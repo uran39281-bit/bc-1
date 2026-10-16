@@ -10,7 +10,7 @@ New in v1.0.4: **Setup → Export diagnostics → Copy report** provides a redac
 
 From v1.0.3: fixes stale media thumbnails after rapid searches; updates current cards in place without rebuilding the browser. A deterministic regression fails on the old implementation and passes with this fix.
 
-Known limitation: one export test failed on the first attempt with a muxer error; the unchanged rerun passed all tests and independent MP4 decoding. The underlying intermittent failure is still under investigation. This is a development build, not production-stable certification.
+Known limitation: during v1.0.3 testing, one export test failed on the first attempt with a muxer error; the unchanged rerun passed all tests and independent MP4 decoding. The underlying intermittent failure is still under investigation. v1.0.4 passed its full suite and all four independent export checks on its first qualification run; this does not establish the earlier failure's cause. This is a development build, not production-stable certification.
 
 V1 two-column desktop Project Media grid, working media-type filters and filename search, preserved browser state and synchronized clip selection.
 
