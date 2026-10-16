@@ -1,12 +1,16 @@
 # BC-1 Android APKs
 
-Separate download repository for Black Ice Custom Engine. [Source code](https://github.com/uran39281-bit/Black-Ice-Emulator/tree/bc-1-v1.0.2-media).
+Separate download repository for Black Ice Custom Engine. [Source code](https://github.com/uran39281-bit/Black-Ice-Emulator/tree/bc-1-v1.0.3-thumbnails).
 
-## Latest: v1.0.2
+## Latest: v1.0.3
 
-[Download BC-1 v1.0.2 APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.0.2/BC-1-v1.0.2.apk)
+[Download BC-1 v1.0.3 APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.0.3/BC-1-v1.0.3.apk)
 
-New: V1 two-column desktop Project Media grid, working media-type filters and filename search, preserved browser state and synchronized clip selection.
+New in v1.0.3: fixes stale media thumbnails after rapid searches; updates current cards in place without rebuilding the browser. A deterministic regression fails on the old implementation and passes with this fix.
+
+Known limitation: one export test failed on the first attempt with a muxer error; the unchanged rerun passed all tests and independent MP4 decoding. The underlying intermittent failure is still under investigation. This is a development build, not production-stable certification.
+
+V1 two-column desktop Project Media grid, working media-type filters and filename search, preserved browser state and synchronized clip selection.
 
 Closer to the official V1 phone/desktop references: monoline icons, editing shortcut strip, preview scrubber and pinned track labels.
 
@@ -14,14 +18,15 @@ V1 dark/cyan interface, phone and tablet/DeX workspaces, UI Lock, thumbnail time
 
 | Version | Download | Verification |
 | --- | --- | --- |
+| v1.0.3 Thumbnail reliability | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.0.3/BC-1-v1.0.3.apk) | 33 unit +18 Android tests; MP4 decode passed on rerun; see export caveat above |
 | v1.0.2 Media browser | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.0.2/BC-1-v1.0.2.apk) | 33 unit + 17 Android tests; independent MP4 decode passed |
 | v1.0.1 UI polish | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.0.1/BC-1-v1.0.1.apk) | 30 unit + 17 Android tests; independent MP4 decode passed |
 | v1.0 | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.0/BC-1-v1.0.apk) | 30 unit + 17 Android tests; independent MP4 decode passed |
 | v0.5 Motion & Layers | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v0.5/BC-1-v0.5-Preview.apk) | 29 unit + 16 Android tests passed |
 | v0.4 Timeline & Export | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v0.4/BC-1-v0.4-Preview.apk) | Previous preview preserved |
 
-Package `com.blackice.bc1.preview`, retained BC-1 preview signing certificate. Install over your existing Preview to retain projects; do not uninstall it first. v1.0.2 is versionCode 14, versionName 1.0.2.
+Package `com.blackice.bc1.preview`, retained BC-1 preview signing certificate. Install over your existing Preview to retain projects; do not uninstall it first. v1.0.3 is versionCode15, versionName1.0.3.
 
-[QA evidence and limitations](v1.0.2/QA.md) · [SHA256 checksum](v1.0.2/SHA256SUMS.txt)
+[QA evidence and limitations](v1.0.3/QA.md) · [SHA256 checksum](v1.0.3/SHA256SUMS.txt)
 
 Checks use an Android API35 emulator. Physical Snapdragon 8 Gen 3 and Samsung DeX performance remains unmeasured. RTX integration is a future backend. Versioned APKs are retained and never replaced with different builds.
