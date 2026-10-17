@@ -1,10 +1,10 @@
-# Active development — BC-1 v2.0.0 (candidate, not published)
+# Active development — BC-1 v1.0.5 (candidate, not published; formerly labelled v2.0.0)
 
-Branch `claude/app-update-4vo05i`: v2.0.0 / versionCode 17, folding in the unpublished v1.1.0 timeline work (v1.1 branch `bc-1-v1.1-timeline` preserved). Selection-based workspace, + Add drawer, contextual tools with focused panels, layered timeline with centred playhead, layer visibility / solo / locks, arrangement tools, Move & Transform, direct preview editing, keyframe animation and reusable presets/elements. Read BC-1-v2.0-QA.md.
+Branch `claude/app-update-4vo05i`: v1.0.5 / versionCode 17 (renumbered from 2.0.0 at the owner's request, no functional change), folding in the unpublished v1.1.0 timeline work (v1.1 branch `bc-1-v1.1-timeline` preserved). Selection-based workspace, + Add drawer, contextual tools with focused panels, layered timeline with centred playhead, layer visibility / solo / locks, arrangement tools, Move & Transform, direct preview editing, keyframe animation and reusable presets/elements. Read BC-1-v1.0.5-QA.md.
 
 CI: dispatch `bc-1-android.yml` on the branch (it is not in the push list). Reduced QA screenshots are pushed to `qa-screenshots/<branch>` by the GPU job; failure summaries are repeated at the end of the job log. Local checks used during development: JVM unit tests against real org.json, and a javac pass against Robolectric android-all filtering Media3-only errors.
 
-IMPORTANT: the retained preview signing key was not available, so v2.0.0 was not published to the APK repo; CI APKs use an ephemeral debug key and cannot update an existing Preview install. Fixed in this work: a Media3 forced-audio race with several visual sequences (NullPointerException in SequenceAssetLoader) — non-primary layers' sound now uses separate audio sequences. The older intermittent "Muxer error" remains unexplained (seen once more on 2026-10-17 before these changes).
+IMPORTANT: the retained preview signing key was not available, so v1.0.5 was not published to the APK repo; CI APKs use an ephemeral debug key and cannot update an existing Preview install. Fixed in this work: a Media3 forced-audio race with several visual sequences (NullPointerException in SequenceAssetLoader) — non-primary layers' sound now uses separate audio sequences. The older intermittent "Muxer error" remains unexplained (seen once more on 2026-10-17 before these changes).
 
 ---
 

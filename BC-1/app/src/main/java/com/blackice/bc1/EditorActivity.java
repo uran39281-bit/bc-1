@@ -366,7 +366,7 @@ public final class EditorActivity extends Activity {
             addAction("Projects / New / Rename",()->projectsMenu());
             addAction("Export diagnostics",()->exportDiagnostics());
             addAction("Open v0.3 effects lab",()->startActivity(new Intent(this,WorkbenchActivity.class)));
-            inspector.addView(note("BC-1 v2.0.0\nExport: H.264 MP4 + AAC, 1080p, up to 30 fps. Lower-rate sources keep their cadence.\nSpace: play • Ctrl+Z/Y: undo/redo • Ctrl+S: save\nS: split • arrows: frame step • Ctrl+D: duplicate\nCtrl+wheel: zoom • Shift+wheel: scroll • right-click: clip menu\n3D Page Curl remains excluded."));
+            inspector.addView(note("BC-1 v1.0.5\nExport: H.264 MP4 + AAC, 1080p, up to 30 fps. Lower-rate sources keep their cadence.\nSpace: play • Ctrl+Z/Y: undo/redo • Ctrl+S: save\nS: split • arrows: frame step • Ctrl+D: duplicate\nCtrl+wheel: zoom • Shift+wheel: scroll • right-click: clip menu\n3D Page Curl remains excluded."));
     }
     /** Layer rows, topmost first: text/shape/image layers, video layers 3–1, the main sequence, then audio. */
     java.util.List<int[]> layerRows(){
@@ -701,7 +701,7 @@ public final class EditorActivity extends Activity {
     }
     void exportDiagnostics(){
         android.content.SharedPreferences prefs=getSharedPreferences(ExportService.PREFS,MODE_PRIVATE);
-        String report="BC-1 v2.0.0 • Android API "+android.os.Build.VERSION.SDK_INT+"\n\n"+
+        String report="BC-1 v1.0.5 • Android API "+android.os.Build.VERSION.SDK_INT+"\n\n"+
                 prefs.getString(ExportService.LAST_FAILURE,"No export failure recorded.")+"\n\n"+
                 "Last failure is retained after successful exports. This summary excludes media names, paths and exception messages.";
         new AlertDialog.Builder(this).setTitle("Export diagnostics").setMessage(report)

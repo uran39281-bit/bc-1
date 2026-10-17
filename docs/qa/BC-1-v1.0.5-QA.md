@@ -1,7 +1,7 @@
-# BC-1 v2.0.0 — selection-based workspace, layered timeline, transforms and animation
+# BC-1 v1.0.5 — selection-based workspace, layered timeline, transforms and animation
 
 Candidate built from `claude/app-update-4vo05i`. It folds in the unpublished v1.1.0 timeline work and continues v1.0.4.
-versionName 2.0.0 / versionCode 17, package `com.blackice.bc1.preview`. Not published: see **Signing** below.
+versionName 1.0.5 / versionCode 17 (developed and first qualified under the working label 2.0.0; renumbered 1.0.5 with no functional change), package `com.blackice.bc1.preview`. Not published: see **Signing** below.
 
 ## Implemented
 
@@ -44,7 +44,7 @@ Qualifying source `03dd1ce582954ebb0496876ff142b5f8daa02079`, [Actions run 39022
   - Existing v1.x suites (workspace layouts, media browser, thumbnails, diagnostics, GPU effects / transitions, export and recovery) still pass.
 - All four independent ffmpeg / ffprobe gates passed (three sequential H.264 1920×1080 + AAC exports and the post-failure recovery export), plus the synchronized five-second speed-change export.
 - Screenshots (phone and DeX: Add drawer, Move & Transform, Layers, timeline selection and text tools) were reviewed from the `qa-screenshots/claude/app-update-4vo05i` branch the CI publishes.
-- APK artifact `BC-1-v2.0.0-apk` (ID 12097152536, zip SHA256 `1628e0cafbbbbd0728f46ef30347b67ca2eb96ff423d5abfba598cae07be117b`), debug-signed by CI.
+- Original qualification APK artifact `BC-1-v2.0.0-apk` (pre-renumbering) (ID 12097152536, zip SHA256 `1628e0cafbbbbd0728f46ef30347b67ca2eb96ff423d5abfba598cae07be117b`), debug-signed by CI.
 
 Found and fixed during qualification: a Media3 1.11 race where a second visual sequence starting with a picture requested synthetic silence before the shared audio output existed (NullPointerException in `SequenceAssetLoader`), which intermittently failed previews and exports with pictures on several layers. Only the first video sequence now carries audio; other layers' sound uses parallel audio-only sequences.
 
