@@ -48,6 +48,13 @@ Qualifying source `03dd1ce582954ebb0496876ff142b5f8daa02079`, [Actions run 39022
 
 Found and fixed during qualification: a Media3 1.11 race where a second visual sequence starting with a picture requested synthetic silence before the shared audio output existed (NullPointerException in `SequenceAssetLoader`), which intermittently failed previews and exports with pictures on several layers. Only the first video sequence now carries audio; other layers' sound uses parallel audio-only sequences.
 
+### v1.0.5 renumbering run
+
+Source `fbcdf855dfda4571551dccdfcb156950fc2b0ecb` (version strings only), [Actions run 39038134981](https://github.com/uran39281-bit/bc-1/actions/runs/39038134981):
+- Build job: unit tests, lint, APK — passed. APK artifact `BC-1-v1.0.5-apk` (ID 12103376094, zip digest `sha256:c6ade0418e8c27dc6f04f8336a0f8982ff6c5126efc5da9b855ca41224c4cbe1`), debug-signed by CI.
+- GPU job attempt 1: 24/25 passed; `projectRoundTripEditsMusicTextAnd1080pExport` failed with the intermittent "Muxer error". The logged cause chain shows it is Media3's export watchdog, not a muxer write failure: `IllegalStateException: Abort: no output sample written in the last 25000 milliseconds` — the 1080p pipeline stalled on the SwiftShader emulator. Why it stalls is still unknown.
+- GPU job attempt 2 (single re-run, unchanged): all 25 tests and all independent ffmpeg / ffprobe gates passed.
+
 ## Signing
 
 The retained BC-1 preview signing key is not available in this build environment. CI APKs are signed with an ephemeral debug key, so they cannot be installed over an existing BC-1 Preview without uninstalling it (which deletes its projects). The candidate is therefore not published to the APK repository.
@@ -60,4 +67,4 @@ The retained BC-1 preview signing key is not available in this build environment
 - Video and audio cannot loop past their source; use speed or Duplicate After instead.
 - Beat detection is approximate (peaks of a 512-bin waveform); markers stay editable.
 - Preview moves show a guide during the gesture; the full GLES preview is re-prepared on release.
-- The intermittent emulator "Muxer error" (first seen in v1.0.3, seen once more on 2026-10-17 during this work) is still not root-caused; failures now print the full error chain into the CI log.
+- The intermittent emulator "Muxer error" (first seen in v1.0.3, seen again twice on 2026-10-17) is the Media3 watchdog aborting after 25 s without an output sample, i.e. a pipeline stall; what stalls (encoder, GL effects or asset loading) is not yet identified.
