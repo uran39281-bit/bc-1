@@ -1,6 +1,14 @@
-# BC-1 Android APKs
+# BC-1 — Black Ice editor
 
-Separate download repository for Black Ice Custom Engine. [Source code](https://github.com/uran39281-bit/Black-Ice-Emulator/tree/bc-1-v1.0.4-diagnostics).
+Home of the BC-1 editor (Black Ice Custom Engine): app source in [`BC-1/`](BC-1), released APKs in the version folders below.
+
+## Source
+
+- [`BC-1/`](BC-1) — Android app (Gradle; `gradle -Pbc1SideBySide assembleDebug` builds the `com.blackice.bc1.preview` package).
+- [`.github/workflows/bc-1-android.yml`](.github/workflows/bc-1-android.yml) — unit tests, lint, APK, and emulator tests with independent MP4 checks; runs on pushes that change the app, or manually.
+- [`docs/qa/`](docs/qa) — QA records per version; [`docs/HANDOFF.md`](docs/HANDOFF.md) — development notes.
+- Current development: v2.0.0 (selection-based workspace, layered timeline, transforms and keyframe animation) — qualified in CI, not yet published below because the retained preview signing key is required. See [docs/qa/BC-1-v2.0-QA.md](docs/qa/BC-1-v2.0-QA.md).
+- Moved from [Black-Ice-Emulator](https://github.com/uran39281-bit/Black-Ice-Emulator/tree/claude/app-update-4vo05i) at commit `14b8308`; earlier history and version branches remain there.
 
 ## Latest: v1.0.4
 
