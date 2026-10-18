@@ -207,7 +207,9 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
             if (!reusable) {
                 if (slot != null) slot.source.release();
                 FrameSource source = c.image ? new ImageSource(context, c.uri, compositor)
-                        : new VideoSource(context, c.uri, d.sourceTimeMs, Math.max(c.outMs, d.sourceTimeMs + 1), compositor);
+                        // Fitted copy, then the plain layer shader: the external-texture variant of the large effects
+                        // shader can take many seconds to compile on some GPUs, and a preview-sized copy costs ~nothing.
+                        : new VideoSource(context, c.uri, d.sourceTimeMs, Math.max(c.outMs, d.sourceTimeMs + 1), compositor, true);
                 slot = new Slot(source, identity, sourceUs);
                 slots.put(key, slot);
             }
