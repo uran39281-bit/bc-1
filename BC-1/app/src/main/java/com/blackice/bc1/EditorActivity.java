@@ -59,11 +59,26 @@ public final class EditorActivity extends Activity {
     final Runnable flushSeek=new Runnable(){@Override public void run(){
         main.removeCallbacks(this);seekQueued=false;if(player==null)return;long now=android.os.SystemClock.uptimeMillis();
         if(seekInFlight&&now-lastSeekAt<SEEK_STALL_MS){seekQueued=true;main.postDelayed(this,SEEK_STALL_MS-(now-lastSeekAt));return;}
-        if(seekInFlight)android.util.Log.w(PREVIEW_LOG,"seek still buffering after "+(now-lastSeekAt)+" ms; sending the next one");
+        if(seekInFlight){recoverPreview(player,"seek stalled",false);return;}
         long target=seekTarget();if(!seekInFlight&&player.getCurrentPosition()==target&&player.getPlaybackState()==Player.STATE_READY)return;
-        lastSeekAt=now;seekInFlight=true;previewSeeks++;android.util.Log.d(PREVIEW_LOG,"seek "+target+" state="+player.getPlaybackState());player.seekTo(target);}};
+        lastSeekAt=now;seekInFlight=true;previewSeeks++;android.util.Log.d(PREVIEW_LOG,"seek "+target+" state="+player.getPlaybackState());player.seekTo(target);main.postDelayed(checkSeek,SEEK_STALL_MS);}};
+    // A seek can stall without onPlayerError. Watch every seek, including the final one after touch-up.
+    final Runnable checkSeek=()->{if(player!=null&&seekInFlight){
+        if(player.getPlaybackState()==Player.STATE_READY)seekSettled();
+        else recoverPreview(player,"seek watchdog",false);
+    }};
+    void recoverPreview(Player failed,String reason,boolean autoplay){
+        if(player!=failed||!active)return;
+        main.removeCallbacks(flushSeek);main.removeCallbacks(checkSeek);seekQueued=false;seekInFlight=false;
+        long now=android.os.SystemClock.uptimeMillis();
+        if(now-previewRecoveryWindow>30_000){previewRecoveryWindow=now;previewRecoveries=0;}
+        if(previewRecoveries>=3){failed.pause();previewHint("Preview unavailable • tap to retry");tell("Preview recovery limit reached: "+reason);return;}
+        previewRecoveries++;
+        android.util.Log.w(PREVIEW_LOG,"rebuilding preview: "+reason+" target="+project.playheadMs+" attempt="+previewRecoveries);
+        preparePreview(autoplay);
+    }
     /** The player finished the seek in flight: send the newest target, if any, respecting the interval. */
-    void seekSettled(){seekInFlight=false;if(!seekQueued)return;main.removeCallbacks(flushSeek);long wait=lastSeekAt+SEEK_INTERVAL_MS-android.os.SystemClock.uptimeMillis();if(wait<=0)flushSeek.run();else main.postDelayed(flushSeek,wait);}
+    void seekSettled(){main.removeCallbacks(checkSeek);seekInFlight=false;if(!seekQueued)return;main.removeCallbacks(flushSeek);long wait=lastSeekAt+SEEK_INTERVAL_MS-android.os.SystemClock.uptimeMillis();if(wait<=0)flushSeek.run();else main.postDelayed(flushSeek,wait);}
     /** One-line preview state for test failure messages and bug reports. */
     String previewDebug(){return "player="+(player==null?"none":player.getClass().getSimpleName()+" state="+player.getPlaybackState()+" pos="+player.getCurrentPosition()+" playWhenReady="+player.getPlayWhenReady()+" error="+(player.getPlayerError()==null?"none":player.getPlayerError().getMessage()))
         +" playhead="+project.playheadMs+" seeksSent="+previewSeeks+" seekQueued="+seekQueued+" inFlight="+seekInFlight+" recoveries="+previewRecoveries+" pending="+previewPending
@@ -154,7 +169,7 @@ public final class EditorActivity extends Activity {
     boolean exporting(){return getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getBoolean("running",false)||exportLaunching;}
     boolean editable(){if(uiLocked){tell("UI locked • unlock editing in Settings");return false;}if(loading||importing){tell("Wait for the current import to finish.");return false;}if(exporting()){tell("Wait for export to finish, or cancel it to continue editing.");return false;}return true;}
     void releasePreview(){
-        main.removeCallbacks(flushSeek);seekQueued=false;seekInFlight=false;
+        main.removeCallbacks(flushSeek);main.removeCallbacks(checkSeek);seekQueued=false;seekInFlight=false;
         previewPending=false;previewAutoplay=false;if(previewProxy!=null)previewProxy.cancel();
         if(player!=null){project.playheadMs=Math.min(project.durationMs(),Math.max(0,player.getCurrentPosition()));player.release();player=null;}
     }
@@ -164,10 +179,8 @@ public final class EditorActivity extends Activity {
         prepared.addListener(new Player.Listener(){
             @Override public void onRenderedFirstFrame(){if(player==prepared&&emptyPreview!=null)emptyPreview.setVisibility(View.GONE);}
             @Override public void onPlayerError(PlaybackException error){android.util.Log.w(PREVIEW_LOG,"player error ("+(player==prepared?"current":"stale")+" player, recoveries="+previewRecoveries+")",error);if(player!=prepared)return;prepared.pause();main.removeCallbacks(flushSeek);seekInFlight=false;
-                // A preview player can fail under rapid seeking; rebuild it at the same position (a few times per 30 s).
-                long now=android.os.SystemClock.uptimeMillis();if(now-previewRecoveryWindow>30_000){previewRecoveryWindow=now;previewRecoveries=0;}
-                if(previewRecoveries++<3){android.util.Log.i(PREVIEW_LOG,"rebuilding preview at "+project.playheadMs+" (attempt "+previewRecoveries+")");previewHint("Recovering preview…");main.postDelayed(()->{if(player==prepared)preparePreview(false);},150);return;}
-                android.util.Log.w(PREVIEW_LOG,"giving up after "+previewRecoveries+" rebuilds");tell("Preview error: "+error.getMessage());previewHint("Preview unavailable • tap to retry");}
+                main.post(()->recoverPreview(prepared,"player error: "+error.getErrorCodeName(),false));}
+
             @Override public void onPlaybackStateChanged(int state){if(player==prepared){android.util.Log.d(PREVIEW_LOG,"state "+state+" pos="+prepared.getCurrentPosition()+" playhead="+project.playheadMs);
                 if(seekInFlight&&state!=Player.STATE_BUFFERING&&prepared.getPlaybackState()!=Player.STATE_BUFFERING)seekSettled();}if(state==Player.STATE_ENDED&&player==prepared){project.playheadMs=project.durationMs();syncPosition();}}
         });
