@@ -1,5 +1,13 @@
 # Black Ice Editor 1.1.0 — cinematic redesign preview
 
+## 1.1.2 — preview survives fast scrubbing
+
+- Fixes "Preview error: Error processing video frames" after scrubbing the timeline quickly on single-clip projects (the live preview).
+- Cause, confirmed against Media3 1.11.1 source and CI logs: (1) `DefaultFrameDroppingShaderProgram.reset()` releases its previous-frame texture without clearing it, so the first frame after a seek draws into a deleted framebuffer (GL 0x506); (2) `MultipleInputVideoGraph.flush()` flushes only its input processors, not the compositor, so the first post-seek frame finds no free output texture.
+- The live preview now uses `SingleInputVideoGraph` (it only ever holds one clip) without the frame-drop effect. Export and the transcoded preview proxy keep frame-rate conversion, so exported cadence is unchanged.
+- Seeks are sent one at a time; newer scrub positions update the target and are sent when the player settles. After a player error the preview rebuilds itself at the same position (up to three times in 30 s).
+- Diagnostics: `BC1Preview` logcat tag, preview state in `PreviewScrubTest` failure messages, preview log kept in CI.
+
 ## Timeline and media update (unreleased)
 
 - The timeline starts at 0 s beside the layer column with a moving playhead (no more half-screen lead-in). Tap or drag the ruler to move the playhead; drag empty space to scroll; zoom keeps the time under the playhead or pinch in place.
