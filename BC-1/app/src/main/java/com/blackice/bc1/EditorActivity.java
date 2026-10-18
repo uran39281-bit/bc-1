@@ -229,6 +229,9 @@ public final class EditorActivity extends Activity {
     long seekTarget(){return Math.min(project.playheadMs,Math.max(0,project.durationMs()-1));}
     void seek(long ms){
         project.playheadMs=Math.max(0,Math.min(ms,project.durationMs()));
+        // Paused scrubbing always goes through the ICE Lite live preview: Media3's player failed under rapid
+        // seeking on some decoders. Playback (and seeking during it) still uses the player.
+        if(player!=null&&!player.getPlayWhenReady()&&live!=null){releasePreview();project.playheadMs=Math.max(0,Math.min(ms,project.durationMs()));}
         if(player!=null){
             player.pause();main.removeCallbacks(flushSeek);
             long now=android.os.SystemClock.uptimeMillis(),wait=lastSeekAt+SEEK_INTERVAL_MS-now;

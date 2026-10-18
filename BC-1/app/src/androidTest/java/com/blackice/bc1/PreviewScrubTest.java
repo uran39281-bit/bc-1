@@ -40,20 +40,19 @@ public class PreviewScrubTest {
         assertTrue("Timed out waiting for " + what, ok.get());
     }
 
-    @Test public void fastScrubbingKeepsTheLivePreviewWorking() throws Exception {
+    /** After Play and pause, scrubbing switches from the Media3 player to the ICE Lite live preview (no player seeks). */
+    @Test public void scrubbingAfterPlaybackUsesTheLivePreview() throws Exception {
         EditProject p = new EditProject(); p.name = "Scrub QA";
         EditProject.Clip c = new MediaImporter(inst.getTargetContext()).importClip(Uri.parse(fixture("red.mp4")), false);
         c.name = "red"; p.clips.add(c);
         new ProjectStore(inst.getTargetContext()).save(p);
         inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS, 0).edit().putString("last-project", p.id).putBoolean("ui-locked", false).commit();
         try (ActivityScenario<EditorActivity> scenario = ActivityScenario.launch(EditorActivity.class)) {
-            // Paused, the editor shows the ICE Lite live frame; Play prepares the Media3 player used for this check.
             waitFor(scenario, a -> !a.loading, 20_000, "the project");
             scenario.onActivity(a -> a.togglePlay());
             waitFor(scenario, a -> a.player != null && a.player.getPlaybackState() == Player.STATE_READY, 20_000, "the playback player");
             scenario.onActivity(a -> a.pausePlayback());
             long duration = p.durationMs();
-            // About 400 seeks in 2 seconds, sweeping back and forth like a fast finger on the timeline.
             long last = 0;
             for (int i = 0; i < 400; i++) {
                 long target = Math.round((Math.sin(i / 9.0) * .5 + .5) * (duration - 1));
@@ -62,11 +61,19 @@ public class PreviewScrubTest {
                 Thread.sleep(5);
             }
             final long expected = last;
-            waitFor(scenario, a -> a.player != null && a.player.getPlaybackState() == Player.STATE_READY
-                    && Math.abs(a.player.getCurrentPosition() - expected) <= 60, 15_000, "the preview to settle on the last scrub position");
+            waitFor(scenario, a -> a.player == null && a.liveView.getVisibility() == android.view.View.VISIBLE && a.project.playheadMs == expected,
+                    10_000, "the live preview at the last scrub position");
+            Thread.sleep(1500);
             AtomicReference<String> hint = new AtomicReference<>();
-            scenario.onActivity(a -> { TextView v = a.emptyPreview; hint.set(v != null && v.getVisibility() == android.view.View.VISIBLE ? v.getText().toString() : ""); });
+            scenario.onActivity(a -> {
+                TextView v = a.emptyPreview; hint.set(v != null && v.getVisibility() == android.view.View.VISIBLE ? v.getText().toString() : "");
+                assertNull("Live preview error", a.live.lastError());
+            });
             assertFalse("Preview left broken: " + hint.get(), hint.get().contains("unavailable"));
+            // Play resumes from the scrubbed position with a fresh player.
+            scenario.onActivity(a -> a.togglePlay());
+            waitFor(scenario, a -> a.player != null && a.player.getPlaybackState() == Player.STATE_READY, 20_000, "playback after scrubbing");
+            scenario.onActivity(a -> { assertTrue("Starts near the scrub position", Math.abs(a.player.getCurrentPosition() - expected) < 500); a.pausePlayback(); });
         }
     }
 
