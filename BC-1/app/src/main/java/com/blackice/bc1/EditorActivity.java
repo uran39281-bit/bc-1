@@ -946,7 +946,7 @@ public final class EditorActivity extends Activity {
         for(int start=0;start<matches.size();start+=mediaColumns){
             LinearLayout row=row();row.setBaselineAligned(false);
             for(int column=0;column<mediaColumns;column++){
-                LinearLayout.LayoutParams cell=new LinearLayout.LayoutParams(0,dp(mediaColumns==2?136:160),1);
+                LinearLayout.LayoutParams cell=new LinearLayout.LayoutParams(0,dp(mediaList?76:mediaColumns==2?136:160),1);
                 if(column>0)cell.leftMargin=dp(6);
                 if(start+column<matches.size())row.addView(mediaCard(matches.get(start+column)),cell);
                 else row.addView(new View(this),cell);
@@ -956,20 +956,21 @@ public final class EditorActivity extends Activity {
     }
     View mediaCard(int index){
         EditProject.Clip clip=project.clips.get(index);
-        LinearLayout card=column();card.setPadding(dp(5),dp(5),dp(5),dp(5));
+        LinearLayout card=mediaList?row():column();card.setPadding(dp(5),dp(5),dp(5),dp(5));
         card.setTag(index);
         card.setBackground(buttonBackground(index==selected));card.setSelected(index==selected);
         ImageView image=new ImageView(this);image.setScaleType(ImageView.ScaleType.CENTER_CROP);
         image.setTag(clip);
         image.setImageDrawable(new V1Icon(clip.track>=4?"Volume":"Media",MUTED));
-        card.addView(image,new LinearLayout.LayoutParams(-1,dp(mediaColumns==2?72:96)));
+        card.addView(image,new LinearLayout.LayoutParams(mediaList?dp(80):-1,dp(mediaList?64:mediaColumns==2?72:96)));
+        LinearLayout details=mediaList?column():card;if(mediaList){details.setPadding(dp(8),0,0,0);card.addView(details,new LinearLayout.LayoutParams(0,-1,1));}
         if(clip.track<4){
             Bitmap thumb=thumbnails.get(clip,mediaThumbnailsReady);
             if(thumb!=null)image.setImageBitmap(thumb);
         }
-        TextView name=label(clip.name,11,TEXT,true);name.setMaxLines(2);name.setEllipsize(android.text.TextUtils.TruncateAt.END);card.addView(name,new LinearLayout.LayoutParams(-1,0,1));
+        TextView name=label(clip.name,11,TEXT,true);name.setMaxLines(2);name.setEllipsize(android.text.TextUtils.TruncateAt.END);details.addView(name,new LinearLayout.LayoutParams(-1,0,1));
         String kind=clip.track>=4?"Audio":clip.image?"Image":"Video";
-        TextView detail=label(kind+" · "+clock(clip.durationMs()),10,MUTED,false);detail.setSingleLine(true);detail.setEllipsize(android.text.TextUtils.TruncateAt.END);card.addView(detail);
+        TextView detail=label(kind+" · "+clock(clip.durationMs()),10,MUTED,false);detail.setSingleLine(true);detail.setEllipsize(android.text.TextUtils.TruncateAt.END);details.addView(detail);
         card.setOnLongClickListener(v->{new AlertDialog.Builder(this).setTitle(clip.name).setItems(new String[]{favoriteMedia.contains(clip.uri)?"Remove favorite":"Add favorite","Preview in project"},(d,n)->{if(n==0){if(!favoriteMedia.remove(clip.uri))favoriteMedia.add(clip.uri);getSharedPreferences(PREFS,MODE_PRIVATE).edit().putStringSet("favorite-media",new java.util.HashSet<>(favoriteMedia)).apply();renderMediaGrid();}else{selected=index;tab=1;seek(project.placements().get(index).startMs);renderInspector();}}).show();return true;});
         card.setFocusable(true);card.setContentDescription("Select "+clip.name);
         card.setOnClickListener(v->{selected=index;tab=1;seek(project.placements().get(index).startMs);renderInspector();renderMediaGrid();});

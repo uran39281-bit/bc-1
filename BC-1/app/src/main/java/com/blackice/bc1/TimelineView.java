@@ -63,7 +63,7 @@ final class TimelineView extends View {
         List<Row> rows=rows();int height=getHeight();float left=a.timelineScroll.getScrollX(),right=left+viewport();
         float top=0,bottom=height;if(a.timelineScroll.getParent() instanceof ScrollView){ScrollView sv=(ScrollView)a.timelineScroll.getParent();top=sv.getScrollY();bottom=top+sv.getHeight();}
         canvas.drawColor(EditorActivity.PANEL);
-        for(int i=0;i<rows.size();i++){Row r=rows.get(i);paint.setColor(i%2==0?0xFF0B1620:EditorActivity.PANEL);canvas.drawRect(left,r.top,right,r.top+a.dp(ROW_DP),paint);}
+        for(int i=0;i<rows.size();i++){Row r=rows.get(i);paint.setColor(i%2==0?0xFF07111E:EditorActivity.PANEL);canvas.drawRect(left,r.top,right,r.top+a.dp(ROW_DP),paint);}
         drawRuler(canvas,left,right,height);
         EditProject p=a.project;List<EditProject.Placement> placements=p.placements();float bar=a.dp(BAR_DP);
         for(EditProject.Placement pl:placements){float y=rowTopOfTrackCached(rows,pl.clip.track);if(y<0)continue;float l=x(pl.startMs),r=x(pl.endMs);if(r<left||l>right||y+bar<top||y>bottom)continue;drawClip(canvas,pl,l,r,y+a.dp(3),bar,left,right);}
@@ -98,7 +98,7 @@ final class TimelineView extends View {
     private boolean multiSelected(int clip){return a.multiClips.contains(clip);}
     private void drawClip(Canvas canvas,EditProject.Placement pl,float l,float r,float y,float bar,float left,float right){
         EditProject p=a.project;EditProject.Clip c=pl.clip;boolean selected=pl.index==a.selected||multiSelected(pl.index),hidden=c.track<4?p.tracks[c.track].hidden:p.tracks[c.track].muted;
-        paint.setAlpha(255);paint.setColor(selected?0xFF226D99:c.track>=4?0xFF1D4B4A:0xFF204057);canvas.drawRoundRect(l,y,r,y+bar,a.dp(5),a.dp(5),paint);
+        paint.setAlpha(255);paint.setColor(selected?0xFF16486A:c.track>=4?0xFF12594F:c.image?0xFF49386D:0xFF172D43);canvas.drawRoundRect(l,y,r,y+bar,a.dp(5),a.dp(5),paint);
         if(c.track<4){Bitmap thumb=a.thumbnails.get(c,a.timelineThumbnailsReady);if(thumb!=null){canvas.save();canvas.clipRect(l+a.dp(1),y+a.dp(1),r-a.dp(1),y+bar-a.dp(1));float tw=bar*thumb.getWidth()/thumb.getHeight();float firstX=l+Math.max(0,(float)Math.floor((left-l)/tw))*tw;for(float tx=firstX;tx<Math.min(r,right);tx+=tw){thumbBounds.set(tx,y,tx+tw,y+bar);canvas.drawBitmap(thumb,null,thumbBounds,paint);}paint.setColor(0xAA08131F);canvas.drawRect(l,y+bar-a.dp(20),r,y+bar,paint);canvas.restore();}}
         float[] peaks=a.waveforms.get(c.uri);if(peaks!=null){paint.setColor(0xFF74D3C1);for(float xx=Math.max(l,left);xx<Math.min(r,right);xx+=a.dp(3)){long source=c.inMs+(long)((xx-l)/(r-l)*(c.outMs-c.inMs));int bin=(int)Math.min(peaks.length-1,source*peaks.length/Math.max(1,c.sourceDurationMs));float amp=peaks[Math.max(0,bin)]*a.dp(12);canvas.drawLine(xx,y+bar/2-amp,xx,y+bar/2+amp,paint);}}
         if(pl.outgoingMs>0){paint.setColor(0x9940BFFF);canvas.drawRect(x(pl.endMs-pl.outgoingMs),y,r,y+bar,paint);}
@@ -121,7 +121,7 @@ final class TimelineView extends View {
         long delta=chosen&&operation>=OP_OV_START&&operation<=OP_OV_MOVE&&moved?pendingDelta:0;
         float l=x(o.startMs+(operation==OP_OV_START||operation==OP_OV_MOVE?delta:0)),r=x(o.endMs+(operation==OP_OV_END||operation==OP_OV_MOVE?delta:0));
         if(r<left||l>right)return;
-        int base=o.imageUri!=null?0xFF3E5C7A:o.shape>0?0xFF2F6D5A:0xFF5A4683;paint.setColor(chosen?0xFF325C79:base);canvas.drawRoundRect(l,y,r,y+bar,a.dp(5),a.dp(5),paint);
+        int base=o.imageUri!=null?0xFF49386D:o.shape>0?0xFF245D63:0xFF79552E;paint.setColor(chosen?0xFF325C79:base);canvas.drawRoundRect(l,y,r,y+bar,a.dp(5),a.dp(5),paint);
         paint.setColor(o.imageUri==null?(o.color|0xFF000000):0xFF9FEAFF);canvas.drawRect(l,y,l+a.dp(4),y+bar,paint);
         canvas.save();canvas.clipRect(l+a.dp(6),y,r-a.dp(6),y+bar);paint.setColor(EditorActivity.TEXT);paint.setTextSize(a.dp(11));canvas.drawText((o.shape>0?"◆ ":o.imageUri!=null?"▣ ":"T  ")+o.label(),Math.max(l,left+headerWidth())+a.dp(9),y+bar-a.dp(8),paint);canvas.restore();
         if(chosen)drawKeys(canvas,o.motion,l,y,bar,k->x(o.startMs+k),left,right);
