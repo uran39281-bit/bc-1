@@ -10,7 +10,7 @@ import android.os.*;
 import android.view.*;
 import android.widget.*;
 import androidx.media3.common.*;
-import androidx.media3.effect.MultipleInputVideoGraph;
+import androidx.media3.effect.SingleInputVideoGraph;
 import androidx.media3.transformer.CompositionPlayer;
 import androidx.media3.exoplayer.ExoPlayer;
 import com.blackice.bc1.editor.*;
@@ -195,7 +195,11 @@ public final class EditorActivity extends Activity {
             }else{
                 android.util.Log.i(PREVIEW_LOG,"prepare live preview at "+position);
                 CompositionPlayer prepared=new CompositionPlayer.Builder(this)
-                        .setVideoGraphFactory(new MultipleInputVideoGraph.Factory(CompositionFactory.frameProcessor()))
+                        // The live preview always has one clip (larger projects use the transcoded proxy). Media3's
+                        // MultipleInputVideoGraph only flushes its per-input stages on a seek, not the compositor, so
+                        // held output textures failed FinalShaderProgramWrapper's free-texture check; the single-input
+                        // graph flushes its whole pipeline.
+                        .setVideoGraphFactory(new SingleInputVideoGraph.Factory(CompositionFactory.frameProcessor()))
                         .setAudioAttributes(new AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(),true).build();
                 attachPreview(prepared);prepared.setComposition(CompositionFactory.buildLive(this,snapshot),Math.min(position,Math.max(0,project.durationMs()-1)));
                 prepared.prepare();prepared.setPlayWhenReady(playWhenReady);

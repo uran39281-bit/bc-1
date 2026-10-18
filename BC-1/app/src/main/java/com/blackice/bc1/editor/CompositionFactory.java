@@ -42,9 +42,10 @@ public final class CompositionFactory {
     public static Composition buildAtHeight(Context context,EditProject project,int shortEdge) {
         return buildAtHeight(context,project,shortEdge,false);
     }
-    /** The live (seekable) preview player's graph. Media3's default frame-drop shader keeps the previous
-     * frame across a seek flush and then fails with GL error 0x506 ("Error processing video frames"), so the
-     * live preview plays source frames without frame-rate conversion; export and the transcoded preview keep it. */
+    /** The live (seekable) preview player's graph. In Media3 1.11 DefaultFrameDroppingShaderProgram.flush()
+     * releases its previous-frame texture without clearing it, so the first frame after a seek draws into a
+     * deleted framebuffer (GL error 0x506, "Error processing video frames"). The live preview therefore plays
+     * source frames without frame-rate conversion; export and the transcoded preview, which never seek, keep it. */
     public static Composition buildLive(Context context,EditProject project) {
         return buildAtHeight(context,project,project.previewHeight,true,false);
     }
