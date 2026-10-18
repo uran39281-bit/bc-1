@@ -74,7 +74,11 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     // ---- Surface ------------------------------------------------------------------------------
 
     /** Draws into an arbitrary surface (an ImageReader in tests). Blocks until attached. */
-    public void attach(Surface target) { runOnGl(() -> bind(target, null)); }
+    public void attach(Surface target) {
+        runOnGl(() -> bind(target, null));
+        Request last = latest;
+        if (last != null) request(last.project, last.timeMs);
+    }
 
     @Override public void onSurfaceTextureAvailable(SurfaceTexture st, int w, int h) {
         runOnGl(() -> bind(new Surface(st), st));
@@ -129,7 +133,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
         Request r = pending.getAndSet(null);
         if (r == null) return;
         try {
-            if (egl == null) { pending.compareAndSet(null, r); return; } // keep it until a surface arrives
+            if (egl == null) return; // no surface yet: binding one redraws the latest request
             long start = System.nanoTime();
             render(r.project, r.timeMs);
             lastError = null;

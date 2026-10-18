@@ -114,4 +114,24 @@ public class LivePreviewTest {
             live.release();
         }
     }
+
+    /** The editor asks for a frame before its view's surface exists; the frame must appear once it does. */
+    @Test public void frameRequestedBeforeTheSurfaceIsDrawnWhenItArrives() throws Exception {
+        LivePreview live = new LivePreview(context);
+        try (Reader reader = new Reader(640, 360)) {
+            EditProject p = project();
+            for (int i = 0; i < 5; i++) live.request(ProjectStore.snapshot(p), 1000 + i); // several, as a scrub would
+            Thread.sleep(300);
+            live.attach(reader.reader.getSurface());
+            int[] red = reader.centre();
+            assertTrue("Red clip after attach: " + red[0] + "," + red[1] + "," + red[2], red[0] > 200 && red[2] < 50);
+            live.request(ProjectStore.snapshot(p), 3000); // and later requests still render
+            Thread.sleep(800);
+            int[] blue = reader.centre();
+            assertTrue("Blue clip at 3 s: " + blue[0] + "," + blue[2], blue[2] > 200 && blue[0] < 50);
+            assertNull(live.lastError());
+        } finally {
+            live.release();
+        }
+    }
 }
