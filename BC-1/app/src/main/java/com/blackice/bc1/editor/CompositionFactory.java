@@ -52,18 +52,18 @@ public final class CompositionFactory {
         List<List<EditProject.Placement>> videoInputs=new ArrayList<>();
         // Input zero is topmost. Explicit layers sit above the two alternating base streams.
         List<List<EditProject.Placement>> groups=new ArrayList<>();
-        for(int layer=3;layer>=1;layer--){List<EditProject.Placement> list=new ArrayList<>();for(EditProject.Placement p:placements)if(p.clip.track==layer)list.add(p);if(!list.isEmpty())groups.add(list);}
+        for(int layer=EditProject.LAST_LAYER;layer>=1;layer--){List<EditProject.Placement> list=new ArrayList<>();for(EditProject.Placement p:placements)if(p.clip.track==layer)list.add(p);if(!list.isEmpty())groups.add(list);}
         List<EditProject.Placement> even=new ArrayList<>(),odd=new ArrayList<>();int baseIndex=0;
         for(EditProject.Placement p:placements)if(p.clip.track==0){(baseIndex++%2==0?even:odd).add(p);}
         if(!even.isEmpty())groups.add(even);if(!odd.isEmpty())groups.add(odd);
-        for(int layer=4;layer<=7;layer++){List<EditProject.Placement> list=new ArrayList<>();for(EditProject.Placement p:placements)if(p.clip.track==layer)list.add(p);if(!list.isEmpty())groups.add(list);}
+        for(int layer=EditProject.AUDIO_FIRST;layer<=EditProject.AUDIO_LAST;layer++){List<EditProject.Placement> list=new ArrayList<>();for(EditProject.Placement p:placements)if(p.clip.track==layer)list.add(p);if(!list.isEmpty())groups.add(list);}
         // Media3 1.11 creates the shared audio output from the first sequence that carries audio. A later
         // sequence that also declares audio but starts with a picture asks for synthetic silence and races
         // that creation (NullPointerException in SequenceAssetLoader). So only the first video sequence
         // carries audio; the sound of other visual layers moves to parallel audio-only sequences.
         List<EditedMediaItemSequence> separateAudio=new ArrayList<>();
         for(List<EditProject.Placement> group:groups){
-            group.sort(Comparator.comparingLong(p->p.startMs));boolean audioOnly=group.get(0).clip.track>=4,primary=sequences.isEmpty()&&!audioOnly;
+            group.sort(Comparator.comparingLong(p->p.startMs));boolean audioOnly=EditProject.audioTrack(group.get(0).clip.track),primary=sequences.isEmpty()&&!audioOnly;
             if(!audioOnly)videoInputs.add(group);
             boolean videoOnly=!audioOnly&&!primary;
             EditedMediaItemSequence.Builder sequence=new EditedMediaItemSequence.Builder(audioOnly?Set.of(C.TRACK_TYPE_AUDIO):videoOnly?Set.of(C.TRACK_TYPE_VIDEO):Set.of(C.TRACK_TYPE_VIDEO,C.TRACK_TYPE_AUDIO));

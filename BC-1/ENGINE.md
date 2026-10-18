@@ -16,10 +16,16 @@ core/            pure Java, no Android imports — shared by every backend
   FrameClock     exact frame timestamps (no cumulative rounding)
   OutputSpec     frame size, frame rate, bitrates
   ExportEngine   engine choice persisted in the export preferences
+  ExportPlanner  resolution / frame rate / codec plan with device fallback; bitrate; size estimate
+  VideoCodec     H.264 or HEVC (H.265); Auto / H.264 / HEVC preference
+  Staging        splits layers into render passes when decoders run short
 
 engine/bc/       Android backend (MediaCodec + GLES 3)
   BcExporter     orchestrates one export on a worker thread
-  VideoSource    frame-accurate forward decoder → SurfaceTexture → fitted frame texture
+  VideoSource    frame-accurate decoder in MediaCodec async mode (each layer decodes in parallel)
+                 → SurfaceTexture → fitted frame texture
+  DecoderBudget  decoders an export may open at once (device instance limit, memory estimate)
+  EncoderCaps    which codec / size / frame rate the device can encode; DeviceVideoReport
   ImageSource    still picture decoded once, fitted once
   Compositor     fit passes + the shipping layer shader (assets/shaders/video.frag) + overlays
   AudioDecoderSource / AudioEncoder   source PCM in, AAC out (staged in a private temp file)
@@ -54,6 +60,28 @@ Each timeline frame produces exactly one encoded picture. Audio is AAC 128 kb/s,
   so a 120 fps clip in a 30 fps export renders one source frame in four.
 - Exports need not run in real time: 4K120 may take several times the clip length on a phone.
 
+## Codecs (H.264 and HEVC)
+
+**Setup → Export codec:** Auto (default) keeps H.264 whenever the device can encode the preset and
+switches to HEVC only when it must, e.g. 4K120 on a Snapdragon 8 Gen 3, whose H.264 encoder stops at
+4K60. HEVC uses ~60% of the H.264 bitrate: 4K120 ≈ 58 Mb/s, about 1.7 GB for four minutes. Both
+engines honour the codec. The export dialog shows the exact plan and estimated size before starting,
+and export refuses to start without room for the file twice (private copy + saved copy).
+
+## Layers and decoders
+
+Projects have **eight visual tracks**: the main sequence plus layers 1–7. Audio moved from tracks 4–7 to
+8–11 (project schema 5); older projects and saved elements are remapped when opened.
+
+Every video layer needs a hardware decoder while it is on screen. BC Core estimates a **decoder budget**
+(the device's reported decoder instances, bounded by memory for the largest source). When a project
+needs more decoders at once than the budget, export renders in **passes**: the first pass renders the
+lowest layers to a private intermediate video (same codec, twice the bitrate); each next pass decodes
+that video as its background and adds the next layers; the last pass adds titles and audio. Alpha-over
+compositing makes this identical to one pass, apart from one extra encode generation per pass. If a
+decoder still cannot be created mid-export, BC Core lowers the budget and retries automatically.
+**Setup → Device video capabilities** lists what this phone's codecs report, with a copyable report.
+
 ## Known differences from the Media3 path
 
 - Letterbox bars of upper layers are transparent (lower layers show through).
@@ -64,14 +92,16 @@ Each timeline frame produces exactly one encoded picture. Audio is AAC 128 kb/s,
 
 ## Verification
 
-- JVM unit tests: `core/RenderPlanTest`, `core/AudioEngineTest`.
+- JVM unit tests: `core/RenderPlanTest`, `core/AudioEngineTest`, `core/ExportPlannerTest`, `core/StagingTest`,
+  `editor/ProjectMigrationTest` (schema 4 → 5 track remap).
 - Device tests: `engine/BcCoreExportTest` (pixel checks across a dissolve, exact frame count, AAC
-  present, portrait/layers/pictures/speed, cancellation). CI decodes `qa/bc-core-1080p.mp4`
+  present, portrait/layers/pictures/speed, cancellation, HEVC, 60 fps from a 120 fps source, three-pass
+  staged render matching the single-pass render on layers 1/4/7, device report and budget). CI decodes `qa/bc-core-1080p.mp4`
   independently with ffmpeg/ffprobe and checks 105 frames, 48 kHz stereo AAC and A/V sync.
 
 ## Roadmap
 
-- Phase 2: desktop backend (FFmpeg via JavaCV for decode/encode, LWJGL OpenGL running the same shaders)
+- Next: desktop backend (FFmpeg via JavaCV for decode/encode, LWJGL OpenGL running the same shaders)
   on top of the unchanged `core` package.
 - Phase 3: BC Core preview player (same RenderPlan, display surface instead of encoder surface).
 - Pitch-preserving speed, hardware decoder pooling for many simultaneous layers.

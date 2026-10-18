@@ -34,7 +34,7 @@ final class TransformPanel {
 
     void build(LinearLayout into){
         if(a.clip()==null&&a.overlay()==null){into.addView(a.note("Select a visual layer to transform it."));return;}
-        if(a.clip()!=null&&a.clip().track>=4){into.addView(a.note("Audio has no picture to transform."));return;}
+        if(a.clip()!=null&&a.clip().track>=EditProject.AUDIO_FIRST){into.addView(a.note("Audio has no picture to transform."));return;}
         HorizontalScrollView scroll=new HorizontalScrollView(a);scroll.setHorizontalScrollBarEnabled(false);LinearLayout tabs=a.row();
         for(int i=0;i<TABS.length;i++){final int index=i;TextView b=a.button(TABS[i],v->{tab=index;a.renderInspector();});b.setTextSize(11);b.setSelected(i==tab);b.setTextColor(i==tab?EditorActivity.CYAN:EditorActivity.TEXT);b.setBackground(a.navBackground(i==tab));tabs.addView(b,new LinearLayout.LayoutParams(-2,a.dp(48)));}
         scroll.addView(tabs);into.addView(scroll);

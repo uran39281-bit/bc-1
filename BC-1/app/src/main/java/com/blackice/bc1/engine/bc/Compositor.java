@@ -103,6 +103,18 @@ final class Compositor {
         GlKit.check("fit bitmap");
     }
 
+    /** Opaque full-frame copy of a frame-sized texture (a previous render pass) as the bottom layer. */
+    void drawPlain(int texture) {
+        GLES30.glDisable(GLES30.GL_BLEND);
+        fit2d.use();
+        fit2d.matrix("uSt", IDENTITY); fit2d.set("uRotation", 0); fit2d.set("uFlipY", 0f);
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture);
+        fit2d.set("uTex", 0);
+        quad.draw();
+        GlKit.check("plain");
+    }
+
     /** Starts an output frame on the encoder surface: opaque black, like an empty Media3 composition. */
     void beginFrame() {
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);

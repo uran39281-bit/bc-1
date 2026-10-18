@@ -57,7 +57,7 @@ public final class PresetStore {
         String group="g"+Long.toString(System.nanoTime()&0xFFFFFFFFL,36);int added=0;
         if(p.clips.size()+element.clips.size()>100||p.overlays.size()+element.overlays.size()>20) throw new IllegalArgumentException("Not enough room: projects hold 100 clips and 20 text/shape/image layers.");
         for(EditProject.Clip c:element.clips){
-            c.startMs+=at;c.group=group;boolean placed=false;int first=c.track>=4?4:1,last=c.track>=4?7:3;
+            c.startMs+=at;c.group=group;boolean placed=false;boolean audio=EditProject.audioTrack(c.track);int first=audio?EditProject.AUDIO_FIRST:1,last=audio?EditProject.AUDIO_LAST:EditProject.LAST_LAYER;
             for(int t=first;t<=last&&!placed;t++){if(LayerOps.free(p,t,c.startMs,c.startMs+c.durationMs(),-1)){c.track=t;placed=true;}}
             if(!placed) throw new IllegalArgumentException("No free layer for “"+c.name+"” at this time.");
             p.clips.add(c);added++;

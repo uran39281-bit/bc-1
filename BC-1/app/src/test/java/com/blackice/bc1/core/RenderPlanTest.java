@@ -83,7 +83,7 @@ public class RenderPlanTest {
     @Test public void layersStackAboveMainAndHiddenLayersAreSkipped() {
         EditProject p = mainLane();
         p.clips.add(clip("L2", 1000, 2, 0)); p.clips.add(clip("L1", 1000, 1, 0)); p.clips.add(clip("L3", 1000, 3, 0));
-        p.clips.add(clip("music-ish", 1000, 4, 0));
+        p.clips.add(clip("music-ish", 1000, EditProject.AUDIO_FIRST, 0));
         RenderPlan plan = new RenderPlan(p, false);
         List<RenderPlan.LayerDraw> at = plan.layersAt(100);
         String[] order = new String[at.size()];

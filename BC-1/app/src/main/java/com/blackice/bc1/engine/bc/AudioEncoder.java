@@ -32,6 +32,8 @@ final class AudioEncoder {
         Encoded(MediaFormat format, File file, List<long[]> samples) { this.format = format; this.file = file; this.samples = samples; }
 
         boolean hasNext() { return next < samples.size(); }
+        /** Restarts reading from the first sample (a retried render pass). */
+        void rewind() { next = 0; }
         long nextTimeUs() { return samples.get(next)[0]; }
 
         /** Reads the next sample into {@code buffer} and fills {@code info}. */

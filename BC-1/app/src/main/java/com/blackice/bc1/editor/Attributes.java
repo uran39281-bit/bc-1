@@ -16,7 +16,7 @@ public final class Attributes {
         try {
             JSONObject j=new JSONObject();
             if((categories&TRANSFORM)!=0) j.put("transform",transform(c.x,c.y,c.scale,c.aspect,c.rotation,c.skewX,c.skewY,c.anchorX,c.anchorY,c.flipH,c.flipV));
-            if((categories&EFFECTS)!=0&&c.track<4) j.put("effects",new JSONObject().put("effect",c.effect).put("intensity",c.intensity).put("opacity",c.opacity)
+            if((categories&EFFECTS)!=0&&!EditProject.audioTrack(c.track)) j.put("effects",new JSONObject().put("effect",c.effect).put("intensity",c.intensity).put("opacity",c.opacity)
                     .put("chroma",c.chroma).put("keyColor",c.keyColor).put("keyTolerance",c.keyTolerance).put("keySoftness",c.keySoftness).put("keySpill",c.keySpill));
             if((categories&ANIMATION)!=0) j.put("animation",ProjectStoreAccess.motion(retime(c.motion,c.inMs,1/c.speed,true)));
             return new Attributes(j,mask(j));
@@ -43,9 +43,9 @@ public final class Attributes {
         int applied=0;
         try {
             JSONObject t=data.optJSONObject("transform");
-            if(t!=null&&(requested&TRANSFORM)!=0&&c.track<4){c.x=f(t,"x");c.y=f(t,"y");c.scale=Math.max(.05f,Math.min(4,f(t,"scale")));c.aspect=f(t,"aspect");c.rotation=f(t,"rotation");c.skewX=f(t,"skewX");c.skewY=f(t,"skewY");c.anchorX=f(t,"anchorX");c.anchorY=f(t,"anchorY");c.flipH=t.getBoolean("flipH");c.flipV=t.getBoolean("flipV");applied|=TRANSFORM;}
+            if(t!=null&&(requested&TRANSFORM)!=0&&!EditProject.audioTrack(c.track)){c.x=f(t,"x");c.y=f(t,"y");c.scale=Math.max(.05f,Math.min(4,f(t,"scale")));c.aspect=f(t,"aspect");c.rotation=f(t,"rotation");c.skewX=f(t,"skewX");c.skewY=f(t,"skewY");c.anchorX=f(t,"anchorX");c.anchorY=f(t,"anchorY");c.flipH=t.getBoolean("flipH");c.flipV=t.getBoolean("flipV");applied|=TRANSFORM;}
             JSONObject e=data.optJSONObject("effects");
-            if(e!=null&&(requested&EFFECTS)!=0&&c.track<4){if(e.has("effect")){c.effect=e.getInt("effect");c.intensity=f(e,"intensity");c.chroma=e.getBoolean("chroma");c.keyColor=e.getInt("keyColor");c.keyTolerance=f(e,"keyTolerance");c.keySoftness=f(e,"keySoftness");c.keySpill=f(e,"keySpill");}c.opacity=f(e,"opacity");applied|=EFFECTS;}
+            if(e!=null&&(requested&EFFECTS)!=0&&!EditProject.audioTrack(c.track)){if(e.has("effect")){c.effect=e.getInt("effect");c.intensity=f(e,"intensity");c.chroma=e.getBoolean("chroma");c.keyColor=e.getInt("keyColor");c.keyTolerance=f(e,"keyTolerance");c.keySoftness=f(e,"keySoftness");c.keySpill=f(e,"keySpill");}c.opacity=f(e,"opacity");applied|=EFFECTS;}
             JSONArray a=data.optJSONArray("animation");
             if(a!=null&&(requested&ANIMATION)!=0){c.motion=retime(ProjectStoreAccess.motion(a),c.inMs,c.speed,false);applied|=ANIMATION;}
         } catch(JSONException ex) { throw new IllegalArgumentException("The copied attributes are damaged."); }

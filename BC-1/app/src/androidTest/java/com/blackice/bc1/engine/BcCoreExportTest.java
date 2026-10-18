@@ -11,6 +11,7 @@ import android.net.Uri;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import com.blackice.bc1.core.ExportPlanner;
+import com.blackice.bc1.core.VideoCodec;
 import com.blackice.bc1.core.FrameClock;
 import com.blackice.bc1.editor.EditProject;
 import com.blackice.bc1.editor.MediaImporter;
@@ -176,6 +177,98 @@ public class BcCoreExportTest {
         ExportPlanner.Plan standard = EncoderCaps.plan(1080, 30, false);
         assertEquals("1080p30 stays the default on every test device", "1080p30", standard.label());
         assertEquals(8_000_000, standard.bitrate);
+    }
+
+    private static int pixel(MediaMetadataRetriever r, long ms, float fx, float fy) {
+        Bitmap frame = r.getFrameAtTime(ms * 1000, MediaMetadataRetriever.OPTION_CLOSEST);
+        assertNotNull("Frame at " + ms, frame);
+        int color = frame.getPixel(Math.round((frame.getWidth() - 1) * fx), Math.round((frame.getHeight() - 1) * fy));
+        frame.recycle();
+        return color;
+    }
+
+    private static String mime(File file) throws Exception {
+        MediaExtractor e = new MediaExtractor();
+        try {
+            e.setDataSource(file.getPath());
+            for (int t = 0; t < e.getTrackCount(); t++) { String m = e.getTrackFormat(t).getString(MediaFormat.KEY_MIME); if (m.startsWith("video/")) return m; }
+            return null;
+        } finally { e.release(); }
+    }
+
+    @Test public void hevcExport() throws Exception {
+        EditProject p = acceptance();
+        File out = new File(context.getCacheDir(), "bc-core-hevc-" + System.nanoTime() + ".mp4");
+        new BcExporter(context, p, ExportPlanner.fixed(360, 30, VideoCodec.HEVC, false), new AtomicBoolean(), percent -> { }).export(out);
+        try {
+            assertEquals("video/hevc", mime(out));
+            assertEquals(FrameClock.frameCount(3500, 30), trackSamples(out)[0]);
+            try (MediaMetadataRetriever r = new MediaMetadataRetriever()) {
+                r.setDataSource(out.getPath());
+                int first = center(r, 1200), last = center(r, 3000);
+                assertTrue("Red first: " + Integer.toHexString(first), Color.red(first) > 200 && Color.blue(first) < 40);
+                assertTrue("Blue last: " + Integer.toHexString(last), Color.blue(last) > 200 && Color.red(last) < 40);
+            }
+            File qa = new File(context.getFilesDir(), "qa"); qa.mkdirs();
+            java.nio.file.Files.copy(out.toPath(), new File(qa, "bc-core-hevc.mp4").toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } finally { out.delete(); }
+    }
+
+    /** Main lane plus video on layers 1, 4 and 7 (the new top layer), each smaller than the one below. */
+    private EditProject layered() throws Exception {
+        EditProject p = new EditProject(); p.name = "BC Core layers";
+        p.clips.add(clip("red.mp4"));
+        int[] tracks = {1, 4, EditProject.LAST_LAYER};
+        String[] media = {"blue.mp4", "red.mp4", "blue.mp4"};
+        float[] scales = {.75f, .5f, .25f};
+        for (int i = 0; i < tracks.length; i++) {
+            EditProject.Clip c = clip(media[i]); c.track = tracks[i]; c.startMs = 0; c.scale = scales[i]; p.clips.add(c);
+        }
+        return p;
+    }
+
+    @Test public void stagedRenderingMatchesSinglePassAcrossEightTracks() throws Exception {
+        float[][] points = {{.5f, .5f}, {.5f, .33f}, {.5f, .2f}, {.5f, .05f}};
+        int[][] colors = new int[2][points.length];
+        int[] passes = new int[2];
+        for (int run = 0; run < 2; run++) {
+            File out = new File(context.getCacheDir(), "bc-core-stage-" + run + "-" + System.nanoTime() + ".mp4");
+            BcExporter exporter = new BcExporter(context, layered(), 360, new AtomicBoolean(), percent -> { }).decoderBudget(run == 0 ? 16 : 2);
+            exporter.export(out);
+            passes[run] = exporter.passes();
+            try (MediaMetadataRetriever r = new MediaMetadataRetriever()) {
+                r.setDataSource(out.getPath());
+                for (int i = 0; i < points.length; i++) colors[run][i] = pixel(r, 1000, points[i][0], points[i][1]);
+            }
+            assertEquals(FrameClock.frameCount(2000, 30), trackSamples(out)[0]);
+            if (run == 1) {
+                File qa = new File(context.getFilesDir(), "qa"); qa.mkdirs();
+                java.nio.file.Files.copy(out.toPath(), new File(qa, "bc-core-staged.mp4").toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+            out.delete();
+        }
+        assertEquals("Budget 16: one pass", 1, passes[0]);
+        assertEquals("Budget 2: main + three layers need three passes", 3, passes[1]);
+        // Expected stacking from the centre outwards: layer 7 blue, layer 4 red, layer 1 blue, main red.
+        int[] expectedBlue = {1, 0, 1, 0};
+        for (int i = 0; i < points.length; i++) {
+            int single = colors[0][i], staged = colors[1][i];
+            boolean blue = expectedBlue[i] == 1;
+            assertTrue("Single pass point " + i + ": " + Integer.toHexString(single), blue ? Color.blue(single) > 200 && Color.red(single) < 50 : Color.red(single) > 200 && Color.blue(single) < 50);
+            assertTrue("Staged point " + i + ": " + Integer.toHexString(staged), Math.abs(Color.red(single) - Color.red(staged)) < 24 && Math.abs(Color.blue(single) - Color.blue(staged)) < 24);
+        }
+    }
+
+    @Test public void deviceReportAndBudget() throws Exception {
+        String report = com.blackice.bc1.engine.bc.DeviceVideoReport.build(context);
+        android.util.Log.i("BC1Report", report);
+        assertTrue(report.contains("Export presets"));
+        assertTrue(report.contains("A 4K 120 fps request exports as:"));
+        EditProject p = layered();
+        com.blackice.bc1.engine.bc.DecoderBudget.Estimate e = com.blackice.bc1.engine.bc.DecoderBudget.estimate(context, p, com.blackice.bc1.core.OutputSpec.of(p, 1080));
+        android.util.Log.i("BC1Report", "Decoder budget " + e.budget + " (instances " + e.instances + ", memory " + e.memoryBudget + ")");
+        assertTrue(e.budget >= com.blackice.bc1.engine.bc.DecoderBudget.MIN && e.budget <= com.blackice.bc1.engine.bc.DecoderBudget.MAX);
+        assertEquals(320, e.largestWidth);
     }
 
     @Test public void cancellationStopsAndRemovesOutput() throws Exception {

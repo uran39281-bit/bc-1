@@ -26,6 +26,8 @@ public final class RenderPlan {
         public final float intensity, opacity, progress;
         /** Upper of the two alternating main-lane streams (transition masks cut its alpha). */
         public final boolean top;
+        /** Stacking group: 0 lower main stream, 1 upper main stream, track + 1 for layer tracks. */
+        public final int group;
 
         LayerDraw(EditProject.Placement p, long sourceTimeMs, Transition t, boolean top) {
             EditProject.Clip c = p.clip;
@@ -36,6 +38,7 @@ public final class RenderPlan {
             intensity = c.motion.value(Motion.INTENSITY, sourceTimeMs, c.intensity);
             opacity = c.motion.value(Motion.OPACITY, sourceTimeMs, c.opacity);
             transition = t.type; role = t.role; progress = t.progress;
+            group = groupOf(p.clip.track, top);
         }
     }
 
@@ -73,7 +76,7 @@ public final class RenderPlan {
         }
         drawOrder.addAll(odd);
         drawOrder.addAll(even);
-        for (int layer = 1; layer <= 3; layer++)
+        for (int layer = 1; layer < EditProject.VISUAL_TRACKS; layer++)
             for (EditProject.Placement p : placements) if (p.clip.track == layer) drawOrder.add(p);
         if (drawOrder.isEmpty()) throw new IllegalArgumentException("Keep at least one video or image layer in the project.");
     }
@@ -81,13 +84,24 @@ public final class RenderPlan {
     public EditProject project() { return project; }
     public List<EditProject.Placement> placements() { return placements; }
 
+    /** Stacking group of a clip: groups draw in ascending order. */
+    public static int groupOf(int track, boolean top) { return track == 0 ? (top ? 1 : 0) : track + 1; }
+
+    /** Number of stacking groups: two main-lane streams plus every visual layer track. */
+    public static int groupCount() { return EditProject.VISUAL_TRACKS + 1; }
+
     /** Visible layers at a timeline instant, bottom to top. */
-    public List<LayerDraw> layersAt(long timeMs) {
+    public List<LayerDraw> layersAt(long timeMs) { return layersAt(timeMs, 0, groupCount()); }
+
+    /** Visible layers in groups [fromGroup, toGroup) at a timeline instant, bottom to top. */
+    public List<LayerDraw> layersAt(long timeMs, int fromGroup, int toGroup) {
         List<LayerDraw> result = new ArrayList<>();
         for (EditProject.Placement p : drawOrder) {
             if (timeMs < p.startMs || timeMs >= p.endMs) continue;
             if (!LayerOps.renders(project, p.clip, preview)) continue;
             boolean top = p.clip.track != 0 || ordinal[p.index] % 2 == 0;
+            int group = groupOf(p.clip.track, top);
+            if (group < fromGroup || group >= toGroup) continue;
             result.add(new LayerDraw(p, sourceTime(p, timeMs), transition(p, previous[p.index], timeMs), top));
         }
         return result;
@@ -99,6 +113,20 @@ public final class RenderPlan {
         for (EditProject.Overlay o : project.overlays)
             if (timeMs >= o.startMs && timeMs < o.endMs && LayerOps.renders(project, o, preview)) result.add(o);
         return result;
+    }
+
+    /**
+     * Video decoders each stacking group needs at once (pictures need none). Placements in one group
+     * never overlap in time, so a group needs at most one decoder.
+     */
+    public int[] decoderDemand() {
+        int[] demand = new int[groupCount()];
+        for (EditProject.Placement p : drawOrder) {
+            if (p.clip.image || !LayerOps.renders(project, p.clip, preview)) continue;
+            boolean top = p.clip.track != 0 || ordinal[p.index] % 2 == 0;
+            demand[groupOf(p.clip.track, top)] = 1;
+        }
+        return demand;
     }
 
     /** Visual placements whose decoders are needed in [fromMs, toMs). */

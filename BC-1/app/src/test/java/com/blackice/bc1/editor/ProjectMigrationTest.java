@@ -29,6 +29,22 @@ public class ProjectMigrationTest {
         EditProject.Overlay bo=back.overlays.get(0);assertEquals(2,bo.shape);assertEquals("Badge",bo.label());assertEquals(1,bo.blend);assertTrue(bo.hidden);
         assertEquals(ProjectStore.encode(p),ProjectStore.encode(back));
     }
+    @Test public void schemaFourAudioMovesToTracksEightToEleven() throws Exception {
+        EditProject p=new EditProject();p.clips.add(clip());EditProject.Clip voice=clip();voice.audioOnly=true;voice.track=EditProject.AUDIO_FIRST+1;p.clips.add(voice);
+        p.tracks[EditProject.AUDIO_FIRST+1].name="Voice";p.tracks[EditProject.AUDIO_FIRST+1].muted=true;p.tracks[2].name="Logo";
+        JSONObject json=new JSONObject(ProjectStore.encode(p));json.put("schema",4);
+        // Schema 4 layout: tracks 0–3 visual, 4–7 audio.
+        org.json.JSONArray all=json.getJSONArray("tracks"),legacy=new org.json.JSONArray();
+        for(int t=0;t<4;t++)legacy.put(all.getJSONObject(t));for(int t=EditProject.AUDIO_FIRST;t<=EditProject.AUDIO_LAST;t++)legacy.put(all.getJSONObject(t));
+        json.put("tracks",legacy);json.getJSONArray("clips").getJSONObject(1).put("track",5);
+        EditProject old=ProjectStore.decode(json.toString());
+        assertEquals(EditProject.AUDIO_FIRST+1,old.clips.get(1).track);assertEquals("Voice",old.tracks[EditProject.AUDIO_FIRST+1].name);assertTrue(old.tracks[EditProject.AUDIO_FIRST+1].muted);
+        assertEquals("Logo",old.tracks[2].name);assertEquals("New visual layers get default rows","Layer 5",old.tracks[5].name);assertFalse(old.tracks[5].muted);
+        assertEquals(0,old.clips.get(0).track);
+        assertEquals(12,old.tracks.length);
+    }
+    @Test public void eightVisualLayersValidate(){EditProject p=new EditProject();p.clips.add(clip());for(int t=1;t<=EditProject.LAST_LAYER;t++){EditProject.Clip c=clip();c.track=t;p.clips.add(c);}p.validate();assertEquals(8,EditProject.VISUAL_TRACKS);
+        EditProject.Clip bad=clip();bad.track=EditProject.TRACK_COUNT;p.clips.add(bad);try{p.validate();fail();}catch(IllegalArgumentException expected){}}
     @Test(expected=IllegalArgumentException.class) public void invalidFrameRateRejected(){EditProject p=new EditProject();p.frameRate=48;p.validate();}
     @Test public void attributesCopySelectivelyAndRetimeAnimation() {
         EditProject.Clip a=clip();a.x=.5f;a.effect=4;a.inMs=1000;a.motion.put(Motion.X,new Motion.Key(1500,.2f));

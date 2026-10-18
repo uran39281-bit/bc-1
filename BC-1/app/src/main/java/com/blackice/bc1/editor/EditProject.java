@@ -6,7 +6,14 @@ import java.util.UUID;
 
 /** Portable edit decision list. Times are integer milliseconds; media is never modified. */
 public final class EditProject {
-    public static final int SCHEMA = 4;
+    /** Schema 5: eight visual tracks (0 main, 1–7 layers) and audio on tracks 8–11 (was 4–7). */
+    public static final int SCHEMA = 5;
+    /** Visual tracks: 0 is the main sequence, 1..VISUAL_TRACKS-1 are independent video/image layers. */
+    public static final int VISUAL_TRACKS = 8;
+    public static final int AUDIO_FIRST = 8, AUDIO_LAST = 11, TRACK_COUNT = 12;
+    public static boolean audioTrack(int track) { return track >= AUDIO_FIRST; }
+    /** Highest independent visual layer track. */
+    public static final int LAST_LAYER = VISUAL_TRACKS - 1;
     public static final long MIN_CLIP_MS = 100;
     public String id = UUID.randomUUID().toString(), name = "Untitled project";
     public boolean portrait;
@@ -17,8 +24,8 @@ public final class EditProject {
     public Music music;
     /** Editor frame rate: timeline frame grid, nudging and export cadence (24–120 fps). */
     public int frameRate = 30;
-    /** Row metadata for tracks 0–7; clips keep their track numbers, so older projects map directly. */
-    public final Track[] tracks = new Track[8];
+    /** Row metadata for tracks 0–11 (see SCHEMA); older projects are remapped when decoded. */
+    public final Track[] tracks = new Track[TRACK_COUNT];
     /** Beat / cue markers in timeline milliseconds, kept sorted. */
     public final List<Long> markers = new ArrayList<>();
     /** Preview-only loop range; negative when unset. Never affects export. */
@@ -29,7 +36,7 @@ public final class EditProject {
         public String name; public int color;
         public boolean hidden, solo, locked, muted, collapsed;
         public Track(String name){this.name=name;color=0xFF40BFFF;}
-        public static String defaultName(int t){return t==0?"Main":t<4?"Layer "+t:"Audio "+(t-3);}
+        public static String defaultName(int t){return t==0?"Main":t<AUDIO_FIRST?"Layer "+t:"Audio "+(t-AUDIO_FIRST+1);}
         public Track copy(){Track c=new Track(name);c.color=color;c.hidden=hidden;c.solo=solo;c.locked=locked;c.muted=muted;c.collapsed=collapsed;return c;}
     }
 
@@ -106,7 +113,7 @@ public final class EditProject {
         return result;
     }
     public long durationMs(){long total=0;for(Placement p:placements())total=Math.max(total,p.endMs);for(Overlay o:overlays)total=Math.max(total,o.endMs);return total;}
-    public int freeAudioTrack(long start,long duration){for(int t=4;t<=7;t++){boolean free=true;for(Placement p:placements())if(p.clip.track==t&&p.startMs<start+duration&&p.endMs>start)free=false;if(free)return t;}throw new IllegalArgumentException("All four audio tracks are occupied at this time.");}
+    public int freeAudioTrack(long start,long duration){for(int t=AUDIO_FIRST;t<=AUDIO_LAST;t++){boolean free=true;for(Placement p:placements())if(p.clip.track==t&&p.startMs<start+duration&&p.endMs>start)free=false;if(free)return t;}throw new IllegalArgumentException("All four audio tracks are occupied at this time.");}
     public void setPlacement(int index,int track,long start){Clip c=clips.get(index);int old=c.track;long oldStart=c.startMs;c.track=track;c.startMs=start;try{validate();}catch(RuntimeException e){c.track=old;c.startMs=oldStart;throw e;}}
     public void trim(int index,long in,long out) {
         Clip c=clips.get(index);
@@ -149,8 +156,8 @@ public final class EditProject {
         for(Clip c:clips) {
             c.motion.validate();
             if(!(c.aspect>=.05f&&c.aspect<=20)||!(Math.abs(c.skewX)<=80)||!(Math.abs(c.skewY)<=80)||!Motion.allowed(0,c.anchorX)||!Motion.allowed(1,c.anchorY)||c.width<0||c.height<0||(c.group!=null&&c.group.length()>40)) throw new IllegalArgumentException("Invalid transform: "+c.name);
-            if(c.audioOnly&&c.track<4)throw new IllegalArgumentException("Audio-only media belongs on an audio lane.");
-            if(c.track<0||c.track>7||c.startMs<0||c.fadeInMs<0||c.fadeOutMs<0||c.fadeInMs>c.durationMs()||c.fadeOutMs>c.durationMs()||!Motion.allowed(0,c.x)||!Motion.allowed(1,c.y)||!Motion.allowed(2,c.scale)||!Motion.allowed(3,c.rotation)||!unit(c.keyTolerance)||!unit(c.keySoftness)||c.keySoftness<.001f||!unit(c.keySpill)||(c.track>=4&&c.image))throw new IllegalArgumentException("Invalid track, transform or fade.");
+            if(c.audioOnly&&!audioTrack(c.track))throw new IllegalArgumentException("Audio-only media belongs on an audio lane.");
+            if(c.track<0||c.track>=TRACK_COUNT||c.startMs<0||c.fadeInMs<0||c.fadeOutMs<0||c.fadeInMs>c.durationMs()||c.fadeOutMs>c.durationMs()||!Motion.allowed(0,c.x)||!Motion.allowed(1,c.y)||!Motion.allowed(2,c.scale)||!Motion.allowed(3,c.rotation)||!unit(c.keyTolerance)||!unit(c.keySoftness)||c.keySoftness<.001f||!unit(c.keySpill)||(audioTrack(c.track)&&c.image))throw new IllegalArgumentException("Invalid track, transform or fade.");
             if(c.uri==null || c.name==null || c.inMs<0 || c.outMs>c.sourceDurationMs || c.durationMs()<MIN_CLIP_MS || !Float.isFinite(c.speed)||c.speed<.25f||c.speed>4||(c.image&&c.speed!=1)
                     || c.effect<0 || c.effect>11 || c.transition< -1 || c.transition>6 || c.easing<0 || c.easing>1
                     || c.transitionMs<0 || c.transitionMs>5000 || !unit(c.intensity) || !unit(c.opacity) || !unit(c.volume))

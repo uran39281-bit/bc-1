@@ -89,10 +89,10 @@ public class AudioEngineTest {
 
     @Test public void mutedAudioLaneIsSilentButHiddenPictureKeepsSound() {
         EditProject p = project(); p.music = null;
-        EditProject.Clip voice = RenderPlanTest.clip("voice", 1000, 4, 0); voice.audioOnly = true; p.clips.add(voice);
+        EditProject.Clip voice = RenderPlanTest.clip("voice", 1000, EditProject.AUDIO_FIRST, 0); voice.audioOnly = true; p.clips.add(voice);
         p.tracks[0].hidden = true;
         assertEquals(2, AudioPlan.of(p, false).segments.size());
-        p.tracks[4].muted = true;
+        p.tracks[EditProject.AUDIO_FIRST].muted = true;
         assertEquals(1, AudioPlan.of(p, false).segments.size());
     }
 

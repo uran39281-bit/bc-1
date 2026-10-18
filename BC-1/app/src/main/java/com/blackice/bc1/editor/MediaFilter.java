@@ -8,7 +8,7 @@ public final class MediaFilter {
     public enum Kind { ALL, VIDEO, AUDIO, IMAGE }
 
     public static boolean matches(EditProject.Clip clip, Kind kind, String query) {
-        boolean audio=clip.track>=4;
+        boolean audio=EditProject.audioTrack(clip.track);
         if(kind==Kind.AUDIO&&!audio || kind==Kind.IMAGE&&(audio||!clip.image)
                 || kind==Kind.VIDEO&&(audio||clip.image))return false;
         String search=query==null?"":query.trim().toLowerCase(Locale.ROOT);

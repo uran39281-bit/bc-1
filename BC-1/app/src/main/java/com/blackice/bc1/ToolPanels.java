@@ -47,7 +47,7 @@ final class ToolPanels {
     }
     private boolean locked(){EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();return c!=null?LayerOps.locked(a.project,a.selected):LayerOps.locked(o);}
     static String kind(EditProject.Clip c,EditProject.Overlay o){
-        if(c!=null)return c.track>=4?"Audio":c.image?"Picture":"Video";
+        if(c!=null)return c.track>=EditProject.AUDIO_FIRST?"Audio":c.image?"Picture":"Video";
         return o.imageUri!=null?"Image layer":o.shape>0?"Shape":"Text";
     }
     private void header(LinearLayout into,String title){
@@ -59,7 +59,7 @@ final class ToolPanels {
     /** Pictures, videos, audio, text, shapes and image layers each get only their compatible tools. */
     static List<String> tools(EditProject.Clip c,EditProject.Overlay o){
         List<String> t=new ArrayList<>();
-        if(c!=null&&c.track>=4){Collections.addAll(t,"Split","Trim","Slip","Volume","Fade In","Fade Out","Duplicate");return t;}
+        if(c!=null&&c.track>=EditProject.AUDIO_FIRST){Collections.addAll(t,"Split","Trim","Slip","Volume","Fade In","Fade Out","Duplicate");return t;}
         if(c!=null&&c.image){Collections.addAll(t,"Duration: "+EditorActivity.seconds(c.durationMs())+" s","Transform","Opacity","Effects","Chroma Key","Animation","Duplicate");return t;}
         if(c!=null){Collections.addAll(t,"Split","Trim","Slip","Speed: "+trimZero(c.speed)+"×","Extract Audio","Transform","Opacity","Effects","Chroma Key","Volume","Animation","Duplicate");return t;}
         if(o.imageUri==null&&o.shape==0){Collections.addAll(t,"Edit Text","Font","Size","Color","Alignment","Transform","Opacity","Duration: "+EditorActivity.seconds(o.endMs-o.startMs)+" s","Animation");return t;}
@@ -68,7 +68,7 @@ final class ToolPanels {
     }
     static String trimZero(float v){String s=String.format(Locale.US,"%.2f",v);return s.replaceAll("0+$","").replaceAll("\\.$","");}
     static List<String> categories(EditProject.Clip c,EditProject.Overlay o){
-        List<String> list=new ArrayList<>();if(c!=null&&c.track>=4)return list;
+        List<String> list=new ArrayList<>();if(c!=null&&c.track>=EditProject.AUDIO_FIRST)return list;
         list.add("Move & Transform");list.add("Color & Fill");if(o!=null)list.add("Border & Shadow");list.add("Blending & Opacity");if(c!=null)list.add("Effects");list.add("Presets");
         return list;
     }
@@ -203,7 +203,7 @@ final class ToolPanels {
     private void durationPanel(){
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
         long start=c!=null?a.project.placements().get(a.selected).startMs:o.startMs,end=c!=null?a.project.placements().get(a.selected).endMs:o.endMs;
-        a.inspector.addView(a.note(c!=null&&!c.image&&c.track<4||c!=null&&c.track>=4?"Video and audio are limited to the available source ("+EditorActivity.seconds(Math.round(c.sourceDurationMs/(double)c.speed))+" s at "+trimZero(c.speed)+"×).":"Pictures, text and shapes can extend to any project length."));
+        a.inspector.addView(a.note(c!=null&&!c.image&&c.track<EditProject.AUDIO_FIRST||c!=null&&c.track>=EditProject.AUDIO_FIRST?"Video and audio are limited to the available source ("+EditorActivity.seconds(Math.round(c.sourceDurationMs/(double)c.speed))+" s at "+trimZero(c.speed)+"×).":"Pictures, text and shapes can extend to any project length."));
         timeField("Duration (seconds)",end-start,value->a.edit("Duration updated",()->{if(c!=null)TimelineEdits.duration(a.project,a.selected,value);else{if(value<EditProject.MIN_CLIP_MS)throw new IllegalArgumentException("Keep at least 0.10 seconds.");o.endMs=Math.addExact(o.startMs,value);}}));
         if(c==null||c.track>0)timeField("Start (seconds)",start,value->a.edit("Start updated",()->{if(c!=null)a.project.setPlacement(a.selected,c.track,value);else{long length=o.endMs-o.startMs;o.startMs=value;o.endMs=value+length;}}));
         else a.inspector.addView(a.note("Main-sequence clips start where the previous clip ends. Move this clip to a layer to set an exact start."));
@@ -292,7 +292,7 @@ final class ToolPanels {
         valueRow("Shadow",o.shadow,0,1,0,100,"%",v->o.shadow=v,null,0,1);
     }
     private void effectsPanel(){
-        EditProject.Clip c=a.clip();if(c==null||c.track>=4){a.inspector.addView(a.note("Select a video or picture to apply visual effects."));return;}
+        EditProject.Clip c=a.clip();if(c==null||c.track>=EditProject.AUDIO_FIRST){a.inspector.addView(a.note("Select a video or picture to apply visual effects."));return;}
         for(int i=0;i<EngineSettings.EFFECTS.length;i++){final int id=i;a.gridAction((c.effect==i?"● ":"")+EngineSettings.EFFECTS[i],()->{if(a.layerEditable())a.edit("Effect applied",()->c.effect=id);});}
         a.flushGrid();
         percent("Effect intensity",c.intensity,.6f,v->c.intensity=v,c.motion,Motion.INTENSITY);
@@ -307,7 +307,7 @@ final class ToolPanels {
     }
     private void effectsHome(){
         EditProject.Clip c=a.clip();
-        if(c==null||c.track>=4){a.inspector.addView(a.note("Select a video or picture to apply visual effects."));return;}
+        if(c==null||c.track>=EditProject.AUDIO_FIRST){a.inspector.addView(a.note("Select a video or picture to apply visual effects."));return;}
         a.inspector.addView(a.note("Selected: "+c.name));effectsPanel();
     }
     private void textPanel(){

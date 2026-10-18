@@ -39,24 +39,47 @@ public class ExportPlannerTest {
 
     @Test public void chooseUsesTheFirstEncodableCandidate() {
         // A phone that encodes 4K up to 60 fps and anything smaller up to 120 fps.
-        ExportPlanner.Capability phone = (w, h, fps) -> (long) w * h <= 3840L * 2160 && (fps <= 60 || (long) w * h <= 2560L * 1440);
+        ExportPlanner.Capability phone = (codec, w, h, fps) -> (long) w * h <= 3840L * 2160 && (fps <= 60 || (long) w * h <= 2560L * 1440);
         ExportPlanner.Plan k = ExportPlanner.choose(2160, 120, false, phone);
         assertEquals("2160p60", k.label());
         assertTrue(k.reduced);
-        assertEquals("2160p60 (2160p120 is not supported on this device)", k.describe());
+        assertEquals("2160p60 H.264 (2160p120 is not supported on this device)", k.describe());
         ExportPlanner.Plan exact = ExportPlanner.choose(1440, 120, true, phone);
         assertFalse(exact.reduced);
         assertEquals(1440, exact.width); assertEquals(2560, exact.height);
         // A 1080p-only encoder.
-        ExportPlanner.Plan small = ExportPlanner.choose(2160, 60, false, (w, h, fps) -> h <= 1080 && w <= 1920 && fps <= 60);
+        ExportPlanner.Plan small = ExportPlanner.choose(2160, 60, false, (codec, w, h, fps) -> h <= 1080 && w <= 1920 && fps <= 60);
         assertEquals("1080p60", small.label());
     }
 
+    /** Like a Snapdragon 8 Gen 3: H.264 to 4K60, HEVC to 4K120. */
+    static final ExportPlanner.Capability SNAPDRAGON = (codec, w, h, fps) -> (long) w * h <= 3840L * 2160 && (codec == VideoCodec.HEVC ? fps <= 120 : fps <= 60);
+
+    @Test public void autoUsesHevcOnlyWhenH264CannotDeliver() {
+        ExportPlanner.Plan k120 = ExportPlanner.choose(2160, 120, false, VideoCodec.Choice.AUTO, SNAPDRAGON);
+        assertEquals("2160p120", k120.label()); assertEquals(VideoCodec.HEVC, k120.codec); assertFalse(k120.reduced);
+        assertEquals("2160p120 HEVC (H.265)", k120.describe());
+        ExportPlanner.Plan k60 = ExportPlanner.choose(2160, 60, false, VideoCodec.Choice.AUTO, SNAPDRAGON);
+        assertEquals("H.264 kept for compatibility", VideoCodec.H264, k60.codec);
+        ExportPlanner.Plan forced = ExportPlanner.choose(2160, 120, false, VideoCodec.Choice.H264_ONLY, SNAPDRAGON);
+        assertEquals("2160p60", forced.label()); assertTrue(forced.reduced);
+        assertEquals(VideoCodec.HEVC, ExportPlanner.choose(1080, 30, false, VideoCodec.Choice.HEVC_ONLY, SNAPDRAGON).codec);
+    }
+
+    @Test public void hevcNeedsLessBitrateAndSizeEstimateIsSane() {
+        ExportPlanner.Plan k120 = ExportPlanner.fixed(2160, 120, VideoCodec.HEVC, false);
+        assertTrue("HEVC 4K120 " + k120.bitrate, k120.bitrate > 50_000_000 && k120.bitrate < 65_000_000);
+        long fourMinutes = k120.estimatedBytes(4 * 60_000);
+        assertTrue("4 min 4K120 HEVC ≈ 1.7 GB: " + fourMinutes, fourMinutes > 1_500_000_000L && fourMinutes < 2_000_000_000L);
+        assertEquals(VideoCodec.Choice.AUTO, VideoCodec.Choice.parse("bogus"));
+        assertEquals(VideoCodec.Choice.HEVC_ONLY, VideoCodec.Choice.parse("HEVC_ONLY"));
+    }
+
     @Test public void brokenCapabilityQueryKeepsTheRequest() {
-        ExportPlanner.Plan plan = ExportPlanner.choose(1080, 30, false, (w, h, fps) -> false);
+        ExportPlanner.Plan plan = ExportPlanner.choose(1080, 30, false, (codec, w, h, fps) -> false);
         assertEquals("1080p30", plan.label());
         assertFalse(plan.reduced);
-        assertEquals("Unknown edges fall back to 1080p", 1080, ExportPlanner.choose(999, 30, false, (w, h, f) -> true).shortEdge);
+        assertEquals("Unknown edges fall back to 1080p", 1080, ExportPlanner.choose(999, 30, false, (codec, w, h, f) -> true).shortEdge);
     }
 
     @Test public void projectsAcceptHighFrameRates() {

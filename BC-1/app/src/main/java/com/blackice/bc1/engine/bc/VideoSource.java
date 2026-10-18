@@ -8,23 +8,46 @@ import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.net.Uri;
+import android.opengl.GLES30;
 import android.os.Build;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.view.Surface;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Frame-accurate forward decoder for one timeline placement. Decodes into a SurfaceTexture and keeps
- * the latest frame whose timestamp is at or before the requested source time, then fits it into a
- * frame-sized texture. Output buffers ahead of the request are held, never dropped.
+ * Frame-accurate forward decoder for one timeline placement.
+ *
+ * The codec runs in asynchronous mode on its own thread: input is fed from the extractor as soon as the
+ * codec asks for it, and decoded frames queue up until the GL thread needs them. Every layer's decoder
+ * therefore works in parallel with the others and with compositing; the codec's own output-buffer pool
+ * provides back-pressure. The GL thread shows the latest frame at or before the requested source time,
+ * looking one frame ahead so superseded frames are released without ever reaching the GPU.
  */
 final class VideoSource implements FrameSource {
-    private static final long WAIT_MS = 5_000;
+    /** Raised when the device has no decoder instance left; the exporter re-plans with fewer decoders. */
+    static final class DecoderUnavailable extends Exception {
+        DecoderUnavailable(Throwable cause) { super("No video decoder instance available", cause); }
+    }
+
+    private static final long WAIT_MS = 10_000;
     private static final long PREROLL_DROP_US = 250_000;
 
+    private static final class Out {
+        final int index; final long ptsUs; final boolean eos, empty;
+        Out(int index, long ptsUs, boolean eos, boolean empty) { this.index = index; this.ptsUs = ptsUs; this.eos = eos; this.empty = empty; }
+    }
+
     private final MediaExtractor extractor = new MediaExtractor();
-    private final MediaCodec codec;
+    private final HandlerThread thread;
+    private final LinkedBlockingDeque<Out> outputs = new LinkedBlockingDeque<>();
+    private volatile Throwable failure;
+    private final Object lock = new Object();
+    private boolean released, inputEos;
+    private MediaCodec codec;
     private final SurfaceTexture surfaceTexture;
     private final Surface surface;
     private final int oesTexture;
@@ -36,14 +59,12 @@ final class VideoSource implements FrameSource {
     private final float[] stMatrix = new float[16];
     private final Object frameLock = new Object();
     private boolean frameAvailable;
-    private final MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-    private int heldIndex = -1;
-    private long heldPts;
-    private boolean heldEos, inputEos, outputEos, fitted;
-    private int rendered, skipped;
+    private Out held;
+    private boolean outputEos, fitted;
     private long latchedUs = -1;
+    private int rendered, skipped;
 
-    VideoSource(Context context, String uri, long inMs, long outMs, Compositor compositor, Handler callbacks) throws Exception {
+    VideoSource(Context context, String uri, long inMs, long outMs, Compositor compositor) throws Exception {
         this.compositor = compositor;
         extractor.setDataSource(context, Uri.parse(uri), null);
         int track = -1; MediaFormat format = null;
@@ -54,33 +75,67 @@ final class VideoSource implements FrameSource {
         }
         if (track < 0) { extractor.release(); throw new IllegalArgumentException("No video track in a visual clip."); }
         extractor.selectTrack(track);
+        extractor.seekTo(inMs * 1000, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
         rotation = format.containsKey("rotation-degrees") ? ((format.getInteger("rotation-degrees") % 360) + 360) % 360 : 0;
         int w = format.getInteger(MediaFormat.KEY_WIDTH), h = format.getInteger(MediaFormat.KEY_HEIGHT);
         displayAspect = rotation == 90 || rotation == 270 ? h / (double) w : w / (double) h;
         endUs = outMs * 1000;
 
+        thread = new HandlerThread("bc1-decoder");
+        thread.start();
+        Handler handler = new Handler(thread.getLooper());
         oesTexture = GlKit.textureExternal();
         surfaceTexture = new SurfaceTexture(oesTexture);
-        surfaceTexture.setOnFrameAvailableListener(st -> { synchronized (frameLock) { frameAvailable = true; frameLock.notifyAll(); } }, callbacks);
+        surfaceTexture.setOnFrameAvailableListener(st -> { synchronized (frameLock) { frameAvailable = true; frameLock.notifyAll(); } }, handler);
         surface = new Surface(surfaceTexture);
         target = new GlKit.Target(compositor.width, compositor.height);
 
-        MediaCodec created = null; Exception last = null;
+        Exception last = null; boolean resources = false;
         for (String name : decoders(format.getString(MediaFormat.KEY_MIME))) {
+            MediaCodec created = null;
             try {
                 created = MediaCodec.createByCodecName(name);
+                created.setCallback(new Callbacks(), handler);
                 created.configure(format, surface, null, 0);
+                codec = created;
                 created.start();
                 break;
             } catch (Exception e) {
-                last = e;
+                last = e; codec = null;
+                if (e instanceof MediaCodec.CodecException && ((MediaCodec.CodecException) e).getErrorCode() == MediaCodec.CodecException.ERROR_INSUFFICIENT_RESOURCE) resources = true;
                 if (created != null) created.release();
-                created = null;
             }
         }
-        if (created == null) { release(); throw new IllegalStateException("No decoder accepted this video", last); }
-        codec = created;
-        extractor.seekTo(inMs * 1000, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+        if (codec == null) {
+            release();
+            if (resources) throw new DecoderUnavailable(last);
+            throw new IllegalStateException("No decoder accepted this video", last);
+        }
+    }
+
+    private final class Callbacks extends MediaCodec.Callback {
+        @Override public void onInputBufferAvailable(MediaCodec mc, int index) {
+            synchronized (lock) {
+                if (released || inputEos) return;
+                try {
+                    long time = extractor.getSampleTime();
+                    int size = time < 0 || time > endUs + 500_000 ? -1 : extractor.readSampleData(mc.getInputBuffer(index), 0);
+                    if (size < 0) { mc.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM); inputEos = true; }
+                    else { mc.queueInputBuffer(index, 0, size, time, 0); extractor.advance(); }
+                } catch (RuntimeException e) { fail(e); }
+            }
+        }
+        @Override public void onOutputBufferAvailable(MediaCodec mc, int index, MediaCodec.BufferInfo info) {
+            boolean eos = (info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0;
+            outputs.add(new Out(index, info.presentationTimeUs, eos, info.size == 0));
+        }
+        @Override public void onError(MediaCodec mc, MediaCodec.CodecException e) { fail(e); }
+        @Override public void onOutputFormatChanged(MediaCodec mc, MediaFormat format) { }
+    }
+
+    private void fail(Throwable t) {
+        if (failure == null) failure = t;
+        outputs.add(new Out(-1, 0, true, true)); // wake the GL thread
     }
 
     /** Hardware first on devices; emulators skip the goldfish host decoder that lost buffers in CI (same rule as Media3 path). */
@@ -104,65 +159,47 @@ final class VideoSource implements FrameSource {
      * decides whether a frame is superseded; superseded frames are released without rendering, so a
      * 120 fps source exported at 30 fps sends one frame in four to the GPU instead of all four.
      */
-    @Override public int textureAt(long sourceTimeMs) throws Exception {
-        long targetUs = sourceTimeMs * 1000;
+    @Override public int textureAt(long sourceTimeMs) throws Exception { return textureAtUs(sourceTimeMs * 1000); }
+
+    @Override public int textureAtUs(long targetUs) throws Exception {
         boolean changed = false;
         while (fetch()) {
-            if (heldPts > targetUs && latchedUs >= 0) break;          // belongs to a later output frame
-            if (heldPts < targetUs - PREROLL_DROP_US && !heldEos) { // far before the in-point after a seek
-                codec.releaseOutputBuffer(heldIndex, false); heldIndex = -1; skipped++; continue;
+            if (held.ptsUs > targetUs && latchedUs >= 0) break;          // belongs to a later output frame
+            if (held.ptsUs < targetUs - PREROLL_DROP_US && !held.eos) { // far before the in-point after a seek
+                codec.releaseOutputBuffer(held.index, false); held = null; skipped++; continue;
             }
-            int candidate = heldIndex; long candidatePts = heldPts; boolean candidateEos = heldEos;
-            heldIndex = -1;
-            if (!candidateEos && candidatePts <= targetUs && fetch() && heldPts <= targetUs) {
-                codec.releaseOutputBuffer(candidate, false); skipped++; // a later frame also fits
+            Out candidate = held; held = null;
+            if (!candidate.eos && candidate.ptsUs <= targetUs && fetch() && held.ptsUs <= targetUs) {
+                codec.releaseOutputBuffer(candidate.index, false); skipped++; // a later frame also fits
                 continue;
             }
-            codec.releaseOutputBuffer(candidate, true);
+            codec.releaseOutputBuffer(candidate.index, true);
             awaitFrame();
             surfaceTexture.updateTexImage();
             surfaceTexture.getTransformMatrix(stMatrix);
-            latchedUs = candidatePts; changed = true; rendered++;
+            latchedUs = candidate.ptsUs; changed = true; rendered++;
             break;
         }
         if (changed || !fitted) {
             if (latchedUs >= 0) compositor.fitExternal(oesTexture, stMatrix, rotation, displayAspect, target);
-            else { target.bind(); android.opengl.GLES30.glClearColor(0, 0, 0, 0); android.opengl.GLES30.glClear(android.opengl.GLES30.GL_COLOR_BUFFER_BIT); }
+            else { target.bind(); GLES30.glClearColor(0, 0, 0, 0); GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT); }
             fitted = true;
         }
         return target.texture;
     }
 
     /** Ensures one decoded output buffer is held. False once the stream has no more frames. */
-    private boolean fetch() {
-        long deadline = System.currentTimeMillis() + WAIT_MS;
-        while (heldIndex < 0) {
+    private boolean fetch() throws Exception {
+        while (held == null) {
             if (outputEos) return false;
-            if (System.currentTimeMillis() > deadline) throw new IllegalStateException("Video decoder stalled");
-            feed();
-            int index = codec.dequeueOutputBuffer(info, 2_000);
-            if (index < 0) continue; // try again, or output format / buffers changed
-            boolean eos = (info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0;
-            if (eos) outputEos = true;
-            if (eos && info.size == 0) { codec.releaseOutputBuffer(index, false); return false; }
-            heldIndex = index; heldPts = info.presentationTimeUs; heldEos = eos;
+            Out next = outputs.poll(WAIT_MS, TimeUnit.MILLISECONDS);
+            if (failure != null) throw new IllegalStateException("Video decoder failed", failure);
+            if (next == null) throw new IllegalStateException("Video decoder stalled");
+            if (next.eos) outputEos = true;
+            if (next.empty) { if (next.index >= 0) codec.releaseOutputBuffer(next.index, false); if (next.eos) return false; continue; }
+            held = next;
         }
         return true;
-    }
-
-    /** Frames sent to the GPU / decoded but never shown (for tests and diagnostics). */
-    int renderedFrames() { return rendered; }
-    int skippedFrames() { return skipped; }
-
-    private void feed() {
-        while (!inputEos) {
-            int index = codec.dequeueInputBuffer(0);
-            if (index < 0) return;
-            long time = extractor.getSampleTime();
-            int size = time < 0 || time > endUs + 500_000 ? -1 : extractor.readSampleData(codec.getInputBuffer(index), 0);
-            if (size < 0) { codec.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM); inputEos = true; }
-            else { codec.queueInputBuffer(index, 0, size, time, 0); extractor.advance(); }
-        }
     }
 
     private void awaitFrame() throws InterruptedException {
@@ -177,11 +214,18 @@ final class VideoSource implements FrameSource {
         }
     }
 
+    /** Frames sent to the GPU / decoded but never shown (for tests and diagnostics). */
+    int renderedFrames() { return rendered; }
+    int skippedFrames() { return skipped; }
+
     @Override public void release() {
-        if (codec != null) { try { codec.stop(); } catch (Exception ignored) { } codec.release(); }
+        synchronized (lock) { released = true; }
+        if (codec != null) { try { codec.stop(); } catch (Exception ignored) { } codec.release(); codec = null; }
+        thread.quitSafely();
+        try { thread.join(2_000); } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
         extractor.release();
         surface.release(); surfaceTexture.release();
-        android.opengl.GLES30.glDeleteTextures(1, new int[]{oesTexture}, 0);
+        GLES30.glDeleteTextures(1, new int[]{oesTexture}, 0);
         target.release();
     }
 }

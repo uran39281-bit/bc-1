@@ -14,6 +14,7 @@ import com.blackice.bc1.engine.bc.BcExporter;
 import com.blackice.bc1.engine.bc.EncoderCaps;
 import com.blackice.bc1.core.ExportPlanner;
 import com.blackice.bc1.core.OutputSpec;
+import com.blackice.bc1.core.VideoCodec;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.*;
@@ -67,13 +68,17 @@ public final class ExportService extends Service {
             output=new File(getCacheDir(),"bc1-export-"+System.currentTimeMillis()+".mp4");
             // Resolution and frame rate the device can actually encode (may step down from the request).
             int shortEdge=intent.getIntExtra(ExportPlanner.PREF_RESOLUTION,getSharedPreferences(PREFS,MODE_PRIVATE).getInt(ExportPlanner.PREF_RESOLUTION,OutputSpec.EXPORT_SHORT_EDGE));
-            plan=EncoderCaps.plan(shortEdge,project.frameRate,project.portrait);
+            VideoCodec.Choice codecChoice=VideoCodec.Choice.parse(getSharedPreferences(PREFS,MODE_PRIVATE).getString(VideoCodec.Choice.PREF_KEY,null));
+            plan=EncoderCaps.plan(shortEdge,project.frameRate,project.portrait,codecChoice);
+            // Pre-flight: the MP4 is written privately, then copied, so both copies must fit.
+            long needed=plan.estimatedBytes(project.durationMs())*2+64L*1024*1024,free=new android.os.StatFs(getCacheDir().getPath()).getAvailableBytes();
+            if(free<needed)throw new IOException(String.format(java.util.Locale.US,"Not enough storage: this export needs about %.1f GB free, %.1f GB available.",needed/1e9,free/1e9));
             project.frameRate=plan.frameRate;
             getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("plan",plan.describe()).apply();
             String engineName=intent.getStringExtra(ExportEngine.PREF_KEY);
             if(engineName==null)engineName=getSharedPreferences(PREFS,MODE_PRIVATE).getString(ExportEngine.PREF_KEY,null);
             if(ExportEngine.parse(engineName)==ExportEngine.BC_CORE){startCore(project);return START_NOT_STICKY;}
-            transformer=new Transformer.Builder(this).setAssetLoaderFactory(CompositionFactory.assetLoader(this)).setVideoMimeType(MimeTypes.VIDEO_H264).setAudioMimeType(MimeTypes.AUDIO_AAC)
+            transformer=new Transformer.Builder(this).setAssetLoaderFactory(CompositionFactory.assetLoader(this)).setVideoMimeType(plan.codec.mime).setAudioMimeType(MimeTypes.AUDIO_AAC)
                     .setPortraitEncodingEnabled(true)
                     .setVideoFrameProcessorFactory(CompositionFactory.frameProcessor())
                     .setEncoderFactory(new DefaultEncoderFactory.Builder(this).setEnableFallback(false)
@@ -91,7 +96,7 @@ public final class ExportService extends Service {
         final File target=output;
         coreThread=new Thread(()->{
             try {
-                new BcExporter(this,project,plan.shortEdge,cancelled,p->coreProgress=p).export(target);
+                new BcExporter(this,project,plan,cancelled,p->coreProgress=p).export(target);
                 main.post(()->{if(!cancelled.get()&&!finished)publish();});
             } catch(CancellationException ignored) {
             } catch(Throwable t) {

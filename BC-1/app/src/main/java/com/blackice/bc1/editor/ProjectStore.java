@@ -73,14 +73,16 @@ public final class ProjectStore {
         p.previewHeight=j.getInt("previewHeight"); p.playheadMs=j.getLong("playheadMs");
         // Schema 4 additions; earlier files receive defaults that render identically.
         p.frameRate=j.optInt("frameRate",30); p.loopInMs=j.optLong("loopInMs",-1); p.loopOutMs=j.optLong("loopOutMs",-1);
+        // Schema 5 moved audio from tracks 4–7 to 8–11 to make room for visual layers 4–7.
+        boolean legacyTracks=j.getInt("schema")<5;
         JSONArray tracks=j.optJSONArray("tracks");
-        if(tracks!=null) for(int t=0;t<Math.min(tracks.length(),p.tracks.length);t++) { JSONObject v=tracks.getJSONObject(t); EditProject.Track track=p.tracks[t];
+        if(tracks!=null) for(int t=0;t<tracks.length();t++) { int target=legacyTracks&&t>=4?t+4:t; if(target>=p.tracks.length)continue; JSONObject v=tracks.getJSONObject(t); EditProject.Track track=p.tracks[target];
             track.name=v.optString("name",track.name); track.color=v.optInt("color",track.color); track.hidden=v.optBoolean("hidden"); track.solo=v.optBoolean("solo");
             track.locked=v.optBoolean("locked"); track.muted=v.optBoolean("muted"); track.collapsed=v.optBoolean("collapsed"); }
         JSONArray markers=j.optJSONArray("markers"); if(markers!=null) for(int i=0;i<markers.length();i++) p.markers.add(markers.getLong(i));
         JSONArray clips=j.getJSONArray("clips");
         for(int i=0;i<clips.length();i++) { JSONObject v=clips.getJSONObject(i); EditProject.Clip c=new EditProject.Clip();
-            c.track=v.optInt("track",0);c.startMs=v.optLong("startMs",0);c.fadeInMs=v.optLong("fadeInMs",0);c.fadeOutMs=v.optLong("fadeOutMs",0);
+            c.track=v.optInt("track",0);if(legacyTracks&&c.track>=4)c.track+=4;c.startMs=v.optLong("startMs",0);c.fadeInMs=v.optLong("fadeInMs",0);c.fadeOutMs=v.optLong("fadeOutMs",0);
             c.x=(float)v.optDouble("x",0);c.y=(float)v.optDouble("y",0);c.scale=(float)v.optDouble("scale",1);c.rotation=(float)v.optDouble("rotation",0);c.motion=motion(v.optJSONArray("motion"));
             c.chroma=v.optBoolean("chroma",false);c.keyColor=v.optInt("keyColor",0xFF00FF00);c.keyTolerance=(float)v.optDouble("keyTolerance",.25);c.keySoftness=(float)v.optDouble("keySoftness",.08);c.keySpill=(float)v.optDouble("keySpill",.5);
             c.id=v.getString("id"); c.uri=v.getString("uri"); c.name=v.getString("name"); c.image=v.getBoolean("image");c.audioOnly=v.optBoolean("audioOnly",false);
