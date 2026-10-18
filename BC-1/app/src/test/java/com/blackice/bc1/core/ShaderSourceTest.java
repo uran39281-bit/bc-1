@@ -32,4 +32,20 @@ public class ShaderSourceTest {
             assertTrue("Effect " + id + " (" + EffectCatalog.name(id) + ") has no shader branch", s.contains("e==" + id + ")"));
         assertTrue(s.contains("uniform float uTime;"));
     }
+
+    /** Each effect compiles alone (BC_EFFECT) so a clip's program only pays for its own effect. */
+    @Test public void everyEffectBlockIsGuardedForSpecialisation() throws Exception {
+        String s = shader();
+        for (int id = 12; id < EffectCatalog.count(); id++) {
+            String guard = "#if !defined(BC_EFFECT) || BC_EFFECT == " + id + "\n";
+            int at = s.indexOf(guard);
+            assertTrue("Effect " + id + " has no BC_EFFECT guard", at >= 0);
+            int end = s.indexOf("#endif", at);
+            assertTrue("Effect " + id + "'s code sits inside its guard", s.substring(at, end).contains("e==" + id + ")"));
+        }
+        assertEquals("Guards balance", s.split("\n#if ", -1).length, s.split("\n#endif", -1).length);
+        String specialised = LayerShader.forEffect(s, 21);
+        assertTrue(specialised.startsWith("#version 300 es\n#define BC_EFFECT 21\n"));
+        assertTrue(LayerShader.forEffect(s, 999).contains("#define BC_EFFECT 0\n"));
+    }
 }
