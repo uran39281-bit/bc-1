@@ -386,8 +386,8 @@ public final class EditorActivity extends Activity {
     void sizePhoneDrawer(){
         if(phoneDrawer==null)return;boolean browse=tab==0;
         Configuration c=getResources().getConfiguration();
-        phonePreview.getLayoutParams().height=dp(browse?80:Math.min(190,Math.max(110,c.screenHeightDp*.22f)));
-        phoneTimelineArea.getLayoutParams().height=dp(browse?88:Math.min(180,Math.max(100,c.screenHeightDp*.19f)));
+        phonePreview.getLayoutParams().height=dp(browse?80:workspaceFocus==1?110:workspaceFocus==2?Math.min(280,c.screenHeightDp*.35f):Math.min(190,Math.max(110,c.screenHeightDp*.22f)));
+        phoneTimelineArea.getLayoutParams().height=dp(browse?88:workspaceFocus==1?Math.min(260,c.screenHeightDp*.3f):workspaceFocus==2?100:Math.min(180,Math.max(100,c.screenHeightDp*.19f)));
         phonePreview.requestLayout();phoneTimelineArea.requestLayout();
         phoneTransport.setVisibility(browse?View.GONE:View.VISIBLE);
         phoneTimelineTools.setVisibility(browse?View.GONE:View.VISIBLE);
