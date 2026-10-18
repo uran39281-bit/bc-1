@@ -293,7 +293,9 @@ public final class EditorActivity extends Activity {
     View transport(boolean singleRow) {
         // Time on the left, playback in the centre; Undo / Redo only where the top bar has none.
         LinearLayout controls=row();controls.setGravity(Gravity.CENTER_VERTICAL);controls.setPadding(dp(6),0,dp(6),0);
-        time=label("",singleRow?11:13,TEXT,false);time.setTypeface(Typeface.MONOSPACE);time.setGravity(Gravity.CENTER_VERTICAL);controls.addView(time,new LinearLayout.LayoutParams(0,dp(48),1));
+        time=label("",singleRow?11:13,TEXT,false);time.setTypeface(Typeface.MONOSPACE);time.setGravity(Gravity.CENTER_VERTICAL);
+        // One line on narrow phones too: shrink rather than wrap.
+        time.setMaxLines(1);time.setAutoSizeTextTypeUniformWithConfiguration(8,singleRow?11:13,1,android.util.TypedValue.COMPLEX_UNIT_SP);controls.addView(time,new LinearLayout.LayoutParams(0,dp(48),1));
         LinearLayout center=row();center.setGravity(Gravity.CENTER);
         jumpStart=transportIcon("SkipStart","Jump to beginning",v->jump(false));center.addView(jumpStart);
         center.addView(transportIcon("StepBack","Previous frame",v->seek(project.playheadMs-Math.round(1000d/project.frameRate))));
