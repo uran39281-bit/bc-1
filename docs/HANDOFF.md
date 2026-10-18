@@ -1,3 +1,11 @@
+# V1.1 cinematic redesign preview — October 18, 2026 UTC
+
+Continue editor work in `uran39281-bit/bc-1`. Qualified source `6ff1b306876a3af2ec06d1bccf0504e43b57223c`, Actions39105942908: 78 unit / 25 Android tests; five independent export checks; lint0errors44warnings. Final phone1920-tall, desktop1920×1080 and compact780×420 screenshots reviewed. Native shared theme and responsive workspace, no project-schema/package changes. Version1.1.0/code18; retained signing certificate verified. Never publish signing material. Source branch `bc-1-v1.1-cinematic` and older branches/releases retained.
+
+Read `v1.1.0/QA.md`, `docs/CHANGELOG-v1.1.md` and `docs/qa/BC-1-v1.1-REDESIGN.md`. This is a redesign preview, not full specification completion. Next work: separate asset catalog/desktop media drag-drop, phone drawer, reference parity, reverse/effect tracks/draw only with real engine support, dedicated new-control interaction tests and physical-device validation. Intermittent Media3 watchdog export stall remains unexplained; passing qualification does not fix it. Do not weaken timeouts/gates or claim stable.
+
+---
+
 # Published v1.0.5 — October 18, 2026 UTC
 
 Qualified source 7c68ae9, Actions 39098242781: 78 unit / 25 Android tests and five export checks passed, lint 0 errors / 41 warnings. See v1.0.5/QA.md. Retained signing key recovered from the existing private BC-1-v0.3-Preview-Signing-Backup.zip; local private path /root/.android/bc1-preview.keystore. Never commit or publish the key. Certificate matches v1.0.4. Signed APK v1.0.5/BC-1-v1.0.5.apk, code17. Prior notes about unavailable signing material are historical and resolved. Continue editor development in bc-1 only.

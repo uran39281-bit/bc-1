@@ -7,10 +7,18 @@ Home of the BC-1 editor (Black Ice Custom Engine): app source in [`BC-1/`](BC-1)
 - [`BC-1/`](BC-1) — Android app (Gradle; `gradle -Pbc1SideBySide assembleDebug` builds the `com.blackice.bc1.preview` package).
 - [`.github/workflows/bc-1-android.yml`](.github/workflows/bc-1-android.yml) — unit tests, lint, APK, and emulator tests with independent MP4 checks; runs on pushes that change the app, or manually.
 - [`docs/qa/`](docs/qa) — QA records per version; [`docs/HANDOFF.md`](docs/HANDOFF.md) — development notes.
-- Current development: v1.0.5 (formerly labelled v2.0.0; selection-based workspace, layered timeline, transforms and keyframe animation) — published below with the recovered retained preview signing key. See [docs/qa/BC-1-v1.0.5-QA.md](docs/qa/BC-1-v1.0.5-QA.md).
+- Previous development: v1.0.5 (formerly labelled v2.0.0; selection-based workspace, layered timeline, transforms and keyframe animation) — published below with the recovered retained preview signing key. See [docs/qa/BC-1-v1.0.5-QA.md](docs/qa/BC-1-v1.0.5-QA.md).
 - Moved from [Black-Ice-Emulator](https://github.com/uran39281-bit/Black-Ice-Emulator/tree/claude/app-update-4vo05i) at commit `14b8308`; earlier history and version branches remain there.
 
-## Latest: v1.0.5
+## Latest: v1.1.0 cinematic redesign preview
+
+[Download BC-1 v1.1.0 APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.1.0/BC-1-v1.1.0.apk)
+
+Native dark-navy/icy-blue theme, desktop navigation, contextual inspector, full-width resizable timeline, media favorites/sort/list controls and preview view/frame controls. Existing editor, projects and package identity preserved; signed with the retained preview key. Install over the existing Preview without uninstalling.
+
+78 unit + 25 Android tests and five independent export checks passed. This is a **development preview**, with incomplete specification items and an unresolved intermittent export stall; physical Snapdragon/DeX performance is unmeasured. [QA, screenshots and limitations](v1.1.0/QA.md) · [Changelog](docs/CHANGELOG-v1.1.md) · [Build instructions](docs/qa/BC-1-v1.1-REDESIGN.md) · [Checksum](v1.1.0/SHA256SUMS.txt).
+
+## Previous: v1.0.5
 
 [Download BC-1 v1.0.5 APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.0.5/BC-1-v1.0.5.apk)
 
