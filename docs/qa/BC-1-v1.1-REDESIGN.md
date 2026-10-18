@@ -16,3 +16,10 @@ Still incomplete: exact reference parity, separate pre-insertion asset catalog/d
 - Run 39104959581 reproduced the historical intermittent export failure. The log identifies a Media3 watchdog abort after **25 seconds without an output sample**. The initiating pipeline stall remains unexplained. No timeout was increased and no export gate was disabled. A later passing run would not establish that this issue is fixed.
 
 New controls for favorites/sorting/list mode and preview scaling/volume/fullscreen are implemented; dedicated automated interaction coverage for every one of those controls is not yet complete. Existing broad regressions plus new frame-button/navigation assertions are used. Exact mockup parity and physical-device performance are not claimed.
+
+- Run 39105225950 stopped on a null workspace-test control after a fixed 3.5-second startup delay. The test now waits for loading to finish, verifies the exact fixture project ID, and reports missing controls explicitly. This removes a timing assumption; it does not establish the cause of that null result.
+- Visual review found a stale initial project caption. The preview information is now refreshed from the loaded project; the device test checks its name. Media/Audio navigation also resets the add category correctly and checks selected-tab state without altering project duration.
+
+## Latest candidate
+
+Source `6ff1b306876a3af2ec06d1bccf0504e43b57223c`, Actions [39105942908](https://github.com/uran39281-bit/bc-1/actions/runs/39105942908). Build passed: 78 unit tests, 0 failures/ignored; lint 0 errors, 44 warnings. Device/export qualification pending at this checkpoint. Signed candidate verified against the retained preview certificate; all 41 non-signature APK entries match the CI artifact. No private signing material is included in the repository.
