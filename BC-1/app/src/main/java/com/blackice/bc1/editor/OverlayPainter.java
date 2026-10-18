@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/** Draws text, shape and image overlays with Android Canvas. Shared by the Media3 graph and BC Core,
+/** Draws text, shape and image overlays with Android Canvas. Shared by the Media3 graph and ICE Lite,
  * so both engines produce the same titles and graphics. Images are decoded once and cached. */
 public final class OverlayPainter {
     private final Context context;

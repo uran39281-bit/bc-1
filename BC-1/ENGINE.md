@@ -1,7 +1,9 @@
-# BC Core — the Black Ice custom engine
+# ICE Lite — the Black Ice custom engine
 
-BC Core is BC-1's own render and export engine. It runs beside the shipping Media3 pipeline and is
-selected in **Setup → Export engine → BC Core (experimental)**. Media3 stays the default until BC Core
+(Developed under the working name "BC Core"; code packages `core/` and `engine/bc/` keep their names.)
+
+ICE Lite is BC-1's own render and export engine. It runs beside the shipping Media3 pipeline and is
+selected in **Setup → Export engine → ICE Lite (experimental)**. Media3 stays the default until ICE Lite
 has passed device QA.
 
 ## Layout
@@ -73,20 +75,20 @@ and export refuses to start without room for the file twice (private copy + save
 Projects have **eight visual tracks**: the main sequence plus layers 1–7. Audio moved from tracks 4–7 to
 8–11 (project schema 5); older projects and saved elements are remapped when opened.
 
-Every video layer needs a hardware decoder while it is on screen. BC Core estimates a **decoder budget**
+Every video layer needs a hardware decoder while it is on screen. ICE Lite estimates a **decoder budget**
 (the device's reported decoder instances, bounded by memory for the largest source). When a project
 needs more decoders at once than the budget, export renders in **passes**: the first pass renders the
 lowest layers to a private intermediate video (same codec, twice the bitrate); each next pass decodes
 that video as its background and adds the next layers; the last pass adds titles and audio. Alpha-over
 compositing makes this identical to one pass, apart from one extra encode generation per pass. If a
-decoder still cannot be created mid-export, BC Core lowers the budget and retries automatically.
+decoder still cannot be created mid-export, ICE Lite lowers the budget and retries automatically.
 **Setup → Device video capabilities** lists what this phone's codecs report, with a copyable report.
 
 ## Known differences from the Media3 path
 
 - Letterbox bars of upper layers are transparent (lower layers show through).
 - Audio speed changes pitch (linear resampling). A pitch-preserving time stretch is a later stage.
-- Preview still uses Media3/ExoPlayer at up to 1080p; BC Core is export-only in this phase.
+- Preview still uses Media3/ExoPlayer at up to 1080p; ICE Lite is export-only in this phase.
 - 4K120 itself is verified only on real hardware; the CI emulator verifies 60 fps output from a 120 fps
   source, the planner on its own encoder list, and the planner rules in unit tests.
 
@@ -103,5 +105,5 @@ decoder still cannot be created mid-export, BC Core lowers the budget and retrie
 
 - Next: desktop backend (FFmpeg via JavaCV for decode/encode, LWJGL OpenGL running the same shaders)
   on top of the unchanged `core` package.
-- Phase 3: BC Core preview player (same RenderPlan, display surface instead of encoder surface).
+- Phase 3: ICE Lite preview player (same RenderPlan, display surface instead of encoder surface).
 - Pitch-preserving speed, hardware decoder pooling for many simultaneous layers.

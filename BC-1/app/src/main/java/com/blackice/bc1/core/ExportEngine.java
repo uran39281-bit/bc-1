@@ -4,8 +4,9 @@ package com.blackice.bc1.core;
 public enum ExportEngine {
     /** Google Media3 Transformer with BC-1 GLES effects (the shipping pipeline). */
     MEDIA3("Media3 (stable)"),
-    /** BC Core: BC-1's own frame scheduler, compositor, mixer and muxer. */
-    BC_CORE("BC Core (experimental)");
+    /** ICE Lite: BC-1's own frame scheduler, compositor, mixer and muxer. The constant keeps its original
+     * name because it is stored in preferences; only the label is user-visible. */
+    BC_CORE("ICE Lite (experimental)");
 
     public static final String PREF_KEY = "engine";
     public final String label;

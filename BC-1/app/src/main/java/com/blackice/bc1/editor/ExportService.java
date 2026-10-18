@@ -34,7 +34,7 @@ public final class ExportService extends Service {
     private Transformer transformer;
     /** Resolution / frame rate chosen for this export. */
     private ExportPlanner.Plan plan;
-    /** BC Core export thread (engine BC_CORE); progress is written from that thread. */
+    /** ICE Lite export thread (engine BC_CORE); progress is written from that thread. */
     private Thread coreThread;
     private volatile int coreProgress=-1;
     private File output;
@@ -45,7 +45,7 @@ public final class ExportService extends Service {
     private PowerManager.WakeLock wakeLock;
     private final Runnable poll=new Runnable(){@Override public void run(){
         if(copying || finished)return;
-        if(coreThread!=null){update(coreProgress<0?"Preparing export…":"Exporting "+coreProgress+"% • BC Core • "+plan.label(),coreProgress);main.postDelayed(this,500);return;}
+        if(coreThread!=null){update(coreProgress<0?"Preparing export…":"Exporting "+coreProgress+"% • ICE Lite • "+plan.label(),coreProgress);main.postDelayed(this,500);return;}
         if(transformer==null)return;
         int state=transformer.getProgress(progress);
         update(state==Transformer.PROGRESS_STATE_AVAILABLE?"Exporting "+progress.progress+"% • "+plan.label():"Preparing export…",state==Transformer.PROGRESS_STATE_AVAILABLE?progress.progress:-1);
@@ -94,7 +94,7 @@ public final class ExportService extends Service {
         } catch(Exception e) {exportFailed("preparation",e);}
         return START_NOT_STICKY;
     }
-    /** BC Core renders on its own thread (it owns a GL context); results return to the main thread. */
+    /** ICE Lite renders on its own thread (it owns a GL context); results return to the main thread. */
     private void startCore(EditProject project) {
         final File target=output;
         coreThread=new Thread(()->{

@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * BC Core GLES compositor. Each source is first fitted (rotation, letterbox) into a frame-sized texture,
+ * ICE Lite GLES compositor. Each source is first fitted (rotation, letterbox) into a frame-sized texture,
  * then drawn with the shipping layer shader (assets/shaders/video.frag), so effects, chroma key,
  * transforms and transition masks are pixel-for-pixel the same code as the Media3 path.
  */

@@ -15,7 +15,7 @@ import java.util.Set;
 /**
  * How many video decoders an export may hold open at once: the device's reported decoder instance
  * limit for the project's codecs, bounded by a memory estimate for the largest source (each decoder
- * queues roughly a dozen YUV frames, plus BC Core's two frame-sized RGBA textures per layer).
+ * queues roughly a dozen YUV frames, plus ICE Lite's two frame-sized RGBA textures per layer).
  */
 public final class DecoderBudget {
     public static final int MIN = 2, MAX = 16;
@@ -58,7 +58,7 @@ public final class DecoderBudget {
         return new Estimate(instances, memoryBudget, largestW, largestH);
     }
 
-    /** Largest instance count reported by the decoders BC Core would pick for this codec. */
+    /** Largest instance count reported by the decoders ICE Lite would pick for this codec. */
     static int instancesFor(String mime) {
         int best = 0;
         for (String name : VideoSource.decoders(mime)) {

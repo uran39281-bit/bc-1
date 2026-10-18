@@ -47,7 +47,7 @@ public final class ClipEffect implements GlEffect {
         }
         @Override public void drawFrame(int tex,long timeUs) throws VideoFrameProcessingException {
             long timeMs=timeUs/1000; EditProject.Clip c=p.clip;
-            // Shared with BC Core so both engines resolve transitions identically.
+            // Shared with ICE Lite so both engines resolve transitions identically.
             com.blackice.bc1.core.RenderPlan.Transition transition=com.blackice.bc1.core.RenderPlan.transition(p,previous,timeMs);
             int type=transition.type,role=transition.role; float progress=transition.progress;
             try {

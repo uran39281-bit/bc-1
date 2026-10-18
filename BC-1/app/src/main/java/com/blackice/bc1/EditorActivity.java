@@ -708,7 +708,7 @@ public final class EditorActivity extends Activity {
         addAction("Timing / advanced",()->overlayDialog(o));
         addAction("Remove overlay",()->edit("Overlay removed",()->{project.overlays.remove(o);selectedOverlay=-1;}));
     }
-    /** Runs BC Core on a generated 8-layer 1080p60 project and reports speed and a 15-minute estimate. */
+    /** Runs ICE Lite on a generated 8-layer 1080p60 project and reports speed and a 15-minute estimate. */
     void engineBenchmark(){
         if(exporting()){tell("Wait for the current export to finish.");return;}
         java.util.concurrent.atomic.AtomicBoolean stop=new java.util.concurrent.atomic.AtomicBoolean();

@@ -19,7 +19,7 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Measures BC Core on this device with a synthetic project: {@code layers} video layers of 1080p at
+ * Measures ICE Lite on this device with a synthetic project: {@code layers} video layers of 1080p at
  * {@code fps}, composited and encoded exactly like a real export. Generates its own source clip, so it
  * needs no media and leaves nothing behind.
  */
@@ -38,7 +38,7 @@ public final class EngineBenchmark {
         public double minutesFor(double minutes) { return minutes * 60 * fps / exportFps() / 60; }
         public String describe() {
             return String.format(Locale.US,
-                    "%s %s • Android %s\n%d layers × 1080p%d, %.1f s timeline\nExport speed: %.1f frames/s (%.2f× real time)\n" +
+                    "ICE Lite benchmark • %s %s • Android %s\n%d layers × 1080p%d, %.1f s timeline\nExport speed: %.1f frames/s (%.2f× real time)\n" +
                     "Estimated 15-minute export: %.0f min\nRender passes: %d • decoder budget %d • direct layer drawing: %s",
                     Build.MANUFACTURER, Build.MODEL, Build.VERSION.RELEASE, layers, fps, durationMs / 1000.0,
                     exportFps(), exportFps() / fps, minutesFor(15), passes, budget, directDrawing ? "yes" : "no (copy per layer)");
@@ -53,7 +53,7 @@ public final class EngineBenchmark {
         File source = new File(dir, "bc1-benchmark-source.mp4"), out = new File(dir, "bc1-benchmark-out.mp4");
         try {
             generate(source, 1920, 1080, fps, durationMs + 200);
-            EditProject p = new EditProject(); p.name = "BC Core benchmark"; p.frameRate = fps;
+            EditProject p = new EditProject(); p.name = "ICE Lite benchmark"; p.frameRate = fps;
             for (int t = 0; t < layers; t++) {
                 EditProject.Clip c = new EditProject.Clip();
                 c.uri = Uri.fromFile(source).toString(); c.name = "layer " + t; c.track = t;

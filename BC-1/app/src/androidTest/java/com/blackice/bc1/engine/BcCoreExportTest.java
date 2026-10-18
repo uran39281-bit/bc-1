@@ -28,7 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
 
-/** BC Core end-to-end: real decoders, GLES compositor, AAC/H.264 encoders and muxer on the emulator. */
+/** ICE Lite end-to-end: real decoders, GLES compositor, AAC/H.264 encoders and muxer on the emulator. */
 @RunWith(AndroidJUnit4.class)
 public class BcCoreExportTest {
     private final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
@@ -51,7 +51,7 @@ public class BcCoreExportTest {
 
     /** red → blue with a 500 ms dissolve, a title and looping music: 3.5 s. */
     private EditProject acceptance() throws Exception {
-        EditProject p = new EditProject(); p.name = "BC Core acceptance";
+        EditProject p = new EditProject(); p.name = "ICE Lite acceptance";
         EditProject.Clip red = clip("red.mp4"), blue = clip("blue.mp4");
         red.transition = 0; red.transitionMs = 500;
         p.clips.add(red); p.clips.add(blue);
@@ -119,7 +119,7 @@ public class BcCoreExportTest {
     }
 
     @Test public void layersPicturesSpeedAndPortrait() throws Exception {
-        EditProject p = new EditProject(); p.name = "BC Core layers"; p.portrait = true; p.frameRate = 25;
+        EditProject p = new EditProject(); p.name = "ICE Lite layers"; p.portrait = true; p.frameRate = 25;
         EditProject.Clip base = clip("red.mp4"); base.speed = 2f; // 1 s on the timeline
         p.clips.add(base);
         // A white picture on layer 1, scaled down, over the first half second.
@@ -144,7 +144,7 @@ public class BcCoreExportTest {
     }
 
     @Test public void highFrameRateSourceSkipsSupersededFrames() throws Exception {
-        EditProject p = new EditProject(); p.name = "BC Core 60 fps"; p.frameRate = 60;
+        EditProject p = new EditProject(); p.name = "ICE Lite 60 fps"; p.frameRate = 60;
         EditProject.Clip fast = new MediaImporter(context).importClip(Uri.parse(fixture("fast120.mp4")), false);
         assertTrue("Fixture is two seconds: " + fast.sourceDurationMs, fast.sourceDurationMs >= 1990);
         fast.name = "fast120"; fast.inMs = 0; fast.outMs = 2000; fast.sourceDurationMs = Math.max(2000, fast.sourceDurationMs);
@@ -216,7 +216,7 @@ public class BcCoreExportTest {
 
     /** Main lane plus video on layers 1, 4 and 7 (the new top layer), each smaller than the one below. */
     private EditProject layered() throws Exception {
-        EditProject p = new EditProject(); p.name = "BC Core layers";
+        EditProject p = new EditProject(); p.name = "ICE Lite layers";
         p.clips.add(clip("red.mp4"));
         int[] tracks = {1, 4, EditProject.LAST_LAYER};
         String[] media = {"blue.mp4", "red.mp4", "blue.mp4"};

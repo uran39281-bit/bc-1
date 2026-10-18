@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * BC Core frame graph: what to draw at a timeline instant, bottom to top, with every shader parameter
+ * ICE Lite frame graph: what to draw at a timeline instant, bottom to top, with every shader parameter
  * resolved. Pure Java, so any backend (Android GLES, desktop OpenGL) renders identical frames.
  *
  * Stacking matches the shipping Media3 graph: the main lane alternates between two streams (odd ordinals

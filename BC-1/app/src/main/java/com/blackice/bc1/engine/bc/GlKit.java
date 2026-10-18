@@ -8,7 +8,7 @@ import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-/** Minimal GLES 3 helpers for BC Core: programs, a full-screen quad, render targets. */
+/** Minimal GLES 3 helpers for ICE Lite: programs, a full-screen quad, render targets. */
 final class GlKit {
     private GlKit() {}
 

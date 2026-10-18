@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * BC Core audio graph: every sound source as a timed segment with its gain envelope. Pure Java.
+ * ICE Lite audio graph: every sound source as a timed segment with its gain envelope. Pure Java.
  * Clip sound follows the shipping rules: visual clips keep their sound even when the picture is hidden,
  * muted audio lanes are silent, pictures carry no sound, and the music bed loops to the end of the timeline.
  */

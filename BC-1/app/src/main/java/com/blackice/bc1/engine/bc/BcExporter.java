@@ -32,7 +32,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * BC Core export: BC-1's own frame scheduler, GLES compositor, audio mixer, encoders and muxer.
+ * ICE Lite export: BC-1's own frame scheduler, GLES compositor, audio mixer, encoders and muxer.
  * Runs synchronously on the calling thread (which owns the GL context); call from a worker thread.
  *
  * Pipeline: AudioPlan → mixer → AAC (temp file); RenderPlan → parallel decoders → compositor →

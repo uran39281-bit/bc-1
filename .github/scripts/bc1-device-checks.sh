@@ -54,7 +54,7 @@ assert abs(float(video['duration'])-float(audio['duration']))<.2, (video,audio)
 print('Independent speed MP4 check passed: synchronized H.264/AAC, five seconds')
 PYVERIFY
 
-# BC Core (custom engine) export: decoded independently, frame count and A/V sync checked.
+# ICE Lite (custom engine) export: decoded independently, frame count and A/V sync checked.
 CORE_MP4="BC-1/app/build/reports/androidTests/qa/bc-core-1080p.mp4"
 ffmpeg -v error -xerror -i "$CORE_MP4" -f null -
 ffprobe -v error -count_frames -show_streams -show_format -of json "$CORE_MP4" > "${CORE_MP4}.ffprobe.json"
@@ -68,10 +68,10 @@ assert audio['codec_name']=='aac' and int(audio['sample_rate'])==48000 and int(a
 assert 3.3<float(report['format']['duration'])<3.7, report['format']
 assert int(video['nb_read_frames'])==105, video['nb_read_frames']
 assert abs(float(video['duration'])-float(audio['duration']))<.15, (video['duration'],audio['duration'])
-print('Independent BC Core MP4 check passed: H.264 1920x1080 105 frames + AAC 48 kHz stereo, synchronized')
+print('Independent ICE Lite MP4 check passed: H.264 1920x1080 105 frames + AAC 48 kHz stereo, synchronized')
 PYVERIFY
 
-# BC Core 60 fps export of a 120 fps source: exact frame count and rate, decoded independently.
+# ICE Lite 60 fps export of a 120 fps source: exact frame count and rate, decoded independently.
 FPS_MP4="BC-1/app/build/reports/androidTests/qa/bc-core-60fps.mp4"
 ffmpeg -v error -xerror -i "$FPS_MP4" -f null -
 ffprobe -v error -count_frames -show_streams -show_format -of json "$FPS_MP4" > "${FPS_MP4}.ffprobe.json"
@@ -83,10 +83,10 @@ assert video['codec_name']=='h264' and (video['width'],video['height'])==(640,36
 assert int(video['nb_read_frames'])==120, video['nb_read_frames']
 num,den=map(int,video['avg_frame_rate'].split('/'))
 assert abs(num/den-60)<0.5, video['avg_frame_rate']
-print('Independent BC Core 60 fps check passed: 120 frames at', video['avg_frame_rate'])
+print('Independent ICE Lite 60 fps check passed: 120 frames at', video['avg_frame_rate'])
 PYVERIFY
 
-# BC Core HEVC export and multi-pass (staged) export: decoded independently.
+# ICE Lite HEVC export and multi-pass (staged) export: decoded independently.
 for spec in "bc-core-hevc.mp4:hevc:105" "bc-core-staged.mp4:h264:60"; do
 IFS=: read -r name codec frames <<<"$spec"
 MP4="BC-1/app/build/reports/androidTests/qa/$name"
@@ -99,6 +99,6 @@ video=next(s for s in report['streams'] if s['codec_type']=='video')
 assert video['codec_name']==sys.argv[2], video['codec_name']
 assert int(video['nb_read_frames'])==int(sys.argv[3]), video['nb_read_frames']
 assert any(s['codec_type']=='audio' and s['codec_name']=='aac' for s in report['streams'])
-print('Independent BC Core check passed:', sys.argv[1], sys.argv[2], sys.argv[3], 'frames + AAC')
+print('Independent ICE Lite check passed:', sys.argv[1], sys.argv[2], sys.argv[3], 'frames + AAC')
 PYVERIFY
 done
