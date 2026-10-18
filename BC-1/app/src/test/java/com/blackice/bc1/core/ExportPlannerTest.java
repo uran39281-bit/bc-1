@@ -52,7 +52,7 @@ public class ExportPlannerTest {
         assertEquals("1080p60", small.label());
     }
 
-    /** Like a Snapdragon 8 Gen 3: H.264 to 4K60, HEVC to 4K120. */
+    /** A device whose H.264 encoder stops at 4K60 while HEVC reaches 4K120. */
     static final ExportPlanner.Capability SNAPDRAGON = (codec, w, h, fps) -> (long) w * h <= 3840L * 2160 && (codec == VideoCodec.HEVC ? fps <= 120 : fps <= 60);
 
     @Test public void autoUsesHevcOnlyWhenH264CannotDeliver() {

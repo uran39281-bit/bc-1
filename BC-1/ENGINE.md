@@ -65,8 +65,10 @@ Each timeline frame produces exactly one encoded picture. Audio is AAC 128 kb/s,
 ## Codecs (H.264 and HEVC)
 
 **Setup → Export codec:** Auto (default) keeps H.264 whenever the device can encode the preset and
-switches to HEVC only when it must, e.g. 4K120 on a Snapdragon 8 Gen 3, whose H.264 encoder stops at
-4K60. HEVC uses ~60% of the H.264 bitrate: 4K120 ≈ 58 Mb/s, about 1.7 GB for four minutes. Both
+switches to HEVC only when it must (an encoder that stops at 4K60 in H.264, say). Measured on a Galaxy
+S24+ (Snapdragon 8 Gen 3): the hardware H.264 and HEVC encoders both report 4K120, so Auto keeps H.264
+there; choose HEVC to roughly halve the file. HEVC uses ~60% of the H.264 bitrate: 4K120 ≈ 58 Mb/s
+(≈1.7 GB for four minutes) against ≈97 Mb/s (≈2.9 GB) in H.264. Both
 engines honour the codec. The export dialog shows the exact plan and estimated size before starting,
 and export refuses to start without room for the file twice (private copy + saved copy).
 
@@ -89,6 +91,8 @@ decoder still cannot be created mid-export, ICE Lite lowers the budget and retri
 - Letterbox bars of upper layers are transparent (lower layers show through).
 - Audio speed changes pitch (linear resampling). A pitch-preserving time stretch is a later stage.
 - Preview still uses Media3/ExoPlayer at up to 1080p; ICE Lite is export-only in this phase.
+- Galaxy S24+ (SM8650) benchmark: 8 layers × 1080p60 exported at 72.6 frames/s (1.21× real time),
+  one pass, direct layer drawing, decoder budget 16 (16 hardware decoder instances, 11.6 GB).
 - 4K120 itself is verified only on real hardware; the CI emulator verifies 60 fps output from a 120 fps
   source, the planner on its own encoder list, and the planner rules in unit tests.
 
