@@ -50,7 +50,14 @@ public final class EditorActivity extends Activity {
     /** Scrubbing sends a seek per touch event; the preview player gets at most one per SEEK_INTERVAL_MS, always ending on the last position. */
     static final long SEEK_INTERVAL_MS=90;
     long lastSeekAt;boolean seekQueued;
-    final Runnable flushSeek=()->{seekQueued=false;if(player!=null){lastSeekAt=android.os.SystemClock.uptimeMillis();player.seekTo(seekTarget());}};
+    /** Logcat tag for preview player lifecycle, seeks and errors; CI keeps these lines in the job log. */
+    static final String PREVIEW_LOG="BC1Preview";
+    int previewSeeks;
+    final Runnable flushSeek=()->{seekQueued=false;if(player!=null){lastSeekAt=android.os.SystemClock.uptimeMillis();long target=seekTarget();previewSeeks++;android.util.Log.d(PREVIEW_LOG,"seek "+target+" state="+player.getPlaybackState());player.seekTo(target);}};
+    /** One-line preview state for test failure messages and bug reports. */
+    String previewDebug(){return "player="+(player==null?"none":player.getClass().getSimpleName()+" state="+player.getPlaybackState()+" pos="+player.getCurrentPosition()+" playWhenReady="+player.getPlayWhenReady()+" error="+(player.getPlayerError()==null?"none":player.getPlayerError().getMessage()))
+        +" playhead="+project.playheadMs+" seeksSent="+previewSeeks+" seekQueued="+seekQueued+" recoveries="+previewRecoveries+" pending="+previewPending
+        +" hint="+(emptyPreview!=null&&emptyPreview.getVisibility()==View.VISIBLE?"'"+emptyPreview.getText().toString().replace('\n',' ')+"'":"hidden")+" status='"+message+"'";}
     /** Automatic preview rebuilds after a player error (e.g. a decoder that failed mid-seek), limited per window. */
     int previewRecoveries;long previewRecoveryWindow;
     PreviewProxy previewProxy;
@@ -146,12 +153,12 @@ public final class EditorActivity extends Activity {
         player=prepared;prepared.setVolume(monitorVolume);prepared.setVideoSurfaceView(surface);
         prepared.addListener(new Player.Listener(){
             @Override public void onRenderedFirstFrame(){if(player==prepared&&emptyPreview!=null)emptyPreview.setVisibility(View.GONE);}
-            @Override public void onPlayerError(PlaybackException error){if(player!=prepared)return;prepared.pause();main.removeCallbacks(flushSeek);
+            @Override public void onPlayerError(PlaybackException error){android.util.Log.w(PREVIEW_LOG,"player error ("+(player==prepared?"current":"stale")+" player, recoveries="+previewRecoveries+")",error);if(player!=prepared)return;prepared.pause();main.removeCallbacks(flushSeek);
                 // A preview player can fail under rapid seeking; rebuild it at the same position (a few times per 30 s).
                 long now=android.os.SystemClock.uptimeMillis();if(now-previewRecoveryWindow>30_000){previewRecoveryWindow=now;previewRecoveries=0;}
-                if(previewRecoveries++<3){previewHint("Recovering preview…");main.postDelayed(()->{if(player==prepared)preparePreview(false);},150);return;}
-                tell("Preview error: "+error.getMessage());previewHint("Preview unavailable • tap to retry");}
-            @Override public void onPlaybackStateChanged(int state){if(state==Player.STATE_ENDED&&player==prepared){project.playheadMs=project.durationMs();syncPosition();}}
+                if(previewRecoveries++<3){android.util.Log.i(PREVIEW_LOG,"rebuilding preview at "+project.playheadMs+" (attempt "+previewRecoveries+")");previewHint("Recovering preview…");main.postDelayed(()->{if(player==prepared)preparePreview(false);},150);return;}
+                android.util.Log.w(PREVIEW_LOG,"giving up after "+previewRecoveries+" rebuilds");tell("Preview error: "+error.getMessage());previewHint("Preview unavailable • tap to retry");}
+            @Override public void onPlaybackStateChanged(int state){if(player==prepared)android.util.Log.d(PREVIEW_LOG,"state "+state+" pos="+prepared.getCurrentPosition()+" playhead="+project.playheadMs);if(state==Player.STATE_ENDED&&player==prepared){project.playheadMs=project.durationMs();syncPosition();}}
         });
     }
     void preparePreview(boolean playWhenReady) {
@@ -175,6 +182,7 @@ public final class EditorActivity extends Activity {
                     @Override public void onError(String error){previewPending=false;previewAutoplay=false;tell("Preview preparation failed: "+error);previewHint("Preview unavailable • tap to retry");}
                 });
             }else{
+                android.util.Log.i(PREVIEW_LOG,"prepare live preview at "+position);
                 CompositionPlayer prepared=new CompositionPlayer.Builder(this)
                         .setVideoGraphFactory(new MultipleInputVideoGraph.Factory(CompositionFactory.frameProcessor()))
                         .setAudioAttributes(new AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(),true).build();

@@ -13,6 +13,11 @@ adb shell am instrument -w -r com.blackice.bc1.preview.test/androidx.test.runner
 adb logcat -d > BC-1/app/build/reports/androidTests/logcat.txt
 # Artifacts are not always retrievable, so surface export failures directly in the job log.
 rg -n -A40 'BC1Export\b|MuxerException|Muxer error' BC-1/app/build/reports/androidTests/logcat.txt | rg -v 'WindowManager|SplashScreen|TopTaskTracker|OptProp' | head -150 || true
+# Preview player lifecycle and errors (PreviewScrubTest and friends), also kept as a separate report.
+rg -n 'BC1Preview|VideoFrameProcessingException|ExoPlaybackException|PlaybackException|CompositionPlayer.*(rror|xception)' BC-1/app/build/reports/androidTests/logcat.txt > BC-1/app/build/reports/androidTests/preview-log.txt || true
+echo "Preview log: $(wc -l < BC-1/app/build/reports/androidTests/preview-log.txt) lines (errors and lifecycle first, then the last seeks)"
+rg -v ' D BC1Preview' BC-1/app/build/reports/androidTests/preview-log.txt | head -120 || true
+rg ' D BC1Preview' BC-1/app/build/reports/androidTests/preview-log.txt | tail -60 || true
 mkdir -p BC-1/app/build/reports/androidTests/qa
 adb exec-out run-as com.blackice.bc1.preview tar -C files/qa -cf - . > BC-1/app/build/reports/androidTests/qa.tar
 tar -xf BC-1/app/build/reports/androidTests/qa.tar -C BC-1/app/build/reports/androidTests/qa

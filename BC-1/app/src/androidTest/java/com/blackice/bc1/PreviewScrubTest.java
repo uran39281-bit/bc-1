@@ -37,7 +37,10 @@ public class PreviewScrubTest {
             scenario.onActivity(a -> ok.set(condition.test(a)));
             if (!ok.get()) Thread.sleep(50);
         }
-        assertTrue("Timed out waiting for " + what, ok.get());
+        // On failure, report the preview's own state so the cause is visible without a device.
+        java.util.concurrent.atomic.AtomicReference<String> state = new java.util.concurrent.atomic.AtomicReference<>("");
+        if (!ok.get()) scenario.onActivity(a -> state.set(a.previewDebug()));
+        assertTrue("Timed out waiting for " + what + " • " + state.get(), ok.get());
     }
 
     @Test public void fastScrubbingKeepsTheLivePreviewWorking() throws Exception {
@@ -58,6 +61,7 @@ public class PreviewScrubTest {
                 Thread.sleep(5);
             }
             final long expected = last;
+            android.util.Log.i(EditorActivity.PREVIEW_LOG, "test: last scrub target " + expected);
             waitFor(scenario, a -> a.player != null && a.player.getPlaybackState() == Player.STATE_READY
                     && Math.abs(a.player.getCurrentPosition() - expected) <= 60, 15_000, "the preview to settle on the last scrub position");
             AtomicReference<String> hint = new AtomicReference<>();
