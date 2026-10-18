@@ -6,6 +6,16 @@ import java.util.Map;
 /** Logs every thread's stack (tag BC1Threads) so CI logs show what was running when an export stalled. */
 public final class ThreadDump {
     private ThreadDump() {}
+    /** Logs a shell command's output, run with the instrumentation's shell permissions. */
+    static void shell(String command) {
+        try (android.os.ParcelFileDescriptor pfd = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(command);
+             java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(new android.os.ParcelFileDescriptor.AutoCloseInputStream(pfd)))) {
+            StringBuilder b = new StringBuilder("$ ").append(command); String line; int n = 0;
+            while ((line = r.readLine()) != null && n++ < 120) b.append('\n').append(line);
+            for (String chunk : b.toString().split("(?<=\\G[\\s\\S]{3000})")) Log.w("BC1Threads", chunk);
+        } catch (Exception e) { Log.w("BC1Threads", command + " failed: " + e); }
+    }
+
     public static void log(String why) {
         Log.w("BC1Threads", "Thread dump: " + why);
         for (Map.Entry<Thread, StackTraceElement[]> e : Thread.getAllStackTraces().entrySet()) {
@@ -28,6 +38,8 @@ public final class ThreadDump {
             } catch (Exception ignored) { }
         }
         rows.sort(java.util.Collections.reverseOrder());
+        shell("top -b -n 1 -m 15");
+        shell("dumpsys media.resource_manager");
         Log.w("BC1Threads", rows.size() + " native threads; busiest:\n" + String.join("\n", rows.subList(0, Math.min(20, rows.size()))));
     }
 }

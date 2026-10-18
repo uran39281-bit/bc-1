@@ -59,6 +59,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     private Compositor compositor;
     private OverlayLayer overlays;
     private int width, height;
+    private long frames;
     private final Map<String, Slot> slots = new HashMap<>();
 
     public LivePreview(Context context) {
@@ -142,6 +143,8 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
             long start = System.nanoTime();
             render(r.project, r.timeMs);
             lastError = null;
+            long took = (System.nanoTime() - start) / 1_000_000;
+            if (++frames % 20 == 1 || took > 250) android.util.Log.d("BC1Live", "frame " + frames + " at " + r.timeMs + " ms took " + took + " ms, " + slots.size() + " sources open");
             FrameListener l = listener;
             if (l != null) l.onFrame(r.timeMs, (System.nanoTime() - start) / 1_000_000);
         } catch (Throwable t) {
