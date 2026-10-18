@@ -36,7 +36,8 @@ public final class ProjectStore {
         return result;
     }
     public static String encode(EditProject p) throws JSONException {
-        p.validate(); JSONObject j=new JSONObject(); j.put("schema",EditProject.SCHEMA).put("id",p.id).put("name",p.name)
+        // Anything on the timeline is also listed in the media bin.
+        p.ensureLibrary(); p.validate(); JSONObject j=new JSONObject(); j.put("schema",EditProject.SCHEMA).put("id",p.id).put("name",p.name)
                 .put("portrait",p.portrait).put("previewHeight",p.previewHeight).put("playheadMs",p.playheadMs)
                 .put("frameRate",p.frameRate).put("loopInMs",p.loopInMs).put("loopOutMs",p.loopOutMs);
         JSONArray tracks=new JSONArray();
@@ -47,13 +48,16 @@ public final class ProjectStore {
         for(EditProject.Clip c:p.clips) clips.put(new JSONObject().put("id",c.id).put("uri",c.uri).put("name",c.name)
                 .put("audioOnly",c.audioOnly).put("image",c.image).put("sourceDurationMs",c.sourceDurationMs).put("inMs",c.inMs).put("outMs",c.outMs)
                 .put("effect",c.effect).put("intensity",c.intensity).put("opacity",c.opacity).put("volume",c.volume).put("speed",c.speed)
-                .put("track",c.track).put("startMs",c.startMs).put("fadeInMs",c.fadeInMs).put("fadeOutMs",c.fadeOutMs)
+                .put("track",c.track).put("startMs",c.startMs).put("gapMs",c.gapMs).put("fadeInMs",c.fadeInMs).put("fadeOutMs",c.fadeOutMs)
                 .put("x",c.x).put("y",c.y).put("scale",c.scale).put("rotation",c.rotation).put("motion",motion(c.motion))
                 .put("chroma",c.chroma).put("keyColor",c.keyColor).put("keyTolerance",c.keyTolerance).put("keySoftness",c.keySoftness).put("keySpill",c.keySpill)
                 .put("transition",c.transition).put("transitionMs",c.transitionMs).put("easing",c.easing)
                 .put("aspect",c.aspect).put("skewX",c.skewX).put("skewY",c.skewY).put("anchorX",c.anchorX).put("anchorY",c.anchorY)
                 .put("flipH",c.flipH).put("flipV",c.flipV).put("width",c.width).put("height",c.height).put("group",c.group));
-        j.put("clips",clips); JSONArray overlays=new JSONArray();
+        j.put("clips",clips); JSONArray library=new JSONArray();
+        for(EditProject.Clip a:p.library) library.put(new JSONObject().put("id",a.id).put("uri",a.uri).put("name",a.name).put("image",a.image).put("audioOnly",a.audioOnly)
+                .put("sourceDurationMs",a.sourceDurationMs).put("inMs",a.inMs).put("outMs",a.outMs).put("width",a.width).put("height",a.height));
+        j.put("library",library); JSONArray overlays=new JSONArray();
         for(EditProject.Overlay o:p.overlays) overlays.put(new JSONObject().put("id",o.id).put("text",o.text)
                 .put("motion",motion(o.motion)).put("imageUri",o.imageUri).put("startMs",o.startMs).put("endMs",o.endMs)
                 .put("x",o.x).put("y",o.y).put("scale",o.scale).put("opacity",o.opacity).put("font",o.font).put("color",o.color).put("alignment",o.alignment)
@@ -80,7 +84,7 @@ public final class ProjectStore {
         JSONArray markers=j.optJSONArray("markers"); if(markers!=null) for(int i=0;i<markers.length();i++) p.markers.add(markers.getLong(i));
         JSONArray clips=j.getJSONArray("clips");
         for(int i=0;i<clips.length();i++) { JSONObject v=clips.getJSONObject(i); EditProject.Clip c=new EditProject.Clip();
-            c.track=v.optInt("track",0);c.startMs=v.optLong("startMs",0);c.fadeInMs=v.optLong("fadeInMs",0);c.fadeOutMs=v.optLong("fadeOutMs",0);
+            c.track=v.optInt("track",0);c.startMs=v.optLong("startMs",0);c.gapMs=v.optLong("gapMs",0);c.fadeInMs=v.optLong("fadeInMs",0);c.fadeOutMs=v.optLong("fadeOutMs",0);
             c.x=(float)v.optDouble("x",0);c.y=(float)v.optDouble("y",0);c.scale=(float)v.optDouble("scale",1);c.rotation=(float)v.optDouble("rotation",0);c.motion=motion(v.optJSONArray("motion"));
             c.chroma=v.optBoolean("chroma",false);c.keyColor=v.optInt("keyColor",0xFF00FF00);c.keyTolerance=(float)v.optDouble("keyTolerance",.25);c.keySoftness=(float)v.optDouble("keySoftness",.08);c.keySpill=(float)v.optDouble("keySpill",.5);
             c.id=v.getString("id"); c.uri=v.getString("uri"); c.name=v.getString("name"); c.image=v.getBoolean("image");c.audioOnly=v.optBoolean("audioOnly",false);
@@ -89,6 +93,13 @@ public final class ProjectStore {
             c.volume=(float)v.getDouble("volume");c.speed=(float)v.optDouble("speed",1); c.transition=v.getInt("transition"); c.transitionMs=v.getLong("transitionMs"); c.easing=v.getInt("easing");
             c.aspect=(float)v.optDouble("aspect",1); c.skewX=(float)v.optDouble("skewX",0); c.skewY=(float)v.optDouble("skewY",0); c.anchorX=(float)v.optDouble("anchorX",0); c.anchorY=(float)v.optDouble("anchorY",0);
             c.flipH=v.optBoolean("flipH"); c.flipV=v.optBoolean("flipV"); c.width=v.optInt("width",0); c.height=v.optInt("height",0); c.group=v.isNull("group")?null:v.optString("group",null); p.clips.add(c); }
+        // The media bin is optional: older files rebuild it from their timeline sources.
+        JSONArray library=j.optJSONArray("library");
+        if(library!=null) for(int i=0;i<library.length();i++) { JSONObject v=library.getJSONObject(i); EditProject.Clip a=new EditProject.Clip();
+            a.id=v.optString("id",a.id); a.uri=v.getString("uri"); a.name=v.getString("name"); a.image=v.optBoolean("image"); a.audioOnly=v.optBoolean("audioOnly");
+            a.sourceDurationMs=v.getLong("sourceDurationMs"); a.inMs=v.optLong("inMs",0); a.outMs=v.optLong("outMs",a.sourceDurationMs); a.width=v.optInt("width",0); a.height=v.optInt("height",0);
+            if(p.libraryIndex(a.uri)<0&&p.library.size()<EditProject.LIBRARY_LIMIT) p.library.add(a); }
+        p.ensureLibrary();
         JSONArray overlays=j.getJSONArray("overlays");
         for(int i=0;i<overlays.length();i++) { JSONObject v=overlays.getJSONObject(i); EditProject.Overlay o=new EditProject.Overlay();
             o.motion=motion(v.optJSONArray("motion"));o.id=v.getString("id"); o.text=v.getString("text"); o.imageUri=v.optString("imageUri",null);

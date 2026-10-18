@@ -43,9 +43,11 @@ public class WorkspaceV2Test {
                     assertTrue(a.monitorInfo.getText().toString().startsWith(p.name));assertEquals(0xFF050B14,EditorActivity.BG);assertNotNull(text(root,"Inspector"));assertNotNull(text(root,"Project"));
                     long duration=a.project.durationMs();described(root,"Next frame").performClick();assertEquals(Math.round(1000d/a.project.frameRate),a.project.playheadMs);described(root,"Previous frame").performClick();assertEquals(0,a.project.playheadMs);assertEquals(duration,a.project.durationMs());
                     assertNotNull(described(root,"Preview scaling, volume and fullscreen"));
-                    if(wide){assertNotNull(described(root,"Resize timeline height"));assertNotNull(described(root,"Save project"));assertNotNull(text(root,"Favorites"));assertNotNull(text(root,"Grid / List"));assertNotNull(text(root,"Sort"));assertTrue(a.timeline.getWidth()>0);text(a.header,"Audio").performClick();assertEquals(1,a.addDrawer.category);assertTrue(text(a.header,"Audio").isSelected());text(a.header,"Media").performClick();assertEquals(0,a.addDrawer.category);assertTrue(text(a.header,"Media").isSelected());assertEquals("Navigation preserves the project",duration,a.project.durationMs());}
-                    text(root,"+ Add").performClick();for(String category:AddDrawer.CATEGORIES)assertNotNull("Add drawer category "+category,described(root,"Add "+category));
-                    assertNotNull("Insert at playhead by default",text(root,"● At playhead"));described(root,"Add Shapes").performClick();});
+                    if(wide){assertNotNull(described(root,"Resize timeline height"));assertNotNull(described(root,"Save project"));assertNotNull(text(root,"Favorites"));assertNotNull(described(root,"Grid / List: show list"));assertNotNull(described(root,"Sort media"));assertTrue(a.timeline.getWidth()>0);text(a.header,"Audio").performClick();assertEquals(1,a.addDrawer.category);assertTrue(text(a.header,"Audio").isSelected());text(a.header,"Media").performClick();assertEquals(0,a.addDrawer.category);assertTrue(text(a.header,"Media").isSelected());assertEquals("Navigation preserves the project",duration,a.project.durationMs());}
+                    assertNull("No separate + Add button repeats the navigation",text(root,"+ Add"));
+                    if(wide){text(a.header,"Text").performClick();assertEquals(2,a.addDrawer.category);assertNull("Top-bar tabs replace the panel's own category row",described(root,"Add Media"));assertNotNull("Shapes share the Text tab",text(root,"+ Rectangle"));}
+                    else{text(root,"Add").performClick();for(String category:AddDrawer.CATEGORIES)assertNotNull("Add drawer category "+category,described(root,"Add "+category));
+                        described(root,"Add Audio").performClick();assertNotNull("Insert at playhead by default",text(root,"● At playhead"));described(root,"Add Shapes").performClick();}});
                 Thread.sleep(300);capture(wide?"v2-wide-add-drawer":"v2-phone-add-drawer");
                 scenario.onActivity(a->{View root=a.getWindow().getDecorView();a.seek(1000);text(root,"+ Rectangle").performClick();
                     assertEquals(1,a.project.overlays.size());assertEquals("Inserted at the playhead",1000,a.project.overlays.get(0).startMs);assertEquals(0,a.selectedOverlay);
@@ -69,7 +71,7 @@ public class WorkspaceV2Test {
                     a.nudge(10,0);assertEquals("Locked layers cannot move",0,a.project.overlays.get(0).x,0);
                     a.moreAction("Unlock layer");a.nudge(10,0);assertEquals(10*TransformMath.pixelX(1920),a.project.overlays.get(0).x,1e-5);
                     described(a.getWindow().getDecorView(),"Delete").performClick();assertTrue(a.project.overlays.isEmpty());a.undo(false);assertEquals("Delete is undoable",1,a.project.overlays.size());
-                    a.deselect();text(a.getWindow().getDecorView(),"+ Add").performClick();described(a.getWindow().getDecorView(),"Add Text").performClick();text(a.getWindow().getDecorView(),"+ Title").performClick();
+                    a.deselect();a.tab=0;a.addDrawer.category=2;a.renderInspector();text(a.getWindow().getDecorView(),"+ Title").performClick();
                     assertEquals(2,a.project.overlays.size());assertEquals("BLACK ICE",a.project.overlays.get(1).text);
                     assertNotNull("Text tools",text(a.getWindow().getDecorView(),"Edit Text"));assertNotNull(text(a.getWindow().getDecorView(),"Font"));
                     // Multi-select and group.

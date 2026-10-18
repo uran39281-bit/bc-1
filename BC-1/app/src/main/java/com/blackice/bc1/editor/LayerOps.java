@@ -88,12 +88,13 @@ public final class LayerOps {
         for(EditProject.Placement placement:p.placements()) if(placement.index!=excluded&&placement.clip.track==track&&placement.startMs<end&&start<placement.endMs) return false;
         return true;
     }
-    /** Removes gaps between clips on independent tracks; the main sequence is already gapless.
-     * The first clip of each track keeps its start time. Returns the total time removed. */
+    /** Removes gaps between clips. Independent tracks keep their first clip's start time; the main
+     * sequence closes up completely, including any gap before its first clip. Returns the total time removed. */
     public static long closeGaps(EditProject p,Collection<Integer> tracks) {
         long removed=0;Snapshot undo=new Snapshot(p);
         try {
-            for(int track:tracks){if(track<=0||track>7)continue;
+            for(int track:tracks){if(track==0){for(EditProject.Clip c:p.clips)if(c.track==0){removed+=c.gapMs;c.gapMs=0;}continue;}
+                if(track<0||track>7)continue;
                 List<EditProject.Clip> row=new ArrayList<>();for(EditProject.Clip c:p.clips)if(c.track==track)row.add(c);
                 row.sort(Comparator.comparingLong(c->c.startMs));
                 for(int i=1;i<row.size();i++){long end=row.get(i-1).startMs+row.get(i-1).durationMs();long gap=row.get(i).startMs-end;if(gap>0){row.get(i).startMs=end;removed+=gap;}}

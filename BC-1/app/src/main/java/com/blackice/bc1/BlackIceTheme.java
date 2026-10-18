@@ -13,6 +13,11 @@ final class BlackIceTheme {
             new int[]{active?0xFF12456A:0xED102235,active?0xFF0B2943:0xEE091522});
         d.setCornerRadius(7*density);d.setStroke(Math.max(1,(int)density),active?ACCENT:BORDER);return d;
     }
+    /** The single primary action (Export): bright ice-blue fill. */
+    static GradientDrawable primary(float density){
+        GradientDrawable d=new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,new int[]{0xFF1C9BFF,0xFF0A6FD8});
+        d.setCornerRadius(7*density);d.setStroke(Math.max(1,(int)density),0xFF63C3FF);return d;
+    }
     static Drawable tab(float density,boolean active){
         return new Drawable(){final Paint p=new Paint(3);
             public void draw(Canvas c){Rect b=getBounds();p.setColor(active?0x2200AFFF:0x00000000);c.drawRect(b,p);if(active){p.setColor(ACCENT);c.drawRect(b.left+8*density,b.bottom-2*density,b.right-8*density,b.bottom,p);}}

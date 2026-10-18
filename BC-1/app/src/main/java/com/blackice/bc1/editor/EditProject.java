@@ -14,6 +14,10 @@ public final class EditProject {
     public long playheadMs;
     public final List<Clip> clips = new ArrayList<>();
     public final List<Overlay> overlays = new ArrayList<>();
+    /** Imported media not yet (or no longer) on the timeline. Entries are clip templates: only identity,
+     * source and size fields are meaningful; placing one copies it onto a track. */
+    public final List<Clip> library = new ArrayList<>();
+    public static final int LIBRARY_LIMIT = 100;
     public Music music;
     /** Editor frame rate: timeline frame grid, nudging and export cadence. */
     public int frameRate = 30;
@@ -37,6 +41,8 @@ public final class EditProject {
         public String id = UUID.randomUUID().toString(), uri, name;
         public boolean image, audioOnly;
         public int track; public long startMs,fadeInMs,fadeOutMs;
+        /** Main sequence only: empty time before this clip. A gap also suppresses the transition into it. */
+        public long gapMs;
         public float x,y,scale=1,rotation,keyTolerance=.25f,keySoftness=.08f,keySpill=.5f;
         /** Height relative to width scale (1 keeps proportions), skew in degrees, anchor in position units. */
         public float aspect=1,skewX,skewY,anchorX,anchorY; public boolean flipH,flipV;
@@ -92,22 +98,37 @@ public final class EditProject {
             incomingMs=incoming; outgoingMs=outgoing;
         }
     }
+    /** Adds a library entry for every timeline source that lacks one (older projects, extracted audio). */
+    public void ensureLibrary(){
+        for(Clip c:clips){if(library.size()>=LIBRARY_LIMIT)return;if(libraryIndex(c.uri)<0)library.add(asset(c));}
+    }
+    public int libraryIndex(String uri){for(int i=0;i<library.size();i++)if(library.get(i).uri.equals(uri))return i;return -1;}
+    /** A fresh, full-length library template for the clip's source. */
+    public static Clip asset(Clip source){
+        Clip a=new Clip();a.uri=source.uri;a.name=source.name;a.image=source.image;a.audioOnly=source.audioOnly;
+        a.width=source.width;a.height=source.height;a.sourceDurationMs=source.sourceDurationMs;
+        a.inMs=0;a.outMs=source.image?Math.max(MIN_CLIP_MS,Math.min(source.sourceDurationMs,source.outMs-source.inMs)):source.sourceDurationMs;
+        if(a.outMs<MIN_CLIP_MS){a.outMs=Math.max(MIN_CLIP_MS,source.outMs);a.sourceDurationMs=Math.max(a.sourceDurationMs,a.outMs);}
+        return a;
+    }
+    public int lastBase(){for(int n=clips.size()-1;n>=0;n--)if(clips.get(n).track==0)return n;return -1;}
     private int nextBase(int i){for(int n=i+1;n<clips.size();n++)if(clips.get(n).track==0)return n;return -1;}
     public long overlapAfter(int i) {
         if(i<0||i>=clips.size()||clips.get(i).track!=0||clips.get(i).transition<0)return 0;
-        int n=nextBase(i);if(n<0)return 0;
+        int n=nextBase(i);if(n<0||clips.get(n).gapMs>0)return 0;
         return Math.max(0,Math.min(clips.get(i).transitionMs,Math.min(clips.get(i).durationMs()/2,clips.get(n).durationMs()/2)));
     }
     public List<Placement> placements() {
         List<Placement> result=new ArrayList<>();long start=0,incoming=0;
         for(int i=0;i<clips.size();i++){Clip c=clips.get(i);long out=overlapAfter(i);
+            if(c.track==0&&c.gapMs>0){start+=c.gapMs;incoming=0;}
             Placement p=new Placement(c,i,c.track==0?start:c.startMs,c.track==0?incoming:0,out);result.add(p);
             if(c.track==0){start=p.endMs-out;incoming=out;}}
         return result;
     }
     public long durationMs(){long total=0;for(Placement p:placements())total=Math.max(total,p.endMs);for(Overlay o:overlays)total=Math.max(total,o.endMs);return total;}
     public int freeAudioTrack(long start,long duration){for(int t=4;t<=7;t++){boolean free=true;for(Placement p:placements())if(p.clip.track==t&&p.startMs<start+duration&&p.endMs>start)free=false;if(free)return t;}throw new IllegalArgumentException("All four audio tracks are occupied at this time.");}
-    public void setPlacement(int index,int track,long start){Clip c=clips.get(index);int old=c.track;long oldStart=c.startMs;c.track=track;c.startMs=start;try{validate();}catch(RuntimeException e){c.track=old;c.startMs=oldStart;throw e;}}
+    public void setPlacement(int index,int track,long start){Clip c=clips.get(index);int old=c.track;long oldStart=c.startMs,oldGap=c.gapMs;c.track=track;c.startMs=start;if(track!=0)c.gapMs=0;try{validate();}catch(RuntimeException e){c.track=old;c.startMs=oldStart;c.gapMs=oldGap;throw e;}}
     public void trim(int index,long in,long out) {
         Clip c=clips.get(index);
         if(in<0 || (!c.image&&out>c.sourceDurationMs) || out-in<MIN_CLIP_MS*c.speed || out>7_200_000_000L) throw new IllegalArgumentException("Keep at least 0.10 seconds inside the source.");
@@ -121,7 +142,7 @@ public final class EditProject {
         Placement p=placements().get(index); long offset=timelineMs-p.startMs;
         if(offset<MIN_CLIP_MS || p.clip.durationMs()-offset<MIN_CLIP_MS)
             throw new IllegalArgumentException("Place the playhead inside the selected clip, at least 0.10 seconds from either edge.");
-        Clip right=p.clip.copy(); right.inMs+=Math.round(offset*(double)p.clip.speed);if(right.track>0)right.startMs=p.startMs+offset;
+        Clip right=p.clip.copy(); right.gapMs=0; right.inMs+=Math.round(offset*(double)p.clip.speed);if(right.track>0)right.startMs=p.startMs+offset;
         p.clip.outMs=right.inMs; p.clip.transition=-1;p.clip.fadeInMs=Math.min(p.clip.fadeInMs,p.clip.durationMs());p.clip.fadeOutMs=0;right.fadeInMs=0;right.fadeOutMs=Math.min(right.fadeOutMs,right.durationMs());
         clips.add(index+1,right);
     }
@@ -139,6 +160,8 @@ public final class EditProject {
     public void validate() {
         if(id==null || !id.matches("[a-zA-Z0-9-]{1,80}") || name==null || name.length()>120)
             throw new IllegalArgumentException("Invalid project identity.");
+        if(library.size()>LIBRARY_LIMIT) throw new IllegalArgumentException("The media bin holds up to "+LIBRARY_LIMIT+" items.");
+        for(Clip a:library) if(a.uri==null||a.name==null||a.sourceDurationMs<0) throw new IllegalArgumentException("Invalid media bin entry.");
         if(clips.size()>100 || overlays.size()>20) throw new IllegalArgumentException("Preview supports up to 100 clips and 20 overlays.");
         if(previewHeight!=360 && previewHeight!=540 && previewHeight!=1080) throw new IllegalArgumentException("Invalid preview resolution.");
         if(frameRate!=24&&frameRate!=25&&frameRate!=30) throw new IllegalArgumentException("Use 24, 25 or 30 fps.");
@@ -149,6 +172,7 @@ public final class EditProject {
         for(Clip c:clips) {
             c.motion.validate();
             if(!(c.aspect>=.05f&&c.aspect<=20)||!(Math.abs(c.skewX)<=80)||!(Math.abs(c.skewY)<=80)||!Motion.allowed(0,c.anchorX)||!Motion.allowed(1,c.anchorY)||c.width<0||c.height<0||(c.group!=null&&c.group.length()>40)) throw new IllegalArgumentException("Invalid transform: "+c.name);
+            if(c.gapMs<0||c.gapMs>7_200_000_000L||(c.track!=0&&c.gapMs!=0))throw new IllegalArgumentException("Gaps belong to main-sequence clips: "+c.name);
             if(c.audioOnly&&c.track<4)throw new IllegalArgumentException("Audio-only media belongs on an audio lane.");
             if(c.track<0||c.track>7||c.startMs<0||c.fadeInMs<0||c.fadeOutMs<0||c.fadeInMs>c.durationMs()||c.fadeOutMs>c.durationMs()||!Motion.allowed(0,c.x)||!Motion.allowed(1,c.y)||!Motion.allowed(2,c.scale)||!Motion.allowed(3,c.rotation)||!unit(c.keyTolerance)||!unit(c.keySoftness)||c.keySoftness<.001f||!unit(c.keySpill)||(c.track>=4&&c.image))throw new IllegalArgumentException("Invalid track, transform or fade.");
             if(c.uri==null || c.name==null || c.inMs<0 || c.outMs>c.sourceDurationMs || c.durationMs()<MIN_CLIP_MS || !Float.isFinite(c.speed)||c.speed<.25f||c.speed>4||(c.image&&c.speed!=1)
