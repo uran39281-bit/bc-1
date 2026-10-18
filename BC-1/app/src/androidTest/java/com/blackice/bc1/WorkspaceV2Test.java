@@ -40,6 +40,10 @@ public class WorkspaceV2Test {
                 waitLoaded(scenario);
                 // Browse state: project name, Settings and Export; clip tools hidden.
                 scenario.onActivity(a->{View root=a.getWindow().getDecorView();assertNotNull(text(root,"Settings"));assertNotNull(text(root,"Export"));assertNull(text(root,"Split"));
+                    assertEquals(0xFF050B14,EditorActivity.BG);assertNotNull(text(root,"Inspector"));assertNotNull(text(root,"Project"));
+                    long duration=a.project.durationMs();described(root,"Next frame").performClick();assertEquals(Math.round(1000d/a.project.frameRate),a.project.playheadMs);described(root,"Previous frame").performClick();assertEquals(0,a.project.playheadMs);assertEquals(duration,a.project.durationMs());
+                    assertNotNull(described(root,"Preview scaling, volume and fullscreen"));
+                    if(wide){assertNotNull(described(root,"Resize timeline height"));assertNotNull(described(root,"Save project"));assertNotNull(text(root,"Favorites"));assertNotNull(text(root,"Grid / List"));assertNotNull(text(root,"Sort"));assertTrue(a.timeline.getWidth()>0);}
                     text(root,"+ Add").performClick();for(String category:AddDrawer.CATEGORIES)assertNotNull("Add drawer category "+category,described(root,"Add "+category));
                     assertNotNull("Insert at playhead by default",text(root,"● At playhead"));described(root,"Add Shapes").performClick();});
                 Thread.sleep(300);capture(wide?"v2-wide-add-drawer":"v2-phone-add-drawer");

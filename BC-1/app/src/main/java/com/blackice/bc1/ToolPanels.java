@@ -341,6 +341,7 @@ final class ToolPanels {
     private void browseHome(){
         a.inspector.addView(a.note("Nothing selected. Tap a layer in the timeline or preview to edit it, or add content."));
         a.inspector.addView(a.button("+ Add media, audio, text or shapes",v->{a.tab=0;a.renderInspector();}));
+        a.inspector.addView(a.button("Project settings",v->{a.tab=4;a.renderInspector();}));
         a.inspector.addView(a.button("Layers & visibility",v->{a.tab=3;a.renderInspector();}));
         a.inspector.addView(a.button((a.project.loopInMs>=0?"Clear loop range ":"Loop range…"),v->a.loopDialog()));
         a.inspector.addView(a.button("Markers & beats",v->open("Markers & beats",this::markersPanel)));
