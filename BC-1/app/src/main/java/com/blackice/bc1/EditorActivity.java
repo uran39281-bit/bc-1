@@ -68,6 +68,7 @@ public final class EditorActivity extends Activity {
     final java.util.Map<String,float[]> waveforms=new java.util.HashMap<>();
     int inspectorWidth=300;
     TextView status,time,play,projectLabel,exportButton,emptyPreview,monitorInfo;
+    View phonePreview,phoneTransport,phoneTimelineTools,phoneTimelineArea; ScrollView phoneDrawer;
     TimelineView timeline;
     final Runnable timelineThumbnailsReady=()->{if(!isDestroyed()&&timeline!=null)timeline.invalidate();};
     HorizontalScrollView timelineScroll;
@@ -204,7 +205,7 @@ public final class EditorActivity extends Activity {
         int layerScroll=timelineScroll!=null&&timelineScroll.getParent() instanceof ScrollView?((ScrollView)timelineScroll.getParent()).getScrollY():0;
         Configuration c=getResources().getConfiguration();android.view.Display display=getWindowManager().getDefaultDisplay();
         boolean wide=LayoutPolicy.resolve(mode,c.screenWidthDp,c.screenHeightDp,c.smallestScreenWidthDp,display!=null&&display.getDisplayId()!=0)==LayoutPolicy.Workspace.WIDE;
-        navTabs.clear();mediaFilterButtons.clear();mediaBrowser=null;mediaGrid=null;mediaCount=null;previewScrubber=null;scrubbing=false;LinearLayout root=column();root.setBackground(BlackIceTheme.backdrop());
+        phonePreview=null;phoneTransport=null;phoneTimelineTools=null;phoneTimelineArea=null;phoneDrawer=null;navTabs.clear();mediaFilterButtons.clear();mediaBrowser=null;mediaGrid=null;mediaCount=null;previewScrubber=null;scrubbing=false;LinearLayout root=column();root.setBackground(BlackIceTheme.backdrop());
         wideLayout=wide;reducedMotion=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("reduced-motion",false);favoriteMedia.clear();favoriteMedia.addAll(getSharedPreferences(PREFS,MODE_PRIVATE).getStringSet("favorite-media",java.util.Collections.emptySet()));header=row();header.setPadding(dp(10),0,dp(8),0);header.setGravity(Gravity.CENTER_VERTICAL);header.setBackground(BlackIceTheme.backdrop());headerKey="";
         root.addView(header,new LinearLayout.LayoutParams(-1,dp(56)));renderHeader();
         if(fullscreenPreview){root.addView(buildMonitor(),new LinearLayout.LayoutParams(-1,0,1));root.addView(transport(true));root.addView(button("Exit fullscreen",v->{fullscreenPreview=false;buildWorkspace();}));inspector=column();}
@@ -232,15 +233,16 @@ public final class EditorActivity extends Activity {
 
         } else {
             LinearLayout content=column();content.setPadding(dp(8),0,dp(8),0);
-            boolean compact=c.screenHeightDp<700;
-            if(compact){ScrollView all=new ScrollView(this);all.setFillViewport(true);all.addView(content);root.addView(all,new LinearLayout.LayoutParams(-1,0,1));}
-            else root.addView(content,new LinearLayout.LayoutParams(-1,0,1));
-            content.addView(buildMonitor(),new LinearLayout.LayoutParams(-1,dp(workspaceFocus==1?110:workspaceFocus==2?280:c.screenHeightDp<780?170:210)));
-            content.addView(transport(false));content.addView(buildTimelineTools());content.addView(buildTimeline(),new LinearLayout.LayoutParams(-1,dp(timelineHeight(c,false))));
-            inspector=column();inspector.setPadding(dp(8),dp(10),dp(8),dp(14));
-            if(compact)content.addView(inspector);else{ScrollView tools=new ScrollView(this);tools.addView(inspector);content.addView(tools,new LinearLayout.LayoutParams(-1,0,1));}
+            root.addView(content,new LinearLayout.LayoutParams(-1,0,1));
+            phonePreview=buildMonitor();content.addView(phonePreview,new LinearLayout.LayoutParams(-1,dp(160)));
+            phoneTransport=transport(false);content.addView(phoneTransport);
+            phoneTimelineTools=buildTimelineTools();content.addView(phoneTimelineTools);
+            phoneTimelineArea=buildTimeline();content.addView(phoneTimelineArea,new LinearLayout.LayoutParams(-1,dp(140)));
+            inspector=column();inspector.setPadding(dp(8),dp(4),dp(8),dp(12));
+            phoneDrawer=new ScrollView(this);phoneDrawer.setContentDescription("Phone editing drawer");phoneDrawer.setFillViewport(true);phoneDrawer.setBackground(panelBackground());phoneDrawer.addView(inspector);
+            content.addView(phoneDrawer,new LinearLayout.LayoutParams(-1,0,1));
             LinearLayout tabs=row();String[] names=NAV;
-            for(int i=0;i<names.length;i++){final int index=i;TextView b=iconButton(names[i],v->{tab=index;renderInspector();});navTabs.add(b);tabs.addView(b,new LinearLayout.LayoutParams(0,dp(62),1));}root.addView(tabs);
+            for(int i=0;i<names.length;i++){final int index=i;TextView b=iconButton(names[i],v->{tab=index;renderInspector();});navTabs.add(b);tabs.addView(b,new LinearLayout.LayoutParams(0,dp(52),1));}root.addView(tabs);
         }
         status=label(message,10,MUTED,false);status.setSingleLine(true);status.setPadding(dp(10),0,dp(10),dp(3));status.setOnClickListener(v->new AlertDialog.Builder(this).setMessage(status.getText()).setPositiveButton("OK",null).show());root.addView(status,new LinearLayout.LayoutParams(-1,dp(24)));
         root.setOnApplyWindowInsetsListener((v,insets)->{v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets.consumeSystemWindowInsets();});
@@ -277,8 +279,8 @@ public final class EditorActivity extends Activity {
     /** Editing tools on the left (dimmed until a layer that supports them is selected); zoom, snapping and
      * fit on the right. These are the only timeline zoom controls. */
     void renderTimelineTools(){if(timelineTools==null)return;timelineTools.removeAllViews();EditProject.Clip c=clip();EditProject.Overlay o=overlay();boolean any=c!=null||o!=null;
-        for(String tool:new String[]{"Split","Trim","Duplicate","Transform","Animation"}){boolean supported=any&&ToolPanels.tools(c,o).stream().anyMatch(t->t.equals(tool));TextView b=headerIcon(tool,tool,v->{tab=1;panels.runTool(tool);});dim(b,supported);timelineTools.addView(b);}
-        TextView delete=headerIcon("Delete","Delete selected layer",v->deleteSelection());dim(delete,any);timelineTools.addView(delete);
+        if(any)for(String tool:new String[]{"Split","Trim","Duplicate","Transform","Animation"}){boolean supported=any&&ToolPanels.tools(c,o).stream().anyMatch(t->t.equals(tool));TextView b=headerIcon(tool,tool,v->{tab=1;panels.runTool(tool);});dim(b,supported);timelineTools.addView(b);}
+        TextView delete=headerIcon("Delete","Delete selected layer",v->deleteSelection());dim(delete,any);if(any)timelineTools.addView(delete);
         timelineTools.addView(new View(this),new LinearLayout.LayoutParams(0,1,1));
         timelineTools.addView(compactButton("−","Zoom out timeline",v->zoomTimeline(1/1.5f,Float.NaN)));
         zoomSlider=new SeekBar(this);zoomSlider.setMax(1000);zoomSlider.setContentDescription("Timeline zoom");zoomSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
@@ -380,14 +382,30 @@ public final class EditorActivity extends Activity {
     }
     View buildTimeline(){ScrollView vertical=new ScrollView(this);timelineScroll=new HorizontalScrollView(this){@Override public boolean onInterceptTouchEvent(MotionEvent e){return false;}};timelineScroll.setFillViewport(true);timelineScroll.setContentDescription("Timeline scroll");timeline=new TimelineView(this);timelineScroll.setOnScrollChangeListener((v,x,y,oldX,oldY)->timeline.invalidate());vertical.setOnScrollChangeListener((v,x,y,oldX,oldY)->timeline.invalidate());timelineScroll.addView(timeline,new HorizontalScrollView.LayoutParams(-2,Math.round(timeline.contentHeight())));timelineScroll.setHorizontalScrollBarEnabled(false);timelineScroll.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{if(r-l!=or-ol)timelineScroll.post(()->{if(timeline!=null){timeline.requestLayout();timeline.syncScroll();}});});vertical.addView(timelineScroll);return vertical;}
     EditProject.Clip clip(){return selected<0||selected>=project.clips.size()?null:project.clips.get(selected);}
+    /** Reserve the phone's usable space for choosing assets; never recreate the player surface. */
+    void sizePhoneDrawer(){
+        if(phoneDrawer==null)return;boolean browse=tab==0;
+        Configuration c=getResources().getConfiguration();
+        phonePreview.getLayoutParams().height=dp(browse?80:Math.min(190,Math.max(110,c.screenHeightDp*.22f)));
+        phoneTimelineArea.getLayoutParams().height=dp(browse?88:Math.min(180,Math.max(100,c.screenHeightDp*.19f)));
+        phonePreview.requestLayout();phoneTimelineArea.requestLayout();
+        phoneTransport.setVisibility(browse?View.GONE:View.VISIBLE);
+        phoneTimelineTools.setVisibility(browse?View.GONE:View.VISIBLE);
+        if(emptyPreview!=null&&project.clips.isEmpty())emptyPreview.setText(browse?"+ Import video or images":"START YOUR FIRST CUT\n\n+ Import video or images");
+    }
     void renderInspector() {
-        if(inspector==null)return;renderTimelineTools();if(selected>=0)selectedOverlay=-1;pruneSelection();renderHeader();updateMediaSelection();if(timeline!=null)timeline.invalidate();if(previewControls!=null)previewControls.invalidate();updateJumpLabels();inspector.removeAllViews();contextualRow=null;contextualCount=0;gridRow=null;gridCount=0;
+        if(inspector==null)return;sizePhoneDrawer();renderTimelineTools();if(selected>=0)selectedOverlay=-1;pruneSelection();renderHeader();updateMediaSelection();if(timeline!=null)timeline.invalidate();if(previewControls!=null)previewControls.invalidate();updateJumpLabels();inspector.removeAllViews();contextualRow=null;contextualCount=0;gridRow=null;gridCount=0;
         for(int i=0;i<navTabs.size();i++){navTabs.get(i).setTextColor(i==tab?CYAN:TEXT);navTabs.get(i).setBackground(navBackground(i==tab));navTabs.get(i).setSelected(i==tab);for(android.graphics.drawable.Drawable icon:navTabs.get(i).getCompoundDrawables())if(icon!=null)icon.setTint(i==tab?CYAN:TEXT);}
+        if(!wideLayout&&tab==0){
+            LinearLayout title=row();title.setGravity(Gravity.CENTER_VERTICAL);title.addView(label("ADD MEDIA",13,CYAN,true),new LinearLayout.LayoutParams(0,dp(44),1));
+            TextView close=button("Done",v->{tab=1;renderInspector();});close.setContentDescription("Close media browser and return to timeline");title.addView(close,new LinearLayout.LayoutParams(dp(72),dp(44)));inspector.addView(title);
+        }else{
         LinearLayout inspectorTabs=row();inspectorTabs.setGravity(Gravity.CENTER_VERTICAL);for(int i=0;i<2;i++){final boolean settings=i==1;boolean on=settings?tab==4:tab!=4;TextView t=button(settings?"Project":"Inspector",v->{tab=settings?4:1;panels.reset();renderInspector();});t.setTextSize(13);t.setTextColor(on?TEXT:MUTED);t.setBackground(navBackground(on));inspectorTabs.addView(t,new LinearLayout.LayoutParams(0,dp(44),1));}LinearLayout.LayoutParams tabsLp=new LinearLayout.LayoutParams(-1,-2);tabsLp.bottomMargin=dp(10);inspector.addView(inspectorTabs,tabsLp);
+        }
         if(!reducedMotion&&android.animation.ValueAnimator.areAnimatorsEnabled()){inspector.animate().cancel();inspector.setAlpha(.8f);inspector.animate().alpha(1).setDuration(180).start();}else inspector.setAlpha(1);
         if(wideLayout&&(clip()!=null||overlay()!=null||multiCount()>1)){LinearLayout actions=row();TextView selectedName=label(multiCount()>1?multiCount()+" layers selected":clip()!=null?clip().name:overlay().label(),12,TEXT,true);selectedName.setSingleLine(true);selectedName.setEllipsize(android.text.TextUtils.TruncateAt.END);selectedName.setOnClickListener(v->renameSelection());inspector.addView(selectedName);actions.addView(headerIcon("Close","Deselect",v->deselect()));actions.addView(headerIcon(multiCount()>1?"Group":"Duplicate",multiCount()>1?"Group selected layers":"Duplicate",v->{if(multiCount()>1)multiAction("Group");else duplicateSelected();}));actions.addView(headerIcon("Delete","Delete",v->deleteSelection()));actions.addView(headerIcon("More","More actions",v->moreMenu()));inspector.addView(actions);}
         String[] headings={"ADD","CLIP EDITOR","GPU EFFECTS","LAYERS","PROJECT SETTINGS"};
-        TextView heading=label(headings[tab],12,CYAN,true);if(!(tab==1&&clip()==null&&overlay()==null&&multiCount()<=1)&&!(tab==0&&topTabs()))inspector.addView(heading);heading.setContentDescription(headings[tab]+". Long press and drag to dock the tool panel in wide mode.");heading.setOnLongClickListener(v->{if(uiLocked)return false;if(inspector.getParent() instanceof ScrollView){v.startDragAndDrop(ClipData.newPlainText("panel","tools"),new View.DragShadowBuilder(v),inspector.getParent(),0);return true;}return false;});
+        TextView heading=label(headings[tab],12,CYAN,true);if(!(tab==1&&clip()==null&&overlay()==null&&multiCount()<=1)&&!(tab==0&&topTabs()))if(wideLayout||tab!=0)inspector.addView(heading);heading.setContentDescription(headings[tab]+". Long press and drag to dock the tool panel in wide mode.");heading.setOnLongClickListener(v->{if(uiLocked)return false;if(inspector.getParent() instanceof ScrollView){v.startDragAndDrop(ClipData.newPlainText("panel","tools"),new View.DragShadowBuilder(v),inspector.getParent(),0);return true;}return false;});
         if(tab==0)addDrawer.render(inspector);
         else if(tab==1||tab==2)panels.render(inspector);
         else if(tab==3)layersPanel();
@@ -891,6 +909,7 @@ public final class EditorActivity extends Activity {
         }catch(Exception e){main.post(()->{exportLaunching=false;tell("Cannot prepare export: "+e.getMessage());});}});
     }
     @Override public boolean onKeyDown(int key,KeyEvent event){
+        if(key==KeyEvent.KEYCODE_BACK&&!wideLayout&&!fullscreenPreview&&tab==0){tab=1;renderInspector();return true;}
         if(key==KeyEvent.KEYCODE_BACK&&fullscreenPreview){fullscreenPreview=false;buildWorkspace();return true;}
         if(getCurrentFocus() instanceof EditText)return super.onKeyDown(key,event);
         if(event.isCtrlPressed()&&key==KeyEvent.KEYCODE_S){saveNow();return true;}

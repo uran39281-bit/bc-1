@@ -28,7 +28,7 @@ final class AddDrawer {
         for(int i=0;i<CATEGORIES.length;i++){final int index=i;String icon=i==0?"Media":i==1?"Audio":i==2?"Text":i==3?"Shapes":"Saved";
             TextView b=a.iconButton(CATEGORIES[i],v->{category=index;items=null;album="All albums";a.renderInspector();});b.setTextColor(i==category?EditorActivity.CYAN:EditorActivity.TEXT);b.setBackground(a.navBackground(i==category));b.setSelected(i==category);
             b.setCompoundDrawables(null,a.icon(icon,i==category?EditorActivity.CYAN:EditorActivity.TEXT),null,null);b.setContentDescription("Add "+CATEGORIES[i]);
-            tabs.addView(b,new LinearLayout.LayoutParams(0,a.dp(60),1));}
+            tabs.addView(b,new LinearLayout.LayoutParams(0,a.dp(a.wideLayout?60:48),1));}
         into.addView(tabs);
         content(into);
     }
@@ -67,7 +67,7 @@ final class AddDrawer {
         into.addView(a.label("PROJECT MEDIA",12,EditorActivity.CYAN,true));
         List<EditProject.Clip> items=new ArrayList<>();for(EditProject.Clip c:a.project.library)if(c.audioOnly==audio)items.add(c);
         if(items.isEmpty()){into.addView(a.note(audio?"Imported audio appears here. Drag it onto an audio row.":"Imported media appears here. Long-press a card and drag it onto the timeline."));return;}
-        into.addView(a.note("Long-press and drag onto a timeline row, or tap for options."));
+        into.addView(a.note(a.wideLayout?"Long-press and drag onto a timeline row, or tap for options.":"Tap to add • hold to drag"));
         a.binGrid=a.column();a.mediaRows(a.binGrid,items,a.wideLayout?2:3,false);into.addView(a.binGrid);
         into.addView(a.label(audio?"DEVICE AUDIO":"DEVICE GALLERY",12,EditorActivity.CYAN,true));
     }
