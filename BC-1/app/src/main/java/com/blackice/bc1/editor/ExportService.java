@@ -80,7 +80,7 @@ public final class ExportService extends Service {
             getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("plan",plan.describe()).apply();
             String engineName=intent.getStringExtra(ExportEngine.PREF_KEY);
             if(engineName==null)engineName=getSharedPreferences(PREFS,MODE_PRIVATE).getString(ExportEngine.PREF_KEY,null);
-            if(ExportEngine.parse(engineName)==ExportEngine.BC_CORE){startCore(project);return START_NOT_STICKY;}
+            if(ExportEngine.resolve(engineName,getPackageName())==ExportEngine.BC_CORE){startCore(project);return START_NOT_STICKY;}
             transformer=new Transformer.Builder(this).setAssetLoaderFactory(CompositionFactory.assetLoader(this)).setVideoMimeType(plan.codec.mime).setAudioMimeType(MimeTypes.AUDIO_AAC)
                     .setPortraitEncodingEnabled(true)
                     .setVideoFrameProcessorFactory(CompositionFactory.frameProcessor())

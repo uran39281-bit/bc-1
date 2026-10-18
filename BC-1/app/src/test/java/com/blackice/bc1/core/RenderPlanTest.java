@@ -129,5 +129,8 @@ public class RenderPlanTest {
         assertEquals(ExportEngine.MEDIA3, ExportEngine.parse("nonsense"));
         assertEquals(ExportEngine.BC_CORE, ExportEngine.parse("BC_CORE"));
         assertEquals(2, ExportEngine.labels().length);
+        assertEquals("Test builds default to ICE Lite", ExportEngine.BC_CORE, ExportEngine.resolve(null, "com.blackice.bc1.icelite"));
+        assertEquals(ExportEngine.MEDIA3, ExportEngine.resolve(null, "com.blackice.bc1.preview"));
+        assertEquals("A stored choice wins", ExportEngine.MEDIA3, ExportEngine.resolve("MEDIA3", "com.blackice.bc1.icelite"));
     }
 }

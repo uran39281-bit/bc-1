@@ -18,6 +18,12 @@ public enum ExportEngine {
         return MEDIA3;
     }
 
+    /** The stored choice, or the build's default: ICE Lite test builds (package *.icelite) default to ICE Lite. */
+    public static ExportEngine resolve(String stored, String packageName) {
+        if (stored == null) return packageName != null && packageName.endsWith(".icelite") ? BC_CORE : MEDIA3;
+        return parse(stored);
+    }
+
     public static String[] labels() {
         ExportEngine[] all = values();
         String[] labels = new String[all.length];
