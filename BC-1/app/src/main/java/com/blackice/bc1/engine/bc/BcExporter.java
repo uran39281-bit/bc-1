@@ -58,6 +58,16 @@ public final class BcExporter {
 
     public OutputSpec spec() { return spec; }
 
+    private int shownFrames, skippedFrames;
+    /** Decoded video frames sent to the GPU, and decoded frames skipped as superseded (after export). */
+    public int shownFrames() { return shownFrames; }
+    public int skippedFrames() { return skippedFrames; }
+
+    private void releaseSource(FrameSource source) {
+        if (source instanceof VideoSource) { shownFrames += ((VideoSource) source).renderedFrames(); skippedFrames += ((VideoSource) source).skippedFrames(); }
+        source.release();
+    }
+
     public void export(File output) throws Exception {
         RenderPlan plan = new RenderPlan(project, false);
         AudioPlan audioPlan = AudioPlan.of(project, false);
@@ -76,7 +86,7 @@ public final class BcExporter {
     private void renderVideo(RenderPlan plan, AudioEncoder.Encoded audio, File output) throws Exception {
         MediaFormat format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, spec.width, spec.height);
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-        format.setInteger(MediaFormat.KEY_BIT_RATE, OutputSpec.VIDEO_BITRATE);
+        format.setInteger(MediaFormat.KEY_BIT_RATE, spec.videoBitrate());
         format.setInteger(MediaFormat.KEY_FRAME_RATE, spec.frameRate);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
 
@@ -131,7 +141,7 @@ public final class BcExporter {
                 long nextMs = FrameClock.frameTimeMs(n + 1, spec.frameRate);
                 for (Iterator<Map.Entry<Integer, FrameSource>> it = sources.entrySet().iterator(); it.hasNext(); ) {
                     Map.Entry<Integer, FrameSource> e = it.next();
-                    if (plan.placements().get(e.getKey()).endMs <= nextMs) { e.getValue().release(); it.remove(); }
+                    if (plan.placements().get(e.getKey()).endMs <= nextMs) { releaseSource(e.getValue()); it.remove(); }
                 }
                 listener.onProgress(AUDIO_SHARE + (int) ((n + 1L) * (99 - AUDIO_SHARE) / frames));
             }
@@ -142,7 +152,7 @@ public final class BcExporter {
             succeeded = true;
             listener.onProgress(100);
         } finally {
-            for (FrameSource s : sources.values()) try { s.release(); } catch (Exception ignored) { }
+            for (FrameSource s : sources.values()) try { releaseSource(s); } catch (Exception ignored) { }
             if (overlays != null) overlays.release();
             if (compositor != null) compositor.release();
             if (egl != null) egl.close();

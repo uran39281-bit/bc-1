@@ -29,7 +29,7 @@ public class ProjectMigrationTest {
         EditProject.Overlay bo=back.overlays.get(0);assertEquals(2,bo.shape);assertEquals("Badge",bo.label());assertEquals(1,bo.blend);assertTrue(bo.hidden);
         assertEquals(ProjectStore.encode(p),ProjectStore.encode(back));
     }
-    @Test(expected=IllegalArgumentException.class) public void invalidFrameRateRejected(){EditProject p=new EditProject();p.frameRate=60;p.validate();}
+    @Test(expected=IllegalArgumentException.class) public void invalidFrameRateRejected(){EditProject p=new EditProject();p.frameRate=48;p.validate();}
     @Test public void attributesCopySelectivelyAndRetimeAnimation() {
         EditProject.Clip a=clip();a.x=.5f;a.effect=4;a.inMs=1000;a.motion.put(Motion.X,new Motion.Key(1500,.2f));
         EditProject.Clip b=clip();b.inMs=200;b.speed=2;

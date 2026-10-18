@@ -10,10 +10,12 @@ import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+import com.blackice.bc1.core.ExportPlanner;
 import com.blackice.bc1.core.FrameClock;
 import com.blackice.bc1.editor.EditProject;
 import com.blackice.bc1.editor.MediaImporter;
 import com.blackice.bc1.engine.bc.BcExporter;
+import com.blackice.bc1.engine.bc.EncoderCaps;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -138,6 +140,42 @@ public class BcCoreExportTest {
             assertTrue("Red base after the picture: " + Integer.toHexString(plain), Color.red(plain) > 200 && Color.green(plain) < 60);
             assertEquals(FrameClock.frameCount(1000, 25), trackSamples(out)[0]);
         } finally { out.delete(); }
+    }
+
+    @Test public void highFrameRateSourceSkipsSupersededFrames() throws Exception {
+        EditProject p = new EditProject(); p.name = "BC Core 60 fps"; p.frameRate = 60;
+        EditProject.Clip fast = new MediaImporter(context).importClip(Uri.parse(fixture("fast120.mp4")), false);
+        assertTrue("Fixture is two seconds: " + fast.sourceDurationMs, fast.sourceDurationMs >= 1990);
+        fast.name = "fast120"; fast.inMs = 0; fast.outMs = 2000; fast.sourceDurationMs = Math.max(2000, fast.sourceDurationMs);
+        p.clips.add(fast);
+        File out = new File(context.getCacheDir(), "bc-core-60-" + System.nanoTime() + ".mp4");
+        BcExporter exporter = new BcExporter(context, p, 360, new AtomicBoolean(), percent -> { });
+        exporter.export(out);
+        try {
+            int frames = FrameClock.frameCount(2000, 60);
+            assertEquals("One picture per 60 fps frame", frames, trackSamples(out)[0]);
+            // 240 source frames for 120 output frames: about half are superseded and never reach the GPU.
+            assertTrue("Shown " + exporter.shownFrames(), exporter.shownFrames() <= frames + 2);
+            assertTrue("Skipped " + exporter.skippedFrames(), exporter.skippedFrames() >= 100);
+            try (MediaMetadataRetriever r = new MediaMetadataRetriever()) {
+                r.setDataSource(out.getPath());
+                int early = center(r, 600), late = center(r, 1400);
+                assertTrue("Red half: " + Integer.toHexString(early), Color.red(early) > 200 && Color.blue(early) < 40);
+                assertTrue("Blue half: " + Integer.toHexString(late), Color.blue(late) > 200 && Color.red(late) < 40);
+            }
+            File qa = new File(context.getFilesDir(), "qa"); qa.mkdirs();
+            java.nio.file.Files.copy(out.toPath(), new File(qa, "bc-core-60fps.mp4").toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } finally { out.delete(); }
+    }
+
+    @Test public void planStepsDownOnlyWhenTheEncoderRefuses() {
+        ExportPlanner.Plan plan = EncoderCaps.plan(2160, 120, false);
+        android.util.Log.i("BC1Plan", "2160p120 request on this device → " + plan.describe() + " @ " + plan.bitrate / 1_000_000 + " Mb/s");
+        if (EncoderCaps.supports(3840, 2160, 120)) assertFalse(plan.reduced);
+        if (plan.reduced) assertTrue("Chosen preset is encodable", EncoderCaps.supports(plan.width, plan.height, plan.frameRate));
+        ExportPlanner.Plan standard = EncoderCaps.plan(1080, 30, false);
+        assertEquals("1080p30 stays the default on every test device", "1080p30", standard.label());
+        assertEquals(8_000_000, standard.bitrate);
     }
 
     @Test public void cancellationStopsAndRemovesOutput() throws Exception {

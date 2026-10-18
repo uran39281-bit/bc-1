@@ -11,6 +11,9 @@ import com.blackice.bc1.EditorActivity;
 import com.blackice.bc1.R;
 import com.blackice.bc1.core.ExportEngine;
 import com.blackice.bc1.engine.bc.BcExporter;
+import com.blackice.bc1.engine.bc.EncoderCaps;
+import com.blackice.bc1.core.ExportPlanner;
+import com.blackice.bc1.core.OutputSpec;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.*;
@@ -28,6 +31,8 @@ public final class ExportService extends Service {
     private static volatile boolean alive;
     public static boolean isRunning(){return alive;}
     private Transformer transformer;
+    /** Resolution / frame rate chosen for this export. */
+    private ExportPlanner.Plan plan;
     /** BC Core export thread (engine BC_CORE); progress is written from that thread. */
     private Thread coreThread;
     private volatile int coreProgress=-1;
@@ -37,10 +42,10 @@ public final class ExportService extends Service {
     private final ProgressHolder progress=new ProgressHolder();
     private final Runnable poll=new Runnable(){@Override public void run(){
         if(copying || finished)return;
-        if(coreThread!=null){update(coreProgress<0?"Preparing export…":"Exporting "+coreProgress+"% • BC Core",coreProgress);main.postDelayed(this,500);return;}
+        if(coreThread!=null){update(coreProgress<0?"Preparing export…":"Exporting "+coreProgress+"% • BC Core • "+plan.label(),coreProgress);main.postDelayed(this,500);return;}
         if(transformer==null)return;
         int state=transformer.getProgress(progress);
-        update(state==Transformer.PROGRESS_STATE_AVAILABLE?"Exporting "+progress.progress+"%":"Preparing export…",state==Transformer.PROGRESS_STATE_AVAILABLE?progress.progress:-1);
+        update(state==Transformer.PROGRESS_STATE_AVAILABLE?"Exporting "+progress.progress+"% • "+plan.label():"Preparing export…",state==Transformer.PROGRESS_STATE_AVAILABLE?progress.progress:-1);
         main.postDelayed(this,500);
     }};
     @Override public IBinder onBind(Intent intent){return null;}
@@ -60,6 +65,11 @@ public final class ExportService extends Service {
             EditProject project=ProjectStore.decode(new String(java.nio.file.Files.readAllBytes(new File(path).toPath()),StandardCharsets.UTF_8));
             new File(path).delete();
             output=new File(getCacheDir(),"bc1-export-"+System.currentTimeMillis()+".mp4");
+            // Resolution and frame rate the device can actually encode (may step down from the request).
+            int shortEdge=intent.getIntExtra(ExportPlanner.PREF_RESOLUTION,getSharedPreferences(PREFS,MODE_PRIVATE).getInt(ExportPlanner.PREF_RESOLUTION,OutputSpec.EXPORT_SHORT_EDGE));
+            plan=EncoderCaps.plan(shortEdge,project.frameRate,project.portrait);
+            project.frameRate=plan.frameRate;
+            getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("plan",plan.describe()).apply();
             String engineName=intent.getStringExtra(ExportEngine.PREF_KEY);
             if(engineName==null)engineName=getSharedPreferences(PREFS,MODE_PRIVATE).getString(ExportEngine.PREF_KEY,null);
             if(ExportEngine.parse(engineName)==ExportEngine.BC_CORE){startCore(project);return START_NOT_STICKY;}
@@ -67,12 +77,12 @@ public final class ExportService extends Service {
                     .setPortraitEncodingEnabled(true)
                     .setVideoFrameProcessorFactory(CompositionFactory.frameProcessor())
                     .setEncoderFactory(new DefaultEncoderFactory.Builder(this).setEnableFallback(false)
-                            .setRequestedVideoEncoderSettings(new VideoEncoderSettings.Builder().setBitrate(8_000_000).build()).build())
+                            .setRequestedVideoEncoderSettings(new VideoEncoderSettings.Builder().setBitrate(plan.bitrate).build()).build())
                     .addListener(new Transformer.Listener(){
                         @Override public void onCompleted(Composition c,ExportResult result) {publish();}
                         @Override public void onError(Composition c,ExportResult r,ExportException e) {exportFailed("encoding",e);}
                     }).build();
-            transformer.start(CompositionFactory.build(this,project,true),output.getAbsolutePath());main.post(poll);
+            transformer.start(CompositionFactory.buildAtHeight(this,project,plan.shortEdge),output.getAbsolutePath());main.post(poll);
         } catch(Exception e) {exportFailed("preparation",e);}
         return START_NOT_STICKY;
     }
@@ -81,7 +91,7 @@ public final class ExportService extends Service {
         final File target=output;
         coreThread=new Thread(()->{
             try {
-                new BcExporter(this,project,com.blackice.bc1.core.OutputSpec.EXPORT_SHORT_EDGE,cancelled,p->coreProgress=p).export(target);
+                new BcExporter(this,project,plan.shortEdge,cancelled,p->coreProgress=p).export(target);
                 main.post(()->{if(!cancelled.get()&&!finished)publish();});
             } catch(CancellationException ignored) {
             } catch(Throwable t) {
@@ -117,7 +127,7 @@ public final class ExportService extends Service {
             } catch(Exception e) {error=e;}
             final Exception failure=error;
             main.post(()->{if(failure!=null&&!cancelled.get())recordFailure("saving",failure);
-                finish(cancelled.get()?"Export cancelled":failure==null?"MP4 saved • 1080p / up to 30 fps":"Save failed: "+failure.getMessage(),failure==null&&!cancelled.get());});
+                finish(cancelled.get()?"Export cancelled":failure==null?"MP4 saved • "+(plan==null?"":plan.describe()):"Save failed: "+failure.getMessage(),failure==null&&!cancelled.get());});
         });
     }
     private void cancelExport() {

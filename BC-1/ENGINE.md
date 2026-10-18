@@ -38,14 +38,29 @@ editor/OverlayPainter   text/shape/image overlay drawing shared by both engines
    point, and buffered audio is interleaved up to each video timestamp. There is no race between two
    encoders feeding one muxer.
 
-Output matches the Media3 path: H.264 8 Mb/s + AAC 128 kb/s, 1080p (portrait encoded as 1080×1920),
-project frame rate (24/25/30). Each timeline frame produces exactly one encoded picture.
+Each timeline frame produces exactly one encoded picture. Audio is AAC 128 kb/s, 48 kHz stereo.
+
+## Resolution, frame rate and bitrate
+
+- **Setup → Export resolution:** 1080p, 1440p or 2160p (4K). **Setup → Frame rate:** 24, 25, 30, 50, 60
+  or 120 fps (also the timeline frame grid). Both engines honour these.
+- **Bitrate** scales with the frame: 8 Mb/s at 1080p30, ~25 Mb/s at 1440p60, ~56 Mb/s at 4K60,
+  ~97 Mb/s at 4K120 (`ExportPlanner.videoBitrate`).
+- **Device check.** Before exporting, `EncoderCaps` asks the phone's H.264 encoders what they can do and
+  `ExportPlanner` picks the first supported preset: the requested one, then the same size down to half
+  the frame rate (never below 30), then smaller sizes at the full rate, then the rest.
+  4K120 → 4K60 → 1440p120 → 1080p120 → … The export status says when it stepped down.
+- **High-fps sources.** The decoder looks one frame ahead and never sends superseded frames to the GPU,
+  so a 120 fps clip in a 30 fps export renders one source frame in four.
+- Exports need not run in real time: 4K120 may take several times the clip length on a phone.
 
 ## Known differences from the Media3 path
 
 - Letterbox bars of upper layers are transparent (lower layers show through).
 - Audio speed changes pitch (linear resampling). A pitch-preserving time stretch is a later stage.
-- Preview still uses Media3/ExoPlayer; BC Core is export-only in this phase.
+- Preview still uses Media3/ExoPlayer at up to 1080p; BC Core is export-only in this phase.
+- 4K120 itself is verified only on real hardware; the CI emulator verifies 60 fps output from a 120 fps
+  source, the planner on its own encoder list, and the planner rules in unit tests.
 
 ## Verification
 

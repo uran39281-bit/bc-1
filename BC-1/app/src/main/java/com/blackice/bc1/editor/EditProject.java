@@ -15,7 +15,7 @@ public final class EditProject {
     public final List<Clip> clips = new ArrayList<>();
     public final List<Overlay> overlays = new ArrayList<>();
     public Music music;
-    /** Editor frame rate: timeline frame grid, nudging and export cadence. */
+    /** Editor frame rate: timeline frame grid, nudging and export cadence (24–120 fps). */
     public int frameRate = 30;
     /** Row metadata for tracks 0–7; clips keep their track numbers, so older projects map directly. */
     public final Track[] tracks = new Track[8];
@@ -141,7 +141,7 @@ public final class EditProject {
             throw new IllegalArgumentException("Invalid project identity.");
         if(clips.size()>100 || overlays.size()>20) throw new IllegalArgumentException("Preview supports up to 100 clips and 20 overlays.");
         if(previewHeight!=360 && previewHeight!=540 && previewHeight!=1080) throw new IllegalArgumentException("Invalid preview resolution.");
-        if(frameRate!=24&&frameRate!=25&&frameRate!=30) throw new IllegalArgumentException("Use 24, 25 or 30 fps.");
+        if(frameRate!=24&&frameRate!=25&&frameRate!=30&&frameRate!=50&&frameRate!=60&&frameRate!=120) throw new IllegalArgumentException("Use 24, 25, 30, 50, 60 or 120 fps.");
         for(Track t:tracks) if(t==null||t.name==null||t.name.isEmpty()||t.name.length()>60) throw new IllegalArgumentException("Every layer needs a name of up to 60 characters.");
         if(markers.size()>500) throw new IllegalArgumentException("Use at most 500 markers.");
         for(int i=0;i<markers.size();i++) if(markers.get(i)<0||(i>0&&markers.get(i)<=markers.get(i-1))) throw new IllegalArgumentException("Markers must be distinct times from zero.");

@@ -70,3 +70,18 @@ assert int(video['nb_read_frames'])==105, video['nb_read_frames']
 assert abs(float(video['duration'])-float(audio['duration']))<.15, (video['duration'],audio['duration'])
 print('Independent BC Core MP4 check passed: H.264 1920x1080 105 frames + AAC 48 kHz stereo, synchronized')
 PYVERIFY
+
+# BC Core 60 fps export of a 120 fps source: exact frame count and rate, decoded independently.
+FPS_MP4="BC-1/app/build/reports/androidTests/qa/bc-core-60fps.mp4"
+ffmpeg -v error -xerror -i "$FPS_MP4" -f null -
+ffprobe -v error -count_frames -show_streams -show_format -of json "$FPS_MP4" > "${FPS_MP4}.ffprobe.json"
+python3 - "${FPS_MP4}.ffprobe.json" <<'PYVERIFY'
+import json,sys
+report=json.load(open(sys.argv[1]))
+video=next(s for s in report['streams'] if s['codec_type']=='video')
+assert video['codec_name']=='h264' and (video['width'],video['height'])==(640,360), video
+assert int(video['nb_read_frames'])==120, video['nb_read_frames']
+num,den=map(int,video['avg_frame_rate'].split('/'))
+assert abs(num/den-60)<0.5, video['avg_frame_rate']
+print('Independent BC Core 60 fps check passed: 120 frames at', video['avg_frame_rate'])
+PYVERIFY

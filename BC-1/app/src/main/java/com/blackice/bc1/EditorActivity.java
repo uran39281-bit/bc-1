@@ -356,9 +356,12 @@ public final class EditorActivity extends Activity {
             select("Project canvas",new String[]{"Landscape 16:9","Portrait 9:16"},project.portrait?1:0,index->{remember();project.portrait=index==1;changed("Project aspect updated");});
             select("Preview resolution (short edge)",new String[]{"360p • Performance","540p • Balanced","1080p • Quality"},project.previewHeight==360?0:project.previewHeight==540?1:2,index->{remember();project.previewHeight=new int[]{360,540,1080}[index];changed("Preview quality updated");});
             addAction("Workspace layout: "+new String[]{"Auto • phone / tablet / DeX","Phone portrait","Wide tablet / DeX"}[mode.ordinal()],()->chooseMode());
-            select("Frame rate",new String[]{"24 fps","25 fps","30 fps"},project.frameRate==24?0:project.frameRate==25?1:2,index->edit("Frame rate updated",()->project.frameRate=new int[]{24,25,30}[index]));
+            {int[] rates=com.blackice.bc1.core.ExportPlanner.FRAME_RATES;String[] rateLabels=new String[rates.length];int rateIndex=2;
+            for(int i=0;i<rates.length;i++){rateLabels[i]=rates[i]+" fps";if(rates[i]==project.frameRate)rateIndex=i;}
+            select("Frame rate",rateLabels,rateIndex,index->edit("Frame rate updated",()->project.frameRate=rates[index]));}
             {android.content.SharedPreferences exportPrefs=getSharedPreferences(ExportService.PREFS,MODE_PRIVATE);
             com.blackice.bc1.core.ExportEngine engine=com.blackice.bc1.core.ExportEngine.parse(exportPrefs.getString(com.blackice.bc1.core.ExportEngine.PREF_KEY,null));
+            select("Export resolution",com.blackice.bc1.core.ExportPlanner.RESOLUTION_LABELS,com.blackice.bc1.core.ExportPlanner.resolutionIndex(exportPrefs.getInt(com.blackice.bc1.core.ExportPlanner.PREF_RESOLUTION,1080)),index->{if(exporting()){tell("Wait for the current export to finish.");renderInspector();return;}exportPrefs.edit().putInt(com.blackice.bc1.core.ExportPlanner.PREF_RESOLUTION,com.blackice.bc1.core.ExportPlanner.SHORT_EDGES[index]).apply();tell("Export resolution: "+com.blackice.bc1.core.ExportPlanner.RESOLUTION_LABELS[index]);renderInspector();});
             select("Export engine",com.blackice.bc1.core.ExportEngine.labels(),engine.ordinal(),index->{if(exporting()){tell("Wait for the current export to finish.");renderInspector();return;}exportPrefs.edit().putString(com.blackice.bc1.core.ExportEngine.PREF_KEY,com.blackice.bc1.core.ExportEngine.values()[index].name()).apply();tell("Export engine: "+com.blackice.bc1.core.ExportEngine.values()[index].label);renderInspector();});}
             addAction("Lock editing and layout: "+(uiLocked?"ON":"OFF"),this::toggleLock);
             addAction("Preview / timeline space",this::chooseSpace);
@@ -369,7 +372,7 @@ public final class EditorActivity extends Activity {
             addAction("Projects / New / Rename",()->projectsMenu());
             addAction("Export diagnostics",()->exportDiagnostics());
             addAction("Open v0.3 effects lab",()->startActivity(new Intent(this,WorkbenchActivity.class)));
-            inspector.addView(note("BC-1 v1.0.5\nExport: H.264 MP4 + AAC, 1080p, up to 30 fps. Lower-rate sources keep their cadence.\nSpace: play • Ctrl+Z/Y: undo/redo • Ctrl+S: save\nS: split • arrows: frame step • Ctrl+D: duplicate\nCtrl+wheel: zoom • Shift+wheel: scroll • right-click: clip menu\n3D Page Curl remains excluded."));
+            inspector.addView(note("BC-1 v1.0.5\nExport: H.264 MP4 + AAC, 1080p to 4K, 24 to 120 fps (device permitting). Lower-rate sources keep their cadence.\nSpace: play • Ctrl+Z/Y: undo/redo • Ctrl+S: save\nS: split • arrows: frame step • Ctrl+D: duplicate\nCtrl+wheel: zoom • Shift+wheel: scroll • right-click: clip menu\n3D Page Curl remains excluded."));
     }
     /** Layer rows, topmost first: text/shape/image layers, video layers 3–1, the main sequence, then audio. */
     java.util.List<int[]> layerRows(){
@@ -805,8 +808,15 @@ public final class EditorActivity extends Activity {
     void exportMenu() {
         if(exporting()){new AlertDialog.Builder(this).setTitle("Cancel current export?").setMessage(getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getString("status","Export running")).setPositiveButton("Cancel export",(d,w)->startService(new Intent(this,ExportService.class).setAction(ExportService.ACTION_CANCEL))).setNegativeButton("Keep exporting",null).show();return;}
         if(loading||importing)return;if(project.clips.isEmpty()){tell("Import at least one video or image before exporting.");return;}
-        new AlertDialog.Builder(this).setTitle("Export MP4").setMessage(project.name+"\n"+(project.portrait?"1080 × 1920":"1920 × 1080")+" • H.264 + AAC • up to 30 fps\n"+clock(project.durationMs())+"\n\nChoose where to save the finished video. Export can continue in the background.")
+        new AlertDialog.Builder(this).setTitle("Export MP4").setMessage(project.name+"\n"+exportSummary()+"\n"+clock(project.durationMs())+"\n\nChoose where to save the finished video. Export can continue in the background.")
                 .setPositiveButton("Choose destination",(d,w)->{Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT).setType("video/mp4").addCategory(Intent.CATEGORY_OPENABLE).putExtra(Intent.EXTRA_TITLE,project.name.replaceAll("[^a-zA-Z0-9 ._-]","_")+".mp4");startActivityForResult(intent,EXPORT);}).setNegativeButton("Cancel",null).show();
+    }
+    /** Requested export size and rate; the device check at export start may step this down. */
+    String exportSummary(){
+        int edge=getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getInt(com.blackice.bc1.core.ExportPlanner.PREF_RESOLUTION,1080);
+        int[] size=com.blackice.bc1.core.ExportPlanner.size(edge,project.portrait);
+        return size[0]+" × "+size[1]+" • "+project.frameRate+" fps • H.264 + AAC • "+(com.blackice.bc1.core.ExportPlanner.videoBitrate(size[0],size[1],project.frameRate)/1_000_000)+" Mb/s"
+                +"\nIf this device cannot encode it, export steps down automatically and says so.";
     }
     void startExport(Uri destination) {
         if(exporting()){tell("An export is already running.");return;}saveNow();releasePreview();exportLaunching=true;

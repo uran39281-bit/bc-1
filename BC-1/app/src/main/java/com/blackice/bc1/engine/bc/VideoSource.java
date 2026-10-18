@@ -40,6 +40,7 @@ final class VideoSource implements FrameSource {
     private int heldIndex = -1;
     private long heldPts;
     private boolean heldEos, inputEos, outputEos, fitted;
+    private int rendered, skipped;
     private long latchedUs = -1;
 
     VideoSource(Context context, String uri, long inMs, long outMs, Compositor compositor, Handler callbacks) throws Exception {
@@ -98,40 +99,31 @@ final class VideoSource implements FrameSource {
         return preferred;
     }
 
+    /**
+     * Shows the latest decoded frame at or before {@code sourceTimeMs}. One output buffer of look-ahead
+     * decides whether a frame is superseded; superseded frames are released without rendering, so a
+     * 120 fps source exported at 30 fps sends one frame in four to the GPU instead of all four.
+     */
     @Override public int textureAt(long sourceTimeMs) throws Exception {
         long targetUs = sourceTimeMs * 1000;
-        long deadline = System.currentTimeMillis() + WAIT_MS;
         boolean changed = false;
-        while (true) {
-            if (System.currentTimeMillis() > deadline) throw new IllegalStateException("Video decoder stalled at " + sourceTimeMs + " ms");
-            if (heldIndex < 0 && !outputEos) {
-                feed();
-                int index = codec.dequeueOutputBuffer(info, 2_000);
-                if (index < 0) continue; // try again, format or buffers changed
-                if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0 && info.size == 0) {
-                    codec.releaseOutputBuffer(index, false); outputEos = true; continue;
-                }
-                heldIndex = index; heldPts = info.presentationTimeUs; heldEos = (info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0;
-                deadline = System.currentTimeMillis() + WAIT_MS;
+        while (fetch()) {
+            if (heldPts > targetUs && latchedUs >= 0) break;          // belongs to a later output frame
+            if (heldPts < targetUs - PREROLL_DROP_US && !heldEos) { // far before the in-point after a seek
+                codec.releaseOutputBuffer(heldIndex, false); heldIndex = -1; skipped++; continue;
             }
-            if (heldIndex >= 0) {
-                if (heldPts < targetUs - PREROLL_DROP_US && !heldEos) {
-                    // Far before the in-point after a seek: decode but never show.
-                    codec.releaseOutputBuffer(heldIndex, false); heldIndex = -1; continue;
-                }
-                if (heldPts <= targetUs || latchedUs < 0) {
-                    codec.releaseOutputBuffer(heldIndex, true); heldIndex = -1;
-                    awaitFrame();
-                    surfaceTexture.updateTexImage();
-                    surfaceTexture.getTransformMatrix(stMatrix);
-                    latchedUs = heldPts; changed = true;
-                    if (heldEos) outputEos = true;
-                    if (latchedUs >= targetUs) break;
-                    continue;
-                }
-                break; // next frame belongs to a later output frame
+            int candidate = heldIndex; long candidatePts = heldPts; boolean candidateEos = heldEos;
+            heldIndex = -1;
+            if (!candidateEos && candidatePts <= targetUs && fetch() && heldPts <= targetUs) {
+                codec.releaseOutputBuffer(candidate, false); skipped++; // a later frame also fits
+                continue;
             }
-            if (outputEos) break;
+            codec.releaseOutputBuffer(candidate, true);
+            awaitFrame();
+            surfaceTexture.updateTexImage();
+            surfaceTexture.getTransformMatrix(stMatrix);
+            latchedUs = candidatePts; changed = true; rendered++;
+            break;
         }
         if (changed || !fitted) {
             if (latchedUs >= 0) compositor.fitExternal(oesTexture, stMatrix, rotation, displayAspect, target);
@@ -140,6 +132,27 @@ final class VideoSource implements FrameSource {
         }
         return target.texture;
     }
+
+    /** Ensures one decoded output buffer is held. False once the stream has no more frames. */
+    private boolean fetch() {
+        long deadline = System.currentTimeMillis() + WAIT_MS;
+        while (heldIndex < 0) {
+            if (outputEos) return false;
+            if (System.currentTimeMillis() > deadline) throw new IllegalStateException("Video decoder stalled");
+            feed();
+            int index = codec.dequeueOutputBuffer(info, 2_000);
+            if (index < 0) continue; // try again, or output format / buffers changed
+            boolean eos = (info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0;
+            if (eos) outputEos = true;
+            if (eos && info.size == 0) { codec.releaseOutputBuffer(index, false); return false; }
+            heldIndex = index; heldPts = info.presentationTimeUs; heldEos = eos;
+        }
+        return true;
+    }
+
+    /** Frames sent to the GPU / decoded but never shown (for tests and diagnostics). */
+    int renderedFrames() { return rendered; }
+    int skippedFrames() { return skipped; }
 
     private void feed() {
         while (!inputEos) {
