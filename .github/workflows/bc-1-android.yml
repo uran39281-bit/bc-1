@@ -7,6 +7,10 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+# A newer push to the same branch supersedes the running checks (and their published logs).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest
