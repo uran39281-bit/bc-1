@@ -120,13 +120,17 @@ public class LivePreviewTest {
         LivePreview live = new LivePreview(context);
         try (Reader reader = new Reader(640, 360)) {
             EditProject p = project();
+            java.util.concurrent.LinkedBlockingQueue<Long> frames = new java.util.concurrent.LinkedBlockingQueue<>();
+            live.setFrameListener((t, ms) -> frames.add(t));
             for (int i = 0; i < 5; i++) live.request(ProjectStore.snapshot(p), 1000 + i); // several, as a scrub would
             Thread.sleep(300);
+            assertTrue("Nothing renders without a surface", frames.isEmpty());
             live.attach(reader.reader.getSurface());
+            assertEquals("The newest request is drawn once the surface arrives", Long.valueOf(1004), frames.poll(15, java.util.concurrent.TimeUnit.SECONDS));
             int[] red = reader.centre();
             assertTrue("Red clip after attach: " + red[0] + "," + red[1] + "," + red[2], red[0] > 200 && red[2] < 50);
             live.request(ProjectStore.snapshot(p), 3000); // and later requests still render
-            Thread.sleep(800);
+            assertEquals(Long.valueOf(3000), frames.poll(15, java.util.concurrent.TimeUnit.SECONDS));
             int[] blue = reader.centre();
             assertTrue("Blue clip at 3 s: " + blue[0] + "," + blue[2], blue[2] > 200 && blue[0] < 50);
             assertNull(live.lastError());

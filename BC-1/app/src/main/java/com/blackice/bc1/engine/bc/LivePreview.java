@@ -81,12 +81,16 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     }
 
     @Override public void onSurfaceTextureAvailable(SurfaceTexture st, int w, int h) {
-        runOnGl(() -> bind(new Surface(st), st));
+        gl.post(() -> bind(new Surface(st), st)); // queued ahead of the redraw below; the UI thread never waits
         Request last = latest;
         if (last != null) request(last.project, last.timeMs);
     }
     @Override public void onSurfaceTextureSizeChanged(SurfaceTexture st, int w, int h) { }
-    @Override public boolean onSurfaceTextureDestroyed(SurfaceTexture st) { runOnGl(this::unbind); return true; }
+    /** Returns false: the render thread releases the SurfaceTexture after its last frame, so a frame in flight never draws into a dead surface. */
+    @Override public boolean onSurfaceTextureDestroyed(SurfaceTexture st) {
+        if (!gl.post(this::unbind)) st.release();
+        return false;
+    }
     @Override public void onSurfaceTextureUpdated(SurfaceTexture st) { }
 
     private void bind(Surface target, SurfaceTexture st) {
@@ -100,7 +104,8 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
         if (overlays != null) { overlays.release(); overlays = null; }
         if (compositor != null) { compositor.release(); compositor = null; }
         if (egl != null) { egl.close(); egl = null; }
-        if (surfaceTexture != null && surface != null) surface.release(); // TextureView owns the SurfaceTexture
+        if (surface != null) surface.release();
+        if (surfaceTexture != null) surfaceTexture.release(); // handed over by onSurfaceTextureDestroyed
         surface = null; surfaceTexture = null; width = height = 0;
     }
 
