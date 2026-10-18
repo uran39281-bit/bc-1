@@ -271,6 +271,15 @@ public class BcCoreExportTest {
         assertEquals(320, e.largestWidth);
     }
 
+    @Test public void eightLayerBenchmarkRuns() throws Exception {
+        // A short run on the emulator's software codecs: checks the full 8-layer path and logs speed.
+        com.blackice.bc1.engine.bc.EngineBenchmark.Result r = com.blackice.bc1.engine.bc.EngineBenchmark.run(context, 8, 60, 1000, new AtomicBoolean(), p -> { });
+        android.util.Log.i("BC1Bench", r.describe());
+        assertEquals(60, r.frames);
+        assertTrue(r.exportFps() > 0);
+        assertTrue(r.describe().contains("8 layers × 1080p60"));
+    }
+
     @Test public void cancellationStopsAndRemovesOutput() throws Exception {
         EditProject p = acceptance();
         AtomicBoolean cancel = new AtomicBoolean();

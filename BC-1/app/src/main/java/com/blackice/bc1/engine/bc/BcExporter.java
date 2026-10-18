@@ -52,6 +52,7 @@ public final class BcExporter {
     private final Listener listener;
     private int budget = -1;
     private int passesUsed, budgetUsed, shownFrames, skippedFrames;
+    private boolean directUsed;
 
     /** Export exactly as planned (codec, size, frame rate). The project's frame rate is set to the plan's. */
     public BcExporter(Context context, EditProject project, ExportPlanner.Plan plan, AtomicBoolean cancelled, Listener listener) {
@@ -80,6 +81,8 @@ public final class BcExporter {
     /** Results of the last export: render passes, decoder budget used. */
     public int passes() { return passesUsed; }
     public int budget() { return budgetUsed; }
+    /** Whether layers were drawn straight from decoder textures (no per-layer copy). */
+    public boolean directDrawing() { return directUsed; }
     /** Decoded video frames sent to the GPU, and decoded frames skipped as superseded. */
     public int shownFrames() { return shownFrames; }
     public int skippedFrames() { return skippedFrames; }
@@ -158,7 +161,7 @@ public final class BcExporter {
         Compositor compositor = null;
         MediaMuxer muxer = null;
         Map<Integer, FrameSource> sources = new HashMap<>();
-        FrameSource baseSource = null;
+        VideoSource baseSource = null;
         OverlayLayer overlays = null;
         boolean succeeded = false;
         try {
@@ -167,10 +170,11 @@ public final class BcExporter {
             encoder.start();
             egl = new EglCore(input);
             compositor = new Compositor(context, spec.width, spec.height);
+            directUsed = compositor.drawsExternal();
             if (last) overlays = new OverlayLayer(context, spec.width, spec.height);
             muxer = new MediaMuxer(output.getPath(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
             Mux mux = new Mux(muxer, audio);
-            if (base != null) baseSource = new VideoSource(context, Uri.fromFile(base).toString(), 0, spec.durationMs + 1000, compositor);
+            if (base != null) baseSource = new VideoSource(context, Uri.fromFile(base).toString(), 0, spec.durationMs + 1000, compositor, true);
 
             int frames = spec.frameCount();
             for (int n = 0; n < frames; n++) {
@@ -178,9 +182,8 @@ public final class BcExporter {
                 long timeUs = FrameClock.frameTimeUs(n, spec.frameRate);
                 long timeMs = timeUs / 1000;
                 List<RenderPlan.LayerDraw> layers = renderPlan.layersAt(timeMs, pass[0], pass[1]);
-                // Decode first (fit passes use their own framebuffers), then composite.
-                int baseTexture = baseSource == null ? 0 : baseSource.textureAtUs(timeUs + 100); // the intermediate holds this exact frame
-                int[] textures = new int[layers.size()];
+                // Phase 1: every source picks its frame and starts delivery, so all decoders work at once.
+                FrameSource[] frame = new FrameSource[layers.size()];
                 for (int i = 0; i < layers.size(); i++) {
                     RenderPlan.LayerDraw d = layers.get(i);
                     FrameSource source = sources.get(d.placementIndex);
@@ -196,11 +199,16 @@ public final class BcExporter {
                         }
                         sources.put(d.placementIndex, source);
                     }
-                    textures[i] = source.textureAt(d.sourceTimeMs);
+                    frame[i] = source;
+                    source.prepare(d.sourceTimeMs * 1000);
                 }
+                if (baseSource != null) baseSource.prepare(timeUs + 100); // the intermediate holds this exact frame
+                // Phase 2: take the delivered frames.
+                for (FrameSource source : frame) source.latch();
+                if (baseSource != null) baseSource.latch();
                 compositor.beginFrame();
-                if (baseSource != null) compositor.drawPlain(baseTexture);
-                for (int i = 0; i < layers.size(); i++) compositor.drawLayer(layers.get(i), textures[i]);
+                if (baseSource != null) compositor.drawPlain(baseSource.texture());
+                for (int i = 0; i < layers.size(); i++) frame[i].draw(compositor, layers.get(i));
                 if (overlays != null) {
                     List<EditProject.Overlay> active = renderPlan.overlaysAt(timeMs);
                     if (!active.isEmpty()) compositor.drawOverlay(overlays.texture(active, timeMs));

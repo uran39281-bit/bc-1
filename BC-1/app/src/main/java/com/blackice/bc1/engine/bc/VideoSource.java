@@ -61,10 +61,15 @@ final class VideoSource implements FrameSource {
     private boolean frameAvailable;
     private Out held;
     private boolean outputEos, fitted;
-    private long latchedUs = -1;
+    private long latchedUs = -1, pendingUs = -1;
     private int rendered, skipped;
 
     VideoSource(Context context, String uri, long inMs, long outMs, Compositor compositor) throws Exception {
+        this(context, uri, inMs, outMs, compositor, !compositor.drawsExternal());
+    }
+
+    /** @param copy keep a fitted frame-sized copy (needed for full-frame use or without direct drawing) */
+    VideoSource(Context context, String uri, long inMs, long outMs, Compositor compositor, boolean copy) throws Exception {
         this.compositor = compositor;
         extractor.setDataSource(context, Uri.parse(uri), null);
         int track = -1; MediaFormat format = null;
@@ -88,7 +93,7 @@ final class VideoSource implements FrameSource {
         surfaceTexture = new SurfaceTexture(oesTexture);
         surfaceTexture.setOnFrameAvailableListener(st -> { synchronized (frameLock) { frameAvailable = true; frameLock.notifyAll(); } }, handler);
         surface = new Surface(surfaceTexture);
-        target = new GlKit.Target(compositor.width, compositor.height);
+        target = copy ? new GlKit.Target(compositor.width, compositor.height) : null;
 
         Exception last = null; boolean resources = false;
         for (String name : decoders(format.getString(MediaFormat.KEY_MIME))) {
@@ -155,16 +160,16 @@ final class VideoSource implements FrameSource {
     }
 
     /**
-     * Shows the latest decoded frame at or before {@code sourceTimeMs}. One output buffer of look-ahead
-     * decides whether a frame is superseded; superseded frames are released without rendering, so a
-     * 120 fps source exported at 30 fps sends one frame in four to the GPU instead of all four.
+     * Picks the latest decoded frame at or before {@code targetUs} and hands it to the SurfaceTexture
+     * without waiting. One output buffer of look-ahead decides whether a frame is superseded; superseded
+     * frames are released without rendering, so a 120 fps source exported at 30 fps sends one frame in
+     * four to the GPU instead of all four.
      */
-    @Override public int textureAt(long sourceTimeMs) throws Exception { return textureAtUs(sourceTimeMs * 1000); }
-
-    @Override public int textureAtUs(long targetUs) throws Exception {
-        boolean changed = false;
+    @Override public void prepare(long targetUs) throws Exception {
+        if (pendingUs >= 0) return;
+        long shownUs = latchedUs;
         while (fetch()) {
-            if (held.ptsUs > targetUs && latchedUs >= 0) break;          // belongs to a later output frame
+            if (held.ptsUs > targetUs && shownUs >= 0) break;            // belongs to a later output frame
             if (held.ptsUs < targetUs - PREROLL_DROP_US && !held.eos) { // far before the in-point after a seek
                 codec.releaseOutputBuffer(held.index, false); held = null; skipped++; continue;
             }
@@ -174,19 +179,41 @@ final class VideoSource implements FrameSource {
                 continue;
             }
             codec.releaseOutputBuffer(candidate.index, true);
+            pendingUs = candidate.ptsUs; rendered++;
+            break;
+        }
+    }
+
+    /** Waits for the prepared frame to reach the texture (all layers' frames arrive in parallel). */
+    @Override public void latch() throws Exception {
+        boolean changed = false;
+        if (pendingUs >= 0) {
             awaitFrame();
             surfaceTexture.updateTexImage();
             surfaceTexture.getTransformMatrix(stMatrix);
-            latchedUs = candidate.ptsUs; changed = true; rendered++;
-            break;
+            latchedUs = pendingUs; pendingUs = -1; changed = true;
         }
-        if (changed || !fitted) {
+        if (target != null && (changed || !fitted)) {
             if (latchedUs >= 0) compositor.fitExternal(oesTexture, stMatrix, rotation, displayAspect, target);
             else { target.bind(); GLES30.glClearColor(0, 0, 0, 0); GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT); }
             fitted = true;
         }
+    }
+
+    /** Direct mode samples the decoder texture in the layer shader; no intermediate copy per frame. */
+    @Override public void draw(Compositor compositor, com.blackice.bc1.core.RenderPlan.LayerDraw layer) {
+        if (target != null) compositor.drawLayer(layer, target.texture);
+        else if (latchedUs >= 0) compositor.drawLayerExternal(layer, oesTexture, stMatrix, rotation, displayAspect);
+    }
+
+    /** Fitted copy for full-frame use; only available when the source was opened with a copy target. */
+    @Override public int texture() {
+        if (target == null) throw new IllegalStateException("Source opened for direct drawing");
         return target.texture;
     }
+
+    /** Convenience for full-frame sources: prepare, latch and return the fitted texture. */
+    int textureAtUs(long targetUs) throws Exception { prepare(targetUs); latch(); return texture(); }
 
     /** Ensures one decoded output buffer is held. False once the stream has no more frames. */
     private boolean fetch() throws Exception {
@@ -226,6 +253,6 @@ final class VideoSource implements FrameSource {
         extractor.release();
         surface.release(); surfaceTexture.release();
         GLES30.glDeleteTextures(1, new int[]{oesTexture}, 0);
-        target.release();
+        if (target != null) target.release();
     }
 }

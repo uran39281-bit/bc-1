@@ -52,16 +52,54 @@ final class Compositor {
     final int width, height;
     private final GlKit.Quad quad;
     private final GlKit.Program fitExternal, fit2d, layer, overlay;
+    /** Layer shader reading the decoder's external texture directly; null if the GPU lacks ESSL 3 external sampling. */
+    private final GlKit.Program layerExternal;
 
     Compositor(Context context, int width, int height) throws IOException {
         this.width = width; this.height = height;
         quad = new GlKit.Quad();
         fitExternal = new GlKit.Program(FIT_VERTEX, FIT_EXTERNAL);
         fit2d = new GlKit.Program(FIT_VERTEX, FIT_2D);
-        layer = new GlKit.Program(asset(context, "shaders/video.vert"), asset(context, "shaders/video.frag"));
+        String vertex = asset(context, "shaders/video.vert"), fragment = asset(context, "shaders/video.frag");
+        layer = new GlKit.Program(vertex, fragment);
+        GlKit.Program external = null;
+        try { external = new GlKit.Program(vertex, externalVariant(fragment)); }
+        catch (RuntimeException unsupported) { GLES30.glGetError(); } // fall back to a fitted copy per layer
+        layerExternal = external;
         overlay = new GlKit.Program(OVERLAY_VERTEX, FIT_2D);
         GlKit.check("compositor programs");
     }
+
+    /**
+     * The shipping layer shader, rewritten to sample a decoder's external texture: frame UVs are mapped
+     * through the letterbox rectangle, the rotation and the SurfaceTexture matrix, and are transparent
+     * outside the picture. Every effect, transform and transition line stays the shipping code.
+     */
+    static String externalVariant(String fragment) {
+        String header = "#version 300 es";
+        if (!fragment.startsWith(header) || !fragment.contains("uniform sampler2D uInput;"))
+            throw new IllegalStateException("Unexpected layer shader layout");
+        String body = fragment.substring(header.length())
+                .replace("uniform sampler2D uInput;",
+                        "uniform samplerExternalOES uInput;\n" +
+                        "uniform mat4 uSt;\nuniform int uRotation;\nuniform vec4 uFit;\n" +
+                        "vec4 sampleSource(vec2 uv) {\n" +
+                        "  vec2 d = (uv - uFit.xy) / uFit.zw;\n" +
+                        "  if (d.x < 0.0 || d.y < 0.0 || d.x > 1.0 || d.y > 1.0) return vec4(0.0);\n" +
+                        "  vec2 c = d;\n" +
+                        "  if (uRotation == 90) c = vec2(1.0 - d.y, d.x);\n" +
+                        "  else if (uRotation == 180) c = vec2(1.0 - d.x, 1.0 - d.y);\n" +
+                        "  else if (uRotation == 270) c = vec2(d.y, 1.0 - d.x);\n" +
+                        "  return texture(uInput, (uSt * vec4(c, 0.0, 1.0)).xy);\n" +
+                        "}")
+                .replace("texture(uInput,", "sampleSource(");
+        // The helper's own texture() call must keep the sampler.
+        body = body.replace("return sampleSource( (uSt", "return texture(uInput, (uSt");
+        return header + "\n#extension GL_OES_EGL_image_external_essl3 : require" + body;
+    }
+
+    /** True when layers can be drawn straight from decoder textures (no per-layer copy). */
+    boolean drawsExternal() { return layerExternal != null; }
 
     private static String asset(Context context, String name) throws IOException {
         try (InputStream in = context.getAssets().open(name)) {
@@ -124,30 +162,49 @@ final class Compositor {
 
     /** One layer through the shipping shader, alpha-composited over what is already drawn. */
     void drawLayer(RenderPlan.LayerDraw d, int texture) {
-        EditProject.Clip c = d.clip;
-        GLES30.glEnable(GLES30.GL_BLEND);
-        GLES30.glBlendFuncSeparate(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA, GLES30.GL_ONE, GLES30.GL_ONE_MINUS_SRC_ALPHA);
         layer.use();
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture);
-        layer.set("uInput", 0);
-        layer.set("uTexel", 1f / width, 1f / height);
-        layer.set("uAspect", (float) width / height);
-        layer.set("uTransform", d.transform.x, d.transform.y, d.transform.scale, (float) Math.toRadians(d.transform.rotation));
-        layer.set("uShape", d.transform.flipH ? -1 : 1, d.transform.aspect * (d.transform.flipV ? -1 : 1),
-                (float) Math.tan(Math.toRadians(d.transform.skewX)), (float) Math.tan(Math.toRadians(d.transform.skewY)));
-        layer.set("uAnchor", d.transform.anchorX, d.transform.anchorY);
-        layer.set("uKeyColor", ((c.keyColor >> 16) & 255) / 255f, ((c.keyColor >> 8) & 255) / 255f, (c.keyColor & 255) / 255f);
-        layer.set("uChroma", c.chroma ? 1 : 0, c.keyTolerance, c.keySoftness, c.keySpill);
-        layer.set("uEffect", d.effect);
-        layer.set("uIntensity", d.intensity);
-        layer.set("uOpacity", d.opacity);
-        layer.set("uTransition", d.transition);
-        layer.set("uRole", d.role);
-        layer.set("uTop", d.top ? 1 : 0);
-        layer.set("uProgress", d.progress);
-        quad.draw();
+        drawWith(layer, d);
         GlKit.check("layer");
+    }
+
+    /** Same, sampling a decoder's external texture directly through the letterbox and rotation. */
+    void drawLayerExternal(RenderPlan.LayerDraw d, int oesTexture, float[] stMatrix, int rotation, double displayAspect) {
+        GlKit.Program p = layerExternal;
+        p.use();
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+        GLES30.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oesTexture);
+        int[] v = GlKit.fit(width, height, displayAspect);
+        p.matrix("uSt", stMatrix);
+        p.set("uRotation", rotation);
+        p.set("uFit", v[0] / (float) width, v[1] / (float) height, v[2] / (float) width, v[3] / (float) height);
+        drawWith(p, d);
+        GLES30.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0);
+        GlKit.check("external layer");
+    }
+
+    private void drawWith(GlKit.Program program, RenderPlan.LayerDraw d) {
+        EditProject.Clip c = d.clip;
+        GLES30.glEnable(GLES30.GL_BLEND);
+        GLES30.glBlendFuncSeparate(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA, GLES30.GL_ONE, GLES30.GL_ONE_MINUS_SRC_ALPHA);
+        program.set("uInput", 0);
+        program.set("uTexel", 1f / width, 1f / height);
+        program.set("uAspect", (float) width / height);
+        program.set("uTransform", d.transform.x, d.transform.y, d.transform.scale, (float) Math.toRadians(d.transform.rotation));
+        program.set("uShape", d.transform.flipH ? -1 : 1, d.transform.aspect * (d.transform.flipV ? -1 : 1),
+                (float) Math.tan(Math.toRadians(d.transform.skewX)), (float) Math.tan(Math.toRadians(d.transform.skewY)));
+        program.set("uAnchor", d.transform.anchorX, d.transform.anchorY);
+        program.set("uKeyColor", ((c.keyColor >> 16) & 255) / 255f, ((c.keyColor >> 8) & 255) / 255f, (c.keyColor & 255) / 255f);
+        program.set("uChroma", c.chroma ? 1 : 0, c.keyTolerance, c.keySoftness, c.keySpill);
+        program.set("uEffect", d.effect);
+        program.set("uIntensity", d.intensity);
+        program.set("uOpacity", d.opacity);
+        program.set("uTransition", d.transition);
+        program.set("uRole", d.role);
+        program.set("uTop", d.top ? 1 : 0);
+        program.set("uProgress", d.progress);
+        quad.draw();
     }
 
     /** Premultiplied overlay texture over the whole frame. */
@@ -167,5 +224,5 @@ final class Compositor {
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
     }
 
-    void release() { fitExternal.release(); fit2d.release(); layer.release(); overlay.release(); quad.release(); }
+    void release() { fitExternal.release(); fit2d.release(); layer.release(); if (layerExternal != null) layerExternal.release(); overlay.release(); quad.release(); }
 }

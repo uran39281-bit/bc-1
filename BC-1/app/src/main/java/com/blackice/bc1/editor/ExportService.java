@@ -41,6 +41,8 @@ public final class ExportService extends Service {
     private Uri destination;
     private boolean copying,finished;
     private final ProgressHolder progress=new ProgressHolder();
+    /** Long exports (e.g. 15 minutes of 8-layer 1080p60) must keep running with the screen off. */
+    private PowerManager.WakeLock wakeLock;
     private final Runnable poll=new Runnable(){@Override public void run(){
         if(copying || finished)return;
         if(coreThread!=null){update(coreProgress<0?"Preparing export…":"Exporting "+coreProgress+"% • BC Core • "+plan.label(),coreProgress);main.postDelayed(this,500);return;}
@@ -56,6 +58,7 @@ public final class ExportService extends Service {
         if(ACTION_CANCEL.equals(intent.getAction())) {cancelExport();return START_NOT_STICKY;}
         if(transformer!=null || coreThread!=null || copying)return START_NOT_STICKY;
         Notification initial=notification("Preparing export…",-1);
+        if(wakeLock==null){wakeLock=getSystemService(PowerManager.class).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"BC1:export");wakeLock.setReferenceCounted(false);wakeLock.acquire(6L*60*60*1000);}
         if(Build.VERSION.SDK_INT>=35)startForeground(41,initial,ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROCESSING);
         else if(Build.VERSION.SDK_INT>=29)startForeground(41,initial,ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
         else startForeground(41,initial);
@@ -140,7 +143,7 @@ public final class ExportService extends Service {
         if(!copying)finish("Export cancelled",false);
     }
     private void finish(String message,boolean success) {
-        if(finished)return;finished=true;main.removeCallbacks(poll);
+        if(finished)return;finished=true;main.removeCallbacks(poll);releaseWakeLock();
         if(!success && destination!=null)try {android.provider.DocumentsContract.deleteDocument(getContentResolver(),destination);}catch(Exception ignored){}
         if(destination!=null)try{getContentResolver().releasePersistableUriPermission(destination,Intent.FLAG_GRANT_WRITE_URI_PERMISSION);}catch(SecurityException|IllegalArgumentException ignored){}
         if(output!=null)output.delete();
@@ -162,5 +165,6 @@ public final class ExportService extends Service {
                 .setProgress(100,Math.max(0,percent),percent<0).addAction(new Notification.Action.Builder(null,"Cancel",cancel).build()).build();
     }
     @Override public void onTimeout(int startId,int foregroundServiceType) {cancelExport();}
-    @Override public void onDestroy(){alive=false;main.removeCallbacks(poll);if(transformer!=null&&!finished)transformer.cancel();cancelled.set(true);io.shutdown();super.onDestroy();}
+    private void releaseWakeLock(){if(wakeLock!=null&&wakeLock.isHeld())wakeLock.release();wakeLock=null;}
+    @Override public void onDestroy(){releaseWakeLock();alive=false;main.removeCallbacks(poll);if(transformer!=null&&!finished)transformer.cancel();cancelled.set(true);io.shutdown();super.onDestroy();}
 }

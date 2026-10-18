@@ -373,6 +373,7 @@ public final class EditorActivity extends Activity {
             addAction("Projects / New / Rename",()->projectsMenu());
             addAction("Export diagnostics",()->exportDiagnostics());
             addAction("Device video capabilities",()->deviceVideoReport());
+            addAction("Engine benchmark (8 layers × 1080p60)",()->engineBenchmark());
             addAction("Open v0.3 effects lab",()->startActivity(new Intent(this,WorkbenchActivity.class)));
             inspector.addView(note("BC-1 v1.0.5\nExport: H.264 MP4 + AAC, 1080p to 4K, 24 to 120 fps (device permitting). Lower-rate sources keep their cadence.\nSpace: play • Ctrl+Z/Y: undo/redo • Ctrl+S: save\nS: split • arrows: frame step • Ctrl+D: duplicate\nCtrl+wheel: zoom • Shift+wheel: scroll • right-click: clip menu\n3D Page Curl remains excluded."));
     }
@@ -706,6 +707,23 @@ public final class EditorActivity extends Activity {
         addAction("Keyframes",()->motionDialog(o.motion,Math.max(0,project.playheadMs-o.startMs),o.endMs-o.startMs,new float[]{o.x,o.y,o.scale,0,o.opacity,0},false));
         addAction("Timing / advanced",()->overlayDialog(o));
         addAction("Remove overlay",()->edit("Overlay removed",()->{project.overlays.remove(o);selectedOverlay=-1;}));
+    }
+    /** Runs BC Core on a generated 8-layer 1080p60 project and reports speed and a 15-minute estimate. */
+    void engineBenchmark(){
+        if(exporting()){tell("Wait for the current export to finish.");return;}
+        java.util.concurrent.atomic.AtomicBoolean stop=new java.util.concurrent.atomic.AtomicBoolean();
+        AlertDialog running=new AlertDialog.Builder(this).setTitle("Engine benchmark").setMessage("Generating a 1080p60 test clip, then exporting 8 layers of it for 10 seconds…\nKeep the app open.")
+                .setNegativeButton("Stop",(d,w)->stop.set(true)).setCancelable(false).show();
+        new Thread(()->{String report;
+            try{report=com.blackice.bc1.engine.bc.EngineBenchmark.run(this,8,60,10_000,stop,p->main.post(()->{if(running.isShowing())running.setMessage("Exporting 8 layers × 1080p60… "+p+"%");})).describe();}
+            catch(java.util.concurrent.CancellationException e){report=null;}
+            catch(Throwable t){report="Benchmark failed: "+t;}
+            final String text=report;
+            main.post(()->{if(running.isShowing())running.dismiss();if(text==null||isDestroyed())return;
+                new AlertDialog.Builder(this).setTitle("Engine benchmark").setMessage(text)
+                    .setPositiveButton("Copy result",(d,w)->{((android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(android.content.ClipData.newPlainText("BC-1 engine benchmark",text));tell("Benchmark result copied");})
+                    .setNegativeButton("Close",null).show();});
+        },"bc1-benchmark").start();
     }
     void deviceVideoReport(){
         io.execute(()->{String report;try{report=com.blackice.bc1.engine.bc.DeviceVideoReport.build(this);}catch(RuntimeException e){report="Codec query failed: "+e.getMessage();}final String text=report;

@@ -38,6 +38,7 @@ final class ImageSource implements FrameSource {
         }
     }
 
-    @Override public int textureAt(long sourceTimeMs) { return target.texture; }
+    @Override public void draw(Compositor compositor, com.blackice.bc1.core.RenderPlan.LayerDraw layer) { compositor.drawLayer(layer, target.texture); }
+    @Override public int texture() { return target.texture; }
     @Override public void release() { target.release(); }
 }
