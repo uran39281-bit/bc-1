@@ -47,16 +47,26 @@ public final class EditorActivity extends Activity {
     ProjectStore store;
     EditProject project=new EditProject();
     Player player;
-    /** Scrubbing sends a seek per touch event; the preview player gets at most one per SEEK_INTERVAL_MS, always ending on the last position. */
-    static final long SEEK_INTERVAL_MS=90;
-    long lastSeekAt;boolean seekQueued;
+    /** Scrubbing sends a seek per touch event. The preview player gets one seek at a time: while it is still
+     * buffering a seek, newer positions only update the target, which is sent once it reports ready (and at
+     * most one per SEEK_INTERVAL_MS). Overlapping seeks made Media3 flush frames still in flight, failing with
+     * "Error processing video frames". SEEK_STALL_MS is a fallback if ready never arrives. */
+    static final long SEEK_INTERVAL_MS=90,SEEK_STALL_MS=3000;
+    long lastSeekAt;boolean seekQueued,seekInFlight;
     /** Logcat tag for preview player lifecycle, seeks and errors; CI keeps these lines in the job log. */
     static final String PREVIEW_LOG="BC1Preview";
     int previewSeeks;
-    final Runnable flushSeek=()->{seekQueued=false;if(player!=null){lastSeekAt=android.os.SystemClock.uptimeMillis();long target=seekTarget();previewSeeks++;android.util.Log.d(PREVIEW_LOG,"seek "+target+" state="+player.getPlaybackState());player.seekTo(target);}};
+    final Runnable flushSeek=new Runnable(){@Override public void run(){
+        main.removeCallbacks(this);seekQueued=false;if(player==null)return;long now=android.os.SystemClock.uptimeMillis();
+        if(seekInFlight&&now-lastSeekAt<SEEK_STALL_MS){seekQueued=true;main.postDelayed(this,SEEK_STALL_MS-(now-lastSeekAt));return;}
+        if(seekInFlight)android.util.Log.w(PREVIEW_LOG,"seek still buffering after "+(now-lastSeekAt)+" ms; sending the next one");
+        long target=seekTarget();if(!seekInFlight&&player.getCurrentPosition()==target&&player.getPlaybackState()==Player.STATE_READY)return;
+        lastSeekAt=now;seekInFlight=true;previewSeeks++;android.util.Log.d(PREVIEW_LOG,"seek "+target+" state="+player.getPlaybackState());player.seekTo(target);}};
+    /** The player finished the seek in flight: send the newest target, if any, respecting the interval. */
+    void seekSettled(){seekInFlight=false;if(!seekQueued)return;main.removeCallbacks(flushSeek);long wait=lastSeekAt+SEEK_INTERVAL_MS-android.os.SystemClock.uptimeMillis();if(wait<=0)flushSeek.run();else main.postDelayed(flushSeek,wait);}
     /** One-line preview state for test failure messages and bug reports. */
     String previewDebug(){return "player="+(player==null?"none":player.getClass().getSimpleName()+" state="+player.getPlaybackState()+" pos="+player.getCurrentPosition()+" playWhenReady="+player.getPlayWhenReady()+" error="+(player.getPlayerError()==null?"none":player.getPlayerError().getMessage()))
-        +" playhead="+project.playheadMs+" seeksSent="+previewSeeks+" seekQueued="+seekQueued+" recoveries="+previewRecoveries+" pending="+previewPending
+        +" playhead="+project.playheadMs+" seeksSent="+previewSeeks+" seekQueued="+seekQueued+" inFlight="+seekInFlight+" recoveries="+previewRecoveries+" pending="+previewPending
         +" hint="+(emptyPreview!=null&&emptyPreview.getVisibility()==View.VISIBLE?"'"+emptyPreview.getText().toString().replace('\n',' ')+"'":"hidden")+" status='"+message+"'";}
     /** Automatic preview rebuilds after a player error (e.g. a decoder that failed mid-seek), limited per window. */
     int previewRecoveries;long previewRecoveryWindow;
@@ -144,7 +154,7 @@ public final class EditorActivity extends Activity {
     boolean exporting(){return getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getBoolean("running",false)||exportLaunching;}
     boolean editable(){if(uiLocked){tell("UI locked • unlock editing in Settings");return false;}if(loading||importing){tell("Wait for the current import to finish.");return false;}if(exporting()){tell("Wait for export to finish, or cancel it to continue editing.");return false;}return true;}
     void releasePreview(){
-        main.removeCallbacks(flushSeek);seekQueued=false;
+        main.removeCallbacks(flushSeek);seekQueued=false;seekInFlight=false;
         previewPending=false;previewAutoplay=false;if(previewProxy!=null)previewProxy.cancel();
         if(player!=null){project.playheadMs=Math.min(project.durationMs(),Math.max(0,player.getCurrentPosition()));player.release();player=null;}
     }
@@ -153,12 +163,13 @@ public final class EditorActivity extends Activity {
         player=prepared;prepared.setVolume(monitorVolume);prepared.setVideoSurfaceView(surface);
         prepared.addListener(new Player.Listener(){
             @Override public void onRenderedFirstFrame(){if(player==prepared&&emptyPreview!=null)emptyPreview.setVisibility(View.GONE);}
-            @Override public void onPlayerError(PlaybackException error){android.util.Log.w(PREVIEW_LOG,"player error ("+(player==prepared?"current":"stale")+" player, recoveries="+previewRecoveries+")",error);if(player!=prepared)return;prepared.pause();main.removeCallbacks(flushSeek);
+            @Override public void onPlayerError(PlaybackException error){android.util.Log.w(PREVIEW_LOG,"player error ("+(player==prepared?"current":"stale")+" player, recoveries="+previewRecoveries+")",error);if(player!=prepared)return;prepared.pause();main.removeCallbacks(flushSeek);seekInFlight=false;
                 // A preview player can fail under rapid seeking; rebuild it at the same position (a few times per 30 s).
                 long now=android.os.SystemClock.uptimeMillis();if(now-previewRecoveryWindow>30_000){previewRecoveryWindow=now;previewRecoveries=0;}
                 if(previewRecoveries++<3){android.util.Log.i(PREVIEW_LOG,"rebuilding preview at "+project.playheadMs+" (attempt "+previewRecoveries+")");previewHint("Recovering preview…");main.postDelayed(()->{if(player==prepared)preparePreview(false);},150);return;}
                 android.util.Log.w(PREVIEW_LOG,"giving up after "+previewRecoveries+" rebuilds");tell("Preview error: "+error.getMessage());previewHint("Preview unavailable • tap to retry");}
-            @Override public void onPlaybackStateChanged(int state){if(player==prepared)android.util.Log.d(PREVIEW_LOG,"state "+state+" pos="+prepared.getCurrentPosition()+" playhead="+project.playheadMs);if(state==Player.STATE_ENDED&&player==prepared){project.playheadMs=project.durationMs();syncPosition();}}
+            @Override public void onPlaybackStateChanged(int state){if(player==prepared){android.util.Log.d(PREVIEW_LOG,"state "+state+" pos="+prepared.getCurrentPosition()+" playhead="+project.playheadMs);
+                if(seekInFlight&&state!=Player.STATE_BUFFERING&&prepared.getPlaybackState()!=Player.STATE_BUFFERING)seekSettled();}if(state==Player.STATE_ENDED&&player==prepared){project.playheadMs=project.durationMs();syncPosition();}}
         });
     }
     void preparePreview(boolean playWhenReady) {
@@ -222,11 +233,11 @@ public final class EditorActivity extends Activity {
         if(player!=null){
             player.pause();main.removeCallbacks(flushSeek);
             long now=android.os.SystemClock.uptimeMillis(),wait=lastSeekAt+SEEK_INTERVAL_MS-now;
-            if(wait<=0)flushSeek.run();else{seekQueued=true;main.postDelayed(flushSeek,wait);}
+            if(wait<=0&&!seekInFlight)flushSeek.run();else{seekQueued=true;if(!seekInFlight)main.postDelayed(flushSeek,wait);else main.postDelayed(flushSeek,Math.max(0,SEEK_STALL_MS-(now-lastSeekAt)));}
         }
         syncPosition();
     }
-    void togglePlay(){if(previewPending){previewAutoplay=!previewAutoplay;tell(previewAutoplay?"Playback will start when the preview is ready.":"Preview will stay paused when ready.");return;}if(player==null){if(project.clips.isEmpty())tell("Import a video or image first.");else preparePreview(true);return;}if(player.getPlayWhenReady())player.pause();else{if(seekQueued){main.removeCallbacks(flushSeek);flushSeek.run();}if(player.getPlaybackState()==Player.STATE_ENDED||project.playheadMs>=project.durationMs())player.seekTo(0);player.play();}}
+    void togglePlay(){if(previewPending){previewAutoplay=!previewAutoplay;tell(previewAutoplay?"Playback will start when the preview is ready.":"Preview will stay paused when ready.");return;}if(player==null){if(project.clips.isEmpty())tell("Import a video or image first.");else preparePreview(true);return;}if(player.getPlayWhenReady())player.pause();else{if(seekQueued){main.removeCallbacks(flushSeek);seekQueued=false;player.seekTo(seekTarget());}if(player.getPlaybackState()==Player.STATE_ENDED||project.playheadMs>=project.durationMs())player.seekTo(0);player.play();}}
 
     void buildWorkspace() {
         // Layout switches keep selection, playhead and zoom (fields) and the layer list's vertical scroll.
