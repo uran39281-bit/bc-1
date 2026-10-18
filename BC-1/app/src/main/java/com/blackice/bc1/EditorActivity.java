@@ -480,7 +480,7 @@ public final class EditorActivity extends Activity {
     void renderHeader(){
         if(header==null)return;EditProject.Clip c=clip();EditProject.Overlay o=overlay();int count=multiCount();
         String key=count>1?"multi"+count:c!=null?"clip"+selected+c.name:o!=null?"overlay"+selectedOverlay+o.label():"none"+project.name+wideLayout;
-        key+=":"+dirty+":"+tab;if(key.equals(headerKey))return;headerKey=key;header.removeAllViews();Configuration cfg=getResources().getConfiguration();
+        key+=":"+dirty+":"+tab+":"+addDrawer.category;if(key.equals(headerKey))return;headerKey=key;header.removeAllViews();Configuration cfg=getResources().getConfiguration();
         if(!wideLayout&&(count>1||c!=null||o!=null)){
             header.addView(compactButton("✕","Deselect",v->deselect()),new LinearLayout.LayoutParams(dp(48),dp(48)));
             TextView name=label(count>1?count+" layers selected":(c!=null?c.name:o.label()),14,TEXT,true);name.setSingleLine(true);name.setEllipsize(android.text.TextUtils.TruncateAt.END);name.setPadding(dp(8),0,dp(4),0);
@@ -497,7 +497,7 @@ public final class EditorActivity extends Activity {
         header.addView(brand,wideLayout&&cfg.screenWidthDp>=1100?new LinearLayout.LayoutParams(dp(220),-2):new LinearLayout.LayoutParams(0,-2,1));
         if(wideLayout&&cfg.screenWidthDp>=1100){
             LinearLayout sectionTabs=row();sectionTabs.setGravity(Gravity.CENTER);header.addView(sectionTabs,new LinearLayout.LayoutParams(0,dp(48),1));String[] sections={"Media","Edit","Effects","Audio","Export"};
-            for(int i=0;i<sections.length;i++){final int section=i;TextView nav=button(sections[i],v->{if(section==4){exportMenu();return;}tab=section==3?0:section;panels.reset();if(section==3)addDrawer.category=1;renderInspector();});nav.setBackground(BlackIceTheme.tab(getResources().getDisplayMetrics().density,i==tab));sectionTabs.addView(nav,new LinearLayout.LayoutParams(dp(66),dp(48)));}
+            for(int i=0;i<sections.length;i++){final int section=i;TextView nav=button(sections[i],v->{if(section==4){exportMenu();return;}tab=section==3?0:section;panels.reset();if(section==0||section==3)addDrawer.category=section==3?1:0;renderInspector();});boolean active=tab==0?(i==(addDrawer.category==1?3:0)):(i==tab&&tab<3);nav.setSelected(active);nav.setBackground(BlackIceTheme.tab(getResources().getDisplayMetrics().density,active));sectionTabs.addView(nav,new LinearLayout.LayoutParams(dp(66),dp(48)));}
         }
         if(wideLayout&&cfg.screenWidthDp>=1100){header.addView(headerIcon("Undo","Undo",v->undo(false)));header.addView(headerIcon("Redo","Redo",v->undo(true)));header.addView(headerIcon("Save","Save project",v->{saveNow();tell("Saving project…");}));}
         TextView add=button("+ Add",v->{tab=0;panels.reset();renderInspector();});add.setContentDescription("Add media, audio, text, shapes or saved elements");add.setTextColor(CYAN);header.addView(add);
