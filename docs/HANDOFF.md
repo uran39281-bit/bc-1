@@ -1,3 +1,9 @@
+# Published v1.0.5 — October 18, 2026 UTC
+
+Qualified source 7c68ae9, Actions 39098242781: 78 unit / 25 Android tests and five export checks passed, lint 0 errors / 41 warnings. See v1.0.5/QA.md. Retained signing key recovered from the existing private BC-1-v0.3-Preview-Signing-Backup.zip; local private path /root/.android/bc1-preview.keystore. Never commit or publish the key. Certificate matches v1.0.4. Signed APK v1.0.5/BC-1-v1.0.5.apk, code17. Prior notes about unavailable signing material are historical and resolved. Continue editor development in bc-1 only.
+
+---
+
 # Editor reliability follow-up — 2026-10-18
 
 Continue in `uran39281-bit/bc-1`, branch `bc-1-editor-reliability`, based on the newer v1.0.5 branch `62ef9fc`. Do not put editor changes back into Black-Ice-Emulator. Version remains 1.0.5 candidate; no replacement APK published.
