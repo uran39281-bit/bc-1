@@ -303,7 +303,7 @@ public final class EditorActivity extends Activity {
             });transport.addView(previewScrubber,new LinearLayout.LayoutParams(-1,dp(28)));
         }
         // Short wide windows keep playback and zoom on one row so the preview retains usable height.
-        if(singleRow){time.setTextSize(10);time.setMaxLines(2);LinearLayout combined=row();combined.setGravity(Gravity.CENTER_VERTICAL);combined.addView(controls,new LinearLayout.LayoutParams(0,dp(48),3));combined.addView(navigation,new LinearLayout.LayoutParams(0,dp(48),2));transport.addView(combined);return transport;}
+        if(singleRow){time.setTextSize(10);time.setMaxLines(2);LinearLayout combined=row();combined.setGravity(Gravity.CENTER_VERTICAL);combined.addView(controls,new LinearLayout.LayoutParams(0,dp(48),3));time.setLayoutParams(new LinearLayout.LayoutParams(dp(100),dp(40)));HorizontalScrollView navScroll=new HorizontalScrollView(this);navScroll.setContentDescription("Playback time and timeline navigation");navScroll.setHorizontalScrollBarEnabled(false);navScroll.addView(navigation);combined.addView(navScroll,new LinearLayout.LayoutParams(0,dp(48),2));transport.addView(combined);return transport;}
         transport.addView(controls);transport.addView(navigation);return transport;
     }
     void clipPercent(boolean volume){EditProject.Clip c=clip();if(c==null)return;percentPanel(volume?"Volume":"Opacity",volume?c.volume:c.opacity,volume?.7f:1f,value->{if(volume)c.volume=value;else c.opacity=value;});}
@@ -494,10 +494,10 @@ public final class EditorActivity extends Activity {
         ImageView logo=new ImageView(this);logo.setImageDrawable(new V1Icon("Cube",BlackIceTheme.ICE));logo.setContentDescription("Black Ice cube logo");header.addView(logo,new LinearLayout.LayoutParams(dp(36),dp(36)));
         LinearLayout brand=column();brand.setPadding(dp(5),0,dp(4),0);brand.addView(label("BLACK ICE",wideLayout?16:13,TEXT,true));brand.addView(label("EDITOR",9,MUTED,false));
         projectLabel=label(project.name+(dirty?" •":"")+"  ▾",11,TEXT,false);projectLabel.setMaxLines(1);brand.addView(projectLabel);brand.setOnClickListener(v->projectsMenu());brand.setContentDescription("Project menu");brand.setFocusable(true);brand.setMinimumHeight(dp(52));
-        header.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
+        header.addView(brand,wideLayout&&cfg.screenWidthDp>=1100?new LinearLayout.LayoutParams(dp(220),-2):new LinearLayout.LayoutParams(0,-2,1));
         if(wideLayout&&cfg.screenWidthDp>=1100){
-            String[] sections={"Media","Edit","Effects","Audio","Export"};
-            for(int i=0;i<sections.length;i++){final int section=i;TextView nav=button(sections[i],v->{if(section==4){exportMenu();return;}tab=section==3?0:section;panels.reset();if(section==3)addDrawer.category=1;renderInspector();});nav.setBackground(BlackIceTheme.tab(getResources().getDisplayMetrics().density,i==tab));header.addView(nav,new LinearLayout.LayoutParams(dp(66),dp(48)));}
+            LinearLayout sectionTabs=row();sectionTabs.setGravity(Gravity.CENTER);header.addView(sectionTabs,new LinearLayout.LayoutParams(0,dp(48),1));String[] sections={"Media","Edit","Effects","Audio","Export"};
+            for(int i=0;i<sections.length;i++){final int section=i;TextView nav=button(sections[i],v->{if(section==4){exportMenu();return;}tab=section==3?0:section;panels.reset();if(section==3)addDrawer.category=1;renderInspector();});nav.setBackground(BlackIceTheme.tab(getResources().getDisplayMetrics().density,i==tab));sectionTabs.addView(nav,new LinearLayout.LayoutParams(dp(66),dp(48)));}
         }
         if(wideLayout&&cfg.screenWidthDp>=1100){header.addView(headerIcon("Undo","Undo",v->undo(false)));header.addView(headerIcon("Redo","Redo",v->undo(true)));header.addView(headerIcon("Save","Save project",v->{saveNow();tell("Saving project…");}));}
         TextView add=button("+ Add",v->{tab=0;panels.reset();renderInspector();});add.setContentDescription("Add media, audio, text, shapes or saved elements");add.setTextColor(CYAN);header.addView(add);
