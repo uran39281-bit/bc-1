@@ -1,3 +1,9 @@
+# V1.1.1 phone media space — October 18, 2026 UTC
+
+Based on main50cd4b8, preserving the newer media bin/free-placement implementation. Source `2db3fd0f2eabe1bdb0ffbc1ca5baa6c1591b0ee2`, workflow39118809055. See `v1.1.1/QA.md` for final qualification. Phone Add reserves a large independently scrollable browser, compact preview and drop target; Done/Back restores editing and focus preferences. No project schema or engine changes. Dynamic version labels and single-line narrow-phone branding were corrected during qualification. Source branch `bc-1-phone-media-space`; old releases remain intact. Continue to investigate the historical intermittent export watchdog issue; no production-stable claim.
+
+---
+
 # V1.1 cinematic redesign preview — October 18, 2026 UTC
 
 Continue editor work in `uran39281-bit/bc-1`. Qualified source `6ff1b306876a3af2ec06d1bccf0504e43b57223c`, Actions39105942908: 78 unit / 25 Android tests; five independent export checks; lint0errors44warnings. Final phone1920-tall, desktop1920×1080 and compact780×420 screenshots reviewed. Native shared theme and responsive workspace, no project-schema/package changes. Version1.1.0/code18; retained signing certificate verified. Never publish signing material. Source branch `bc-1-v1.1-cinematic` and older branches/releases retained.
