@@ -69,7 +69,7 @@ jobs:
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: bash .github/scripts/bc1-device-checks.sh
+          script: bash -c 'set -o pipefail; mkdir -p BC-1/app/build/reports/androidTests; bash .github/scripts/bc1-device-checks.sh 2>&1 | tee BC-1/app/build/reports/androidTests/device-checks.log'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -81,9 +81,14 @@ jobs:
           TOKEN: ${{ github.token }}
         run: |
           dir=BC-1/app/build/reports/androidTests/qa
-          ls "$dir"/*.png >/dev/null 2>&1 || exit 0
+          reports=BC-1/app/build/reports/androidTests
           mkdir -p /tmp/shots
-          for f in "$dir"/*.png; do ffmpeg -v error -y -i "$f" -vf scale=540:-1 "/tmp/shots/$(basename "$f")" || true; done
+          for f in "$dir"/*.png; do [ -e "$f" ] && ffmpeg -v error -y -i "$f" -vf scale=540:-1 "/tmp/shots/$(basename "$f")" || true; done
+          # Text summaries so failures can be read without downloading artifacts.
+          [ -f "$reports/device-checks.log" ] && tail -c 200000 "$reports/device-checks.log" > /tmp/shots/device-checks.log || true
+          [ -f "$reports/instrumentation.txt" ] && cp "$reports/instrumentation.txt" /tmp/shots/ || true
+          [ -f "$reports/logcat.txt" ] && grep -E "BC1|AndroidRuntime|FATAL|MediaCodec.*(rror|xception)|CodecException|TestRunner" "$reports/logcat.txt" | tail -n 3000 > /tmp/shots/logcat-filtered.txt || true
+          ls /tmp/shots/* >/dev/null 2>&1 || exit 0
           cd /tmp/shots && git init -q && git checkout -q -b qa && git add . \
             && git -c user.name=bc1-ci -c user.email=bc1-ci@users.noreply.github.com commit -qm "QA screenshots for $GITHUB_SHA (run $GITHUB_RUN_ID)" \
             && git push -qf "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "qa:refs/heads/qa-screenshots/${GITHUB_REF_NAME}"
