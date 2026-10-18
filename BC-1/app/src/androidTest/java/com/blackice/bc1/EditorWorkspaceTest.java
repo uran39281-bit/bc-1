@@ -109,7 +109,15 @@ public class EditorWorkspaceTest {
                 scenario.onActivity(a->{assertNotNull("Paused seek updates the playhead",text(a.getWindow().getDecorView(),"00:01.00  /  00:03.75"));a.onKeyDown(KeyEvent.KEYCODE_DPAD_LEFT,new KeyEvent(0,0,KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_DPAD_LEFT,0,KeyEvent.META_SHIFT_ON));});
                 scenario.onActivity(a->a.onKeyDown(KeyEvent.KEYCODE_SPACE,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_SPACE)));
                 Thread.sleep(1500);
-                scenario.onActivity(a->a.onKeyDown(KeyEvent.KEYCODE_SPACE,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_SPACE)));
+                scenario.onActivity(a->{
+                    assertNotNull(a.player);
+                    assertTrue("Playback advances the media clock",a.player.getCurrentPosition()>0);
+                    a.player.pause();
+                    // Wall-clock scheduling can pause after the first clip ends, where the sampled
+                    // quarter-frame legitimately contains black. Seek to a known covered frame.
+                    a.seek(1000);
+                    assertFalse("Seek leaves the preview paused",a.player.getPlayWhenReady());
+                });
                 assertVisiblePreview(scenario);
                 scenario.onActivity(a->{View root=a.getWindow().getDecorView();assertNotNull("Sample project must be loaded before visual checks",text(root,"Ice • First Cut  ▾"));SurfaceView video=surface(root);assertNotNull(video);assertTrue(video.getWidth()>0&&video.getHeight()>0);View parent=(View)video.getParent();text(root,"Effects").performClick();assertSame(parent,video.getParent());assertNotNull(text(root,"GPU EFFECTS"));});
                 scenario.onActivity(a->{View root=a.getWindow().getDecorView();for(int i=0;i<3;i++)text(root,"+").performClick();});
