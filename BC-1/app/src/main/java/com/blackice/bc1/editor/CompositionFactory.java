@@ -42,8 +42,17 @@ public final class CompositionFactory {
     public static Composition buildAtHeight(Context context,EditProject project,int shortEdge) {
         return buildAtHeight(context,project,shortEdge,false);
     }
+    /** The live (seekable) preview player's graph. Media3's default frame-drop shader keeps the previous
+     * frame across a seek flush and then fails with GL error 0x506 ("Error processing video frames"), so the
+     * live preview plays source frames without frame-rate conversion; export and the transcoded preview keep it. */
+    public static Composition buildLive(Context context,EditProject project) {
+        return buildAtHeight(context,project,project.previewHeight,true,false);
+    }
     /** Preview additionally isolates soloed layers. */
     public static Composition buildAtHeight(Context context,EditProject project,int shortEdge,boolean preview) {
+        return buildAtHeight(context,project,shortEdge,preview,true);
+    }
+    private static Composition buildAtHeight(Context context,EditProject project,int shortEdge,boolean preview,boolean frameDrop) {
         project.validate(); if(project.clips.isEmpty()) throw new IllegalArgumentException("Import a video or image first.");
         int longEdge=(shortEdge*16/9+1)/2*2;
         int w=project.portrait?shortEdge:longEdge, h=project.portrait?longEdge:shortEdge;
@@ -74,7 +83,7 @@ public final class CompositionFactory {
                 EditProject.Clip previous=null;int ordinal=0;
                 if(c.track==0)for(EditProject.Placement candidate:placements){if(candidate.index==p.index)break;if(candidate.clip.track==0){previous=candidate.clip;ordinal++;}}
                 boolean renders=LayerOps.renders(project,c,preview);
-                List<Effect> effects=audioOnly?List.of():List.of(Presentation.createForWidthAndHeight(w,h,Presentation.LAYOUT_SCALE_TO_FIT),new ClipEffect(p,previous,ordinal%2==0,renders),FrameDropEffect.createDefaultFrameDropEffect(project.frameRate));
+                List<Effect> effects=new ArrayList<>();if(!audioOnly){effects.add(Presentation.createForWidthAndHeight(w,h,Presentation.LAYOUT_SCALE_TO_FIT));effects.add(new ClipEffect(p,previous,ordinal%2==0,renders));if(frameDrop)effects.add(FrameDropEffect.createDefaultFrameDropEffect(project.frameRate));}
                 // Audio tracks honour mute; a hidden picture keeps its own sound (mute it with volume).
                 float volume=audioOnly&&!renders?0:c.volume;
                 // Pictures carry no sound, so their (silent) audio path is left untouched.
@@ -110,7 +119,7 @@ public final class CompositionFactory {
         List<EditProject.Overlay> overlays=new ArrayList<>();for(EditProject.Overlay o:project.overlays)if(LayerOps.renders(project,o,preview))overlays.add(o);
         if(!overlays.isEmpty()) finalEffects.add(new OverlayEffect(ImmutableList.of(new ProjectOverlay(context,overlays))));
         finalEffects.add(Presentation.createForWidthAndHeight(w,h,Presentation.LAYOUT_SCALE_TO_FIT));
-        finalEffects.add(FrameDropEffect.createDefaultFrameDropEffect(project.frameRate));
+        if(frameDrop)finalEffects.add(FrameDropEffect.createDefaultFrameDropEffect(project.frameRate));
         Composition.Builder composition=new Composition.Builder(sequences)
                 .setHdrMode(Composition.HDR_MODE_TONE_MAP_HDR_TO_SDR_USING_OPEN_GL);
         // Audio-only sequences do not make a multi-input video graph. Media3's

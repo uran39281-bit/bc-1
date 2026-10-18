@@ -197,7 +197,7 @@ public final class EditorActivity extends Activity {
                 CompositionPlayer prepared=new CompositionPlayer.Builder(this)
                         .setVideoGraphFactory(new MultipleInputVideoGraph.Factory(CompositionFactory.frameProcessor()))
                         .setAudioAttributes(new AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(),true).build();
-                attachPreview(prepared);prepared.setComposition(CompositionFactory.build(this,snapshot,false),Math.min(position,Math.max(0,project.durationMs()-1)));
+                attachPreview(prepared);prepared.setComposition(CompositionFactory.buildLive(this,snapshot),Math.min(position,Math.max(0,project.durationMs()-1)));
                 prepared.prepare();prepared.setPlayWhenReady(playWhenReady);
             }
         }catch(Exception e){releasePreview();tell("Cannot prepare preview: "+e.getMessage());previewHint("Preview unavailable • tap to retry");}
