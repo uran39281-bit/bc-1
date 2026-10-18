@@ -26,8 +26,14 @@ public class ExportDiagnosticsUiTest {
         try(ActivityScenario<EditorActivity> scenario=ActivityScenario.launch(EditorActivity.class)){
             scenario.onActivity(a->{View root=a.getWindow().getDecorView();text(root,"Settings").performClick();text(root,"Export diagnostics").performClick();});
             inst.waitForIdleSync();
-            AccessibilityNodeInfo root=inst.getUiAutomation().getRootInActiveWindow();assertNotNull(root);
-            java.util.List<AccessibilityNodeInfo> copy=root.findAccessibilityNodeInfosByText("Copy report");assertEquals(1,copy.size());
+            // The dialog can reach the accessibility tree a moment after the click; wait for it (up to 5 s).
+            java.util.List<AccessibilityNodeInfo> copy=java.util.Collections.emptyList();
+            for(int attempt=0;attempt<50&&copy.size()!=1;attempt++){
+                AccessibilityNodeInfo root=inst.getUiAutomation().getRootInActiveWindow();
+                if(root!=null)copy=root.findAccessibilityNodeInfosByText("Copy report");
+                if(copy.size()!=1){Thread.sleep(100);inst.waitForIdleSync();}
+            }
+            assertEquals(1,copy.size());
             Bitmap screenshot=inst.getUiAutomation().takeScreenshot();assertNotNull(screenshot);File qa=new File(context.getFilesDir(),"qa");qa.mkdirs();
             try(OutputStream out=new FileOutputStream(new File(qa,"v104-export-diagnostics.png"))){screenshot.compress(Bitmap.CompressFormat.PNG,100,out);}screenshot.recycle();
             assertTrue(copy.get(0).performAction(AccessibilityNodeInfo.ACTION_CLICK));inst.waitForIdleSync();
