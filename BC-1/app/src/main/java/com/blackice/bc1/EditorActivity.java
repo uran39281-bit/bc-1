@@ -22,7 +22,9 @@ import java.util.concurrent.*;
 /** Black Ice V1 workspace, now backed by a persistent, non-destructive video timeline. */
 @androidx.annotation.OptIn(markerClass = {androidx.media3.common.util.UnstableApi.class, androidx.media3.common.util.ExperimentalApi.class})
 public final class EditorActivity extends Activity {
-    static final int BG=0xFF080F15,PANEL=0xFF0D1721,CARD=0xFF13212F,CYAN=0xFF40BFFF,TEXT=0xFFE6F5FF,MUTED=0xFF91A7BC;
+    static final int BG=BlackIceTheme.BACKGROUND,PANEL=BlackIceTheme.PRIMARY,CARD=BlackIceTheme.SECONDARY,CYAN=BlackIceTheme.ACCENT,TEXT=BlackIceTheme.TEXT,MUTED=BlackIceTheme.MUTED;
+    boolean dirty,reducedMotion,favoritesOnly,mediaList; int mediaSort,customTimelineHeight; long editRevision;
+    final java.util.Set<String> favoriteMedia=new java.util.HashSet<>();
     public static final String PREFS="bc1-editor";
     static final int IMPORT=701,MUSIC=702,OVERLAY=703,EXPORT=704,REPLACE=705,MEDIA_ACCESS=113;
     static final String[] NAV={"Add","Edit","Effects","Layers"};
@@ -171,13 +173,13 @@ public final class EditorActivity extends Activity {
     }
     void remember(){try {undo.addLast(ProjectStore.encode(project));while(undo.size()>30)undo.removeFirst();redo.clear();}catch(Exception e){tell(e.getMessage());}}
     void changed(String text) {
-        project.validate();message=text;refreshProject();preparePreview(false);main.removeCallbacks(autosave);main.postDelayed(autosave,300);
+        project.validate();dirty=true;editRevision++;message=text;refreshProject();preparePreview(false);main.removeCallbacks(autosave);main.postDelayed(autosave,300);
     }
     void saveNow() {
         main.removeCallbacks(autosave);if(loading)return;
         if(player!=null)project.playheadMs=Math.min(project.durationMs(),Math.max(0,player.getCurrentPosition()));
-        EditProject snapshot=ProjectStore.snapshot(project);
-        io.execute(()->{try{store.save(snapshot);main.post(()->getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("last-project",snapshot.id).apply());}
+        EditProject snapshot=ProjectStore.snapshot(project);long savingRevision=editRevision;
+        io.execute(()->{try{store.save(snapshot);main.post(()->{getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("last-project",snapshot.id).apply();if(project.id.equals(snapshot.id)&&savingRevision==editRevision){dirty=false;renderHeader();}});}
             catch(Exception e){main.post(()->tell("Save failed: "+e.getMessage()));}});
     }
     void undo(boolean forward) {
@@ -188,7 +190,7 @@ public final class EditorActivity extends Activity {
     }
     void refreshProject() {
         if(selected>=project.clips.size())selected=-1;if(selectedOverlay>=project.overlays.size())selectedOverlay=-1;
-        if(projectLabel!=null)projectLabel.setText(project.name+"  ▾");
+        if(projectLabel!=null)projectLabel.setText(project.name+(dirty?" •":"")+"  ▾");
         if(timeline!=null){timeline.getLayoutParams().height=Math.round(timeline.contentHeight());timeline.requestLayout();timeline.invalidate();}
         for(EditProject.Clip clip:project.clips)if(clip.track>=4)loadWaveform(clip,true);
         if(monitor!=null)monitor.requestLayout();if(emptyPreview!=null)emptyPreview.setVisibility(project.clips.isEmpty()?View.VISIBLE:View.GONE);renderInspector();renderMediaBrowser();syncPosition();
@@ -202,8 +204,8 @@ public final class EditorActivity extends Activity {
         int layerScroll=timelineScroll!=null&&timelineScroll.getParent() instanceof ScrollView?((ScrollView)timelineScroll.getParent()).getScrollY():0;
         Configuration c=getResources().getConfiguration();android.view.Display display=getWindowManager().getDefaultDisplay();
         boolean wide=LayoutPolicy.resolve(mode,c.screenWidthDp,c.screenHeightDp,c.smallestScreenWidthDp,display!=null&&display.getDisplayId()!=0)==LayoutPolicy.Workspace.WIDE;
-        navTabs.clear();mediaFilterButtons.clear();mediaBrowser=null;mediaGrid=null;mediaCount=null;previewScrubber=null;scrubbing=false;LinearLayout root=column();root.setBackgroundColor(BG);
-        wideLayout=wide;header=row();header.setPadding(dp(10),0,dp(8),0);header.setGravity(Gravity.CENTER_VERTICAL);headerKey="";
+        navTabs.clear();mediaFilterButtons.clear();mediaBrowser=null;mediaGrid=null;mediaCount=null;previewScrubber=null;scrubbing=false;LinearLayout root=column();root.setBackground(BlackIceTheme.backdrop());
+        wideLayout=wide;reducedMotion=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("reduced-motion",false);favoriteMedia.clear();favoriteMedia.addAll(getSharedPreferences(PREFS,MODE_PRIVATE).getStringSet("favorite-media",java.util.Collections.emptySet()));header=row();header.setPadding(dp(10),0,dp(8),0);header.setGravity(Gravity.CENTER_VERTICAL);header.setBackground(BlackIceTheme.backdrop());headerKey="";
         root.addView(header,new LinearLayout.LayoutParams(-1,dp(56)));renderHeader();
         if(wide) {
             LinearLayout body=row();root.addView(body,new LinearLayout.LayoutParams(-1,0,1));
@@ -211,15 +213,21 @@ public final class EditorActivity extends Activity {
             String[] names=NAV;
             for(int i=0;i<names.length;i++){final int index=i;TextView b=iconButton(names[i],v->{tab=index;renderInspector();});navTabs.add(b);rail.addView(b,new LinearLayout.LayoutParams(-1,dp(c.screenHeightDp<550?52:64)));}
             body.addView(rail,new LinearLayout.LayoutParams(dp(76),-1));
-            if(c.screenWidthDp>=1100){int width=Math.min(340,Math.max(220,Math.round(c.screenWidthDp*.20f)));mediaColumns=width>=260?2:1;ScrollView library=new ScrollView(this);mediaBrowser=column();mediaBrowser.setPadding(dp(10),dp(10),dp(10),dp(10));library.addView(mediaBrowser);library.setBackgroundColor(PANEL);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(width),-1);lp.rightMargin=dp(6);body.addView(library,lp);renderMediaBrowser();}
+            if(c.screenWidthDp>=1100){int width=Math.min(340,Math.max(220,Math.round(c.screenWidthDp*.20f)));mediaColumns=mediaList?1:width>=260?2:1;ScrollView library=new ScrollView(this);mediaBrowser=column();mediaBrowser.setPadding(dp(10),dp(10),dp(10),dp(10));library.addView(mediaBrowser);library.setBackgroundColor(PANEL);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(width),-1);lp.rightMargin=dp(6);body.addView(library,lp);renderMediaBrowser();}
             LinearLayout center=column();center.setPadding(dp(4),dp(4),dp(6),dp(4));body.addView(center,new LinearLayout.LayoutParams(0,-1,1));
-            center.addView(buildMonitor(),new LinearLayout.LayoutParams(-1,0,1));center.addView(transport(c.screenHeightDp<550));center.addView(buildTimeline(),new LinearLayout.LayoutParams(-1,dp(timelineHeight(c,true))));
+            center.addView(buildMonitor(),new LinearLayout.LayoutParams(-1,0,1));center.addView(transport(c.screenHeightDp<550));
             ScrollView tools=new ScrollView(this);tools.setFillViewport(false);inspector=column();inspector.setPadding(dp(10),dp(10),dp(10),dp(12));tools.addView(inspector);tools.setBackgroundColor(PANEL);
             View divider=new View(this);divider.setBackgroundColor(0xFF284B60);divider.setContentDescription("Drag to resize tool panel");body.addView(divider,new LinearLayout.LayoutParams(dp(8),-1));
             body.addView(tools,new LinearLayout.LayoutParams(dp(Math.min(inspectorWidth,c.screenWidthDp<1000?250:500)),-1));
             divider.setOnTouchListener(new View.OnTouchListener(){float down;int initial;public boolean onTouch(View v,MotionEvent e){if(uiLocked)return true;if(e.getAction()==MotionEvent.ACTION_DOWN){down=e.getRawX();initial=tools.getWidth();return true;}if(e.getAction()==MotionEvent.ACTION_MOVE){int width=Math.max(dp(180),Math.min(body.getWidth()/2,initial+(int)((getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("panel-left",false)?-1:1)*(down-e.getRawX()))));tools.getLayoutParams().width=width;tools.requestLayout();inspectorWidth=Math.round(width/getResources().getDisplayMetrics().density);return true;}if(e.getAction()==MotionEvent.ACTION_UP)getSharedPreferences(PREFS,MODE_PRIVATE).edit().putInt("panel-width",inspectorWidth).apply();return true;}});
             if(getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("panel-left",false)){body.removeView(tools);body.removeView(divider);body.addView(tools,1);body.addView(divider,2);}
             body.setOnDragListener((v,event)->{if(uiLocked||event.getLocalState()!=tools)return false;if(event.getAction()==android.view.DragEvent.ACTION_DROP){boolean left=event.getX()<body.getWidth()/2f;body.removeView(tools);body.removeView(divider);if(left){body.addView(tools,1);body.addView(divider,2);}else{body.addView(divider);body.addView(tools);}getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("panel-left",left).apply();return true;}return true;});
+            final View timelineArea=buildTimeline();
+            View timelineDivider=new View(this);timelineDivider.setBackgroundColor(BlackIceTheme.BORDER);timelineDivider.setContentDescription("Resize timeline height");
+            root.addView(timelineDivider,new LinearLayout.LayoutParams(-1,dp(8)));
+            root.addView(timelineArea,new LinearLayout.LayoutParams(-1,dp(customTimelineHeight>0?customTimelineHeight:Math.min(240,timelineHeight(c,true)))));
+            timelineDivider.setOnTouchListener(new View.OnTouchListener(){float startY;int initial;public boolean onTouch(View v,MotionEvent e){if(uiLocked)return true;if(e.getActionMasked()==MotionEvent.ACTION_DOWN){startY=e.getRawY();initial=timelineArea.getHeight();return true;}if(e.getActionMasked()==MotionEvent.ACTION_MOVE){int h=Math.max(dp(110),Math.min(dp(c.screenHeightDp*.45f),initial+(int)(startY-e.getRawY())));timelineArea.getLayoutParams().height=h;timelineArea.requestLayout();customTimelineHeight=Math.round(h/getResources().getDisplayMetrics().density);return true;}return true;}});
+
         } else {
             LinearLayout content=column();content.setPadding(dp(8),0,dp(8),0);
             boolean compact=c.screenHeightDp<700;
@@ -343,6 +351,9 @@ public final class EditorActivity extends Activity {
     void renderInspector() {
         if(inspector==null)return;if(selected>=0)selectedOverlay=-1;pruneSelection();renderHeader();updateMediaSelection();if(timeline!=null)timeline.invalidate();if(previewControls!=null)previewControls.invalidate();updateJumpLabels();inspector.removeAllViews();contextualRow=null;contextualCount=0;gridRow=null;gridCount=0;
         for(int i=0;i<navTabs.size();i++){navTabs.get(i).setTextColor(i==tab?CYAN:TEXT);navTabs.get(i).setBackground(navBackground(i==tab));navTabs.get(i).setSelected(i==tab);for(android.graphics.drawable.Drawable icon:navTabs.get(i).getCompoundDrawables())if(icon!=null)icon.setTint(i==tab?CYAN:TEXT);}
+        LinearLayout inspectorTabs=row();for(int i=0;i<2;i++){final boolean settings=i==1;TextView t=button(settings?"Project":"Inspector",v->{tab=settings?4:1;panels.reset();renderInspector();});t.setBackground(navBackground(settings?tab==4:tab!=4));inspectorTabs.addView(t,new LinearLayout.LayoutParams(0,dp(40),1));}inspector.addView(inspectorTabs);
+        if(!reducedMotion&&android.animation.ValueAnimator.areAnimatorsEnabled()){inspector.animate().cancel();inspector.setAlpha(.8f);inspector.animate().alpha(1).setDuration(180).start();}else inspector.setAlpha(1);
+        if(wideLayout&&(clip()!=null||overlay()!=null||multiCount()>1)){LinearLayout actions=row();TextView selectedName=label(multiCount()>1?multiCount()+" layers selected":clip()!=null?clip().name:overlay().label(),12,TEXT,true);selectedName.setSingleLine(true);selectedName.setEllipsize(android.text.TextUtils.TruncateAt.END);selectedName.setOnClickListener(v->renameSelection());inspector.addView(selectedName);actions.addView(headerIcon("Close","Deselect",v->deselect()));actions.addView(headerIcon(multiCount()>1?"Group":"Duplicate",multiCount()>1?"Group selected layers":"Duplicate",v->{if(multiCount()>1)multiAction("Group");else duplicateSelected();}));actions.addView(headerIcon("Delete","Delete",v->deleteSelection()));actions.addView(headerIcon("More","More actions",v->moreMenu()));inspector.addView(actions);}
         String[] headings={"ADD","CLIP EDITOR","GPU EFFECTS","LAYERS","PROJECT SETTINGS"};
         TextView heading=label(headings[tab],12,CYAN,true);inspector.addView(heading);heading.setContentDescription(headings[tab]+". Long press and drag to dock the tool panel in wide mode.");heading.setOnLongClickListener(v->{if(uiLocked)return false;if(inspector.getParent() instanceof ScrollView){v.startDragAndDrop(ClipData.newPlainText("panel","tools"),new View.DragShadowBuilder(v),inspector.getParent(),0);return true;}return false;});
         if(tab==0)addDrawer.render(inspector);
@@ -358,6 +369,7 @@ public final class EditorActivity extends Activity {
             addAction("Workspace layout: "+new String[]{"Auto • phone / tablet / DeX","Phone portrait","Wide tablet / DeX"}[mode.ordinal()],()->chooseMode());
             select("Frame rate",new String[]{"24 fps","25 fps","30 fps"},project.frameRate==24?0:project.frameRate==25?1:2,index->edit("Frame rate updated",()->project.frameRate=new int[]{24,25,30}[index]));
             addAction("Lock editing and layout: "+(uiLocked?"ON":"OFF"),this::toggleLock);
+            addAction("Reduced motion: "+(reducedMotion?"ON":"OFF"),()->{reducedMotion=!reducedMotion;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("reduced-motion",reducedMotion).apply();renderInspector();});
             addAction("Preview / timeline space",this::chooseSpace);
             addAction("Snap to playhead, clip edges and markers: "+(snapping?"ON":"OFF"),()->{snapping=!snapping;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("snapping",snapping).apply();renderInspector();});
             addAction("Save project",()->{saveNow();tell("Saving project…");});
@@ -366,7 +378,7 @@ public final class EditorActivity extends Activity {
             addAction("Projects / New / Rename",()->projectsMenu());
             addAction("Export diagnostics",()->exportDiagnostics());
             addAction("Open v0.3 effects lab",()->startActivity(new Intent(this,WorkbenchActivity.class)));
-            inspector.addView(note("BC-1 v1.0.5\nExport: H.264 MP4 + AAC, 1080p, up to 30 fps. Lower-rate sources keep their cadence.\nSpace: play • Ctrl+Z/Y: undo/redo • Ctrl+S: save\nS: split • arrows: frame step • Ctrl+D: duplicate\nCtrl+wheel: zoom • Shift+wheel: scroll • right-click: clip menu\n3D Page Curl remains excluded."));
+            inspector.addView(note("BC-1 v1.1.0\nExport: H.264 MP4 + AAC, 1080p, up to 30 fps. Lower-rate sources keep their cadence.\nSpace: play • Ctrl+Z/Y: undo/redo • Ctrl+S: save\nS: split • arrows: frame step • Ctrl+D: duplicate\nCtrl+wheel: zoom • Shift+wheel: scroll • right-click: clip menu\n3D Page Curl remains excluded."));
     }
     /** Layer rows, topmost first: text/shape/image layers, video layers 3–1, the main sequence, then audio. */
     java.util.List<int[]> layerRows(){
@@ -453,8 +465,8 @@ public final class EditorActivity extends Activity {
     void renderHeader(){
         if(header==null)return;EditProject.Clip c=clip();EditProject.Overlay o=overlay();int count=multiCount();
         String key=count>1?"multi"+count:c!=null?"clip"+selected+c.name:o!=null?"overlay"+selectedOverlay+o.label():"none"+project.name+wideLayout;
-        if(key.equals(headerKey))return;headerKey=key;header.removeAllViews();Configuration cfg=getResources().getConfiguration();
-        if(count>1||c!=null||o!=null){
+        key+=":"+dirty+":"+tab;if(key.equals(headerKey))return;headerKey=key;header.removeAllViews();Configuration cfg=getResources().getConfiguration();
+        if(!wideLayout&&(count>1||c!=null||o!=null)){
             header.addView(compactButton("✕","Deselect",v->deselect()),new LinearLayout.LayoutParams(dp(48),dp(48)));
             TextView name=label(count>1?count+" layers selected":(c!=null?c.name:o.label()),14,TEXT,true);name.setSingleLine(true);name.setEllipsize(android.text.TextUtils.TruncateAt.END);name.setPadding(dp(8),0,dp(4),0);
             name.setContentDescription(count>1?name.getText():"Selected layer "+name.getText()+". Tap to rename.");name.setMinHeight(dp(48));name.setGravity(Gravity.CENTER_VERTICAL);if(count<=1)name.setOnClickListener(v->renameSelection());
@@ -464,20 +476,24 @@ public final class EditorActivity extends Activity {
             header.addView(headerIcon("More","More actions",v->moreMenu()));
             exportButton=null;projectLabel=null;return;
         }
-        ImageView logo=new ImageView(this);logo.setImageResource(R.drawable.ic_black_ice);logo.setContentDescription("Black Ice mountain mark");header.addView(logo,new LinearLayout.LayoutParams(dp(36),dp(36)));
-        LinearLayout brand=column();brand.setPadding(dp(5),0,dp(4),0);brand.addView(label(wideLayout||cfg.screenWidthDp>=460?"Black Ice Editor":"Black Ice",wideLayout?17:14,TEXT,true));
-        projectLabel=label(project.name+"  ▾",11,TEXT,false);projectLabel.setMaxLines(1);brand.addView(projectLabel);brand.setOnClickListener(v->projectsMenu());brand.setContentDescription("Project menu");brand.setFocusable(true);brand.setMinimumHeight(dp(52));
+        ImageView logo=new ImageView(this);logo.setImageDrawable(new V1Icon("Cube",BlackIceTheme.ICE));logo.setContentDescription("Black Ice cube logo");header.addView(logo,new LinearLayout.LayoutParams(dp(36),dp(36)));
+        LinearLayout brand=column();brand.setPadding(dp(5),0,dp(4),0);brand.addView(label("BLACK ICE",wideLayout?16:13,TEXT,true));brand.addView(label("EDITOR",9,MUTED,false));
+        projectLabel=label(project.name+(dirty?" •":"")+"  ▾",11,TEXT,false);projectLabel.setMaxLines(1);brand.addView(projectLabel);brand.setOnClickListener(v->projectsMenu());brand.setContentDescription("Project menu");brand.setFocusable(true);brand.setMinimumHeight(dp(52));
         header.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
-        if(wideLayout&&cfg.screenWidthDp>=1100){header.addView(iconButton("Undo",v->undo(false)));header.addView(iconButton("Redo",v->undo(true)));header.addView(iconButton("Save",v->{saveNow();tell("Saving project…");}));}
+        if(wideLayout&&cfg.screenWidthDp>=1100){
+            String[] sections={"Media","Edit","Effects","Audio","Export"};
+            for(int i=0;i<sections.length;i++){final int section=i;TextView nav=button(sections[i],v->{if(section==4){exportMenu();return;}tab=section==3?0:section;panels.reset();if(section==3)addDrawer.category=1;renderInspector();});nav.setBackground(BlackIceTheme.tab(getResources().getDisplayMetrics().density,i==tab));header.addView(nav,new LinearLayout.LayoutParams(dp(66),dp(48)));}
+        }
+        if(wideLayout&&cfg.screenWidthDp>=1100){header.addView(headerIcon("Undo","Undo",v->undo(false)));header.addView(headerIcon("Redo","Redo",v->undo(true)));header.addView(headerIcon("Save","Save project",v->{saveNow();tell("Saving project…");}));}
         TextView add=button("+ Add",v->{tab=0;panels.reset();renderInspector();});add.setContentDescription("Add media, audio, text, shapes or saved elements");add.setTextColor(CYAN);header.addView(add);
-        header.addView(button("Settings",v->{tab=4;renderInspector();}));exportButton=button("Export",v->exportMenu());header.addView(exportButton);
+        header.addView(button("Settings",v->{tab=4;renderInspector();}));exportButton=button("Export",v->exportMenu());exportButton.setBackground(buttonBackground(true));header.addView(exportButton);
     }
     TextView headerIcon(String icon,String description,View.OnClickListener l){TextView b=compactButton("",description,l);b.setCompoundDrawables(icon(icon,TEXT),null,null,null);b.setPadding(dp(12),0,dp(12),0);b.setMinWidth(dp(48));return b;}
     android.graphics.drawable.Drawable icon(String name,int color){V1Icon icon=new V1Icon(name,color);icon.setBounds(0,0,dp(22),dp(22));return icon;}
     /** Two-column (three in wide mode) grid of equal tool buttons. */
     void gridAction(String title,Runnable action){int columns=wideLayout?3:2;if(gridRow==null||gridCount%columns==0){gridRow=row();LinearLayout.LayoutParams rp=new LinearLayout.LayoutParams(-1,-2);rp.topMargin=dp(5);inspector.addView(gridRow,rp);}
-        TextView b=button(title,v->action.run());b.setTextSize(11);LinearLayout.LayoutParams cell=new LinearLayout.LayoutParams(0,dp(54),1);cell.rightMargin=dp(4);gridRow.addView(b,cell);gridCount++;}
-    void flushGrid(){if(gridRow!=null){int columns=wideLayout?3:2;while(gridCount%columns!=0){gridRow.addView(new View(this),new LinearLayout.LayoutParams(0,dp(54),1));gridCount++;}}gridRow=null;gridCount=0;}
+        TextView b=button(title,v->action.run());b.setTextSize(11);LinearLayout.LayoutParams cell=new LinearLayout.LayoutParams(0,dp(wideLayout?44:54),1);cell.rightMargin=dp(4);gridRow.addView(b,cell);gridCount++;}
+    void flushGrid(){if(gridRow!=null){int columns=wideLayout?3:2;while(gridCount%columns!=0){gridRow.addView(new View(this),new LinearLayout.LayoutParams(0,dp(wideLayout?44:54),1));gridCount++;}}gridRow=null;gridCount=0;}
     void setStatic(int property,float value){EditProject.Clip c=clip();EditProject.Overlay o=overlay();
         if(c!=null)switch(property){case Motion.X:c.x=value;break;case Motion.Y:c.y=value;break;case Motion.SCALE:c.scale=value;break;case Motion.ROTATION:c.rotation=value;break;case Motion.OPACITY:c.opacity=value;break;case Motion.INTENSITY:c.intensity=value;break;case Motion.SKEW_X:c.skewX=value;break;case Motion.SKEW_Y:c.skewY=value;break;case Motion.ANCHOR_X:c.anchorX=value;break;case Motion.ANCHOR_Y:c.anchorY=value;break;}
         else if(o!=null)switch(property){case Motion.X:o.x=value;break;case Motion.Y:o.y=value;break;case Motion.SCALE:o.scale=value;break;case Motion.ROTATION:o.rotation=value;break;case Motion.OPACITY:o.opacity=value;break;case Motion.SKEW_X:o.skewX=value;break;case Motion.SKEW_Y:o.skewY=value;break;case Motion.ANCHOR_X:o.anchorX=value;break;case Motion.ANCHOR_Y:o.anchorY=value;break;}
@@ -701,7 +717,7 @@ public final class EditorActivity extends Activity {
     }
     void exportDiagnostics(){
         android.content.SharedPreferences prefs=getSharedPreferences(ExportService.PREFS,MODE_PRIVATE);
-        String report="BC-1 v1.0.5 • Android API "+android.os.Build.VERSION.SDK_INT+"\n\n"+
+        String report="BC-1 v1.1.0 • Android API "+android.os.Build.VERSION.SDK_INT+"\n\n"+
                 prefs.getString(ExportService.LAST_FAILURE,"No export failure recorded.")+"\n\n"+
                 "Last failure is retained after successful exports. This summary excludes media names, paths and exception messages.";
         new AlertDialog.Builder(this).setTitle("Export diagnostics").setMessage(report)
@@ -881,6 +897,7 @@ public final class EditorActivity extends Activity {
             mediaFilterButtons.add(filter);filters.addView(filter,new LinearLayout.LayoutParams(0,dp(48),1));
         }
         mediaBrowser.addView(filters);
+        LinearLayout options=row();options.addView(button("Favorites",v->{favoritesOnly=!favoritesOnly;renderMediaGrid();}),new LinearLayout.LayoutParams(0,dp(40),1));options.addView(button("Grid / List",v->{mediaList=!mediaList;mediaColumns=mediaList?1:2;renderMediaGrid();}),new LinearLayout.LayoutParams(0,dp(40),1));options.addView(button("Sort",v->new AlertDialog.Builder(this).setTitle("Sort media").setSingleChoiceItems(new String[]{"Project order","Name","Duration"},mediaSort,(d,n)->{mediaSort=n;d.dismiss();renderMediaGrid();}).show()),new LinearLayout.LayoutParams(0,dp(40),1));mediaBrowser.addView(options);
         EditText search=new EditText(this);search.setSingleLine(true);search.setTextSize(12);
         search.setTextColor(TEXT);search.setHintTextColor(MUTED);search.setHint("Search media");
         search.setContentDescription("Search project media");search.setText(mediaQuery);
@@ -903,7 +920,8 @@ public final class EditorActivity extends Activity {
             filter.setSelected(chosen);filter.setTextColor(chosen?CYAN:TEXT);filter.setBackground(navBackground(chosen));
         }
         ArrayList<Integer> matches=new ArrayList<>();
-        for(int i=0;i<project.clips.size();i++)if(MediaFilter.matches(project.clips.get(i),mediaKind,mediaQuery))matches.add(i);
+        for(int i=0;i<project.clips.size();i++)if((!favoritesOnly||favoriteMedia.contains(project.clips.get(i).uri))&&MediaFilter.matches(project.clips.get(i),mediaKind,mediaQuery))matches.add(i);
+        if(mediaSort==1)matches.sort((a,b)->project.clips.get(a).name.compareToIgnoreCase(project.clips.get(b).name));else if(mediaSort==2)matches.sort((a,b)->Long.compare(project.clips.get(a).durationMs(),project.clips.get(b).durationMs()));
         mediaCount.setText(matches.size()+" / "+project.clips.size()+" clips");
         if(matches.isEmpty()){
             mediaGrid.addView(note(project.clips.isEmpty()?"Import media to build your project.":"No matching media"));
@@ -936,6 +954,7 @@ public final class EditorActivity extends Activity {
         TextView name=label(clip.name,11,TEXT,true);name.setMaxLines(2);name.setEllipsize(android.text.TextUtils.TruncateAt.END);card.addView(name,new LinearLayout.LayoutParams(-1,0,1));
         String kind=clip.track>=4?"Audio":clip.image?"Image":"Video";
         TextView detail=label(kind+" · "+clock(clip.durationMs()),10,MUTED,false);detail.setSingleLine(true);detail.setEllipsize(android.text.TextUtils.TruncateAt.END);card.addView(detail);
+        card.setOnLongClickListener(v->{new AlertDialog.Builder(this).setTitle(clip.name).setItems(new String[]{favoriteMedia.contains(clip.uri)?"Remove favorite":"Add favorite","Preview in project"},(d,n)->{if(n==0){if(!favoriteMedia.remove(clip.uri))favoriteMedia.add(clip.uri);getSharedPreferences(PREFS,MODE_PRIVATE).edit().putStringSet("favorite-media",new java.util.HashSet<>(favoriteMedia)).apply();renderMediaGrid();}else{selected=index;tab=1;seek(project.placements().get(index).startMs);renderInspector();}}).show();return true;});
         card.setFocusable(true);card.setContentDescription("Select "+clip.name);
         card.setOnClickListener(v->{selected=index;tab=1;seek(project.placements().get(index).startMs);renderInspector();renderMediaGrid();});
         return card;
@@ -972,10 +991,10 @@ public final class EditorActivity extends Activity {
     LinearLayout row(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.HORIZONTAL);return l;}
     TextView label(String text,float size,int color,boolean bold){TextView v=new TextView(this);v.setText(text);v.setTextSize(size);v.setTextColor(color);if(bold)v.setTypeface(Typeface.DEFAULT,Typeface.BOLD);return v;}
     TextView note(String text){TextView v=label(text,12,MUTED,false);v.setPadding(0,dp(7),0,dp(10));return v;}
-    TextView button(String title,View.OnClickListener listener){TextView b=label(title,12,TEXT,true);b.setGravity(Gravity.CENTER);b.setPadding(dp(12),dp(6),dp(12),dp(6));b.setMinWidth(dp(48));b.setMinHeight(dp(48));b.setMaxLines(2);b.setFocusable(true);b.setContentDescription(title);b.setBackground(buttonBackground(false));b.setOnClickListener(listener);return b;}
+    TextView button(String title,View.OnClickListener listener){TextView b=label(title,12,TEXT,true);b.setGravity(Gravity.CENTER);b.setPadding(dp(12),dp(6),dp(12),dp(6));b.setMinWidth(dp(48));b.setMinHeight(dp(wideLayout?36:48));b.setMaxLines(2);b.setFocusable(true);b.setContentDescription(title);b.setBackground(buttonBackground(false));b.setTooltipText(title);b.setOnClickListener(listener);b.setOnHoverListener((v,e)->{v.setAlpha(e.getAction()==MotionEvent.ACTION_HOVER_EXIT?1f:.82f);return false;});return b;}
     TextView iconButton(String name,View.OnClickListener action){TextView view=button(name,action);view.setTextSize(10);view.setTypeface(Typeface.DEFAULT);view.setPadding(dp(6),dp(3),dp(6),dp(3));V1Icon icon=new V1Icon(name,TEXT);icon.setBounds(0,0,dp(22),dp(22));view.setCompoundDrawables(null,icon,null,null);view.setCompoundDrawablePadding(dp(3));view.setBackground(navBackground(false));return view;}
-    GradientDrawable navBackground(boolean selected){GradientDrawable bg=new GradientDrawable();bg.setColor(selected?0xFF103047:BG);bg.setCornerRadius(dp(5));bg.setStroke(dp(1),selected?CYAN:0xFF172630);return bg;}
-    GradientDrawable buttonBackground(boolean selected){GradientDrawable bg=new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,new int[]{selected?0xFF16486A:CARD,selected?0xFF102B42:PANEL});bg.setCornerRadius(dp(7));bg.setStroke(dp(1),selected?CYAN:0xFF294357);return bg;}
+    android.graphics.drawable.Drawable navBackground(boolean selected){return BlackIceTheme.tab(getResources().getDisplayMetrics().density,selected);}
+    GradientDrawable buttonBackground(boolean selected){return BlackIceTheme.surface(getResources().getDisplayMetrics().density,selected); }
     void addAction(String title,Runnable action){TextView b=button(title,v->action.run());if(tab==1&&!title.startsWith("Duration:")){if(contextualRow==null||contextualCount%2==0){contextualRow=row();LinearLayout.LayoutParams rowParams=new LinearLayout.LayoutParams(-1,-2);rowParams.topMargin=dp(6);inspector.addView(contextualRow,rowParams);}LinearLayout.LayoutParams cell=new LinearLayout.LayoutParams(0,dp(56),1);cell.rightMargin=dp(4);contextualRow.addView(b,cell);contextualCount++;return;}LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,-2);params.topMargin=dp(6);inspector.addView(b,params);}
     interface IndexAction{void apply(int index);}
     interface ValueAction{void apply(float value);}

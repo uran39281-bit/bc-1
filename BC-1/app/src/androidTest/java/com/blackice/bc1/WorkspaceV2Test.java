@@ -46,7 +46,7 @@ public class WorkspaceV2Test {
                 scenario.onActivity(a->{View root=a.getWindow().getDecorView();a.seek(1000);text(root,"+ Rectangle").performClick();
                     assertEquals(1,a.project.overlays.size());assertEquals("Inserted at the playhead",1000,a.project.overlays.get(0).startMs);assertEquals(0,a.selectedOverlay);
                     // Selected layer: name, Duplicate, Delete, More replace Settings / Export.
-                    assertNotNull(text(root,"Rectangle"));assertNull(text(root,"Settings"));assertNotNull(described(root,"Duplicate"));assertNotNull(described(root,"More actions"));
+                    assertNotNull(text(root,"Rectangle"));if(a.wideLayout)assertNotNull(text(root,"Settings"));else assertNull(text(root,"Settings"));assertNotNull(described(root,"Duplicate"));assertNotNull(described(root,"More actions"));
                     assertNotNull("Shape tools",text(root,"Color"));assertNull("No slip for shapes",text(root,"Slip"));assertNotNull(text(root,"Move & Transform"));
                     text(root,"Opacity").performClick();assertNotNull("Focused panel",text(root,"‹  Back"));
                     View diamond=described(root,"Opacity keyframe: not animated • tap to animate");assertNotNull(diamond);diamond.performClick();
