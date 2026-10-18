@@ -7,7 +7,7 @@ public final class TimelineEdits {
         EditProject.Clip c=p.clips.get(index);
         if(duration<EditProject.MIN_CLIP_MS || duration>7_200_000_000L)
             throw new IllegalArgumentException("Duration must be at least 0.10 seconds.");
-        p.trim(index,c.inMs,Math.addExact(c.inMs,Math.round(duration*c.speed)));
+        p.trim(index,c.inMs,Math.addExact(c.inMs,Math.round(duration*(double)c.speed)));
     }
     public static void slip(EditProject p,int index,long sourceIn) {
         EditProject.Clip c=p.clips.get(index);
@@ -22,7 +22,7 @@ public final class TimelineEdits {
         try {
             if(c.startMs<0)throw new IllegalArgumentException("A clip cannot start before zero.");
             if(c.image){long length=c.durationMs()+(left?-deltaMs:deltaMs);duration(p,index,length);}
-            else p.trim(index,c.inMs+(left?Math.round(deltaMs*c.speed):0),c.outMs+(left?0:Math.round(deltaMs*c.speed)));
+            else p.trim(index,c.inMs+(left?Math.round(deltaMs*(double)c.speed):0),c.outMs+(left?0:Math.round(deltaMs*(double)c.speed)));
         }catch(RuntimeException e){c.startMs=oldStart;throw e;}
     }
     public static void speed(EditProject p,int index,float speed){

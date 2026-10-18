@@ -19,4 +19,22 @@ public class TimelineEditsTest {
         double frames=TimelineEdits.rulerStep(1200,56,24);assertEquals(2d/24,frames,1e-9);assertEquals("1s 12f",TimelineEdits.rulerLabel(1500,frames,24));assertEquals("2s",TimelineEdits.rulerLabel(2000,frames,24));
         assertEquals("1:30",TimelineEdits.rulerLabel(90000,60,30));
     }
+    @Test public void longDurationsPreserveMillisecondsAndDoNotSaturate() {
+        EditProject p=project(true);
+        for(long duration:new long[]{16_777_217L,3_000_000_001L}) {
+            TimelineEdits.duration(p,0,duration);
+            assertEquals(duration,p.clips.get(0).durationMs());
+        }
+        p.split(0,2_500_000_001L);
+        assertEquals(2_500_000_501L,p.clips.get(1).inMs);
+        assertEquals(3_000_000_001L,p.durationMs());
+        p.validate();
+    }
+    @Test public void longVideoHandleUsesLongSourceDelta() {
+        EditProject p=project(false);EditProject.Clip c=p.clips.get(0);
+        c.sourceDurationMs=7_000_000_000L;
+        TimelineEdits.edge(p,0,false,3_000_000_001L);
+        assertEquals(3_000_003_501L,c.outMs);
+        p.validate();
+    }
 }

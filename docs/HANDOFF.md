@@ -1,3 +1,13 @@
+# Editor reliability follow-up — 2026-10-18
+
+Continue in `uran39281-bit/bc-1`, branch `bc-1-editor-reliability`, based on the newer v1.0.5 branch `62ef9fc`. Do not put editor changes back into Black-Ice-Emulator. Version remains 1.0.5 candidate; no replacement APK published.
+
+Fixed float-to-int rounding in exact duration, handle source deltas and split offsets. Operations now use double-to-long rounding, preserving millisecond values beyond 2^24 and avoiding saturation at Integer.MAX_VALUE. Two JVM regressions cover long image durations/splits and video edge extensions. A direct Java model harness failed against the original implementation (16,777,217 became 16,777,216), and passes with the changes. Full Android CI remains required.
+
+Rejected editor commands restore project objects; refresh the inspector after rollback so callbacks reference the restored clips. No project schema or saved-file changes. Retained preview signing key is absent in this environment; do not publish a differently signed APK as an in-place update.
+
+---
+
 # Active development — BC-1 v1.0.5 (candidate, not published; formerly labelled v2.0.0)
 
 Branch `claude/app-update-4vo05i`: v1.0.5 / versionCode 17 (renumbered from 2.0.0 at the owner's request, no functional change), folding in the unpublished v1.1.0 timeline work (v1.1 branch `bc-1-v1.1-timeline` preserved). Selection-based workspace, + Add drawer, contextual tools with focused panels, layered timeline with centred playhead, layer visibility / solo / locks, arrangement tools, Move & Transform, direct preview editing, keyframe animation and reusable presets/elements. Read BC-1-v1.0.5-QA.md.

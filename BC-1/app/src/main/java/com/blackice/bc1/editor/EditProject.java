@@ -121,7 +121,7 @@ public final class EditProject {
         Placement p=placements().get(index); long offset=timelineMs-p.startMs;
         if(offset<MIN_CLIP_MS || p.clip.durationMs()-offset<MIN_CLIP_MS)
             throw new IllegalArgumentException("Place the playhead inside the selected clip, at least 0.10 seconds from either edge.");
-        Clip right=p.clip.copy(); right.inMs+=Math.round(offset*p.clip.speed);if(right.track>0)right.startMs=p.startMs+offset;
+        Clip right=p.clip.copy(); right.inMs+=Math.round(offset*(double)p.clip.speed);if(right.track>0)right.startMs=p.startMs+offset;
         p.clip.outMs=right.inMs; p.clip.transition=-1;p.clip.fadeInMs=Math.min(p.clip.fadeInMs,p.clip.durationMs());p.clip.fadeOutMs=0;right.fadeInMs=0;right.fadeOutMs=Math.min(right.fadeOutMs,right.durationMs());
         clips.add(index+1,right);
     }
