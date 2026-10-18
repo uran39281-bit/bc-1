@@ -97,6 +97,24 @@ matching GLSL). Frames that contain a blended layer are composed in two off-scre
 read what lies beneath; frames without one take the direct path. Media3 cannot render blend modes, so
 projects that use them export with ICE Lite and get an ICE Lite prepared preview.
 
+## Black Ice effects
+
+`core/EffectCatalog` lists every clip effect by stored id: the original twelve (0–11) and 36 Black Ice
+effects (12–47), written for BC-1 in the shared layer shader (`assets/shaders/video.frag`), so they work in
+the live preview, Media3 exports and ICE Lite exports alike:
+
+- **Blur & Sharpen:** Box Blur, Motion Blur, Spin Blur, Zoom Blur, Unsharp Mask
+- **Color & Light:** Contrast, Brightness, Gamma, Levels, Hue Shift, Warm, Cool, Posterize, Invert, Sepia,
+  Ice Duotone, Light Leak
+- **Distortion:** Swirl, Bulge, Pinch, Ripple, Wave, Fisheye, Mirror, Kaleidoscope, Shake
+- **Edges & Keying:** Threshold, Edge Detect, Emboss, Luma Key
+- **Stylize:** Film Grain, Scanlines, Glitch, VHS, RGB Split, Halftone
+
+Each uses the clip's animatable intensity. Contrast, Brightness and Gamma (like Exposure and Saturation)
+are neutral at 50%. Animated effects (Ripple, Wave, Shake, Light Leak, Film Grain, Glitch, VHS) follow the
+clip's source time (`uTime`). A contact sheet rendered from the shader is in
+`docs/effects/black-ice-effects-sheet.png`.
+
 ## Engine routing
 
 Each export picks its engine from the setting plus the project: more than four simultaneous video layers
@@ -115,12 +133,13 @@ ICE Lite anyway. The saved-export message says when the engine differed from the
 
 ## Verification
 
-- JVM unit tests: `core/RenderPlanTest`, `core/AudioEngineTest`, `core/ExportPlannerTest`, `core/StagingTest`, `core/BlendModeTest`,
+- JVM unit tests: `core/RenderPlanTest`, `core/AudioEngineTest`, `core/ExportPlannerTest`, `core/StagingTest`, `core/BlendModeTest`, `core/EffectCatalogTest`,
   `editor/ProjectMigrationTest` (schema 4 → 5 track remap).
 - Device tests: `engine/BcCoreExportTest` (pixel checks across a dissolve, exact frame count, AAC
   present, portrait/layers/pictures/speed, cancellation, HEVC, 60 fps from a 120 fps source, three-pass
   staged render matching the single-pass render on layers 1/4/7, device report and budget, all 26 blend
-  modes rendered on the GPU and compared with the Java reference). CI decodes `qa/bc-core-1080p.mp4`
+  modes rendered on the GPU and compared with the Java reference, all 36 Black Ice effects rendered and
+  checked for a visible change). CI decodes `qa/bc-core-1080p.mp4`
   independently with ffmpeg/ffprobe and checks 105 frames, 48 kHz stereo AAC and A/V sync.
 
 ## Roadmap

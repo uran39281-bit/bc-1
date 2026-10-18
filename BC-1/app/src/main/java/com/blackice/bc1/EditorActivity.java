@@ -313,7 +313,7 @@ public final class EditorActivity extends Activity {
     }
     void durationDialog(){EditProject.Clip c=clip();if(c==null||!editable())return;numberDialog("Duration (seconds)",seconds(c.durationMs()),value->edit("Duration updated",()->TimelineEdits.duration(project,selected,parseMs(value))));}
     void slipDialog(){EditProject.Clip c=clip();if(c==null||c.image||!editable())return;numberDialog("Slip: source in (seconds)",seconds(c.inMs),value->edit("Source segment slipped",()->TimelineEdits.slip(project,selected,parseMs(value))));}
-    void effectsDialog(){EditProject.Clip c=clip();if(c==null||c.track>=EditProject.AUDIO_FIRST||!editable())return;new AlertDialog.Builder(this).setTitle("Effect").setSingleChoiceItems(EngineSettings.EFFECTS,c.effect,(d,i)->{d.dismiss();edit("Effect applied",()->c.effect=i);}).setNegativeButton("Back",null).show();}
+    void effectsDialog(){EditProject.Clip c=clip();if(c==null||c.track>=EditProject.AUDIO_FIRST||!editable())return;new AlertDialog.Builder(this).setTitle("Effect").setSingleChoiceItems(com.blackice.bc1.core.EffectCatalog.NAMES,c.effect,(d,i)->{d.dismiss();edit("Effect applied",()->c.effect=i);}).setNegativeButton("Back",null).show();}
     void splitSelected(){if(clip()!=null)edit("Clip split",()->project.split(selected,project.playheadMs));}
     /** Failed/no-op commands do not consume undo or discard redo. */
     void edit(String message,Runnable operation){

@@ -280,6 +280,7 @@ final class Compositor {
         program.set("uRole", d.role);
         program.set("uTop", d.top ? 1 : 0);
         program.set("uProgress", d.progress);
+        program.set("uTime", d.sourceTimeMs / 1000f);
         quad.draw();
     }
 

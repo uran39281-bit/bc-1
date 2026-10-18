@@ -161,7 +161,7 @@ public final class EditProject {
             if(c.audioOnly&&!audioTrack(c.track))throw new IllegalArgumentException("Audio-only media belongs on an audio lane.");
             if(c.track<0||c.track>=TRACK_COUNT||c.startMs<0||c.fadeInMs<0||c.fadeOutMs<0||c.fadeInMs>c.durationMs()||c.fadeOutMs>c.durationMs()||!Motion.allowed(0,c.x)||!Motion.allowed(1,c.y)||!Motion.allowed(2,c.scale)||!Motion.allowed(3,c.rotation)||!unit(c.keyTolerance)||!unit(c.keySoftness)||c.keySoftness<.001f||!unit(c.keySpill)||(audioTrack(c.track)&&c.image))throw new IllegalArgumentException("Invalid track, transform or fade.");
             if(c.uri==null || c.name==null || c.inMs<0 || c.outMs>c.sourceDurationMs || c.durationMs()<MIN_CLIP_MS || !Float.isFinite(c.speed)||c.speed<.25f||c.speed>4||(c.image&&c.speed!=1)
-                    || c.effect<0 || c.effect>11 || !com.blackice.bc1.core.BlendMode.valid(c.blend) || c.transition< -1 || c.transition>6 || c.easing<0 || c.easing>1
+                    || !com.blackice.bc1.core.EffectCatalog.valid(c.effect) || !com.blackice.bc1.core.BlendMode.valid(c.blend) || c.transition< -1 || c.transition>6 || c.easing<0 || c.easing>1
                     || c.transitionMs<0 || c.transitionMs>5000 || !unit(c.intensity) || !unit(c.opacity) || !unit(c.volume))
                 throw new IllegalArgumentException("Invalid clip: "+c.name);
         }

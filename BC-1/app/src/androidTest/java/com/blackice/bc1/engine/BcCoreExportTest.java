@@ -327,6 +327,57 @@ public class BcCoreExportTest {
         assertTrue("Blend modes off the reference:\n" + failures, failures.length() == 0);
     }
 
+    /** Every Black Ice effect (ids 12+) renders through ICE Lite and visibly changes a detailed test picture. */
+    @Test public void blackIceEffectsRenderAndChangeThePicture() throws Exception {
+        Bitmap pattern = Bitmap.createBitmap(320, 180, Bitmap.Config.ARGB_8888);
+        android.graphics.Canvas canvas = new android.graphics.Canvas(pattern);
+        android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        paint.setShader(new android.graphics.LinearGradient(0, 0, 0, 180, 0xFF2A7FD4, 0xFF6B5A3A, android.graphics.Shader.TileMode.CLAMP));
+        canvas.drawRect(0, 0, 320, 180, paint); paint.setShader(null);
+        paint.setColor(0xFFE03A2A); canvas.drawCircle(110, 80, 34, paint);
+        paint.setColor(Color.WHITE); canvas.drawRect(186, 45, 256, 67, paint);
+        for (int x = 0; x < 64; x += 4) { paint.setColor(x % 8 == 0 ? 0xFFEEEEEE : 0xFF111111); canvas.drawRect(190 + x, 110, 194 + x, 145, paint); }
+        File png = new File(context.getFilesDir(), "effects-pattern.png");
+        try (OutputStream o = new FileOutputStream(png)) { pattern.compress(Bitmap.CompressFormat.PNG, 100, o); }
+        pattern.recycle();
+        EditProject.Clip still = new MediaImporter(context).importClip(Uri.fromFile(png), false);
+        assertTrue(still.image);
+        EditProject p = new EditProject(); p.name = "Black Ice effects";
+        int first = 12, count = com.blackice.bc1.core.EffectCatalog.count();
+        for (int id = first - 1; id < count; id++) {
+            EditProject.Clip c = still.copy(); c.name = "fx " + id; c.inMs = 0; c.outMs = 200; c.sourceDurationMs = 200;
+            c.effect = id == first - 1 ? 0 : id; c.intensity = .6f; p.clips.add(c);
+        }
+        File out = new File(context.getCacheDir(), "bc-core-effects-" + System.nanoTime() + ".mp4");
+        new BcExporter(context, p, 180, new AtomicBoolean(), percent -> { }).export(out);
+        StringBuilder unchanged = new StringBuilder();
+        try (MediaMetadataRetriever r = new MediaMetadataRetriever()) {
+            r.setDataSource(out.getPath());
+            Bitmap none = r.getFrameAtTime(100_000, MediaMetadataRetriever.OPTION_CLOSEST);
+            assertNotNull(none);
+            for (int id = first; id < count; id++) {
+                Bitmap frame = r.getFrameAtTime(((id - first + 1) * 200L + 100) * 1000, MediaMetadataRetriever.OPTION_CLOSEST);
+                assertNotNull("Frame for effect " + id, frame);
+                double diff = 0; int samples = 0;
+                for (int y = 4; y < frame.getHeight() - 4; y += 3) for (int x = 4; x < frame.getWidth() - 4; x += 3) {
+                    int a = none.getPixel(x, y), b = frame.getPixel(x, y);
+                    diff += Math.abs(Color.red(a) - Color.red(b)) + Math.abs(Color.green(a) - Color.green(b)) + Math.abs(Color.blue(a) - Color.blue(b));
+                    samples += 3;
+                }
+                double mean = diff / samples;
+                android.util.Log.i("BC1Effects", com.blackice.bc1.core.EffectCatalog.name(id) + " mean change " + String.format(java.util.Locale.US, "%.1f", mean));
+                if (mean < 1.0) unchanged.append(com.blackice.bc1.core.EffectCatalog.name(id)).append(' ');
+                frame.recycle();
+            }
+            none.recycle();
+        } finally {
+            File qa = new File(context.getFilesDir(), "qa"); qa.mkdirs();
+            if (out.isFile()) java.nio.file.Files.copy(out.toPath(), new File(qa, "bc-core-effects.mp4").toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            out.delete();
+        }
+        assertTrue("Effects with no visible change: " + unchanged, unchanged.length() == 0);
+    }
+
     @Test public void cancellationStopsAndRemovesOutput() throws Exception {
         EditProject p = acceptance();
         AtomicBoolean cancel = new AtomicBoolean();

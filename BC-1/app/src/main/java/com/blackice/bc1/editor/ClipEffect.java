@@ -61,7 +61,7 @@ public final class ClipEffect implements GlEffect {
                 program.setFloatsUniform("uChroma",new float[]{c.chroma?1:0,c.keyTolerance,c.keySoftness,c.keySpill});
                 program.setIntUniform("uEffect",c.effect); program.setFloatUniform("uIntensity",c.motion.value(5,sourceTime,c.intensity));
                 program.setFloatUniform("uOpacity",visible?c.motion.value(4,sourceTime,c.opacity):0); program.setIntUniform("uTransition",type);
-                program.setIntUniform("uRole",role); program.setIntUniform("uTop",top?1:0);
+                program.setIntUniform("uRole",role); program.setIntUniform("uTop",top?1:0); program.setFloatUniform("uTime",sourceTime/1000f);
                 program.setFloatUniform("uProgress",progress); program.bindAttributesAndUniforms();
                 GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP,0,4); GlUtil.checkGlError();
             } catch(GlUtil.GlException e) { throw new VideoFrameProcessingException(e,timeUs); }

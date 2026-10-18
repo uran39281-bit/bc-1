@@ -281,7 +281,7 @@ final class ToolPanels {
         if(o!=null){a.inspector.addView(a.note("Image layers keep their own colors. Use Border & Shadow or Blending & Opacity."));return;}
         a.inspector.addView(a.note("Color adjustments for this "+(c.image?"picture":"video")+". One color effect is active at a time."));
         int[] ids={0,4,9,10,11};
-        for(int id:ids)a.gridAction((c.effect==id?"● ":"")+EngineSettings.EFFECTS[id],()->{if(a.layerEditable())a.edit("Color updated",()->c.effect=id);});
+        for(int id:ids)a.gridAction((c.effect==id?"● ":"")+com.blackice.bc1.core.EffectCatalog.name(id),()->{if(a.layerEditable())a.edit("Color updated",()->c.effect=id);});
         a.flushGrid();
         if(c.effect!=0)percent("Strength",c.intensity,.6f,v->c.intensity=v,c.motion,Motion.INTENSITY);
     }
@@ -293,9 +293,15 @@ final class ToolPanels {
     }
     private void effectsPanel(){
         EditProject.Clip c=a.clip();if(c==null||c.track>=EditProject.AUDIO_FIRST){a.inspector.addView(a.note("Select a video or picture to apply visual effects."));return;}
-        for(int i=0;i<EngineSettings.EFFECTS.length;i++){final int id=i;a.gridAction((c.effect==i?"● ":"")+EngineSettings.EFFECTS[i],()->{if(a.layerEditable())a.edit("Effect applied",()->c.effect=id);});}
-        a.flushGrid();
+        // One effect per clip, grouped by category; the Black Ice set is ids 12+ (core.EffectCatalog).
+        a.inspector.addView(a.note("Effect: "+com.blackice.bc1.core.EffectCatalog.name(c.effect)));
+        for(int cat=0;cat<com.blackice.bc1.core.EffectCatalog.CATEGORIES.length;cat++){
+            a.inspector.addView(a.note(com.blackice.bc1.core.EffectCatalog.CATEGORIES[cat]));
+            for(int id:com.blackice.bc1.core.EffectCatalog.inCategory(cat)){final int effect=id;a.gridAction((c.effect==id?"● ":"")+com.blackice.bc1.core.EffectCatalog.name(id),()->{if(a.layerEditable())a.edit("Effect: "+com.blackice.bc1.core.EffectCatalog.name(effect),()->c.effect=effect);});}
+            a.flushGrid();
+        }
         percent("Effect intensity",c.intensity,.6f,v->c.intensity=v,c.motion,Motion.INTENSITY);
+        if(com.blackice.bc1.core.EffectCatalog.centered(c.effect))a.inspector.addView(a.note("50% leaves the picture unchanged; lower reduces, higher increases."));
         a.select("Blend mode",com.blackice.bc1.core.BlendMode.labels(),com.blackice.bc1.core.BlendMode.of(c.blend).ordinal(),index->{if(a.layerEditable())a.edit("Blend mode: "+com.blackice.bc1.core.BlendMode.of(index).label,()->c.blend=index);});
         if(c.blend!=0)a.inspector.addView(a.note("Blend modes render with ICE Lite: in exports and in the prepared preview."));
         a.inspector.addView(a.button("Chroma Key…",v->open("Chroma Key",this::chromaPanel)));
