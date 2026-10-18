@@ -45,6 +45,12 @@ public final class EditorActivity extends Activity {
     ProjectStore store;
     EditProject project=new EditProject();
     Player player;
+    /** Scrubbing sends a seek per touch event; the preview player gets at most one per SEEK_INTERVAL_MS, always ending on the last position. */
+    static final long SEEK_INTERVAL_MS=90;
+    long lastSeekAt;boolean seekQueued;
+    final Runnable flushSeek=()->{seekQueued=false;if(player!=null){lastSeekAt=android.os.SystemClock.uptimeMillis();player.seekTo(seekTarget());}};
+    /** Automatic preview rebuilds after a player error (e.g. a decoder that failed mid-seek), limited per window. */
+    int previewRecoveries;long previewRecoveryWindow;
     PreviewProxy previewProxy;
     SurfaceView surface;
     FrameLayout monitor;
@@ -128,6 +134,7 @@ public final class EditorActivity extends Activity {
     boolean exporting(){return getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getBoolean("running",false)||exportLaunching;}
     boolean editable(){if(uiLocked){tell("UI locked • unlock editing in Settings");return false;}if(loading||importing){tell("Wait for the current import to finish.");return false;}if(exporting()){tell("Wait for export to finish, or cancel it to continue editing.");return false;}return true;}
     void releasePreview(){
+        main.removeCallbacks(flushSeek);seekQueued=false;
         previewPending=false;previewAutoplay=false;if(previewProxy!=null)previewProxy.cancel();
         if(player!=null){project.playheadMs=Math.min(project.durationMs(),Math.max(0,player.getCurrentPosition()));player.release();player=null;}
     }
@@ -136,7 +143,11 @@ public final class EditorActivity extends Activity {
         player=prepared;prepared.setVideoSurfaceView(surface);
         prepared.addListener(new Player.Listener(){
             @Override public void onRenderedFirstFrame(){if(player==prepared&&emptyPreview!=null)emptyPreview.setVisibility(View.GONE);}
-            @Override public void onPlayerError(PlaybackException error){if(player!=prepared)return;prepared.pause();tell("Preview error: "+error.getMessage());previewHint("Preview unavailable • tap to retry");}
+            @Override public void onPlayerError(PlaybackException error){if(player!=prepared)return;prepared.pause();main.removeCallbacks(flushSeek);
+                // A preview player can fail under rapid seeking; rebuild it at the same position (a few times per 30 s).
+                long now=android.os.SystemClock.uptimeMillis();if(now-previewRecoveryWindow>30_000){previewRecoveryWindow=now;previewRecoveries=0;}
+                if(previewRecoveries++<3){previewHint("Recovering preview…");main.postDelayed(()->{if(player==prepared)preparePreview(false);},150);return;}
+                tell("Preview error: "+error.getMessage());previewHint("Preview unavailable • tap to retry");}
             @Override public void onPlaybackStateChanged(int state){if(state==Player.STATE_ENDED&&player==prepared){project.playheadMs=project.durationMs();syncPosition();}}
         });
     }
@@ -194,8 +205,17 @@ public final class EditorActivity extends Activity {
         if(monitor!=null)monitor.requestLayout();if(emptyPreview!=null)emptyPreview.setVisibility(project.clips.isEmpty()?View.VISIBLE:View.GONE);renderInspector();renderMediaBrowser();syncPosition();
     }
     void syncPosition(){if(previewControls!=null)previewControls.invalidate();if(time!=null)time.setText(clock(project.playheadMs)+"  /  "+clock(project.durationMs()));if(timeline!=null)timeline.syncScroll();if(previewScrubber!=null&&!scrubbing)previewScrubber.setProgress((int)(1000*project.playheadMs/Math.max(1,project.durationMs())));}
-    void seek(long ms){project.playheadMs=Math.max(0,Math.min(ms,project.durationMs()));if(player!=null){player.pause();player.seekTo(Math.min(project.playheadMs,Math.max(0,project.durationMs()-1)));}syncPosition();}
-    void togglePlay(){if(previewPending){previewAutoplay=!previewAutoplay;tell(previewAutoplay?"Playback will start when the preview is ready.":"Preview will stay paused when ready.");return;}if(player==null){if(project.clips.isEmpty())tell("Import a video or image first.");else preparePreview(true);return;}if(player.getPlayWhenReady())player.pause();else{if(player.getPlaybackState()==Player.STATE_ENDED||project.playheadMs>=project.durationMs())player.seekTo(0);player.play();}}
+    long seekTarget(){return Math.min(project.playheadMs,Math.max(0,project.durationMs()-1));}
+    void seek(long ms){
+        project.playheadMs=Math.max(0,Math.min(ms,project.durationMs()));
+        if(player!=null){
+            player.pause();main.removeCallbacks(flushSeek);
+            long now=android.os.SystemClock.uptimeMillis(),wait=lastSeekAt+SEEK_INTERVAL_MS-now;
+            if(wait<=0)flushSeek.run();else{seekQueued=true;main.postDelayed(flushSeek,wait);}
+        }
+        syncPosition();
+    }
+    void togglePlay(){if(previewPending){previewAutoplay=!previewAutoplay;tell(previewAutoplay?"Playback will start when the preview is ready.":"Preview will stay paused when ready.");return;}if(player==null){if(project.clips.isEmpty())tell("Import a video or image first.");else preparePreview(true);return;}if(player.getPlayWhenReady())player.pause();else{if(seekQueued){main.removeCallbacks(flushSeek);flushSeek.run();}if(player.getPlaybackState()==Player.STATE_ENDED||project.playheadMs>=project.durationMs())player.seekTo(0);player.play();}}
 
     void buildWorkspace() {
         // Layout switches keep selection, playhead and zoom (fields) and the layer list's vertical scroll.
