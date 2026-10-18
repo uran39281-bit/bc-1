@@ -115,6 +115,16 @@ are neutral at 50%. Animated effects (Ripple, Wave, Shake, Light Leak, Film Grai
 clip's source time (`uTime`). A contact sheet rendered from the shader is in
 `docs/effects/black-ice-effects-sheet.png`.
 
+## Live preview
+
+While paused, the editor's preview is drawn by ICE Lite (`engine/bc/LivePreview`, a TextureView above the
+player surface): the frame at the playhead goes through the same RenderPlan and compositor as export, so
+effects, blend modes, transforms, layers and titles show the moment a value changes. Sliders apply while
+dragging (one undo entry per drag). Decoders and pictures stay open between frames: a parameter change
+only redraws, forward scrubbing continues the open decoders, and a backward jump reopens them. Requests are
+coalesced so fast drags never queue up. The Media3 playback player is prepared only when Play is pressed;
+its first frame replaces the live frame, and the live decoders are closed to free the hardware.
+
 ## Engine routing
 
 Each export picks its engine from the setting plus the project: more than four simultaneous video layers
@@ -125,7 +135,8 @@ ICE Lite anyway. The saved-export message says when the engine differed from the
 
 - Letterbox bars of upper layers are transparent (lower layers show through).
 - Audio speed changes pitch (linear resampling). A pitch-preserving time stretch is a later stage.
-- Live preview uses Media3/ExoPlayer; prepared previews of heavy or blended projects are rendered by ICE Lite.
+- Paused preview is ICE Lite (live); playback uses Media3/ExoPlayer, with prepared previews of heavy or blended
+  projects rendered by ICE Lite.
 - Galaxy S24+ (SM8650) benchmark: 8 layers × 1080p60 exported at 72.6 frames/s (1.21× real time),
   one pass, direct layer drawing, decoder budget 16 (16 hardware decoder instances, 11.6 GB).
 - 4K120 itself is verified only on real hardware; the CI emulator verifies 60 fps output from a 120 fps

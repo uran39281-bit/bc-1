@@ -159,10 +159,10 @@ final class ToolPanels {
         a.inspector.addView(row);
         SeekBar slider=new SeekBar(a);slider.setMax(1000);slider.setProgress(Math.round((value-min)/(max-min)*1000));slider.setContentDescription(title);
         slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
-            public void onProgressChanged(SeekBar s,int p,boolean user){if(user)exact.setText(format((min+(max-min)*p/1000f)*displayFactor));}
-            public void onStartTrackingTouch(SeekBar s){a.pausePlayback();}
-            // One slider drag is one undo entry.
-            public void onStopTrackingTouch(SeekBar s){commit(title,min+(max-min)*s.getProgress()/1000f,apply);}
+            // The preview follows the slider live (ICE Lite); one drag is one undo entry.
+            public void onProgressChanged(SeekBar s,int p,boolean user){if(!user)return;float v=min+(max-min)*p/1000f;exact.setText(format(v*displayFactor));a.liveAdjust(()->apply.set(v));}
+            public void onStartTrackingTouch(SeekBar s){a.pausePlayback();a.beginLiveAdjust();}
+            public void onStopTrackingTouch(SeekBar s){float v=min+(max-min)*s.getProgress()/1000f;if(a.liveBefore!=null)a.endLiveAdjust(title+" updated",()->apply.set(v));else commit(title,v,apply);}
         });
         a.inspector.addView(slider,new LinearLayout.LayoutParams(-1,a.dp(44)));
         LinearLayout actions=a.row();

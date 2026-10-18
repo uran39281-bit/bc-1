@@ -47,7 +47,11 @@ public class PreviewScrubTest {
         new ProjectStore(inst.getTargetContext()).save(p);
         inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS, 0).edit().putString("last-project", p.id).putBoolean("ui-locked", false).commit();
         try (ActivityScenario<EditorActivity> scenario = ActivityScenario.launch(EditorActivity.class)) {
-            waitFor(scenario, a -> !a.loading && a.player != null && a.player.getPlaybackState() == Player.STATE_READY, 20_000, "the live preview");
+            // Paused, the editor shows the ICE Lite live frame; Play prepares the Media3 player used for this check.
+            waitFor(scenario, a -> !a.loading, 20_000, "the project");
+            scenario.onActivity(a -> a.togglePlay());
+            waitFor(scenario, a -> a.player != null && a.player.getPlaybackState() == Player.STATE_READY, 20_000, "the playback player");
+            scenario.onActivity(a -> a.pausePlayback());
             long duration = p.durationMs();
             // About 400 seeks in 2 seconds, sweeping back and forth like a fast finger on the timeline.
             long last = 0;
@@ -63,6 +67,35 @@ public class PreviewScrubTest {
             AtomicReference<String> hint = new AtomicReference<>();
             scenario.onActivity(a -> { TextView v = a.emptyPreview; hint.set(v != null && v.getVisibility() == android.view.View.VISIBLE ? v.getText().toString() : ""); });
             assertFalse("Preview left broken: " + hint.get(), hint.get().contains("unavailable"));
+        }
+    }
+
+    /** With no playback player (the normal paused state), scrubbing renders through the ICE Lite live preview. */
+    @Test public void fastScrubbingWithTheLivePreview() throws Exception {
+        EditProject p = new EditProject(); p.name = "Live scrub QA";
+        EditProject.Clip c = new MediaImporter(inst.getTargetContext()).importClip(Uri.parse(fixture("red.mp4")), false);
+        c.name = "red"; c.effect = 21; c.intensity = .5f; p.clips.add(c); // Hue Shift: red becomes cyan
+        new ProjectStore(inst.getTargetContext()).save(p);
+        inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS, 0).edit().putString("last-project", p.id).putBoolean("ui-locked", false).commit();
+        try (ActivityScenario<EditorActivity> scenario = ActivityScenario.launch(EditorActivity.class)) {
+            waitFor(scenario, a -> !a.loading && a.liveView != null && a.liveView.getVisibility() == android.view.View.VISIBLE && a.liveView.isAvailable(), 20_000, "the live preview");
+            long duration = p.durationMs();
+            for (int i = 0; i < 300; i++) {
+                long target = Math.round((Math.sin(i / 7.0) * .5 + .5) * (duration - 1));
+                scenario.onActivity(a -> a.seek(target));
+                Thread.sleep(5);
+            }
+            Thread.sleep(1500);
+            AtomicReference<String> state = new AtomicReference<>();
+            scenario.onActivity(a -> {
+                assertNull("No playback player while paused", a.player);
+                android.graphics.Bitmap b = a.liveView.getBitmap();
+                int px = b.getPixel(b.getWidth() / 2, b.getHeight() / 2); b.recycle();
+                state.set(Integer.toHexString(px) + " error=" + a.live.lastError());
+                assertNull("Live preview error", a.live.lastError());
+                assertTrue("Hue-shifted red shows as cyan in the live frame: " + Integer.toHexString(px),
+                        android.graphics.Color.red(px) < 90 && android.graphics.Color.green(px) > 150 && android.graphics.Color.blue(px) > 150);
+            });
         }
     }
 }

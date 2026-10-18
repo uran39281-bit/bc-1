@@ -53,6 +53,11 @@ public final class EditorActivity extends Activity {
     int previewRecoveries;long previewRecoveryWindow;
     PreviewProxy previewProxy;
     SurfaceView surface;
+    /** ICE Lite live preview: draws the playhead frame while paused, so edits show at once (no preview preparation). */
+    com.blackice.bc1.engine.bc.LivePreview live;
+    TextureView liveView;
+    /** Project before the current slider drag (one undo entry per drag); null when not dragging. */
+    String liveBefore;
     FrameLayout monitor;
     LinearLayout inspector,mediaBrowser,mediaGrid,contextualRow;
     int contextualCount;
@@ -97,7 +102,7 @@ public final class EditorActivity extends Activity {
         android.content.SharedPreferences export=getSharedPreferences(ExportService.PREFS,MODE_PRIVATE);
         boolean running=export.getBoolean("running",false);
         long completed=export.getLong("finishedAt",0);
-        if(!running&&!exportLaunching&&!loading&&(wasExporting||completed>lastExportSeen)){lastExportSeen=completed;tell(export.getString("status","Export ended"));if(wasExporting)preparePreview(false);}
+        if(!running&&!exportLaunching&&!loading&&(wasExporting||completed>lastExportSeen)){lastExportSeen=completed;tell(export.getString("status","Export ended"));if(wasExporting)showLive();}
         wasExporting=running;
         if(exportButton!=null)exportButton.setText(running?"Cancel":"Export");
         if(status!=null)status.setText(running?export.getString("status","Exporting…"):message);
@@ -105,7 +110,7 @@ public final class EditorActivity extends Activity {
     }};
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);getWindow().setStatusBarColor(BG);getWindow().setNavigationBarColor(BG);
-        thumbnails=new ThumbnailCache(this);previewProxy=new PreviewProxy(this);addDrawer=new AddDrawer(this);presets=new PresetStore(this);uiLocked=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("ui-locked",false);
+        thumbnails=new ThumbnailCache(this);previewProxy=new PreviewProxy(this);live=new com.blackice.bc1.engine.bc.LivePreview(this);addDrawer=new AddDrawer(this);presets=new PresetStore(this);uiLocked=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("ui-locked",false);
         store=new ProjectStore(this);inspectorWidth=getSharedPreferences(PREFS,MODE_PRIVATE).getInt("panel-width",300);
         android.content.SharedPreferences exportState=getSharedPreferences(ExportService.PREFS,MODE_PRIVATE);
         if(exportState.getBoolean("running",false)&&!ExportService.isRunning())exportState.edit().putBoolean("running",false)
@@ -122,13 +127,13 @@ public final class EditorActivity extends Activity {
             EditProject result=loaded;String error=failure;
             main.post(()->{if(isDestroyed())return;loading=false;if(result!=null)project=result;
                 message=error==null?(project.clips.isEmpty()?"Import videos or images to begin.":"Project restored • "+project.clips.size()+" clips"):error;
-                refreshProject();preparePreview(false);
+                refreshProject();showLive();
             });
         });
     }
-    @Override protected void onStart(){super.onStart();active=true;main.post(pulse);if(!loading)preparePreview(false);}
+    @Override protected void onStart(){super.onStart();active=true;main.post(pulse);if(!loading)showLive();}
     @Override protected void onStop(){active=false;main.removeCallbacks(pulse);saveNow();releasePreview();super.onStop();}
-    @Override protected void onDestroy(){main.removeCallbacks(autosave);io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
+    @Override protected void onDestroy(){main.removeCallbacks(autosave);if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
     @Override protected void onSaveInstanceState(Bundle state){state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());saveNow();super.onSaveInstanceState(state);}
     @Override public void onConfigurationChanged(Configuration config){super.onConfigurationChanged(config);buildWorkspace();}
     boolean exporting(){return getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getBoolean("running",false)||exportLaunching;}
@@ -138,19 +143,35 @@ public final class EditorActivity extends Activity {
         previewPending=false;previewAutoplay=false;if(previewProxy!=null)previewProxy.cancel();
         if(player!=null){project.playheadMs=Math.min(project.durationMs(),Math.max(0,player.getCurrentPosition()));player.release();player=null;}
     }
-    void previewHint(String text){if(emptyPreview!=null){emptyPreview.setText(text);emptyPreview.setVisibility(View.VISIBLE);}}
+    void previewHint(String text){if(emptyPreview!=null){emptyPreview.setText(text);emptyPreview.setBackgroundColor(liveView!=null&&liveView.getVisibility()==View.VISIBLE?0x99000000:Color.BLACK);emptyPreview.setVisibility(View.VISIBLE);}}
     void attachPreview(Player prepared){
         player=prepared;prepared.setVideoSurfaceView(surface);
         prepared.addListener(new Player.Listener(){
-            @Override public void onRenderedFirstFrame(){if(player==prepared&&emptyPreview!=null)emptyPreview.setVisibility(View.GONE);}
+            @Override public void onRenderedFirstFrame(){if(player!=prepared)return;if(emptyPreview!=null){emptyPreview.setVisibility(View.GONE);emptyPreview.setBackgroundColor(Color.BLACK);}if(liveView!=null)liveView.setVisibility(View.GONE);if(live!=null)live.releaseDecoders();}
             @Override public void onPlayerError(PlaybackException error){if(player!=prepared)return;prepared.pause();main.removeCallbacks(flushSeek);
                 // A preview player can fail under rapid seeking; rebuild it at the same position (a few times per 30 s).
                 long now=android.os.SystemClock.uptimeMillis();if(now-previewRecoveryWindow>30_000){previewRecoveryWindow=now;previewRecoveries=0;}
-                if(previewRecoveries++<3){previewHint("Recovering preview…");main.postDelayed(()->{if(player==prepared)preparePreview(false);},150);return;}
+                if(previewRecoveries++<3){previewHint("Recovering preview…");main.postDelayed(()->{if(player==prepared)showLive();},150);return;}
                 tell("Preview error: "+error.getMessage());previewHint("Preview unavailable • tap to retry");}
             @Override public void onPlaybackStateChanged(int state){if(state==Player.STATE_ENDED&&player==prepared){project.playheadMs=project.durationMs();syncPosition();}}
         });
     }
+    /**
+     * Shows the frame at the playhead through ICE Lite at once. The playback player is released and only
+     * prepared again when Play is pressed, so edits, slider drags and paused scrubbing never wait for it.
+     */
+    void renderLive(){
+        if(live==null||liveView==null||!active||loading)return;
+        if(project.clips.isEmpty()){liveView.setVisibility(View.GONE);return;}
+        try{
+            EditProject snapshot=comparing&&compareSnapshot!=null?ProjectStore.decode(compareSnapshot):ProjectStore.snapshot(project);
+            snapshot.playheadMs=project.playheadMs;
+            liveView.setVisibility(View.VISIBLE);if(emptyPreview!=null)emptyPreview.setVisibility(View.GONE);
+            live.request(snapshot,project.playheadMs);
+        }catch(Exception e){tell("Live preview: "+e.getMessage());}
+    }
+    /** Live preview after an edit or reload: drop the playback player (Play prepares it again). */
+    void showLive(){if(player!=null||previewPending)releasePreview();renderLive();}
     void preparePreview(boolean playWhenReady) {
         if(!active||loading||exporting())return;
         long position=project.playheadMs;releasePreview();project.playheadMs=position;
@@ -182,7 +203,7 @@ public final class EditorActivity extends Activity {
     }
     void remember(){try {undo.addLast(ProjectStore.encode(project));while(undo.size()>30)undo.removeFirst();redo.clear();}catch(Exception e){tell(e.getMessage());}}
     void changed(String text) {
-        project.validate();message=text;refreshProject();preparePreview(false);main.removeCallbacks(autosave);main.postDelayed(autosave,300);
+        project.validate();message=text;refreshProject();showLive();main.removeCallbacks(autosave);main.postDelayed(autosave,300);
     }
     void saveNow() {
         main.removeCallbacks(autosave);if(loading)return;
@@ -212,7 +233,7 @@ public final class EditorActivity extends Activity {
             player.pause();main.removeCallbacks(flushSeek);
             long now=android.os.SystemClock.uptimeMillis(),wait=lastSeekAt+SEEK_INTERVAL_MS-now;
             if(wait<=0)flushSeek.run();else{seekQueued=true;main.postDelayed(flushSeek,wait);}
-        }
+        }else renderLive();
         syncPosition();
     }
     void togglePlay(){if(previewPending){previewAutoplay=!previewAutoplay;tell(previewAutoplay?"Playback will start when the preview is ready.":"Preview will stay paused when ready.");return;}if(player==null){if(project.clips.isEmpty())tell("Import a video or image first.");else preparePreview(true);return;}if(player.getPlayWhenReady())player.pause();else{if(seekQueued){main.removeCallbacks(flushSeek);flushSeek.run();}if(player.getPlaybackState()==Player.STATE_ENDED||project.playheadMs>=project.durationMs())player.seekTo(0);player.play();}}
@@ -259,16 +280,21 @@ public final class EditorActivity extends Activity {
     View buildMonitor() {
         if(surface==null){surface=new SurfaceView(this);surface.setContentDescription("Video project preview");}
         if(surface.getParent()!=null)((android.view.ViewGroup)surface.getParent()).removeView(surface);
+        if(liveView==null){liveView=new TextureView(this);liveView.setSurfaceTextureListener(live);liveView.setContentDescription("Live project preview");liveView.setVisibility(View.GONE);}
+        if(liveView.getParent()!=null)((android.view.ViewGroup)liveView.getParent()).removeView(liveView);
         monitor=new FrameLayout(this){@Override protected void onMeasure(int wSpec,int hSpec){
             int w=View.MeasureSpec.getSize(wSpec),h=View.MeasureSpec.getSize(hSpec);float ratio=project.portrait?9f/16:16f/9;
             int fit=Math.min(w,(int)(h*ratio));
             // Navigation zoom / pan changes only the view of the frame, never a layer's scale or position.
             int sw=Math.round(fit*previewZoom),sh=(int)(sw/ratio),offX=Math.round(previewPanX*sw),offY=Math.round(previewPanY*sh);
             FrameLayout.LayoutParams params=(FrameLayout.LayoutParams)surface.getLayoutParams();
-            if(params.width!=Math.max(1,sw)||params.height!=Math.max(1,sh)||params.leftMargin!=offX||params.topMargin!=offY){params.width=Math.max(1,sw);params.height=Math.max(1,sh);params.leftMargin=offX;params.topMargin=offY;params.rightMargin=0;params.bottomMargin=0;surface.setLayoutParams(params);}super.onMeasure(wSpec,hSpec);
+            if(params.width!=Math.max(1,sw)||params.height!=Math.max(1,sh)||params.leftMargin!=offX||params.topMargin!=offY){params.width=Math.max(1,sw);params.height=Math.max(1,sh);params.leftMargin=offX;params.topMargin=offY;params.rightMargin=0;params.bottomMargin=0;surface.setLayoutParams(params);}
+            FrameLayout.LayoutParams lp=(FrameLayout.LayoutParams)liveView.getLayoutParams();
+            if(lp.width!=params.width||lp.height!=params.height||lp.leftMargin!=params.leftMargin||lp.topMargin!=params.topMargin){lp.width=params.width;lp.height=params.height;lp.leftMargin=params.leftMargin;lp.topMargin=params.topMargin;lp.gravity=params.gravity;liveView.setLayoutParams(lp);}
+            super.onMeasure(wSpec,hSpec);
         }};
-        monitor.setBackgroundColor(Color.BLACK);monitor.addView(surface,new FrameLayout.LayoutParams(-1,-1,Gravity.CENTER));
-        emptyPreview=label("START YOUR FIRST CUT\n\n+ Import video or images",14,CYAN,true);emptyPreview.setGravity(Gravity.CENTER);emptyPreview.setContentDescription("Import video or images");emptyPreview.setFocusable(true);emptyPreview.setBackgroundColor(Color.BLACK);emptyPreview.setOnClickListener(v->{if(project.clips.isEmpty())pick(IMPORT,"*/*");else if(previewPending){releasePreview();previewHint("Preview cancelled • tap to prepare");}else preparePreview(false);});emptyPreview.setVisibility(project.clips.isEmpty()?View.VISIBLE:View.GONE);monitor.addView(emptyPreview,new FrameLayout.LayoutParams(-1,-1));
+        monitor.setBackgroundColor(Color.BLACK);monitor.addView(surface,new FrameLayout.LayoutParams(-1,-1,Gravity.CENTER));monitor.addView(liveView,new FrameLayout.LayoutParams(-1,-1,Gravity.CENTER));
+        emptyPreview=label("START YOUR FIRST CUT\n\n+ Import video or images",14,CYAN,true);emptyPreview.setGravity(Gravity.CENTER);emptyPreview.setContentDescription("Import video or images");emptyPreview.setFocusable(true);emptyPreview.setBackgroundColor(Color.BLACK);emptyPreview.setOnClickListener(v->{if(project.clips.isEmpty())pick(IMPORT,"*/*");else if(previewPending){releasePreview();previewHint("Preview cancelled • tap to prepare");}else showLive();});emptyPreview.setVisibility(project.clips.isEmpty()?View.VISIBLE:View.GONE);monitor.addView(emptyPreview,new FrameLayout.LayoutParams(-1,-1));
         previewControls=new PreviewEditor(this);monitor.addView(previewControls,new FrameLayout.LayoutParams(-1,-1));
         TextView compare=button("Compare",null);compare.setTextSize(10);compare.setContentDescription("Hold to compare with the layer before the current adjustments");compare.setTooltipText(compare.getContentDescription());
         compare.setOnTouchListener((v,e)->{if(e.getActionMasked()==MotionEvent.ACTION_DOWN)compare(true);else if(e.getActionMasked()==MotionEvent.ACTION_UP||e.getActionMasked()==MotionEvent.ACTION_CANCEL)compare(false);return true;});
@@ -478,6 +504,16 @@ public final class EditorActivity extends Activity {
     /** Workspace lock (Settings) and per-layer locks are separate; both block edits. */
     boolean layerEditable(){if(!editable())return false;for(int i:selectedClips())if(LayerOps.locked(project,i)){tell("Layer locked • unlock it in Layers to edit");return false;}for(int i:selectedOverlays())if(project.overlays.get(i).locked){tell("Layer locked • unlock it in Layers to edit");return false;}return true;}
     void pausePlayback(){if(player!=null)player.pause();}
+    /** Slider drag start: remember the project for one undo entry and switch to the live preview. */
+    void beginLiveAdjust(){if(!layerEditable())return;try{liveBefore=ProjectStore.encode(project);}catch(Exception e){liveBefore=null;return;}if(player!=null||previewPending)releasePreview();}
+    /** During a drag: apply the value and redraw at once, without validation or undo. */
+    void liveAdjust(Runnable apply){if(liveBefore==null)return;try{apply.run();renderLive();}catch(RuntimeException ignored){}}
+    /** Drag end: validate and record a single undo entry from the drag start. */
+    void endLiveAdjust(String message,Runnable apply){
+        String before=liveBefore;liveBefore=null;if(before==null)return;
+        try{apply.run();project.validate();if(!before.equals(ProjectStore.encode(project))){pushUndo(before);changed(message);}else renderLive();}
+        catch(Exception e){try{project=ProjectStore.decode(before);}catch(Exception ignored){}changed(e.getMessage()==null?"Value not applied":e.getMessage());}
+    }
     /** Rebuilds the top bar: project / Settings / Export normally; layer name / Duplicate / Delete / More when selected. */
     void renderHeader(){
         if(header==null)return;EditProject.Clip c=clip();EditProject.Overlay o=overlay();int count=multiCount();
@@ -709,8 +745,8 @@ public final class EditorActivity extends Activity {
     void resetPreviewView(){previewZoom=1;previewPanX=0;previewPanY=0;if(monitor!=null)monitor.requestLayout();if(previewControls!=null)previewControls.invalidate();}
     /** Before/after: hold Compare to preview the project as it was when the current layer was selected. */
     void compare(boolean start){
-        if(start){if(compareSnapshot==null){tell("Select a layer and adjust it to compare before and after.");return;}comparing=true;preparePreview(false);}
-        else if(comparing){comparing=false;preparePreview(false);}
+        if(start){if(compareSnapshot==null){tell("Select a layer and adjust it to compare before and after.");return;}comparing=true;showLive();}
+        else if(comparing){comparing=false;showLive();}
         if(previewControls!=null)previewControls.invalidate();
     }
     void previewMove(float x,float y){previewMoveX=x;previewMoveY=y;if(previewControls!=null)previewControls.invalidate();}
@@ -866,7 +902,7 @@ public final class EditorActivity extends Activity {
                 +String.format(java.util.Locale.US,"\nAbout %.2f GB",plan.estimatedBytes(project.durationMs())/1e9);
     }
     void startExport(Uri destination) {
-        if(exporting()){tell("An export is already running.");return;}saveNow();releasePreview();exportLaunching=true;
+        if(exporting()){tell("An export is already running.");return;}saveNow();releasePreview();if(live!=null)live.releaseDecoders();exportLaunching=true;
         EditProject snapshot=ProjectStore.snapshot(project);io.execute(()->{try{
             File file=new File(getCacheDir(),"export-project-"+System.currentTimeMillis()+".json");try(FileOutputStream out=new FileOutputStream(file)){out.write(ProjectStore.encode(snapshot).getBytes(java.nio.charset.StandardCharsets.UTF_8));}
             main.post(()->{exportLaunching=false;try{startForegroundService(new Intent(this,ExportService.class).putExtra("project",file.getAbsolutePath()).putExtra("destination",destination.toString()));message="Export started";}catch(Exception e){file.delete();tell("Cannot start export: "+e.getMessage());}});

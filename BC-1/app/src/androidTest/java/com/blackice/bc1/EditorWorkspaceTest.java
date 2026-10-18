@@ -26,6 +26,10 @@ public class EditorWorkspaceTest {
     private void assertVisiblePreview(ActivityScenario<EditorActivity> scenario)throws Exception{
         long deadline=SystemClock.elapsedRealtime()+90000;
         while(SystemClock.elapsedRealtime()<deadline){
+                // While paused the ICE Lite live preview (a TextureView over the player surface) shows the frame.
+                java.util.concurrent.atomic.AtomicInteger live=new java.util.concurrent.atomic.AtomicInteger(-1);
+                scenario.onActivity(a->{if(a.liveView!=null&&a.liveView.getVisibility()==View.VISIBLE&&a.liveView.isAvailable()){Bitmap b=a.liveView.getBitmap();if(b!=null){live.set(b.getPixel(b.getWidth()/4,b.getHeight()/2));b.recycle();}}});
+                if(live.get()!=-1&&android.graphics.Color.blue(live.get())>30)return;
                 java.util.concurrent.atomic.AtomicReference<SurfaceView> preview=new java.util.concurrent.atomic.AtomicReference<>();
                 scenario.onActivity(a->preview.set(surface(a.getWindow().getDecorView())));
                 Bitmap pixels=Bitmap.createBitmap(preview.get().getWidth(),preview.get().getHeight(),Bitmap.Config.ARGB_8888);
