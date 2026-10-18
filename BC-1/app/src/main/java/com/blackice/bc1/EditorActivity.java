@@ -357,6 +357,9 @@ public final class EditorActivity extends Activity {
             select("Preview resolution (short edge)",new String[]{"360p • Performance","540p • Balanced","1080p • Quality"},project.previewHeight==360?0:project.previewHeight==540?1:2,index->{remember();project.previewHeight=new int[]{360,540,1080}[index];changed("Preview quality updated");});
             addAction("Workspace layout: "+new String[]{"Auto • phone / tablet / DeX","Phone portrait","Wide tablet / DeX"}[mode.ordinal()],()->chooseMode());
             select("Frame rate",new String[]{"24 fps","25 fps","30 fps"},project.frameRate==24?0:project.frameRate==25?1:2,index->edit("Frame rate updated",()->project.frameRate=new int[]{24,25,30}[index]));
+            {android.content.SharedPreferences exportPrefs=getSharedPreferences(ExportService.PREFS,MODE_PRIVATE);
+            com.blackice.bc1.core.ExportEngine engine=com.blackice.bc1.core.ExportEngine.parse(exportPrefs.getString(com.blackice.bc1.core.ExportEngine.PREF_KEY,null));
+            select("Export engine",com.blackice.bc1.core.ExportEngine.labels(),engine.ordinal(),index->{if(exporting()){tell("Wait for the current export to finish.");renderInspector();return;}exportPrefs.edit().putString(com.blackice.bc1.core.ExportEngine.PREF_KEY,com.blackice.bc1.core.ExportEngine.values()[index].name()).apply();tell("Export engine: "+com.blackice.bc1.core.ExportEngine.values()[index].label);renderInspector();});}
             addAction("Lock editing and layout: "+(uiLocked?"ON":"OFF"),this::toggleLock);
             addAction("Preview / timeline space",this::chooseSpace);
             addAction("Snap to playhead, clip edges and markers: "+(snapping?"ON":"OFF"),()->{snapping=!snapping;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("snapping",snapping).apply();renderInspector();});

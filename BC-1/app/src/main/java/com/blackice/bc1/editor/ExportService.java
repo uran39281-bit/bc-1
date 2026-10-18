@@ -9,6 +9,8 @@ import androidx.media3.common.MimeTypes;
 import androidx.media3.transformer.*;
 import com.blackice.bc1.EditorActivity;
 import com.blackice.bc1.R;
+import com.blackice.bc1.core.ExportEngine;
+import com.blackice.bc1.engine.bc.BcExporter;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.*;
@@ -26,12 +28,17 @@ public final class ExportService extends Service {
     private static volatile boolean alive;
     public static boolean isRunning(){return alive;}
     private Transformer transformer;
+    /** BC Core export thread (engine BC_CORE); progress is written from that thread. */
+    private Thread coreThread;
+    private volatile int coreProgress=-1;
     private File output;
     private Uri destination;
     private boolean copying,finished;
     private final ProgressHolder progress=new ProgressHolder();
     private final Runnable poll=new Runnable(){@Override public void run(){
-        if(transformer==null || copying || finished)return;
+        if(copying || finished)return;
+        if(coreThread!=null){update(coreProgress<0?"Preparing export…":"Exporting "+coreProgress+"% • BC Core",coreProgress);main.postDelayed(this,500);return;}
+        if(transformer==null)return;
         int state=transformer.getProgress(progress);
         update(state==Transformer.PROGRESS_STATE_AVAILABLE?"Exporting "+progress.progress+"%":"Preparing export…",state==Transformer.PROGRESS_STATE_AVAILABLE?progress.progress:-1);
         main.postDelayed(this,500);
@@ -41,7 +48,7 @@ public final class ExportService extends Service {
     @Override public int onStartCommand(Intent intent,int flags,int startId) {
         if(intent==null){stopSelf();return START_NOT_STICKY;}
         if(ACTION_CANCEL.equals(intent.getAction())) {cancelExport();return START_NOT_STICKY;}
-        if(transformer!=null || copying)return START_NOT_STICKY;
+        if(transformer!=null || coreThread!=null || copying)return START_NOT_STICKY;
         Notification initial=notification("Preparing export…",-1);
         if(Build.VERSION.SDK_INT>=35)startForeground(41,initial,ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROCESSING);
         else if(Build.VERSION.SDK_INT>=29)startForeground(41,initial,ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
@@ -53,6 +60,9 @@ public final class ExportService extends Service {
             EditProject project=ProjectStore.decode(new String(java.nio.file.Files.readAllBytes(new File(path).toPath()),StandardCharsets.UTF_8));
             new File(path).delete();
             output=new File(getCacheDir(),"bc1-export-"+System.currentTimeMillis()+".mp4");
+            String engineName=intent.getStringExtra(ExportEngine.PREF_KEY);
+            if(engineName==null)engineName=getSharedPreferences(PREFS,MODE_PRIVATE).getString(ExportEngine.PREF_KEY,null);
+            if(ExportEngine.parse(engineName)==ExportEngine.BC_CORE){startCore(project);return START_NOT_STICKY;}
             transformer=new Transformer.Builder(this).setAssetLoaderFactory(CompositionFactory.assetLoader(this)).setVideoMimeType(MimeTypes.VIDEO_H264).setAudioMimeType(MimeTypes.AUDIO_AAC)
                     .setPortraitEncodingEnabled(true)
                     .setVideoFrameProcessorFactory(CompositionFactory.frameProcessor())
@@ -65,6 +75,21 @@ public final class ExportService extends Service {
             transformer.start(CompositionFactory.build(this,project,true),output.getAbsolutePath());main.post(poll);
         } catch(Exception e) {exportFailed("preparation",e);}
         return START_NOT_STICKY;
+    }
+    /** BC Core renders on its own thread (it owns a GL context); results return to the main thread. */
+    private void startCore(EditProject project) {
+        final File target=output;
+        coreThread=new Thread(()->{
+            try {
+                new BcExporter(this,project,com.blackice.bc1.core.OutputSpec.EXPORT_SHORT_EDGE,cancelled,p->coreProgress=p).export(target);
+                main.post(()->{if(!cancelled.get()&&!finished)publish();});
+            } catch(CancellationException ignored) {
+            } catch(Throwable t) {
+                Exception e=t instanceof Exception?(Exception)t:new RuntimeException(t);
+                main.post(()->{if(!cancelled.get())exportFailed("encoding",e);});
+            }
+        },"bc1-core-export");
+        coreThread.start();main.post(poll);
     }
     private void recordFailure(String stage,Exception error) {
         // Preserve nested codec/muxer causes for device QA, only in debuggable builds.

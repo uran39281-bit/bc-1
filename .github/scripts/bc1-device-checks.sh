@@ -53,3 +53,20 @@ assert 4.8<float(report['format']['duration'])<5.2, report['format']
 assert abs(float(video['duration'])-float(audio['duration']))<.2, (video,audio)
 print('Independent speed MP4 check passed: synchronized H.264/AAC, five seconds')
 PYVERIFY
+
+# BC Core (custom engine) export: decoded independently, frame count and A/V sync checked.
+CORE_MP4="BC-1/app/build/reports/androidTests/qa/bc-core-1080p.mp4"
+ffmpeg -v error -xerror -i "$CORE_MP4" -f null -
+ffprobe -v error -count_frames -show_streams -show_format -of json "$CORE_MP4" > "${CORE_MP4}.ffprobe.json"
+python3 - "${CORE_MP4}.ffprobe.json" <<'PYVERIFY'
+import json,sys
+report=json.load(open(sys.argv[1]))
+video=next(s for s in report['streams'] if s['codec_type']=='video')
+audio=next(s for s in report['streams'] if s['codec_type']=='audio')
+assert (video['codec_name'],video['width'],video['height'])==('h264',1920,1080), video
+assert audio['codec_name']=='aac' and int(audio['sample_rate'])==48000 and int(audio['channels'])==2, audio
+assert 3.3<float(report['format']['duration'])<3.7, report['format']
+assert int(video['nb_read_frames'])==105, video['nb_read_frames']
+assert abs(float(video['duration'])-float(audio['duration']))<.15, (video['duration'],audio['duration'])
+print('Independent BC Core MP4 check passed: H.264 1920x1080 105 frames + AAC 48 kHz stereo, synchronized')
+PYVERIFY

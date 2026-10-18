@@ -47,15 +47,9 @@ public final class ClipEffect implements GlEffect {
         }
         @Override public void drawFrame(int tex,long timeUs) throws VideoFrameProcessingException {
             long timeMs=timeUs/1000; EditProject.Clip c=p.clip;
-            int type=-1,role=0,easing=c.easing; float progress=0;
-            if(p.incomingMs>0 && timeMs<p.startMs+p.incomingMs && previous!=null) {
-                type=previous.transition; role=1; easing=previous.easing;
-                progress=(float)(timeMs-p.startMs)/p.incomingMs;
-            } else if(p.outgoingMs>0 && timeMs>=p.endMs-p.outgoingMs) {
-                type=c.transition; role=2; progress=(float)(timeMs-(p.endMs-p.outgoingMs))/p.outgoingMs;
-            }
-            progress=Math.max(0,Math.min(1,progress));
-            if(easing==1) progress=progress*progress*(3-2*progress);
+            // Shared with BC Core so both engines resolve transitions identically.
+            com.blackice.bc1.core.RenderPlan.Transition transition=com.blackice.bc1.core.RenderPlan.transition(p,previous,timeMs);
+            int type=transition.type,role=transition.role; float progress=transition.progress;
             try {
                 program.use(); program.setSamplerTexIdUniform("uInput",tex,0);
                 long sourceTime=Math.round(Math.max(0,timeMs-p.startMs)*c.speed)+c.inMs;
