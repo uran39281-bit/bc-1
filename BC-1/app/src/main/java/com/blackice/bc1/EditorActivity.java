@@ -531,7 +531,7 @@ public final class EditorActivity extends Activity {
             exportButton=null;projectLabel=null;return;
         }
         ImageView logo=new ImageView(this);logo.setImageDrawable(new V1Icon("Cube",BlackIceTheme.ICE));logo.setContentDescription("Black Ice cube logo");header.addView(logo,new LinearLayout.LayoutParams(dp(38),dp(38)));
-        LinearLayout brand=column();brand.setPadding(dp(8),0,dp(4),0);TextView wordmark=label("BLACK ICE",wideLayout?17:14,TEXT,true);wordmark.setLetterSpacing(.22f);brand.addView(wordmark);TextView sub=label("EDITOR",9,MUTED,false);sub.setLetterSpacing(.35f);brand.addView(sub);
+        LinearLayout brand=column();brand.setPadding(dp(8),0,dp(4),0);TextView wordmark=label("BLACK ICE",wideLayout?17:14,TEXT,true);wordmark.setLetterSpacing(wideLayout?.22f:.08f);wordmark.setSingleLine(true);wordmark.setAutoSizeTextTypeUniformWithConfiguration(10,wideLayout?17:14,1,android.util.TypedValue.COMPLEX_UNIT_SP);brand.addView(wordmark);TextView sub=label("EDITOR",9,MUTED,false);sub.setLetterSpacing(.35f);brand.addView(sub);
         projectLabel=label(project.name+(dirty?" •":"")+"  ▾",10,MUTED,false);projectLabel.setMaxLines(1);projectLabel.setEllipsize(android.text.TextUtils.TruncateAt.END);brand.addView(projectLabel);brand.setOnClickListener(v->projectsMenu());brand.setContentDescription("Project menu");brand.setFocusable(true);brand.setMinimumHeight(dp(52));
         header.addView(brand,topTabs()?new LinearLayout.LayoutParams(dp(210),-2):new LinearLayout.LayoutParams(0,-2,1));
         if(topTabs()){
