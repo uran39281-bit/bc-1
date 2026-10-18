@@ -12,6 +12,7 @@ public final class ProjectBundle {
  public static void write(Context context,EditProject original,OutputStream destination)throws Exception{
   EditProject p=ProjectStore.snapshot(original);Map<String,String> names=new LinkedHashMap<>();
   for(EditProject.Clip c:p.clips)c.uri=asset(names,c.uri);
+  for(EditProject.Clip a:p.library)a.uri=asset(names,a.uri);
   for(EditProject.Overlay o:p.overlays)if(o.imageUri!=null)o.imageUri=asset(names,o.imageUri);
   if(p.music!=null)p.music.uri=asset(names,p.music.uri);
   try(ZipOutputStream out=new ZipOutputStream(destination)){out.putNextEntry(new ZipEntry("project.json"));out.write(ProjectStore.encode(p).getBytes(StandardCharsets.UTF_8));out.closeEntry();
@@ -23,12 +24,13 @@ public final class ProjectBundle {
  public static EditProject read(Context context,InputStream source)throws Exception{
   File dir=new File(context.getFilesDir(),"bundle-"+UUID.randomUUID());if(!dir.mkdir())throw new IOException("Cannot create restore folder");boolean success=false;
   try{Set<String> names=new HashSet<>();long total=0;int count=0;byte[] buffer=new byte[128*1024];
-   try(ZipInputStream zip=new ZipInputStream(source)){ZipEntry e;while((e=zip.getNextEntry())!=null){String name=e.getName();if(e.isDirectory()||!(name.equals("project.json")||name.matches("assets/[0-9]{4}\\.media"))||!names.add(name)||++count>122)throw new IOException("Invalid or duplicate bundle entry");
+   try(ZipInputStream zip=new ZipInputStream(source)){ZipEntry e;while((e=zip.getNextEntry())!=null){String name=e.getName();if(e.isDirectory()||!(name.equals("project.json")||name.matches("assets/[0-9]{4}\\.media"))||!names.add(name)||++count>222)throw new IOException("Invalid or duplicate bundle entry");
     File f=new File(dir,name);f.getParentFile().mkdirs();long entry=0;
     try(OutputStream out=new FileOutputStream(f)){int n;while((n=zip.read(buffer))!=-1){total+=n;entry+=n;if(total>MAX_BYTES||(name.equals("project.json")&&entry>4*1024*1024)||dir.getUsableSpace()<64L*1024*1024)throw new IOException("Bundle too large or insufficient storage");out.write(buffer,0,n);}}
    }}
    File json=new File(dir,"project.json");if(!json.isFile())throw new IOException("Missing project.json");EditProject p=ProjectStore.decode(new String(Files.readAllBytes(json.toPath()),StandardCharsets.UTF_8));
    for(EditProject.Clip c:p.clips)c.uri=resolve(dir,c.uri,names);
+   for(EditProject.Clip a:p.library)a.uri=resolve(dir,a.uri,names);
    for(EditProject.Overlay o:p.overlays)if(o.imageUri!=null)o.imageUri=resolve(dir,o.imageUri,names);
    if(p.music!=null)p.music.uri=resolve(dir,p.music.uri,names);
    p.id=UUID.randomUUID().toString();p.name=p.name.length()>109?p.name.substring(0,109)+" (restored)":p.name+" (restored)";new ProjectStore(context).save(p);success=true;return p;

@@ -30,6 +30,39 @@ public final class TimelineEdits {
         float before=c.speed;long fadeIn=c.fadeInMs,fadeOut=c.fadeOutMs;c.speed=speed;c.fadeInMs=Math.min(fadeIn,c.durationMs());c.fadeOutMs=Math.min(fadeOut,c.durationMs());
         try{p.validate();}catch(RuntimeException e){c.speed=before;c.fadeInMs=fadeIn;c.fadeOutMs=fadeOut;throw e;}
     }
+    /** Moves a clip to a track and timeline start, returning its new index. Layers 1–7 keep the exact start.
+     * The main sequence (0) stays ordered: the clip is inserted by time with the empty space before it kept
+     * as a gap; later main clips shift right only when it would otherwise overlap them. Every other
+     * main-sequence clip keeps its timeline position. Callers restore a snapshot if this throws. */
+    public static int place(EditProject p,int index,int track,long start) {
+        EditProject.Clip c=p.clips.get(index);
+        if(track<0||track>7)throw new IllegalArgumentException("No such layer.");
+        if((c.track>=4)!=(track>=4))throw new IllegalArgumentException(c.track>=4?"Audio stays on audio layers.":"Video and pictures stay on visual layers.");
+        start=Math.max(0,start);
+        java.util.Map<EditProject.Clip,Long> kept=new java.util.IdentityHashMap<>();
+        for(EditProject.Placement pl:p.placements())if(pl.clip.track==0&&pl.clip!=c)kept.put(pl.clip,pl.startMs);
+        p.clips.remove(index);c.gapMs=0;c.track=track;c.startMs=track==0?0:start;
+        int at=index;
+        if(track==0){
+            long center=start+c.durationMs()/2;at=-1;
+            for(int i=0;i<p.clips.size();i++){EditProject.Clip m=p.clips.get(i);if(m.track==0&&center<=kept.get(m)+m.durationMs()/2){at=i;break;}}
+            if(at<0){int last=p.lastBase();at=last<0?Math.min(index,p.clips.size()):last+1;}
+            kept.put(c,start);
+        }
+        p.clips.add(at,c);
+        regap(p,kept);
+        p.validate();
+        return at;
+    }
+    /** Rebuilds main-sequence gaps so each clip starts at its wanted time, or as soon after it as the clips
+     * before allow (transitions still overlap clips that touch). */
+    static void regap(EditProject p,java.util.Map<EditProject.Clip,Long> wanted) {
+        long end=0;int previous=-1;
+        for(int i=0;i<p.clips.size();i++){EditProject.Clip m=p.clips.get(i);if(m.track!=0)continue;
+            Long want=wanted.get(m);m.gapMs=previous<0?Math.max(0,want==null?0:want):Math.max(0,(want==null?end:want)-end);
+            long begin=m.gapMs>0||previous<0?end+m.gapMs:end-p.overlapAfter(previous);
+            end=begin+m.durationMs();previous=i;}
+    }
     /** Snaps to zero, the playhead, markers and clip edges; returns the input unchanged when none lies within the screen-space tolerance. */
     public static long snap(EditProject p,int excluded,long time,long tolerance) {
         long target=time,distance=tolerance+1;

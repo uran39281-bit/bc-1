@@ -11,7 +11,7 @@ final class V1Icon extends Drawable {
     V1Icon(String name,int color){this.name=name;pen.setColor(color);pen.setStyle(Paint.Style.STROKE);pen.setStrokeWidth(1.6f);pen.setStrokeCap(Paint.Cap.ROUND);pen.setStrokeJoin(Paint.Join.ROUND);}
     private void line(float x,float y,float xx,float yy){path.moveTo(x,y);path.lineTo(xx,yy);}
     @Override public void draw(Canvas canvas){
-        canvas.save();canvas.translate(getBounds().left,getBounds().top);canvas.scale(getBounds().width()/24f,getBounds().height()/24f);path.reset();
+        canvas.save();canvas.translate(getBounds().left,getBounds().top);canvas.scale(getBounds().width()/24f,getBounds().height()/24f);path.reset();boolean fill=false;
         switch(name){
             case "Cube":path.moveTo(12,2);path.lineTo(22,7);path.lineTo(22,17);path.lineTo(12,23);path.lineTo(2,17);path.lineTo(2,7);path.close();line(2,7,12,13);line(22,7,12,13);line(12,13,12,23);line(12,2,12,13);break;
             case "Media":path.addRect(3,5,21,20,Path.Direction.CW);line(3,5,9,5);line(9,5,11,2);line(11,2,17,2);line(17,2,19,5);line(5,16,10,11);line(10,11,14,15);line(14,15,17,12);line(17,12,20,16);break;
@@ -55,9 +55,26 @@ final class V1Icon extends Drawable {
             case "Fade In":line(3,20,21,4);line(3,20,21,20);break;
             case "Fade Out":line(3,4,21,20);line(3,20,21,20);break;
             case "Settings":path.addCircle(12,12,3,Path.Direction.CW);path.addCircle(12,12,8,Path.Direction.CW);for(int i=0;i<8;i++){double r=Math.PI*i/4;line(12+8*(float)Math.cos(r),12+8*(float)Math.sin(r),12+10.5f*(float)Math.cos(r),12+10.5f*(float)Math.sin(r));}break;
+            case "SkipStart":line(5,5,5,19);path.moveTo(19,5);path.lineTo(8,12);path.lineTo(19,19);path.close();break;
+            case "SkipEnd":line(19,5,19,19);path.moveTo(5,5);path.lineTo(16,12);path.lineTo(5,19);path.close();break;
+            case "StepBack":path.moveTo(12,6);path.lineTo(4,12);path.lineTo(12,18);path.close();path.moveTo(20,6);path.lineTo(12,12);path.lineTo(20,18);path.close();break;
+            case "StepForward":path.moveTo(4,6);path.lineTo(12,12);path.lineTo(4,18);path.close();path.moveTo(12,6);path.lineTo(20,12);path.lineTo(12,18);path.close();break;
+            case "Play":fill=true;path.moveTo(6,4);path.lineTo(20,12);path.lineTo(6,20);path.close();break;
+            case "Pause":fill=true;path.addRoundRect(6,4,10,20,1,1,Path.Direction.CW);path.addRoundRect(14,4,18,20,1,1,Path.Direction.CW);break;
+            case "Fullscreen":line(3,9,3,3);line(3,3,9,3);line(15,3,21,3);line(21,3,21,9);line(21,15,21,21);line(21,21,15,21);line(9,21,3,21);line(3,21,3,15);break;
+            case "Magnet":path.moveTo(5,3);path.lineTo(5,12);path.cubicTo(5,21,19,21,19,12);path.lineTo(19,3);line(10,3,10,12);path.moveTo(10,12);path.cubicTo(10,15,14,15,14,12);line(14,12,14,3);line(5,7,10,7);line(14,7,19,7);break;
+            case "Fit":line(3,12,9,12);line(9,12,6,9);line(9,12,6,15);line(21,12,15,12);line(15,12,18,9);line(15,12,18,15);line(12,4,12,20);break;
+            case "Search":path.addCircle(10,10,6,Path.Direction.CW);line(15,15,21,21);break;
+            case "Sort":line(4,6,20,6);line(6,12,18,12);line(9,18,15,18);break;
+            case "Grid":path.addRect(4,4,10,10,Path.Direction.CW);path.addRect(14,4,20,10,Path.Direction.CW);path.addRect(4,14,10,20,Path.Direction.CW);path.addRect(14,14,20,20,Path.Direction.CW);break;
+            case "List":line(8,6,20,6);line(8,12,20,12);line(8,18,20,18);path.addCircle(4,6,.8f,Path.Direction.CW);path.addCircle(4,12,.8f,Path.Direction.CW);path.addCircle(4,18,.8f,Path.Direction.CW);break;
+            case "Animation":path.moveTo(8,5);path.lineTo(13,10);path.lineTo(8,15);path.lineTo(3,10);path.close();path.moveTo(17,9);path.lineTo(21,13);path.lineTo(17,17);path.lineTo(13,13);line(3,21,21,21);break;
+            case "Loop":path.moveTo(4,12);path.cubicTo(4,5,12,5,17,7);line(17,7,14,4);line(17,7,14,10);path.moveTo(20,12);path.cubicTo(20,19,12,19,7,17);line(7,17,10,14);line(7,17,10,20);break;
+            case "Flag":line(5,3,5,21);path.moveTo(5,4);path.lineTo(18,4);path.lineTo(15,8.5f);path.lineTo(18,13);path.lineTo(5,13);break;
             default:path.addCircle(12,12,8,Path.Direction.CW);break;
         }
-        canvas.drawPath(path,pen);canvas.restore();
+        // Play and Pause read as solid glyphs; everything else stays monoline.
+        if(fill)pen.setStyle(Paint.Style.FILL_AND_STROKE);canvas.drawPath(path,pen);pen.setStyle(Paint.Style.STROKE);canvas.restore();
     }
     @Override public void setAlpha(int alpha){pen.setAlpha(alpha);invalidateSelf();}
     @Override public void setColorFilter(ColorFilter filter){pen.setColorFilter(filter);invalidateSelf();}

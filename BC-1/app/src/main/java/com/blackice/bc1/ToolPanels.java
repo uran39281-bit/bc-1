@@ -339,12 +339,15 @@ final class ToolPanels {
         }
     }
     private void browseHome(){
-        a.inspector.addView(a.note("Nothing selected. Tap a layer in the timeline or preview to edit it, or add content."));
-        a.inspector.addView(a.button("+ Add media, audio, text or shapes",v->{a.tab=0;a.renderInspector();}));
-        a.inspector.addView(a.button("Project settings",v->{a.tab=4;a.renderInspector();}));
-        a.inspector.addView(a.button("Layers & visibility",v->{a.tab=3;a.renderInspector();}));
-        a.inspector.addView(a.button((a.project.loopInMs>=0?"Clear loop range ":"Loop range…"),v->a.loopDialog()));
-        a.inspector.addView(a.button("Markers & beats",v->open("Markers & beats",this::markersPanel)));
+        android.widget.ImageView cube=new android.widget.ImageView(a);cube.setImageDrawable(new V1Icon("Cube",EditorActivity.CYAN));cube.setContentDescription("Nothing selected");
+        LinearLayout.LayoutParams cubeLp=new LinearLayout.LayoutParams(a.dp(52),a.dp(52));cubeLp.gravity=android.view.Gravity.CENTER_HORIZONTAL;cubeLp.topMargin=a.dp(18);a.inspector.addView(cube,cubeLp);
+        TextView title=a.label("Nothing selected",16,EditorActivity.TEXT,false);title.setGravity(android.view.Gravity.CENTER);title.setPadding(0,a.dp(10),0,a.dp(4));a.inspector.addView(title);
+        TextView hint=a.label("Select a clip in the timeline\nor preview to edit it.",12,EditorActivity.MUTED,false);hint.setGravity(android.view.Gravity.CENTER);hint.setPadding(0,0,0,a.dp(18));a.inspector.addView(hint);
+        a.menuRow("Add","Add media, audio, text or shape",v->{a.tab=0;a.renderInspector();});
+        a.menuRow("Settings","Project settings",v->{a.tab=4;a.renderInspector();});
+        a.menuRow("Layers","Layers & visibility",v->{a.tab=3;a.renderInspector();});
+        a.menuRow("Loop",a.project.loopInMs>=0?"Clear loop range":"Loop range…",v->a.loopDialog());
+        a.menuRow("Flag","Markers & beats",v->open("Markers & beats",this::markersPanel));
     }
     // ---- Animation ---------------------------------------------------------------------------------
     /** Timeline ms → this layer's key time, and back. */
