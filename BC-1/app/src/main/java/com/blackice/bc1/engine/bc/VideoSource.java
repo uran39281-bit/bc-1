@@ -98,14 +98,18 @@ final class VideoSource implements FrameSource {
         Exception last = null; boolean resources = false;
         for (String name : decoders(format.getString(MediaFormat.KEY_MIME))) {
             MediaCodec created = null;
+            long opening = System.nanoTime();
             try {
                 created = MediaCodec.createByCodecName(name);
                 created.setCallback(new Callbacks(), handler);
                 created.configure(format, surface, null, 0);
                 codec = created;
                 created.start();
+                long ms = (System.nanoTime() - opening) / 1_000_000;
+                if (ms > 500) android.util.Log.d("BC1Decoder", "Opening " + name + " took " + ms + " ms");
                 break;
             } catch (Exception e) {
+                android.util.Log.d("BC1Decoder", name + " refused after " + (System.nanoTime() - opening) / 1_000_000 + " ms: " + e);
                 last = e; codec = null;
                 if (e instanceof MediaCodec.CodecException && ((MediaCodec.CodecException) e).getErrorCode() == MediaCodec.CodecException.ERROR_INSUFFICIENT_RESOURCE) resources = true;
                 if (created != null) created.release();

@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.view.Surface;
 import android.view.TextureView;
+import android.opengl.GLES30;
 import com.blackice.bc1.core.OutputSpec;
 import com.blackice.bc1.core.RenderPlan;
 import com.blackice.bc1.editor.EditProject;
@@ -177,6 +178,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
 
     private void render(EditProject project, long timeMs) throws Exception {
         if (project.clips.isEmpty()) { egl.makeCurrent(); clearBlack(); egl.swap(); return; }
+        long t0 = System.nanoTime();
         OutputSpec spec = OutputSpec.of(project, project.previewHeight);
         if (compositor == null || spec.width != width || spec.height != height) {
             releaseSources();
@@ -187,6 +189,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
             compositor = new Compositor(context, width, height);
             overlays = new OverlayLayer(context, width, height);
         }
+        long tCompositor = System.nanoTime();
         RenderPlan plan = new RenderPlan(project, true);
         long time = Math.max(0, Math.min(timeMs, Math.max(0, project.durationMs() - 1)));
         List<RenderPlan.LayerDraw> layers = plan.layersAt(time);
@@ -213,7 +216,9 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
             used.add(key);
             slot.source.prepare(sourceUs);
         }
+        long tPrepare = System.nanoTime();
         for (FrameSource s : frame) s.latch();
+        long tLatch = System.nanoTime();
         // Decoders not on screen are closed so a few layers never hold every hardware decoder.
         for (String key : new ArrayList<>(slots.keySet())) if (!used.contains(key)) slots.remove(key).source.release();
 
@@ -223,9 +228,16 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
         compositor.beginFrame(blend);
         for (int i = 0; i < layers.size(); i++) frame[i].draw(compositor, layers.get(i));
         compositor.endLayers();
+        GLES30.glFinish();
+        long tDraw = System.nanoTime();
         List<EditProject.Overlay> active = plan.overlaysAt(time);
         if (!active.isEmpty()) compositor.drawOverlay(overlays.texture(active, time));
         egl.swap();
+        long tSwap = System.nanoTime();
+        if (tSwap - t0 > 250_000_000L) android.util.Log.d("BC1Live", String.format(java.util.Locale.US,
+                "slow frame: setup %d ms, open+prepare %d ms, latch %d ms, draw %d ms, swap %d ms",
+                (tCompositor - t0) / 1_000_000, (tPrepare - tCompositor) / 1_000_000, (tLatch - tPrepare) / 1_000_000,
+                (tDraw - tLatch) / 1_000_000, (tSwap - tDraw) / 1_000_000));
     }
 
     private static void clearBlack() {
