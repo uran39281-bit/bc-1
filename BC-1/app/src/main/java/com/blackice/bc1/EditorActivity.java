@@ -383,6 +383,7 @@ public final class EditorActivity extends Activity {
     View buildTimeline(){ScrollView vertical=new ScrollView(this);timelineScroll=new HorizontalScrollView(this){@Override public boolean onInterceptTouchEvent(MotionEvent e){return false;}};timelineScroll.setFillViewport(true);timelineScroll.setContentDescription("Timeline scroll");timeline=new TimelineView(this);timelineScroll.setOnScrollChangeListener((v,x,y,oldX,oldY)->timeline.invalidate());vertical.setOnScrollChangeListener((v,x,y,oldX,oldY)->timeline.invalidate());timelineScroll.addView(timeline,new HorizontalScrollView.LayoutParams(-2,Math.round(timeline.contentHeight())));timelineScroll.setHorizontalScrollBarEnabled(false);timelineScroll.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{if(r-l!=or-ol)timelineScroll.post(()->{if(timeline!=null){timeline.requestLayout();timeline.syncScroll();}});});vertical.addView(timelineScroll);return vertical;}
     EditProject.Clip clip(){return selected<0||selected>=project.clips.size()?null:project.clips.get(selected);}
     /** Reserve the phone's usable space for choosing assets; never recreate the player surface. */
+    String appVersion(){try{return getPackageManager().getPackageInfo(getPackageName(),0).versionName;}catch(android.content.pm.PackageManager.NameNotFoundException e){return "unknown";}}
     void sizePhoneDrawer(){
         if(phoneDrawer==null)return;boolean browse=tab==0;
         Configuration c=getResources().getConfiguration();
@@ -428,7 +429,7 @@ public final class EditorActivity extends Activity {
             addAction("Projects / New / Rename",()->projectsMenu());
             addAction("Export diagnostics",()->exportDiagnostics());
             addAction("Open v0.3 effects lab",()->startActivity(new Intent(this,WorkbenchActivity.class)));
-            inspector.addView(note("BC-1 v1.1.0\nExport: H.264 MP4 + AAC, 1080p, up to 30 fps. Lower-rate sources keep their cadence.\nSpace: play • Ctrl+Z/Y: undo/redo • Ctrl+S: save\nS: split • arrows: frame step • Ctrl+D: duplicate\nCtrl+wheel: zoom • Shift+wheel: scroll • right-click: clip menu\n3D Page Curl remains excluded."));
+            inspector.addView(note("BC-1 v"+appVersion()+"\nExport: H.264 MP4 + AAC, 1080p, up to 30 fps. Lower-rate sources keep their cadence.\nSpace: play • Ctrl+Z/Y: undo/redo • Ctrl+S: save\nS: split • arrows: frame step • Ctrl+D: duplicate\nCtrl+wheel: zoom • Shift+wheel: scroll • right-click: clip menu\n3D Page Curl remains excluded."));
     }
     /** Layer rows, topmost first: text/shape/image layers, video layers 3–1, the main sequence, then audio. */
     java.util.List<int[]> layerRows(){
@@ -790,7 +791,7 @@ public final class EditorActivity extends Activity {
     }
     void exportDiagnostics(){
         android.content.SharedPreferences prefs=getSharedPreferences(ExportService.PREFS,MODE_PRIVATE);
-        String report="BC-1 v1.1.0 • Android API "+android.os.Build.VERSION.SDK_INT+"\n\n"+
+        String report="BC-1 v"+appVersion()+" • Android API "+android.os.Build.VERSION.SDK_INT+"\n\n"+
                 prefs.getString(ExportService.LAST_FAILURE,"No export failure recorded.")+"\n\n"+
                 "Last failure is retained after successful exports. This summary excludes media names, paths and exception messages.";
         new AlertDialog.Builder(this).setTitle("Export diagnostics").setMessage(report)
