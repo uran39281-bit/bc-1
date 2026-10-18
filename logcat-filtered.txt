@@ -1,0 +1,419 @@
+10-18 23:18:57.726  3609  3609 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-18 23:18:57.736  3609  3609 I AndroidRuntime: Using default boot image
+10-18 23:18:57.736  3609  3609 I AndroidRuntime: Leaving lock profiling enabled
+10-18 23:18:58.067  3609  3609 D AndroidRuntime: Calling main entry com.android.commands.am.Am
+10-18 23:18:59.989  3657  3702 I TestRunner: run started: 28 tests
+10-18 23:18:59.991  3657  3702 I TestRunner: started: rapidSearchDuringDecodeUpdatesCurrentThumbnail(com.blackice.bc1.EditorWorkspaceTest)
+10-18 23:19:11.286  3657  3702 I TestRunner: finished: rapidSearchDuringDecodeUpdatesCurrentThumbnail(com.blackice.bc1.EditorWorkspaceTest)
+10-18 23:19:11.291  3657  3702 I TestRunner: started: editorAdaptsAndTabsKeepVideoSurface(com.blackice.bc1.EditorWorkspaceTest)
+10-18 23:19:40.673  3657  3657 D BC1Preview: state 2 pos=0 playhead=0
+10-18 23:19:41.958  3657  3657 D BC1Preview: state 3 pos=0 playhead=0
+10-18 23:19:45.011  3657  3657 D BC1Preview: seek 1000 state=3
+10-18 23:19:45.012  3657  3657 D BC1Preview: state 2 pos=1000 playhead=1000
+10-18 23:19:45.260  3657  3657 D BC1Preview: state 3 pos=1000 playhead=1000
+10-18 23:19:45.547  3657  3657 D BC1Preview: seek 0 state=3
+10-18 23:19:45.550  3657  3657 D BC1Preview: state 2 pos=0 playhead=0
+10-18 23:19:45.775  3657  3657 D BC1Preview: state 3 pos=0 playhead=0
+10-18 23:19:47.109  3657  3657 D BC1Preview: seek 1000 state=3
+10-18 23:19:47.114  3657  3657 D BC1Preview: state 2 pos=1000 playhead=1000
+10-18 23:19:47.462  3657  3657 D BC1Preview: state 3 pos=1000 playhead=1000
+10-18 23:19:51.150  3657  3657 D BC1Preview: state 2 pos=1000 playhead=1000
+10-18 23:19:52.218  3657  3657 D BC1Preview: state 3 pos=1000 playhead=1000
+10-18 23:19:55.191  3657  3657 D BC1Preview: seek 750 state=3
+10-18 23:19:55.194  3657  3657 D BC1Preview: state 2 pos=750 playhead=750
+10-18 23:19:55.810  3657  3657 D BC1Preview: state 3 pos=750 playhead=750
+10-18 23:19:56.254  3657  3657 D BC1Preview: state 2 pos=750 playhead=750
+10-18 23:19:57.634  3657  3657 D BC1Preview: state 3 pos=750 playhead=750
+10-18 23:20:01.222  3657  3657 D BC1Preview: seek 0 state=3
+10-18 23:20:01.234  3657  3657 D BC1Preview: state 2 pos=0 playhead=0
+10-18 23:20:01.527  3657  3657 D BC1Preview: state 3 pos=0 playhead=0
+10-18 23:20:02.291  3657  3657 D BC1Preview: state 2 pos=0 playhead=0
+10-18 23:20:02.675  3657  3657 D BC1Preview: state 3 pos=0 playhead=0
+10-18 23:20:06.507  3657  3702 I TestRunner: finished: editorAdaptsAndTabsKeepVideoSurface(com.blackice.bc1.EditorWorkspaceTest)
+10-18 23:20:06.514  3657  3702 I TestRunner: started: setupShowsAndCopiesRedactedReport(com.blackice.bc1.ExportDiagnosticsUiTest)
+10-18 23:20:08.011  3657  3702 E TestRunner: failed: setupShowsAndCopiesRedactedReport(com.blackice.bc1.ExportDiagnosticsUiTest)
+10-18 23:20:08.011  3657  3702 E TestRunner: ----- begin exception -----
+10-18 23:20:08.011  3657  3702 E TestRunner: java.lang.AssertionError
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at org.junit.Assert.fail(Assert.java:87)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at org.junit.Assert.assertTrue(Assert.java:42)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at org.junit.Assert.assertTrue(Assert.java:53)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at com.blackice.bc1.ExportDiagnosticsUiTest.lambda$setupShowsAndCopiesRedactedReport$1(ExportDiagnosticsUiTest.java:36)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at com.blackice.bc1.ExportDiagnosticsUiTest$$ExternalSyntheticLambda1.perform(D8$$SyntheticClass:0)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at androidx.test.core.app.ActivityScenario.lambda$onActivity$2$androidx-test-core-app-ActivityScenario(ActivityScenario.java:794)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at androidx.test.core.app.ActivityScenario$$ExternalSyntheticLambda2.run(D8$$SyntheticClass:0)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:487)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at android.app.Instrumentation$SyncRunnable.run(Instrumentation.java:2612)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at android.os.Handler.handleCallback(Handler.java:959)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at android.os.Handler.dispatchMessage(Handler.java:100)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at android.os.Looper.loopOnce(Looper.java:232)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at android.os.Looper.loop(Looper.java:317)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at android.app.ActivityThread.main(ActivityThread.java:8705)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at java.lang.reflect.Method.invoke(Native Method)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+10-18 23:20:08.011  3657  3702 E TestRunner: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)
+10-18 23:20:08.011  3657  3702 E TestRunner: ----- end exception -----
+10-18 23:20:08.012  3657  3702 I TestRunner: finished: setupShowsAndCopiesRedactedReport(com.blackice.bc1.ExportDiagnosticsUiTest)
+10-18 23:20:08.030  3657  3702 I TestRunner: started: exportHonoursOrderVisibilityAndTransforms(com.blackice.bc1.LayerRenderingTest)
+10-18 23:20:23.990  3657  3702 I TestRunner: finished: exportHonoursOrderVisibilityAndTransforms(com.blackice.bc1.LayerRenderingTest)
+10-18 23:20:23.991  3657  3702 I TestRunner: started: soloIsolatesOnlyInPreview(com.blackice.bc1.LayerRenderingTest)
+10-18 23:20:30.481  3657  3702 I TestRunner: finished: soloIsolatesOnlyInPreview(com.blackice.bc1.LayerRenderingTest)
+10-18 23:20:30.482  3657  3702 I TestRunner: started: mediaBrowserHasSpaceAndReturnsToEditingWithoutProjectLoss(com.blackice.bc1.PhoneMediaSpaceTest)
+10-18 23:20:45.926  3657  3702 I TestRunner: finished: mediaBrowserHasSpaceAndReturnsToEditingWithoutProjectLoss(com.blackice.bc1.PhoneMediaSpaceTest)
+10-18 23:20:45.928  3657  3702 I TestRunner: started: cancellationCacheReuseAndEditInvalidation(com.blackice.bc1.PreviewProxyTest)
+10-18 23:20:53.083  3657  3702 I TestRunner: finished: cancellationCacheReuseAndEditInvalidation(com.blackice.bc1.PreviewProxyTest)
+10-18 23:20:53.084  3657  3702 I TestRunner: started: fastScrubbingKeepsTheLivePreviewWorking(com.blackice.bc1.PreviewScrubTest)
+10-18 23:20:53.143  3657  3657 I BC1Preview: prepare live preview at 0
+10-18 23:20:53.212  3657  3657 D BC1Preview: state 2 pos=0 playhead=0
+10-18 23:20:56.603  3657  3657 D BC1Preview: state 3 pos=0 playhead=0
+10-18 23:20:56.773  3657  3657 D BC1Preview: seek 1510 state=3
+10-18 23:20:56.774  3657  3657 D BC1Preview: state 2 pos=1510 playhead=1510
+10-18 23:20:56.930  3657  3657 D BC1Preview: state 3 pos=1510 playhead=2306
+10-18 23:20:56.931  3657  3657 D BC1Preview: seek 2306 state=3
+10-18 23:20:56.935  3657  3657 D BC1Preview: state 2 pos=2306 playhead=2306
+10-18 23:20:57.127  3657  3657 D BC1Preview: state 3 pos=2306 playhead=2929
+10-18 23:20:57.127  3657  3657 D BC1Preview: seek 2929 state=3
+10-18 23:20:57.129  3657  3657 D BC1Preview: state 2 pos=2929 playhead=2929
+10-18 23:20:57.291  3657  3657 D BC1Preview: state 3 pos=2929 playhead=2944
+10-18 23:20:57.291  3657  3657 D BC1Preview: seek 2944 state=3
+10-18 23:20:57.292  3657  3657 D BC1Preview: state 2 pos=2944 playhead=2944
+10-18 23:20:57.432  3657  3657 D BC1Preview: state 3 pos=2944 playhead=2602
+10-18 23:20:57.432  3657  3657 D BC1Preview: seek 2602 state=3
+10-18 23:20:57.434  3657  3657 D BC1Preview: state 2 pos=2602 playhead=2602
+10-18 23:20:57.587  3657  3657 D BC1Preview: state 3 pos=2602 playhead=1723
+10-18 23:20:57.587  3657  3657 D BC1Preview: seek 1723 state=3
+10-18 23:20:57.589  3657  3657 D BC1Preview: state 2 pos=1723 playhead=1723
+10-18 23:20:57.776  3657  3657 D BC1Preview: state 3 pos=1723 playhead=613
+10-18 23:20:57.777  3657  3657 D BC1Preview: seek 613 state=3
+10-18 23:20:57.779  3657  3657 D BC1Preview: state 2 pos=613 playhead=613
+10-18 23:20:57.898  3657  3657 D BC1Preview: state 3 pos=613 playhead=107
+10-18 23:20:57.898  3657  3657 D BC1Preview: seek 107 state=3
+10-18 23:20:57.900  3657  3657 D BC1Preview: state 2 pos=107 playhead=107
+10-18 23:20:58.037  3657  3657 D BC1Preview: state 3 pos=107 playhead=3
+10-18 23:20:58.037  3657  3657 D BC1Preview: seek 3 state=3
+10-18 23:20:58.038  3657  3657 D BC1Preview: state 2 pos=3 playhead=3
+10-18 23:20:58.134  3657  3657 D BC1Preview: state 3 pos=3 playhead=192
+10-18 23:20:58.134  3657  3657 D BC1Preview: seek 192 state=3
+10-18 23:20:58.136  3657  3657 D BC1Preview: state 2 pos=192 playhead=192
+10-18 23:20:58.234  3657  3657 D BC1Preview: state 3 pos=192 playhead=387
+10-18 23:20:58.234  3657  3657 D BC1Preview: seek 387 state=3
+10-18 23:20:58.236  3657  3657 D BC1Preview: state 2 pos=387 playhead=387
+10-18 23:20:58.313  3657  3657 D BC1Preview: state 3 pos=387 playhead=779
+10-18 23:20:58.365  3657  3657 D BC1Preview: seek 930 state=3
+10-18 23:20:58.368  3657  3657 D BC1Preview: state 2 pos=930 playhead=930
+10-18 23:20:58.524  3657  3657 D BC1Preview: state 3 pos=930 playhead=1418
+10-18 23:20:58.524  3657  3657 D BC1Preview: seek 1418 state=3
+10-18 23:20:58.526  3657  3657 D BC1Preview: state 2 pos=1418 playhead=1418
+10-18 23:20:58.708  3657  3657 D BC1Preview: state 3 pos=1418 playhead=2370
+10-18 23:20:58.708  3657  3657 D BC1Preview: seek 2370 state=3
+10-18 23:20:58.714  3657  3657 D BC1Preview: state 2 pos=2370 playhead=2370
+10-18 23:20:58.900  3657  3657 D BC1Preview: state 3 pos=2370 playhead=2994
+10-18 23:20:58.900  3657  3657 D BC1Preview: seek 2994 state=3
+10-18 23:20:58.904  3657  3657 D BC1Preview: state 2 pos=2994 playhead=2994
+10-18 23:20:59.033  3657  3657 D BC1Preview: state 3 pos=2994 playhead=2970
+10-18 23:20:59.033  3657  3657 D BC1Preview: seek 2970 state=3
+10-18 23:20:59.041  3657  3657 D BC1Preview: state 2 pos=2970 playhead=2970
+10-18 23:20:59.207  3657  3657 D BC1Preview: state 3 pos=2970 playhead=2420
+10-18 23:20:59.207  3657  3657 D BC1Preview: seek 2420 state=3
+10-18 23:20:59.210  3657  3657 D BC1Preview: state 2 pos=2420 playhead=2420
+10-18 23:20:59.416  3657  3657 D BC1Preview: state 3 pos=2420 playhead=988
+10-18 23:20:59.417  3657  3657 D BC1Preview: seek 988 state=3
+10-18 23:20:59.418  3657  3657 D BC1Preview: state 2 pos=988 playhead=988
+10-18 23:20:59.574  3657  3657 D BC1Preview: state 3 pos=988 playhead=319
+10-18 23:20:59.574  3657  3657 D BC1Preview: seek 319 state=3
+10-18 23:20:59.578  3657  3657 D BC1Preview: state 2 pos=319 playhead=319
+10-18 23:20:59.726  3657  3657 D BC1Preview: state 3 pos=319 playhead=9
+10-18 23:20:59.726  3657  3657 D BC1Preview: seek 9 state=3
+10-18 23:20:59.729  3657  3657 D BC1Preview: state 2 pos=9 playhead=9
+10-18 23:20:59.801  3657  3657 D BC1Preview: state 3 pos=9 playhead=39
+10-18 23:20:59.889  3657  3657 D BC1Preview: seek 85 state=3
+10-18 23:20:59.891  3657  3657 D BC1Preview: state 2 pos=85 playhead=85
+10-18 23:21:00.020  3657  3657 D BC1Preview: state 3 pos=85 playhead=327
+10-18 23:21:00.020  3657  3657 D BC1Preview: seek 327 state=3
+10-18 23:21:00.024  3657  3657 D BC1Preview: state 2 pos=327 playhead=327
+10-18 23:21:00.162  3657  3657 D BC1Preview: state 3 pos=327 playhead=846
+10-18 23:21:00.162  3657  3657 D BC1Preview: seek 846 state=3
+10-18 23:21:00.166  3657  3657 D BC1Preview: state 2 pos=846 playhead=846
+10-18 23:21:00.434  3657  3657 D BC1Preview: state 3 pos=846 playhead=1827
+10-18 23:21:00.434  3657  3657 D BC1Preview: seek 1827 state=3
+10-18 23:21:00.438  3657  3657 D BC1Preview: state 2 pos=1827 playhead=1827
+10-18 23:21:00.614  3657  3657 D BC1Preview: state 3 pos=1827 playhead=2772
+10-18 23:21:00.614  3657  3657 D BC1Preview: seek 2772 state=3
+10-18 23:21:00.616  3657  3657 D BC1Preview: state 2 pos=2772 playhead=2772
+10-18 23:21:00.838  3657  3657 D BC1Preview: state 3 pos=2772 playhead=3015
+10-18 23:21:00.838  3657  3657 D BC1Preview: seek 3015 state=3
+10-18 23:21:00.838  3657  3657 D BC1Preview: state 2 pos=3015 playhead=3015
+10-18 23:21:01.032  3657  3657 D BC1Preview: state 3 pos=3015 playhead=2359
+10-18 23:21:01.032  3657  3657 D BC1Preview: seek 2359 state=3
+10-18 23:21:01.034  3657  3657 D BC1Preview: state 2 pos=2359 playhead=2359
+10-18 23:21:01.199  3657  3657 D BC1Preview: state 3 pos=2359 playhead=1405
+10-18 23:21:01.199  3657  3657 D BC1Preview: seek 1405 state=3
+10-18 23:21:01.204  3657  3657 D BC1Preview: state 2 pos=1405 playhead=1405
+10-18 23:21:01.446  3657  3657 D BC1Preview: state 3 pos=1405 playhead=274
+10-18 23:21:01.447  3657  3657 D BC1Preview: seek 274 state=3
+10-18 23:21:01.459  3657  3657 D BC1Preview: state 2 pos=274 playhead=274
+10-18 23:21:01.566  3657  3657 D BC1Preview: state 3 pos=274 playhead=21
+10-18 23:21:01.567  3657  3657 D BC1Preview: seek 21 state=3
+10-18 23:21:01.568  3657  3657 D BC1Preview: state 2 pos=21 playhead=21
+10-18 23:21:01.721  3657  3657 D BC1Preview: state 3 pos=21 playhead=112
+10-18 23:21:01.721  3657  3657 D BC1Preview: seek 112 state=3
+10-18 23:21:01.722  3657  3657 D BC1Preview: state 2 pos=112 playhead=112
+10-18 23:21:01.865  3657  3657 D BC1Preview: state 3 pos=112 playhead=494
+10-18 23:21:01.865  3657  3657 D BC1Preview: seek 494 state=3
+10-18 23:21:01.866  3657  3657 D BC1Preview: state 2 pos=494 playhead=494
+10-18 23:21:01.987  3657  3657 D BC1Preview: state 3 pos=494 playhead=1072
+10-18 23:21:01.987  3657  3657 D BC1Preview: seek 1072 state=3
+10-18 23:21:01.988  3657  3657 D BC1Preview: state 2 pos=1072 playhead=1072
+10-18 23:21:02.213  3657  3657 D BC1Preview: state 3 pos=1072 playhead=1900
+10-18 23:21:02.213  3657  3657 D BC1Preview: seek 1900 state=3
+10-18 23:21:02.214  3657  3657 D BC1Preview: state 2 pos=1900 playhead=1900
+10-18 23:21:02.383  3657  3657 D BC1Preview: state 3 pos=1900 playhead=2812
+10-18 23:21:02.383  3657  3657 D BC1Preview: seek 2812 state=3
+10-18 23:21:02.385  3657  3657 D BC1Preview: state 2 pos=2812 playhead=2812
+10-18 23:21:02.543  3657  3657 D BC1Preview: state 3 pos=2812 playhead=2974
+10-18 23:21:02.543  3657  3657 D BC1Preview: seek 2974 state=3
+10-18 23:21:02.544  3657  3657 D BC1Preview: state 2 pos=2974 playhead=2974
+10-18 23:21:02.707  3657  3657 D BC1Preview: state 3 pos=2974 playhead=2433
+10-18 23:21:02.707  3657  3657 D BC1Preview: seek 2433 state=3
+10-18 23:21:02.710  3657  3657 D BC1Preview: state 2 pos=2433 playhead=2433
+10-18 23:21:02.882  3657  3657 D BC1Preview: state 3 pos=2433 playhead=1329
+10-18 23:21:02.882  3657  3657 D BC1Preview: seek 1329 state=3
+10-18 23:21:02.883  3657  3657 D BC1Preview: state 2 pos=1329 playhead=1329
+10-18 23:21:03.121  3657  3657 D BC1Preview: state 3 pos=1329 playhead=232
+10-18 23:21:03.121  3657  3657 D BC1Preview: seek 232 state=3
+10-18 23:21:03.128  3657  3657 D BC1Preview: state 2 pos=232 playhead=232
+10-18 23:21:03.192  3657  3657 D BC1Preview: state 3 pos=232 playhead=39
+10-18 23:21:03.251  3657  3657 D BC1Preview: seek 10 state=3
+10-18 23:21:03.254  3657  3657 D BC1Preview: state 2 pos=10 playhead=10
+10-18 23:21:03.331  3657  3657 D BC1Preview: state 3 pos=10 playhead=8
+10-18 23:21:03.351  3657  3657 D BC1Preview: seek 35 state=3
+10-18 23:21:03.358  3657  3657 D BC1Preview: state 2 pos=35 playhead=35
+10-18 23:21:03.446  3657  3657 D BC1Preview: state 3 pos=35 playhead=143
+10-18 23:21:03.446  3657  3657 D BC1Preview: seek 143 state=3
+10-18 23:21:03.503  3657  3657 D BC1Preview: state 2 pos=143 playhead=143
+10-18 23:21:03.630  3657  3657 D BC1Preview: state 3 pos=143 playhead=427
+10-18 23:21:03.630  3657  3657 D BC1Preview: seek 427 state=3
+10-18 23:21:03.631  3657  3657 D BC1Preview: state 2 pos=427 playhead=427
+10-18 23:21:03.728  3657  3657 D BC1Preview: state 3 pos=427 playhead=985
+10-18 23:21:03.728  3657  3657 D BC1Preview: seek 985 state=3
+10-18 23:21:03.729  3657  3657 D BC1Preview: state 2 pos=985 playhead=985
+10-18 23:21:03.928  3657  3657 D BC1Preview: state 3 pos=985 playhead=1811
+10-18 23:21:03.928  3657  3657 D BC1Preview: seek 1811 state=3
+10-18 23:21:03.930  3657  3657 D BC1Preview: state 2 pos=1811 playhead=1811
+10-18 23:21:04.111  3657  3657 D BC1Preview: state 3 pos=1811 playhead=2661
+10-18 23:21:04.111  3657  3657 D BC1Preview: seek 2661 state=3
+10-18 23:21:04.112  3657  3657 D BC1Preview: state 2 pos=2661 playhead=2661
+10-18 23:21:04.294  3657  3657 D BC1Preview: state 3 pos=2661 playhead=3019
+10-18 23:21:04.294  3657  3657 D BC1Preview: seek 3019 state=3
+10-18 23:21:04.295  3657  3657 D BC1Preview: state 2 pos=3019 playhead=3019
+10-18 23:21:04.423  3657  3657 D BC1Preview: state 3 pos=3019 playhead=2821
+10-18 23:21:04.423  3657  3657 D BC1Preview: seek 2821 state=3
+10-18 23:21:04.427  3657  3657 D BC1Preview: state 2 pos=2821 playhead=2821
+10-18 23:21:04.557  3657  3657 D BC1Preview: state 3 pos=2821 playhead=2372
+10-18 23:21:04.557  3657  3657 D BC1Preview: seek 2372 state=3
+10-18 23:21:04.559  3657  3657 D BC1Preview: state 2 pos=2372 playhead=2372
+10-18 23:21:04.734  3657  3657 D BC1Preview: state 3 pos=2372 playhead=1254
+10-18 23:21:04.734  3657  3657 D BC1Preview: seek 1254 state=3
+10-18 23:21:04.735  3657  3657 D BC1Preview: state 2 pos=1254 playhead=1254
+10-18 23:21:04.905  3657  3657 D BC1Preview: state 3 pos=1254 playhead=508
+10-18 23:21:04.905  3657  3657 D BC1Preview: seek 508 state=3
+10-18 23:21:04.906  3657  3657 D BC1Preview: state 2 pos=508 playhead=508
+10-18 23:21:05.029  3657  3657 D BC1Preview: state 3 pos=508 playhead=193
+10-18 23:21:05.029  3657  3657 D BC1Preview: seek 193 state=3
+10-18 23:21:05.030  3657  3657 D BC1Preview: state 2 pos=193 playhead=193
+10-18 23:21:05.127  3657  3657 D BC1Preview: state 3 pos=193 playhead=24
+10-18 23:21:05.127  3657  3657 D BC1Preview: seek 24 state=3
+10-18 23:21:05.128  3657  3657 D BC1Preview: state 2 pos=24 playhead=24
+10-18 23:21:05.191  3657  3657 D BC1Preview: state 3 pos=24 playhead=18
+10-18 23:21:05.238  3657  3657 D BC1Preview: seek 53 state=3
+10-18 23:21:05.239  3657  3657 D BC1Preview: state 2 pos=53 playhead=53
+10-18 23:21:05.343  3657  3657 D BC1Preview: state 3 pos=53 playhead=176
+10-18 23:21:05.343  3657  3657 D BC1Preview: seek 176 state=3
+10-18 23:21:05.343  3657  3657 D BC1Preview: state 2 pos=176 playhead=176
+10-18 23:21:05.439  3657  3657 D BC1Preview: state 3 pos=176 playhead=365
+10-18 23:21:05.439  3657  3657 D BC1Preview: seek 365 state=3
+10-18 23:21:05.442  3657  3657 D BC1Preview: state 2 pos=365 playhead=365
+10-18 23:21:05.668  3657  3657 D BC1Preview: state 3 pos=365 playhead=1057
+10-18 23:21:05.668  3657  3657 D BC1Preview: seek 1057 state=3
+10-18 23:21:05.672  3657  3657 D BC1Preview: state 2 pos=1057 playhead=1057
+10-18 23:21:05.851  3657  3657 D BC1Preview: state 3 pos=1057 playhead=2198
+10-18 23:21:05.851  3657  3657 D BC1Preview: seek 2198 state=3
+10-18 23:21:05.852  3657  3657 D BC1Preview: state 2 pos=2198 playhead=2198
+10-18 23:21:06.032  3657  3657 D BC1Preview: state 3 pos=2198 playhead=2803
+10-18 23:21:06.033  3657  3657 D BC1Preview: seek 2803 state=3
+10-18 23:21:06.036  3657  3657 D BC1Preview: state 2 pos=2803 playhead=2803
+10-18 23:21:06.207  3657  3657 D BC1Preview: state 3 pos=2803 playhead=2978
+10-18 23:21:06.207  3657  3657 D BC1Preview: seek 2978 state=3
+10-18 23:21:06.208  3657  3657 D BC1Preview: state 2 pos=2978 playhead=2978
+10-18 23:21:06.343  3657  3657 D BC1Preview: state 3 pos=2978 playhead=2684
+10-18 23:21:06.343  3657  3657 D BC1Preview: seek 2684 state=3
+10-18 23:21:06.345  3657  3657 D BC1Preview: state 2 pos=2684 playhead=2684
+10-18 23:21:06.497  3657  3657 D BC1Preview: state 3 pos=2684 playhead=1846
+10-18 23:21:06.497  3657  3657 D BC1Preview: seek 1846 state=3
+10-18 23:21:06.499  3657  3657 D BC1Preview: state 2 pos=1846 playhead=1846
+10-18 23:21:06.714  3657  3657 D BC1Preview: state 3 pos=1846 playhead=579
+10-18 23:21:06.714  3657  3657 D BC1Preview: seek 579 state=3
+10-18 23:21:06.714  3657  3657 D BC1Preview: state 2 pos=579 playhead=579
+10-18 23:21:06.846  3657  3657 D BC1Preview: state 3 pos=579 playhead=158
+10-18 23:21:06.846  3657  3657 D BC1Preview: seek 158 state=3
+10-18 23:21:06.848  3657  3657 D BC1Preview: state 2 pos=158 playhead=158
+10-18 23:21:07.008  3657  3657 D BC1Preview: state 3 pos=158 playhead=7
+10-18 23:21:07.008  3657  3657 D BC1Preview: seek 7 state=3
+10-18 23:21:07.009  3657  3657 D BC1Preview: state 2 pos=7 playhead=7
+10-18 23:21:07.086  3657  3657 D BC1Preview: state 3 pos=7 playhead=136
+10-18 23:21:07.147  3657  3657 D BC1Preview: seek 136 state=3
+10-18 23:21:07.150  3657  3657 D BC1Preview: state 2 pos=136 playhead=136
+10-18 23:21:07.269  3657  3657 D BC1Preview: state 3 pos=136 playhead=538
+10-18 23:21:07.269  3657  3657 D BC1Preview: seek 538 state=3
+10-18 23:21:07.270  3657  3657 D BC1Preview: state 2 pos=538 playhead=538
+10-18 23:21:07.462  3657  3657 D BC1Preview: state 3 pos=538 playhead=1629
+10-18 23:21:07.462  3657  3657 D BC1Preview: seek 1629 state=3
+10-18 23:21:07.464  3657  3657 D BC1Preview: state 2 pos=1629 playhead=1629
+10-18 23:21:07.624  3657  3657 D BC1Preview: state 3 pos=1629 playhead=2534
+10-18 23:21:07.624  3657  3657 D BC1Preview: seek 2534 state=3
+10-18 23:21:07.632  3657  3657 D BC1Preview: state 2 pos=2534 playhead=2534
+10-18 23:21:07.793  3657  3657 D BC1Preview: state 3 pos=2534 playhead=2965
+10-18 23:21:07.793  3657  3657 D BC1Preview: seek 2965 state=3
+10-18 23:21:07.793  3657  3657 D BC1Preview: state 2 pos=2965 playhead=2965
+10-18 23:21:07.928  3657  3657 D BC1Preview: state 3 pos=2965 playhead=2997
+10-18 23:21:07.928  3657  3657 D BC1Preview: seek 2997 state=3
+10-18 23:21:07.930  3657  3657 D BC1Preview: state 2 pos=2997 playhead=2997
+10-18 23:21:08.041  3657  3657 D BC1Preview: state 3 pos=2997 playhead=2740
+10-18 23:21:08.041  3657  3657 D BC1Preview: seek 2740 state=3
+10-18 23:21:08.042  3657  3657 D BC1Preview: state 2 pos=2740 playhead=2740
+10-18 23:21:08.180  3657  3657 D BC1Preview: state 3 pos=2740 playhead=2093
+10-18 23:21:08.180  3657  3657 D BC1Preview: seek 2093 state=3
+10-18 23:21:08.183  3657  3657 D BC1Preview: state 2 pos=2093 playhead=2093
+10-18 23:21:08.356  3657  3657 D BC1Preview: state 3 pos=2093 playhead=948
+10-18 23:21:08.356  3657  3657 D BC1Preview: seek 948 state=3
+10-18 23:21:08.359  3657  3657 D BC1Preview: state 2 pos=948 playhead=948
+10-18 23:21:08.498  3657  3657 D BC1Preview: state 3 pos=948 playhead=400
+10-18 23:21:08.498  3657  3657 D BC1Preview: seek 400 state=3
+10-18 23:21:08.499  3657  3657 D BC1Preview: state 2 pos=400 playhead=400
+10-18 23:21:08.595  3657  3657 D BC1Preview: state 3 pos=400 playhead=68
+10-18 23:21:08.595  3657  3657 D BC1Preview: seek 68 state=3
+10-18 23:21:08.638  3657  3657 D BC1Preview: state 2 pos=68 playhead=68
+10-18 23:21:08.739  3657  3657 D BC1Preview: state 3 pos=68 playhead=1
+10-18 23:21:08.739  3657  3657 D BC1Preview: seek 1 state=3
+10-18 23:21:08.744  3657  3657 D BC1Preview: state 2 pos=1 playhead=1
+10-18 23:21:08.890  3657  3657 D BC1Preview: state 3 pos=1 playhead=169
+10-18 23:21:08.890  3657  3657 D BC1Preview: seek 169 state=3
+10-18 23:21:08.891  3657  3657 D BC1Preview: state 2 pos=169 playhead=169
+10-18 23:21:09.000  3657  3657 D BC1Preview: state 3 pos=169 playhead=470
+10-18 23:21:09.000  3657  3657 D BC1Preview: seek 470 state=3
+10-18 23:21:09.001  3657  3657 D BC1Preview: state 2 pos=470 playhead=470
+10-18 23:21:09.182  3657  3657 D BC1Preview: state 3 pos=470 playhead=885
+10-18 23:21:09.182  3657  3657 D BC1Preview: seek 885 state=3
+10-18 23:21:09.191  3657  3657 D BC1Preview: state 2 pos=885 playhead=885
+10-18 23:21:09.305  3657  3657 D BC1Preview: state 3 pos=885 playhead=1369
+10-18 23:21:09.305  3657  3657 D BC1Preview: seek 1369 state=3
+10-18 23:21:09.308  3657  3657 D BC1Preview: state 2 pos=1369 playhead=1369
+10-18 23:21:09.378  3657  3702 I BC1Preview: test: last scrub target 2029
+10-18 23:21:09.483  3657  3657 D BC1Preview: state 3 pos=1369 playhead=2029
+10-18 23:21:09.483  3657  3657 D BC1Preview: seek 2029 state=3
+10-18 23:21:09.484  3657  3657 D BC1Preview: state 2 pos=2029 playhead=2029
+10-18 23:21:09.606  3657  3657 D BC1Preview: state 3 pos=2029 playhead=2029
+10-18 23:21:09.875  3657  3702 I TestRunner: finished: fastScrubbingKeepsTheLivePreviewWorking(com.blackice.bc1.PreviewScrubTest)
+10-18 23:21:09.879  3657  3702 I TestRunner: started: dragLeavesGapsMovesBetweenRowsAndDropsMedia(com.blackice.bc1.TimelineDragTest)
+10-18 23:21:15.179  3657  3702 I TestRunner: finished: dragLeavesGapsMovesBetweenRowsAndDropsMedia(com.blackice.bc1.TimelineDragTest)
+10-18 23:21:15.189  3657  3702 I TestRunner: started: phoneAndDexGesturesHistoryAndSaveReopen(com.blackice.bc1.TimelineInteractionTest)
+10-18 23:21:36.610  3657  3657 D BC1Preview: state 2 pos=500 playhead=500
+10-18 23:21:36.856  3657  3657 D BC1Preview: state 2 pos=500 playhead=500
+10-18 23:21:37.398  3657  3657 D BC1Preview: state 3 pos=500 playhead=500
+10-18 23:21:38.007  3657  3657 D BC1Preview: state 2 pos=500 playhead=500
+10-18 23:21:38.564  3657  3657 D BC1Preview: state 3 pos=500 playhead=500
+10-18 23:22:16.726  3657  3657 D BC1Preview: state 2 pos=500 playhead=500
+10-18 23:22:17.176  3657  3657 D BC1Preview: state 2 pos=500 playhead=500
+10-18 23:22:17.740  3657  3657 D BC1Preview: state 3 pos=500 playhead=500
+10-18 23:22:18.866  3657  3657 D BC1Preview: state 2 pos=500 playhead=500
+10-18 23:22:19.505  3657  3657 D BC1Preview: state 3 pos=500 playhead=500
+10-18 23:22:20.860  3657  3702 I TestRunner: finished: phoneAndDexGesturesHistoryAndSaveReopen(com.blackice.bc1.TimelineInteractionTest)
+10-18 23:22:20.862  3657  3702 I TestRunner: started: extractedAudioLayerOffsetsAndFadesInExport(com.blackice.bc1.VideoEditorTest)
+10-18 23:22:25.634  3657  3702 I TestRunner: finished: extractedAudioLayerOffsetsAndFadesInExport(com.blackice.bc1.VideoEditorTest)
+10-18 23:22:25.635  3657  3702 I TestRunner: started: everyVideoTransitionExportsCorrectEndpointsAndMidpoint(com.blackice.bc1.VideoEditorTest)
+10-18 23:23:20.355  3657  3702 I TestRunner: finished: everyVideoTransitionExportsCorrectEndpointsAndMidpoint(com.blackice.bc1.VideoEditorTest)
+10-18 23:23:20.356  3657  3702 I TestRunner: started: missingMediaRecordsRedactedCauseAndNextExportRecovers(com.blackice.bc1.VideoEditorTest)
+10-18 23:23:21.560  3657  3657 E BC1Export: Export failed
+10-18 23:23:21.560  3657  3657 E BC1Export: androidx.media3.transformer.ExportException: Asset loader error
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.transformer.ExoPlayerAssetLoader$PlayerListener.onPlayerError(ExoPlayerAssetLoader.java:517)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl.lambda$updatePlaybackInfo$21(ExoPlayerImpl.java:2387)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl$$ExternalSyntheticLambda34.invoke(D8$$SyntheticClass:0)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.common.util.ListenerSet$ListenerHolder.invoke(ListenerSet.java:466)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.common.util.ListenerSet.lambda$queueEvent$0(ListenerSet.java:334)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.common.util.ListenerSet$$ExternalSyntheticLambda1.run(D8$$SyntheticClass:0)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.common.util.ListenerSet.flushEvents(ListenerSet.java:358)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl.updatePlaybackInfo(ExoPlayerImpl.java:2450)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl.handlePlaybackInfo(ExoPlayerImpl.java:2273)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl.lambda$new$1$androidx-media3-exoplayer-ExoPlayerImpl(ExoPlayerImpl.java:375)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl$$ExternalSyntheticLambda13.run(D8$$SyntheticClass:0)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at android.os.Handler.handleCallback(Handler.java:959)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at android.os.Handler.dispatchMessage(Handler.java:100)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at android.os.Looper.loopOnce(Looper.java:232)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at android.os.Looper.loop(Looper.java:317)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+10-18 23:23:21.560  3657  3657 E BC1Export: Caused by: androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:1021)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:993)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at android.os.Handler.dispatchMessage(Handler.java:103)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	... 3 more
+10-18 23:23:21.560  3657  3657 E BC1Export: Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: /data/user/0/com.blackice.bc1.preview/cache/private-missing-video.mp4: open failed: ENOENT (No such file or directory)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:203)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:113)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:277)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:89)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1298)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:453)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at java.lang.Thread.run(Thread.java:1012)
+10-18 23:23:21.560  3657  3657 E BC1Export: Caused by: java.io.FileNotFoundException: /data/user/0/com.blackice.bc1.preview/cache/private-missing-video.mp4: open failed: ENOENT (No such file or directory)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at libcore.io.IoBridge.open(IoBridge.java:574)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:183)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	... 8 more
+10-18 23:23:21.560  3657  3657 E BC1Export: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at libcore.io.Linux.open(Native Method)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:563)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:563)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at android.app.ActivityThread$AndroidOs.open(ActivityThread.java:8591)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	at libcore.io.IoBridge.open(IoBridge.java:560)
+10-18 23:23:21.560  3657  3657 E BC1Export: 	... 12 more
+10-18 23:23:51.450  3657  3702 I TestRunner: finished: missingMediaRecordsRedactedCauseAndNextExportRecovers(com.blackice.bc1.VideoEditorTest)
+10-18 23:23:51.451  3657  3702 I TestRunner: started: projectBundlesRoundTripMediaAndRejectTraversal(com.blackice.bc1.VideoEditorTest)
+10-18 23:23:51.633  3657  3702 I TestRunner: finished: projectBundlesRoundTripMediaAndRejectTraversal(com.blackice.bc1.VideoEditorTest)
+10-18 23:23:51.647  3657  3702 I TestRunner: started: corruptOrFutureProjectDoesNotReplaceSavedProject(com.blackice.bc1.VideoEditorTest)
+10-18 23:23:51.679  3657  3702 I TestRunner: finished: corruptOrFutureProjectDoesNotReplaceSavedProject(com.blackice.bc1.VideoEditorTest)
+10-18 23:23:51.680  3657  3702 I TestRunner: started: projectRoundTripEditsMusicTextAnd1080pExport(com.blackice.bc1.VideoEditorTest)
+10-18 23:23:51.700  3657  3702 I BC1ExportTest: 1080p service export iteration 0
+10-18 23:24:28.714  3657  3702 I BC1ExportTest: 1080p service export iteration 1
+10-18 23:25:05.394  3657  3702 I BC1ExportTest: 1080p service export iteration 2
+10-18 23:25:41.975  3657  3702 I TestRunner: finished: projectRoundTripEditsMusicTextAnd1080pExport(com.blackice.bc1.VideoEditorTest)
+10-18 23:25:41.976  3657  3702 I TestRunner: started: previewSeeksAfterTrimAcrossBothTracks(com.blackice.bc1.VideoEditorTest)
+10-18 23:25:48.509  3657  3702 I TestRunner: finished: previewSeeksAfterTrimAcrossBothTracks(com.blackice.bc1.VideoEditorTest)
+10-18 23:25:48.511  3657  3702 I TestRunner: started: videoEffectsAndTimedImageOverlayReachTheExport(com.blackice.bc1.VideoEditorTest)
+10-18 23:25:55.802  3657  3702 I TestRunner: finished: videoEffectsAndTimedImageOverlayReachTheExport(com.blackice.bc1.VideoEditorTest)
+10-18 23:25:55.803  3657  3702 I TestRunner: started: audioWaveformDecodesRealPeaks(com.blackice.bc1.VideoEditorTest)
+10-18 23:25:55.829  3657  3702 I TestRunner: finished: audioWaveformDecodesRealPeaks(com.blackice.bc1.VideoEditorTest)
+10-18 23:25:55.830  3657  3702 I TestRunner: started: independentLayerKeyframesCompositeAndChromaKey(com.blackice.bc1.VideoEditorTest)
+10-18 23:26:09.077  3657  3702 I TestRunner: finished: independentLayerKeyframesCompositeAndChromaKey(com.blackice.bc1.VideoEditorTest)
+10-18 23:26:09.077  3657  3702 I TestRunner: started: foregroundExportCanBeCancelledWithoutPublishing(com.blackice.bc1.VideoEditorTest)
+10-18 23:26:10.658  3657  3702 I TestRunner: finished: foregroundExportCanBeCancelledWithoutPublishing(com.blackice.bc1.VideoEditorTest)
+10-18 23:26:10.663  3657  3702 I TestRunner: started: speedAndTextStyleSurviveReopenAndExport(com.blackice.bc1.VideoEditorTest)
+10-18 23:26:19.336  3657  3702 I TestRunner: finished: speedAndTextStyleSurviveReopenAndExport(com.blackice.bc1.VideoEditorTest)
+10-18 23:26:19.337  3657  3702 I TestRunner: started: emulatorWorkspacesKeepMonitorAndToolsUsable(com.blackice.bc1.WorkspaceTest)
+10-18 23:26:28.663  3657  3702 I TestRunner: finished: emulatorWorkspacesKeepMonitorAndToolsUsable(com.blackice.bc1.WorkspaceTest)
+10-18 23:26:28.665  3657  3702 I TestRunner: started: addDrawerPanelsLayersAndKeyframesOnPhoneAndDex(com.blackice.bc1.WorkspaceV2Test)
+10-18 23:26:58.411  3657  3702 I TestRunner: finished: addDrawerPanelsLayersAndKeyframesOnPhoneAndDex(com.blackice.bc1.WorkspaceV2Test)
+10-18 23:26:58.413  3657  3702 I TestRunner: started: blurPreservesImageOrientationAndSurvivesContextLoss(com.blackice.bc1.engine.GpuPipelineTest)
+10-18 23:27:01.028  3657  3702 I TestRunner: finished: blurPreservesImageOrientationAndSurvivesContextLoss(com.blackice.bc1.engine.GpuPipelineTest)
+10-18 23:27:01.030  3657  3702 I TestRunner: started: everyTransitionHasExactEndpoints(com.blackice.bc1.engine.GpuPipelineTest)
+10-18 23:27:01.736  3657  3702 I TestRunner: finished: everyTransitionHasExactEndpoints(com.blackice.bc1.engine.GpuPipelineTest)
+10-18 23:27:01.741  3657  3702 I TestRunner: started: opacityAndDipMidpointAreExact(com.blackice.bc1.engine.GpuPipelineTest)
+10-18 23:27:02.289  3657  3702 I TestRunner: finished: opacityAndDipMidpointAreExact(com.blackice.bc1.engine.GpuPipelineTest)
+10-18 23:27:02.290  3657  3702 I TestRunner: started: everyEffectRendersAtEveryQualityAndStrength(com.blackice.bc1.engine.GpuPipelineTest)
+10-18 23:27:03.816  3657  3702 I TestRunner: finished: everyEffectRendersAtEveryQualityAndStrength(com.blackice.bc1.engine.GpuPipelineTest)
+10-18 23:27:03.817  3657  3702 I TestRunner: run finished: 28 tests, 1 failed, 0 ignored
+10-18 23:27:03.838  3609  3609 I AndroidRuntime: VM exiting with result code 0.
