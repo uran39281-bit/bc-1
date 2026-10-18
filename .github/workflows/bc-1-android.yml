@@ -35,6 +35,21 @@ jobs:
           name: BC-1-v1.1.0-apk
           path: BC-1/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+      # Re-sign with the retained preview key (repository secrets) so the APK updates existing installs.
+      - name: Sign APK with the BC-1 Preview key
+        id: sign
+        env:
+          KEYSTORE_BASE64: ${{ secrets.BC1_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.BC1_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.BC1_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.BC1_KEY_PASSWORD }}
+        run: bash .github/scripts/bc1-sign-apk.sh BC-1/app/build/outputs/apk/debug/app-debug.apk BC-1-preview-signed.apk
+      - uses: actions/upload-artifact@v4
+        if: steps.sign.outputs.signed == 'true'
+        with:
+          name: BC-1-v1.1.0-preview-signed-apk
+          path: BC-1-preview-signed.apk
+          retention-days: 30
       - uses: actions/upload-artifact@v4
         if: always()
         with:
