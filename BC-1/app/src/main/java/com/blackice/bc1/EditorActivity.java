@@ -67,7 +67,7 @@ public final class EditorActivity extends Activity {
     static final int AUDIO_LAYER=110,BACKUP=111,RESTORE=112;
     final java.util.Map<String,float[]> waveforms=new java.util.HashMap<>();
     int inspectorWidth=300;
-    TextView status,time,play,projectLabel,exportButton,emptyPreview;
+    TextView status,time,play,projectLabel,exportButton,emptyPreview,monitorInfo;
     TimelineView timeline;
     final Runnable timelineThumbnailsReady=()->{if(!isDestroyed()&&timeline!=null)timeline.invalidate();};
     HorizontalScrollView timelineScroll;
@@ -262,7 +262,7 @@ public final class EditorActivity extends Activity {
         TextView compare=button("Compare",null);compare.setTextSize(10);compare.setContentDescription("Hold to compare with the layer before the current adjustments");compare.setTooltipText(compare.getContentDescription());
         compare.setOnTouchListener((v,e)->{if(e.getActionMasked()==MotionEvent.ACTION_DOWN)compare(true);else if(e.getActionMasked()==MotionEvent.ACTION_UP||e.getActionMasked()==MotionEvent.ACTION_CANCEL)compare(false);return true;});
         monitor.addView(compare,new FrameLayout.LayoutParams(-2,dp(40),Gravity.BOTTOM|Gravity.END));
-        TextView info=label(project.name+"  ·  "+(project.portrait?"9:16":"16:9")+"  ·  "+project.frameRate+" fps",10,MUTED,false);info.setPadding(dp(8),dp(4),dp(8),0);info.setSingleLine(true);info.setEllipsize(android.text.TextUtils.TruncateAt.END);monitor.addView(info,new FrameLayout.LayoutParams(-2,dp(28),Gravity.TOP|Gravity.START));
+        TextView info=monitorInfo=label(project.name+"  ·  "+(project.portrait?"9:16":"16:9")+"  ·  "+project.frameRate+" fps",10,MUTED,false);info.setPadding(dp(8),dp(4),dp(8),0);info.setSingleLine(true);info.setEllipsize(android.text.TextUtils.TruncateAt.END);monitor.addView(info,new FrameLayout.LayoutParams(-2,dp(28),Gravity.TOP|Gravity.START));
         TextView viewOptions=button("View ▾",v->previewOptions());viewOptions.setContentDescription("Preview scaling, volume and fullscreen");FrameLayout.LayoutParams viewLp=new FrameLayout.LayoutParams(dp(72),dp(36),Gravity.TOP|Gravity.END);viewLp.topMargin=dp(28);monitor.addView(viewOptions,viewLp);
         return monitor;
     }
@@ -478,7 +478,7 @@ public final class EditorActivity extends Activity {
     void pausePlayback(){if(player!=null)player.pause();}
     /** Rebuilds the top bar: project / Settings / Export normally; layer name / Duplicate / Delete / More when selected. */
     void renderHeader(){
-        if(header==null)return;EditProject.Clip c=clip();EditProject.Overlay o=overlay();int count=multiCount();
+        if(monitorInfo!=null)monitorInfo.setText(project.name+"  ·  "+(project.portrait?"1080 × 1920 · 9:16":"1920 × 1080 · 16:9")+"  ·  "+project.frameRate+" fps");if(header==null)return;EditProject.Clip c=clip();EditProject.Overlay o=overlay();int count=multiCount();
         String key=count>1?"multi"+count:c!=null?"clip"+selected+c.name:o!=null?"overlay"+selectedOverlay+o.label():"none"+project.name+wideLayout;
         key+=":"+dirty+":"+tab+":"+addDrawer.category;if(key.equals(headerKey))return;headerKey=key;header.removeAllViews();Configuration cfg=getResources().getConfiguration();
         if(!wideLayout&&(count>1||c!=null||o!=null)){
