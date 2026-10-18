@@ -86,7 +86,7 @@ public class BcCoreExportTest {
                 int count = 0;
                 while (e.getSampleTime() >= 0) { count++; e.advance(); }
                 e.unselectTrack(t); e.seekTo(0, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
-                if ("video/avc".equals(mime)) video = count; else if ("audio/mp4a-latm".equals(mime)) audio = count;
+                if (mime.startsWith("video/")) video = count; else if ("audio/mp4a-latm".equals(mime)) audio = count;
             }
             return new int[]{video, audio};
         } finally { e.release(); }
