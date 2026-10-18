@@ -89,24 +89,43 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     @Override public void onSurfaceTextureSizeChanged(SurfaceTexture st, int w, int h) { }
     /** Returns false: the render thread releases the SurfaceTexture after its last frame, so a frame in flight never draws into a dead surface. */
     @Override public boolean onSurfaceTextureDestroyed(SurfaceTexture st) {
-        if (!gl.post(this::unbind)) st.release();
+        if (!gl.post(this::detachWindow)) st.release();
         return false;
     }
     @Override public void onSurfaceTextureUpdated(SurfaceTexture st) { }
 
     private void bind(Surface target, SurfaceTexture st) {
-        unbind();
+        detachWindow();
         surface = target; surfaceTexture = st;
-        egl = new EglCore(target);
+        if (egl != null) {
+            // Same context: compiled shaders, open decoders and the last decoded frames carry over.
+            try { egl.setWindow(target); }
+            catch (RuntimeException e) {
+                surface = null; surfaceTexture = null; // keep the new window out of the full teardown
+                unbind();
+                surface = target; surfaceTexture = st;
+                egl = new EglCore(target);
+            }
+        } else egl = new EglCore(target);
+        if (st != null && width > 0) st.setDefaultBufferSize(width, height);
     }
 
+    /** Lets go of the current window (the view's surface is going away) but keeps the GL context when the driver allows. */
+    private void detachWindow() {
+        if (egl != null && egl.hasWindow() && !egl.dropWindow()) { unbind(); return; }
+        if (surface != null) surface.release();
+        if (surfaceTexture != null) surfaceTexture.release(); // handed over by onSurfaceTextureDestroyed
+        surface = null; surfaceTexture = null;
+    }
+
+    /** Releases everything: decoders, programs, context and window. */
     private void unbind() {
         releaseSources();
         if (overlays != null) { overlays.release(); overlays = null; }
         if (compositor != null) { compositor.release(); compositor = null; }
         if (egl != null) { egl.close(); egl = null; }
         if (surface != null) surface.release();
-        if (surfaceTexture != null) surfaceTexture.release(); // handed over by onSurfaceTextureDestroyed
+        if (surfaceTexture != null) surfaceTexture.release();
         surface = null; surfaceTexture = null; width = height = 0;
     }
 
@@ -139,7 +158,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
         Request r = pending.getAndSet(null);
         if (r == null) return;
         try {
-            if (egl == null) return; // no surface yet: binding one redraws the latest request
+            if (egl == null || !egl.hasWindow()) return; // no surface yet: binding one redraws the latest request
             long start = System.nanoTime();
             render(r.project, r.timeMs);
             lastError = null;

@@ -14,6 +14,7 @@ final class EglCore implements AutoCloseable {
     private EGLDisplay display = EGL14.EGL_NO_DISPLAY;
     private EGLContext context = EGL14.EGL_NO_CONTEXT;
     private EGLSurface surface = EGL14.EGL_NO_SURFACE;
+    private EGLConfig config;
 
     EglCore(Surface window) {
         display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
@@ -33,10 +34,32 @@ final class EglCore implements AutoCloseable {
         context = EGL14.eglCreateContext(display, configs[0], EGL14.EGL_NO_CONTEXT,
                 new int[]{EGL14.EGL_CONTEXT_CLIENT_VERSION, 3, EGL14.EGL_NONE}, 0);
         check("eglCreateContext");
+        config = configs[0];
         surface = EGL14.eglCreateWindowSurface(display, configs[0], window, new int[]{EGL14.EGL_NONE}, 0);
         check("eglCreateWindowSurface");
         if (!EGL14.eglMakeCurrent(display, surface, surface, context)) throw new IllegalStateException("eglMakeCurrent failed");
     }
+
+    /**
+     * Drops the window surface but keeps the context (and every texture and compiled program in it)
+     * current without a surface. False if the driver cannot do that; then the caller closes this core.
+     */
+    boolean dropWindow() {
+        if (!EGL14.eglMakeCurrent(display, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, context)) return false;
+        if (surface != EGL14.EGL_NO_SURFACE) EGL14.eglDestroySurface(display, surface);
+        surface = EGL14.EGL_NO_SURFACE;
+        return true;
+    }
+
+    /** Draws into a new window from now on, keeping the context. */
+    void setWindow(Surface window) {
+        if (surface != EGL14.EGL_NO_SURFACE && !dropWindow()) throw new IllegalStateException("Cannot release the old window surface");
+        surface = EGL14.eglCreateWindowSurface(display, config, window, new int[]{EGL14.EGL_NONE}, 0);
+        check("eglCreateWindowSurface");
+        makeCurrent();
+    }
+
+    boolean hasWindow() { return surface != EGL14.EGL_NO_SURFACE; }
 
     void makeCurrent() {
         if (!EGL14.eglMakeCurrent(display, surface, surface, context)) throw new IllegalStateException("eglMakeCurrent failed");

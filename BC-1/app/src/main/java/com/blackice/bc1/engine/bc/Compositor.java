@@ -51,11 +51,16 @@ final class Compositor {
 
     final int width, height;
     private final GlKit.Quad quad;
-    private final GlKit.Program fitExternal, fit2d, layer, overlay;
-    /** Layer shader reading the decoder's external texture directly; null if the GPU lacks ESSL 3 external sampling. */
-    private final GlKit.Program layerExternal;
-    /** Blend-mode variants: read the composite so far as a backdrop and write the blended result. */
-    private final GlKit.Program layerBlend, layerExternalBlend;
+    private final GlKit.Program fitExternal, fit2d, overlay;
+    /**
+     * Layer programs, compiled on first use: the shipping shader is large, and a software GL (emulators)
+     * takes seconds per compile, so a frame only pays for the variants it draws with.
+     * External: reads the decoder's texture directly (null if the GPU lacks ESSL 3 external sampling).
+     * Blend: reads the composite so far as a backdrop and writes the blended result.
+     */
+    private final String vertex, fragment;
+    private GlKit.Program layer, layerExternal, layerBlend, layerExternalBlend;
+    private boolean externalTried, externalBlendTried;
     /** Ping-pong composite targets, used only in frames that contain a blend-mode layer. */
     private GlKit.Target[] accum;
     private boolean accumulating;
@@ -66,22 +71,28 @@ final class Compositor {
         quad = new GlKit.Quad();
         fitExternal = new GlKit.Program(FIT_VERTEX, FIT_EXTERNAL);
         fit2d = new GlKit.Program(FIT_VERTEX, FIT_2D);
-        String vertex = asset(context, "shaders/video.vert"), fragment = asset(context, "shaders/video.frag");
-        layer = new GlKit.Program(vertex, fragment);
-        GlKit.Program external = null;
-        try { external = new GlKit.Program(vertex, externalVariant(fragment)); }
-        catch (RuntimeException unsupported) { GLES30.glGetError(); } // fall back to a fitted copy per layer
-        layerExternal = external;
-        String blended = blendVariant(fragment);
-        layerBlend = new GlKit.Program(vertex, blended);
-        GlKit.Program externalBlend = null;
-        if (layerExternal != null) {
-            try { externalBlend = new GlKit.Program(vertex, externalVariant(blended)); }
-            catch (RuntimeException unsupported) { GLES30.glGetError(); }
-        }
-        layerExternalBlend = externalBlend;
+        vertex = asset(context, "shaders/video.vert"); fragment = asset(context, "shaders/video.frag");
         overlay = new GlKit.Program(OVERLAY_VERTEX, FIT_2D);
         GlKit.check("compositor programs");
+    }
+
+    private GlKit.Program layer() { if (layer == null) layer = new GlKit.Program(vertex, fragment); return layer; }
+    private GlKit.Program layerBlend() { if (layerBlend == null) layerBlend = new GlKit.Program(vertex, blendVariant(fragment)); return layerBlend; }
+    private GlKit.Program layerExternal() {
+        if (!externalTried) {
+            externalTried = true;
+            try { layerExternal = new GlKit.Program(vertex, externalVariant(fragment)); }
+            catch (RuntimeException unsupported) { GLES30.glGetError(); } // fall back to a fitted copy per layer
+        }
+        return layerExternal;
+    }
+    private GlKit.Program layerExternalBlend() {
+        if (!externalBlendTried && layerExternal() != null) {
+            externalBlendTried = true;
+            try { layerExternalBlend = new GlKit.Program(vertex, externalVariant(blendVariant(fragment))); }
+            catch (RuntimeException unsupported) { GLES30.glGetError(); }
+        }
+        return layerExternalBlend;
     }
 
     /**
@@ -127,7 +138,7 @@ final class Compositor {
     }
 
     /** True when layers can be drawn straight from decoder textures (no per-layer copy). */
-    boolean drawsExternal() { return layerExternal != null && layerExternalBlend != null; }
+    boolean drawsExternal() { return layerExternal() != null; }
 
     private static String asset(Context context, String name) throws IOException {
         try (InputStream in = context.getAssets().open(name)) {
@@ -211,8 +222,9 @@ final class Compositor {
     }
 
     /** Selects the plain or blend program; for a blend layer, targets the other composite buffer. */
-    private GlKit.Program begin(RenderPlan.LayerDraw d, GlKit.Program plain, GlKit.Program blend) {
-        if (!accumulating || d.blend == 0 || blend == null) { plain.use(); return plain; }
+    private GlKit.Program begin(RenderPlan.LayerDraw d, boolean external) {
+        GlKit.Program blend = accumulating && d.blend != 0 ? (external ? layerExternalBlend() : layerBlend()) : null;
+        if (blend == null) { GlKit.Program plain = external ? layerExternal() : layer(); plain.use(); return plain; }
         int backdrop = accum[current].texture;
         accum[1 - current].bind();
         blend.use();
@@ -234,7 +246,7 @@ final class Compositor {
 
     /** One layer through the shipping shader, alpha-composited over what is already drawn. */
     void drawLayer(RenderPlan.LayerDraw d, int texture) {
-        GlKit.Program p = begin(d, layer, layerBlend);
+        GlKit.Program p = begin(d, false);
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture);
         drawWith(p, d, p == layerBlend);
@@ -244,7 +256,7 @@ final class Compositor {
 
     /** Same, sampling a decoder's external texture directly through the letterbox and rotation. */
     void drawLayerExternal(RenderPlan.LayerDraw d, int oesTexture, float[] stMatrix, int rotation, double displayAspect) {
-        GlKit.Program p = begin(d, layerExternal, layerExternalBlend);
+        GlKit.Program p = begin(d, true);
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
         GLES30.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oesTexture);
         int[] v = GlKit.fit(width, height, displayAspect);
@@ -302,7 +314,9 @@ final class Compositor {
     }
 
     void release() {
-        fitExternal.release(); fit2d.release(); layer.release(); layerBlend.release();
+        fitExternal.release(); fit2d.release();
+        if (layer != null) layer.release();
+        if (layerBlend != null) layerBlend.release();
         if (layerExternal != null) layerExternal.release();
         if (layerExternalBlend != null) layerExternalBlend.release();
         if (accum != null) for (GlKit.Target t : accum) t.release();
