@@ -86,11 +86,28 @@ compositing makes this identical to one pass, apart from one extra encode genera
 decoder still cannot be created mid-export, ICE Lite lowers the budget and retries automatically.
 **Setup → Device video capabilities** lists what this phone's codecs report, with a copyable report.
 
+## Blend modes
+
+Every visual clip has a **blend mode** (Effects → Blend mode): Normal, Darken, Multiply, Color Burn, Linear
+Burn, Darker Color, Lighten, Screen, Color Dodge, Linear Dodge (Add), Lighter Color, Overlay, Soft Light,
+Hard Light, Vivid Light, Linear Light, Pin Light, Hard Mix, Difference, Exclusion, Subtract, Divide, Hue,
+Saturation, Color and Luminosity. They are BC-1's own implementation of the public W3C *Compositing and
+Blending* formulas plus the usual photo-editing extensions (`core/BlendMode`: a Java reference and the
+matching GLSL). Frames that contain a blended layer are composed in two off-screen buffers so the layer can
+read what lies beneath; frames without one take the direct path. Media3 cannot render blend modes, so
+projects that use them export with ICE Lite and get an ICE Lite prepared preview.
+
+## Engine routing
+
+Each export picks its engine from the setting plus the project: more than four simultaneous video layers
+or any blend mode → ICE Lite; HDR (PQ/HLG) clips → Media3, which tone-maps them, unless the project needs
+ICE Lite anyway. The saved-export message says when the engine differed from the setting and why.
+
 ## Known differences from the Media3 path
 
 - Letterbox bars of upper layers are transparent (lower layers show through).
 - Audio speed changes pitch (linear resampling). A pitch-preserving time stretch is a later stage.
-- Preview still uses Media3/ExoPlayer at up to 1080p; ICE Lite is export-only in this phase.
+- Live preview uses Media3/ExoPlayer; prepared previews of heavy or blended projects are rendered by ICE Lite.
 - Galaxy S24+ (SM8650) benchmark: 8 layers × 1080p60 exported at 72.6 frames/s (1.21× real time),
   one pass, direct layer drawing, decoder budget 16 (16 hardware decoder instances, 11.6 GB).
 - 4K120 itself is verified only on real hardware; the CI emulator verifies 60 fps output from a 120 fps
@@ -98,11 +115,12 @@ decoder still cannot be created mid-export, ICE Lite lowers the budget and retri
 
 ## Verification
 
-- JVM unit tests: `core/RenderPlanTest`, `core/AudioEngineTest`, `core/ExportPlannerTest`, `core/StagingTest`,
+- JVM unit tests: `core/RenderPlanTest`, `core/AudioEngineTest`, `core/ExportPlannerTest`, `core/StagingTest`, `core/BlendModeTest`,
   `editor/ProjectMigrationTest` (schema 4 → 5 track remap).
 - Device tests: `engine/BcCoreExportTest` (pixel checks across a dissolve, exact frame count, AAC
   present, portrait/layers/pictures/speed, cancellation, HEVC, 60 fps from a 120 fps source, three-pass
-  staged render matching the single-pass render on layers 1/4/7, device report and budget). CI decodes `qa/bc-core-1080p.mp4`
+  staged render matching the single-pass render on layers 1/4/7, device report and budget, all 26 blend
+  modes rendered on the GPU and compared with the Java reference). CI decodes `qa/bc-core-1080p.mp4`
   independently with ffmpeg/ffprobe and checks 105 frames, 48 kHz stereo AAC and A/V sync.
 
 ## Roadmap

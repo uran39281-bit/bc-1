@@ -54,6 +54,12 @@ final class Compositor {
     private final GlKit.Program fitExternal, fit2d, layer, overlay;
     /** Layer shader reading the decoder's external texture directly; null if the GPU lacks ESSL 3 external sampling. */
     private final GlKit.Program layerExternal;
+    /** Blend-mode variants: read the composite so far as a backdrop and write the blended result. */
+    private final GlKit.Program layerBlend, layerExternalBlend;
+    /** Ping-pong composite targets, used only in frames that contain a blend-mode layer. */
+    private GlKit.Target[] accum;
+    private boolean accumulating;
+    private int current;
 
     Compositor(Context context, int width, int height) throws IOException {
         this.width = width; this.height = height;
@@ -66,6 +72,14 @@ final class Compositor {
         try { external = new GlKit.Program(vertex, externalVariant(fragment)); }
         catch (RuntimeException unsupported) { GLES30.glGetError(); } // fall back to a fitted copy per layer
         layerExternal = external;
+        String blended = blendVariant(fragment);
+        layerBlend = new GlKit.Program(vertex, blended);
+        GlKit.Program externalBlend = null;
+        if (layerExternal != null) {
+            try { externalBlend = new GlKit.Program(vertex, externalVariant(blended)); }
+            catch (RuntimeException unsupported) { GLES30.glGetError(); }
+        }
+        layerExternalBlend = externalBlend;
         overlay = new GlKit.Program(OVERLAY_VERTEX, FIT_2D);
         GlKit.check("compositor programs");
     }
@@ -98,8 +112,22 @@ final class Compositor {
         return header + "\n#extension GL_OES_EGL_image_external_essl3 : require" + body;
     }
 
+    /**
+     * The shipping layer shader, ending in a blend over a backdrop texture instead of alpha output: the
+     * layer's blended colour (core.BlendMode formulas) is mixed into the backdrop by the layer's alpha.
+     */
+    static String blendVariant(String fragment) {
+        String precision = "precision highp float;";
+        String output = "fragColor=vec4(clamp(a.rgb,0.0,1.0),a.a*uOpacity);";
+        if (!fragment.contains(precision) || !fragment.contains(output)) throw new IllegalStateException("Unexpected layer shader layout");
+        return fragment
+                .replace(precision, precision + "\nuniform sampler2D uBackdrop;\nuniform int uBlend;\n" + com.blackice.bc1.core.BlendMode.GLSL)
+                .replace(output, "vec3 bcBack=texture(uBackdrop,vUV).rgb; vec3 bcSrc=clamp(a.rgb,0.0,1.0);\n" +
+                        "    fragColor=vec4(mix(bcBack,clamp(bcBlend(uBlend,bcBack,bcSrc),0.0,1.0),clamp(a.a*uOpacity,0.0,1.0)),1.0);");
+    }
+
     /** True when layers can be drawn straight from decoder textures (no per-layer copy). */
-    boolean drawsExternal() { return layerExternal != null; }
+    boolean drawsExternal() { return layerExternal != null && layerExternalBlend != null; }
 
     private static String asset(Context context, String name) throws IOException {
         try (InputStream in = context.getAssets().open(name)) {
@@ -154,40 +182,88 @@ final class Compositor {
     }
 
     /** Starts an output frame on the encoder surface: opaque black, like an empty Media3 composition. */
-    void beginFrame() {
+    void beginFrame() { beginFrame(false); }
+
+    /**
+     * Starts an output frame. With {@code accumulate} (a blend-mode layer is visible) layers are composed in
+     * an off-screen target so blended layers can read what lies beneath; {@link #endLayers} copies it out.
+     */
+    void beginFrame(boolean accumulate) {
+        accumulating = accumulate;
+        if (accumulate) {
+            if (accum == null) accum = new GlKit.Target[]{new GlKit.Target(width, height), new GlKit.Target(width, height)};
+            current = 0;
+            accum[0].bind();
+        } else {
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
+            GLES30.glViewport(0, 0, width, height);
+        }
+        clear(0, 0, 0, 1);
+    }
+
+    /** Finishes the layer stack: overlays and the encoder then see the composed frame. */
+    void endLayers() {
+        if (!accumulating) return;
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
         GLES30.glViewport(0, 0, width, height);
-        clear(0, 0, 0, 1);
+        drawPlain(accum[current].texture);
+        accumulating = false;
+    }
+
+    /** Selects the plain or blend program; for a blend layer, targets the other composite buffer. */
+    private GlKit.Program begin(RenderPlan.LayerDraw d, GlKit.Program plain, GlKit.Program blend) {
+        if (!accumulating || d.blend == 0 || blend == null) { plain.use(); return plain; }
+        int backdrop = accum[current].texture;
+        accum[1 - current].bind();
+        blend.use();
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE1);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, backdrop);
+        blend.set("uBackdrop", 1);
+        blend.set("uBlend", d.blend);
+        return blend;
+    }
+
+    private void end(GlKit.Program used, GlKit.Program blend) {
+        if (used == blend && blend != null) {
+            current = 1 - current;
+            GLES30.glActiveTexture(GLES30.GL_TEXTURE1);
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
+            GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+        }
     }
 
     /** One layer through the shipping shader, alpha-composited over what is already drawn. */
     void drawLayer(RenderPlan.LayerDraw d, int texture) {
-        layer.use();
+        GlKit.Program p = begin(d, layer, layerBlend);
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture);
-        drawWith(layer, d);
+        drawWith(p, d, p == layerBlend);
+        end(p, layerBlend);
         GlKit.check("layer");
     }
 
     /** Same, sampling a decoder's external texture directly through the letterbox and rotation. */
     void drawLayerExternal(RenderPlan.LayerDraw d, int oesTexture, float[] stMatrix, int rotation, double displayAspect) {
-        GlKit.Program p = layerExternal;
-        p.use();
+        GlKit.Program p = begin(d, layerExternal, layerExternalBlend);
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
         GLES30.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oesTexture);
         int[] v = GlKit.fit(width, height, displayAspect);
         p.matrix("uSt", stMatrix);
         p.set("uRotation", rotation);
         p.set("uFit", v[0] / (float) width, v[1] / (float) height, v[2] / (float) width, v[3] / (float) height);
-        drawWith(p, d);
+        drawWith(p, d, p == layerExternalBlend);
         GLES30.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0);
+        end(p, layerExternalBlend);
         GlKit.check("external layer");
     }
 
-    private void drawWith(GlKit.Program program, RenderPlan.LayerDraw d) {
+    private void drawWith(GlKit.Program program, RenderPlan.LayerDraw d, boolean blendMode) {
         EditProject.Clip c = d.clip;
-        GLES30.glEnable(GLES30.GL_BLEND);
-        GLES30.glBlendFuncSeparate(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA, GLES30.GL_ONE, GLES30.GL_ONE_MINUS_SRC_ALPHA);
+        if (blendMode) GLES30.glDisable(GLES30.GL_BLEND); // the shader writes the finished pixel
+        else {
+            GLES30.glEnable(GLES30.GL_BLEND);
+            GLES30.glBlendFuncSeparate(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA, GLES30.GL_ONE, GLES30.GL_ONE_MINUS_SRC_ALPHA);
+        }
         program.set("uInput", 0);
         program.set("uTexel", 1f / width, 1f / height);
         program.set("uAspect", (float) width / height);
@@ -224,5 +300,11 @@ final class Compositor {
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
     }
 
-    void release() { fitExternal.release(); fit2d.release(); layer.release(); if (layerExternal != null) layerExternal.release(); overlay.release(); quad.release(); }
+    void release() {
+        fitExternal.release(); fit2d.release(); layer.release(); layerBlend.release();
+        if (layerExternal != null) layerExternal.release();
+        if (layerExternalBlend != null) layerExternalBlend.release();
+        if (accum != null) for (GlKit.Target t : accum) t.release();
+        overlay.release(); quad.release();
+    }
 }

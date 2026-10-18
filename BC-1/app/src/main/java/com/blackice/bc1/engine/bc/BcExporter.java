@@ -51,6 +51,7 @@ public final class BcExporter {
     private final AtomicBoolean cancelled;
     private final Listener listener;
     private int budget = -1;
+    private boolean preview;
     private int passesUsed, budgetUsed, shownFrames, skippedFrames;
     private boolean directUsed;
 
@@ -75,6 +76,9 @@ public final class BcExporter {
     public OutputSpec spec() { return spec; }
     public ExportPlanner.Plan plan() { return plan; }
 
+    /** Preview semantics: soloed layers are isolated (export ignores solo). */
+    public BcExporter previewSemantics(boolean preview) { this.preview = preview; return this; }
+
     /** Overrides the decoder budget (tests); by default it is estimated from the device. */
     public BcExporter decoderBudget(int budget) { this.budget = budget; return this; }
 
@@ -88,8 +92,8 @@ public final class BcExporter {
     public int skippedFrames() { return skippedFrames; }
 
     public void export(File output) throws Exception {
-        RenderPlan renderPlan = new RenderPlan(project, false);
-        AudioPlan audioPlan = AudioPlan.of(project, false);
+        RenderPlan renderPlan = new RenderPlan(project, preview);
+        AudioPlan audioPlan = AudioPlan.of(project, preview);
         File temp = new File(output.getParentFile(), output.getName() + ".aac.tmp");
         AudioEncoder.Encoded audio;
         try (AudioMixer mixer = new AudioMixer(audioPlan, s -> AudioDecoderSource.open(context, s), OutputSpec.AUDIO_RATE)) {
@@ -206,9 +210,12 @@ public final class BcExporter {
                 // Phase 2: take the delivered frames.
                 for (FrameSource source : frame) source.latch();
                 if (baseSource != null) baseSource.latch();
-                compositor.beginFrame();
+                boolean blendFrame = false;
+                for (RenderPlan.LayerDraw d : layers) blendFrame |= d.blend != 0;
+                compositor.beginFrame(blendFrame);
                 if (baseSource != null) compositor.drawPlain(baseSource.texture());
                 for (int i = 0; i < layers.size(); i++) frame[i].draw(compositor, layers.get(i));
+                compositor.endLayers();
                 if (overlays != null) {
                     List<EditProject.Overlay> active = renderPlan.overlaysAt(timeMs);
                     if (!active.isEmpty()) compositor.drawOverlay(overlays.texture(active, timeMs));

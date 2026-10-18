@@ -34,6 +34,8 @@ public final class ExportService extends Service {
     private Transformer transformer;
     /** Resolution / frame rate chosen for this export. */
     private ExportPlanner.Plan plan;
+    /** Why this export uses a different engine than the setting (null when it does not). */
+    private String routeNote;
     /** ICE Lite export thread (engine BC_CORE); progress is written from that thread. */
     private Thread coreThread;
     private volatile int coreProgress=-1;
@@ -80,7 +82,12 @@ public final class ExportService extends Service {
             getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("plan",plan.describe()).apply();
             String engineName=intent.getStringExtra(ExportEngine.PREF_KEY);
             if(engineName==null)engineName=getSharedPreferences(PREFS,MODE_PRIVATE).getString(ExportEngine.PREF_KEY,null);
-            if(ExportEngine.resolve(engineName,getPackageName())==ExportEngine.BC_CORE){startCore(project);return START_NOT_STICKY;}
+            // Heavy projects go to ICE Lite (it can render in passes); HDR clips go to Media3 (it tone-maps).
+            int decoders=0;try{for(int d:new com.blackice.bc1.core.RenderPlan(project,false).decoderDemand())decoders+=d;}catch(IllegalArgumentException noVisual){}
+            ExportEngine.Route route=ExportEngine.route(ExportEngine.resolve(engineName,getPackageName()),decoders,com.blackice.bc1.engine.bc.HdrCheck.anyHdr(this,project),com.blackice.bc1.core.RenderPlan.usesBlend(project));
+            routeNote=route.reason;
+            getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("route",routeNote==null?"":routeNote).apply();
+            if(route.engine==ExportEngine.BC_CORE){startCore(project);return START_NOT_STICKY;}
             transformer=new Transformer.Builder(this).setAssetLoaderFactory(CompositionFactory.assetLoader(this)).setVideoMimeType(plan.codec.mime).setAudioMimeType(MimeTypes.AUDIO_AAC)
                     .setPortraitEncodingEnabled(true)
                     .setVideoFrameProcessorFactory(CompositionFactory.frameProcessor())
@@ -135,7 +142,7 @@ public final class ExportService extends Service {
             } catch(Exception e) {error=e;}
             final Exception failure=error;
             main.post(()->{if(failure!=null&&!cancelled.get())recordFailure("saving",failure);
-                finish(cancelled.get()?"Export cancelled":failure==null?"MP4 saved • "+(plan==null?"":plan.describe()):"Save failed: "+failure.getMessage(),failure==null&&!cancelled.get());});
+                finish(cancelled.get()?"Export cancelled":failure==null?"MP4 saved • "+(plan==null?"":plan.describe())+(routeNote==null?"":" • "+routeNote):"Save failed: "+failure.getMessage(),failure==null&&!cancelled.get());});
         });
     }
     private void cancelExport() {

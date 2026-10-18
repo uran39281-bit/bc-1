@@ -133,4 +133,16 @@ public class RenderPlanTest {
         assertEquals(ExportEngine.MEDIA3, ExportEngine.resolve(null, "com.blackice.bc1.preview"));
         assertEquals("A stored choice wins", ExportEngine.MEDIA3, ExportEngine.resolve("MEDIA3", "com.blackice.bc1.icelite"));
     }
+
+    @Test public void routingSendsHeavyProjectsToIceLiteAndHdrToMedia3() {
+        ExportEngine.Route light = ExportEngine.route(ExportEngine.MEDIA3, 4, false);
+        assertEquals(ExportEngine.MEDIA3, light.engine); assertNull(light.reason);
+        ExportEngine.Route heavy = ExportEngine.route(ExportEngine.MEDIA3, 8, false);
+        assertEquals(ExportEngine.BC_CORE, heavy.engine); assertEquals("ICE Lite used: 8 video layers at once", heavy.reason);
+        ExportEngine.Route hdr = ExportEngine.route(ExportEngine.BC_CORE, 2, true);
+        assertEquals("HDR goes to Media3 for tone mapping", ExportEngine.MEDIA3, hdr.engine);
+        ExportEngine.Route heavyHdr = ExportEngine.route(ExportEngine.BC_CORE, 6, true);
+        assertEquals("Too heavy for Media3: stays on ICE Lite with a note", ExportEngine.BC_CORE, heavyHdr.engine); assertNotNull(heavyHdr.reason);
+        assertNull(ExportEngine.route(ExportEngine.BC_CORE, 8, false).reason);
+    }
 }

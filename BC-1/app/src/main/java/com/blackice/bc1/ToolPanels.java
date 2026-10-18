@@ -296,6 +296,8 @@ final class ToolPanels {
         for(int i=0;i<EngineSettings.EFFECTS.length;i++){final int id=i;a.gridAction((c.effect==i?"● ":"")+EngineSettings.EFFECTS[i],()->{if(a.layerEditable())a.edit("Effect applied",()->c.effect=id);});}
         a.flushGrid();
         percent("Effect intensity",c.intensity,.6f,v->c.intensity=v,c.motion,Motion.INTENSITY);
+        a.select("Blend mode",com.blackice.bc1.core.BlendMode.labels(),com.blackice.bc1.core.BlendMode.of(c.blend).ordinal(),index->{if(a.layerEditable())a.edit("Blend mode: "+com.blackice.bc1.core.BlendMode.of(index).label,()->c.blend=index);});
+        if(c.blend!=0)a.inspector.addView(a.note("Blend modes render with ICE Lite: in exports and in the prepared preview."));
         a.inspector.addView(a.button("Chroma Key…",v->open("Chroma Key",this::chromaPanel)));
         if(c.track==0){
             String[] transitions=new String[EngineSettings.TRANSITIONS.length+1];transitions[0]="Cut (no overlap)";System.arraycopy(EngineSettings.TRANSITIONS,0,transitions,1,EngineSettings.TRANSITIONS.length);

@@ -280,6 +280,41 @@ public class BcCoreExportTest {
         assertTrue(r.describe().contains("8 layers × 1080p60"));
     }
 
+    /** All 26 blend modes in one export: warm layer clips over a cool main clip, checked against BlendMode's reference math. */
+    @Test public void blendModesMatchTheReferenceMath() throws Exception {
+        EditProject p = new EditProject(); p.name = "ICE Lite blend modes";
+        int modes = com.blackice.bc1.core.BlendMode.values().length;
+        EditProject.Clip base = new MediaImporter(context).importClip(Uri.parse(fixture("cool.mp4")), false);
+        base.name = "cool"; base.inMs = 0; base.outMs = modes * 200L; base.sourceDurationMs = Math.max(base.sourceDurationMs, base.outMs); p.clips.add(base);
+        String warm = fixture("warm.mp4");
+        for (int i = 0; i < modes; i++) {
+            EditProject.Clip top = new MediaImporter(context).importClip(Uri.parse(warm), false);
+            top.name = "warm " + i; top.track = 1; top.startMs = i * 200L; top.inMs = 0; top.outMs = 200; top.blend = i; p.clips.add(top);
+        }
+        File out = new File(context.getCacheDir(), "bc-core-blend-" + System.nanoTime() + ".mp4");
+        new BcExporter(context, p, 180, new AtomicBoolean(), percent -> { }).export(out);
+        float[] cool = {64 / 255f, 128 / 255f, 192 / 255f}, warmColor = {192 / 255f, 128 / 255f, 64 / 255f};
+        StringBuilder failures = new StringBuilder();
+        try (MediaMetadataRetriever r = new MediaMetadataRetriever()) {
+            r.setDataSource(out.getPath());
+            for (int i = 0; i < modes; i++) {
+                com.blackice.bc1.core.BlendMode mode = com.blackice.bc1.core.BlendMode.of(i);
+                float[] expected = mode.composite(cool, warmColor, 1);
+                int actual = center(r, i * 200L + 100);
+                int[] got = {Color.red(actual), Color.green(actual), Color.blue(actual)};
+                for (int c = 0; c < 3; c++) if (Math.abs(got[c] - Math.round(expected[c] * 255)) > 18)
+                    failures.append(String.format(java.util.Locale.US, "%s: got %d,%d,%d expected %d,%d,%d%n", mode.label, got[0], got[1], got[2],
+                            Math.round(expected[0] * 255), Math.round(expected[1] * 255), Math.round(expected[2] * 255)));
+                android.util.Log.i("BC1Blend", mode.label + " " + Integer.toHexString(actual));
+            }
+        } finally {
+            File qa = new File(context.getFilesDir(), "qa"); qa.mkdirs();
+            if (out.isFile()) java.nio.file.Files.copy(out.toPath(), new File(qa, "bc-core-blend.mp4").toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            out.delete();
+        }
+        assertTrue("Blend modes off the reference:\n" + failures, failures.length() == 0);
+    }
+
     @Test public void cancellationStopsAndRemovesOutput() throws Exception {
         EditProject p = acceptance();
         AtomicBoolean cancel = new AtomicBoolean();

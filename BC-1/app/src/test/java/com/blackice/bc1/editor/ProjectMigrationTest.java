@@ -43,6 +43,12 @@ public class ProjectMigrationTest {
         assertEquals(0,old.clips.get(0).track);
         assertEquals(12,old.tracks.length);
     }
+    @Test public void blendModeRoundTripsAndDefaultsToNormal() throws Exception {
+        EditProject p=new EditProject();p.clips.add(clip());EditProject.Clip top=clip();top.track=2;top.blend=7;p.clips.add(top);
+        EditProject back=ProjectStore.decode(ProjectStore.encode(p));assertEquals(7,back.clips.get(1).blend);
+        JSONObject json=new JSONObject(ProjectStore.encode(p));json.getJSONArray("clips").getJSONObject(1).remove("blend");
+        assertEquals("Projects saved before blend modes open as Normal",0,ProjectStore.decode(json.toString()).clips.get(1).blend);
+    }
     @Test public void eightVisualLayersValidate(){EditProject p=new EditProject();p.clips.add(clip());for(int t=1;t<=EditProject.LAST_LAYER;t++){EditProject.Clip c=clip();c.track=t;p.clips.add(c);}p.validate();assertEquals(8,EditProject.VISUAL_TRACKS);
         EditProject.Clip bad=clip();bad.track=EditProject.TRACK_COUNT;p.clips.add(bad);try{p.validate();fail();}catch(IllegalArgumentException expected){}}
     @Test(expected=IllegalArgumentException.class) public void invalidFrameRateRejected(){EditProject p=new EditProject();p.frameRate=48;p.validate();}

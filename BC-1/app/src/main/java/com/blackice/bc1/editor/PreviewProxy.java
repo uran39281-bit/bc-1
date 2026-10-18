@@ -31,13 +31,15 @@ public final class PreviewProxy implements AutoCloseable {
     private File partial;
     private int generation;
     private Runnable poll;
+    /** Cancels an ICE Lite preview render (used for compositions Media3 cannot decode at once). */
+    private java.util.concurrent.atomic.AtomicBoolean coreStop;
 
     public PreviewProxy(Context context) {
         this.context=context.getApplicationContext();
         directory=new File(context.getCacheDir(),"bc1-preview-v11");
     }
     public static boolean required(EditProject project) {
-        return project.clips.size()>1 || (!project.clips.isEmpty()&&project.clips.get(0).image);
+        return project.clips.size()>1 || (!project.clips.isEmpty()&&project.clips.get(0).image) || com.blackice.bc1.core.RenderPlan.usesBlend(project);
     }
     public void prepare(EditProject project,Listener listener) {
         cancel();final int request=generation;
@@ -51,6 +53,7 @@ public final class PreviewProxy implements AutoCloseable {
             trimCache(null);
             if(directory.getUsableSpace()<64L*1024*1024)throw new IOException("Free some storage to prepare the preview.");
             partial=new File(directory,key+".part.mp4");partial.delete();
+            if(needsIceLite(snapshot)){prepareWithIceLite(snapshot,completed,request,listener);return;}
             transformer=new Transformer.Builder(context)
                     .setAssetLoaderFactory(CompositionFactory.assetLoader(context))
                     .setVideoMimeType(MimeTypes.VIDEO_H264).setAudioMimeType(MimeTypes.AUDIO_AAC)
@@ -81,6 +84,30 @@ public final class PreviewProxy implements AutoCloseable {
             main.post(poll);
         }catch(Exception error){fail(request,listener,error.getMessage());}
     }
+    /** More simultaneous video layers than Media3 can open: ICE Lite renders the preview (in passes if needed). */
+    static boolean needsIceLite(EditProject project){
+        if(com.blackice.bc1.core.RenderPlan.usesBlend(project))return true;
+        int decoders=0;
+        try{for(int d:new com.blackice.bc1.core.RenderPlan(project,true).decoderDemand())decoders+=d;}catch(IllegalArgumentException noVisual){return false;}
+        return decoders>com.blackice.bc1.core.ExportEngine.MEDIA3_MAX_DECODERS;
+    }
+    private void prepareWithIceLite(EditProject snapshot,File completed,int request,Listener listener){
+        final File target=partial;final java.util.concurrent.atomic.AtomicBoolean stop=new java.util.concurrent.atomic.AtomicBoolean();coreStop=stop;
+        new Thread(()->{
+            try{
+                new com.blackice.bc1.engine.bc.BcExporter(context,snapshot,
+                        com.blackice.bc1.core.ExportPlanner.fixed(snapshot.previewHeight,snapshot.frameRate,com.blackice.bc1.core.VideoCodec.H264,snapshot.portrait),
+                        stop,p->main.post(()->{if(request==generation)listener.onProgress(p);})).previewSemantics(true).export(target);
+                main.post(()->{
+                    if(request!=generation){target.delete();return;}
+                    coreStop=null;
+                    if(!target.renameTo(completed)){fail(request,listener,"Could not save the prepared preview.");return;}
+                    partial=null;trimCache(completed);listener.onReady(completed);
+                });
+            }catch(java.util.concurrent.CancellationException cancelled){target.delete();
+            }catch(Throwable error){main.post(()->fail(request,listener,String.valueOf(error.getMessage())));}
+        },"bc1-ice-preview").start();
+    }
     private void fail(int request,Listener listener,String message){
         if(request!=generation)return;cancel();listener.onError(message==null?"Preview preparation failed.":message);
     }
@@ -95,6 +122,7 @@ public final class PreviewProxy implements AutoCloseable {
     public void cancel(){
         generation++;if(poll!=null)main.removeCallbacks(poll);poll=null;
         if(transformer!=null){transformer.cancel();transformer=null;}
+        if(coreStop!=null){coreStop.set(true);coreStop=null;}
         if(partial!=null){partial.delete();partial=null;}
     }
     @Override public void close(){cancel();}

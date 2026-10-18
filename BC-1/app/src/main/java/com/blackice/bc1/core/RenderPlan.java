@@ -28,6 +28,8 @@ public final class RenderPlan {
         public final boolean top;
         /** Stacking group: 0 lower main stream, 1 upper main stream, track + 1 for layer tracks. */
         public final int group;
+        /** {@link BlendMode} id over the layers below. */
+        public final int blend;
 
         LayerDraw(EditProject.Placement p, long sourceTimeMs, Transition t, boolean top) {
             EditProject.Clip c = p.clip;
@@ -39,6 +41,7 @@ public final class RenderPlan {
             opacity = c.motion.value(Motion.OPACITY, sourceTimeMs, c.opacity);
             transition = t.type; role = t.role; progress = t.progress;
             group = groupOf(p.clip.track, top);
+            blend = c.blend;
         }
     }
 
@@ -105,6 +108,12 @@ public final class RenderPlan {
             result.add(new LayerDraw(p, sourceTime(p, timeMs), transition(p, previous[p.index], timeMs), top));
         }
         return result;
+    }
+
+    /** True when any clip uses a non-normal blend mode (Media3 cannot render these). */
+    public static boolean usesBlend(EditProject project) {
+        for (EditProject.Clip c : project.clips) if (c.blend != 0 && !EditProject.audioTrack(c.track)) return true;
+        return false;
     }
 
     /** Overlays (text, shapes, images) visible at an instant, bottom to top. */

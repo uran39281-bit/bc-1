@@ -24,6 +24,37 @@ public enum ExportEngine {
         return parse(stored);
     }
 
+    /** Most video layers the Media3 path decodes at once without risking decoder exhaustion (it cannot stage). */
+    public static final int MEDIA3_MAX_DECODERS = 4;
+
+    /** The engine an export actually uses, and why it differs from the setting (null when it does not). */
+    public static final class Route {
+        public final ExportEngine engine; public final String reason;
+        Route(ExportEngine engine, String reason) { this.engine = engine; this.reason = reason; }
+    }
+
+    /**
+     * Picks the engine for one export. Projects with more simultaneous video layers than Media3 can open
+     * go to ICE Lite (which renders in passes when needed); projects with HDR clips go to Media3 (which
+     * tone-maps HDR to SDR) unless they are too heavy for it.
+     */
+    public static Route route(ExportEngine requested, int videoDecoders, boolean hdr) { return route(requested, videoDecoders, hdr, false); }
+
+    /** Same, where {@code blends} means a clip uses a blend mode only ICE Lite renders. */
+    public static Route route(ExportEngine requested, int videoDecoders, boolean hdr, boolean blends) {
+        if (requested == MEDIA3 && videoDecoders > MEDIA3_MAX_DECODERS)
+            return new Route(BC_CORE, "ICE Lite used: " + videoDecoders + " video layers at once");
+        if (requested == MEDIA3 && blends)
+            return new Route(BC_CORE, "ICE Lite used: blend modes");
+        if (requested == BC_CORE && blends && hdr)
+            return new Route(BC_CORE, "HDR clips exported without tone mapping (blend modes need ICE Lite)");
+        if (requested == BC_CORE && hdr && videoDecoders <= MEDIA3_MAX_DECODERS)
+            return new Route(MEDIA3, "Media3 used: HDR clips need tone mapping");
+        if (requested == BC_CORE && hdr)
+            return new Route(BC_CORE, "HDR clips exported without tone mapping (too many layers for Media3)");
+        return new Route(requested, null);
+    }
+
     public static String[] labels() {
         ExportEngine[] all = values();
         String[] labels = new String[all.length];

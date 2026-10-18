@@ -9,3 +9,7 @@ done
 ffmpeg -hide_banner -loglevel error -y -f lavfi -i 'sine=frequency=880:sample_rate=48000:duration=1' -c:a pcm_s16le BC-1/app/src/androidTest/assets/music.wav
 # 120 fps source for ICE Lite high-frame-rate tests: red for 1 s, then blue for 1 s.
 ffmpeg -hide_banner -loglevel error -y -f lavfi -i "color=c=red:s=320x180:r=120:d=1" -f lavfi -i "color=c=blue:s=320x180:r=120:d=1" -f lavfi -i "sine=frequency=550:sample_rate=48000:duration=2" -filter_complex "[0:v][1:v]concat=n=2:v=1:a=0[v]" -map "[v]" -map 2:a -r 120 -c:v libx264 -pix_fmt yuv420p -c:a aac -b:a 96k -shortest BC-1/app/src/androidTest/assets/fast120.mp4
+# Flat colour sources for blend-mode checks (warm over cool), six seconds each, video only.
+for spec in warm:0xC08040 cool:0x4080C0; do
+  ffmpeg -hide_banner -loglevel error -y -f lavfi -i "color=c=${spec#*:}:s=320x180:r=30:d=6" -c:v libx264 -pix_fmt yuv420p "BC-1/app/src/androidTest/assets/${spec%%:*}.mp4"
+done
