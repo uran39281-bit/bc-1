@@ -10,7 +10,13 @@ Home of the BC-1 editor (Black Ice Custom Engine): app source in [`BC-1/`](BC-1)
 - Previous development: v1.0.5 (formerly labelled v2.0.0; selection-based workspace, layered timeline, transforms and keyframe animation) — published below with the recovered retained preview signing key. See [docs/qa/BC-1-v1.0.5-QA.md](docs/qa/BC-1-v1.0.5-QA.md).
 - Moved from [Black-Ice-Emulator](https://github.com/uran39281-bit/Black-Ice-Emulator/tree/claude/app-update-4vo05i) at commit `14b8308`; earlier history and version branches remain there.
 
-## Latest: v1.1.1 phone media space
+## Latest: v1.1.2 preview scrubbing recovery
+
+[Download BC-1 v1.1.2 APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.1.2/BC-1-v1.1.2.apk)
+
+Live-preview graph fixes and bounded recovery for silent seek stalls; version-aware export diagnostics test. 88 unit tests, 28 Android tests and five independent export checks passed. Signed with the retained preview key; install over the current Preview without uninstalling. Development preview: the underlying intermittent Media3 stall is not claimed eliminated. [QA, screenshots and limitations](v1.1.2/QA.md) · [Checksum](v1.1.2/SHA256SUMS.txt).
+
+## Previous: v1.1.1 phone media space
 
 [Download BC-1 v1.1.1 APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.1.1/BC-1-v1.1.1.apk)
 

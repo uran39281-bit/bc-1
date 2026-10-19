@@ -1,3 +1,9 @@
+# Published v1.1.2 — October 19, 2026 UTC
+
+Qualified source c986f55cd257267fc2ec0af6ac363fc0c0232cc4, run39178553717: 88 JVM / 28 Android tests, five independent export checks, lint0errors44warnings. Fixes stale diagnostics version assertion; adds bounded recovery for silent seek stalls (including final seek). Upstream main51999d4 had failed fast-scrub and diagnostics tests. This qualification reached READY at2029ms without triggering recovery, so do not claim the Media3 buffering root cause fixed or the recovery path fully exercised. Existing export watchdog intermittency remains unresolved. Phone/desktop screenshots reviewed. Package unchanged, version1.1.2/code20; retained certificate and signed payload verified. See v1.1.2/QA.md. Never publish signing material. Older releases preserved.
+
+---
+
 # V1.1.1 phone media space — October 18, 2026 UTC
 
 Based on main50cd4b8, preserving the newer media bin/free-placement implementation. Source `2db3fd0f2eabe1bdb0ffbc1ca5baa6c1591b0ee2`, workflow39118809055. See `v1.1.1/QA.md` for final qualification. Phone Add reserves a large independently scrollable browser, compact preview and drop target; Done/Back restores editing and focus preferences. No project schema or engine changes. Dynamic version labels and single-line narrow-phone branding were corrected during qualification. Source branch `bc-1-phone-media-space`; old releases remain intact. Continue to investigate the historical intermittent export watchdog issue; no production-stable claim.
