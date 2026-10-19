@@ -1,3 +1,9 @@
+# Published v1.2.0 — October 19, 2026 UTC
+
+Signed qualified CI artifact12158081821 from run39186264263 / source20a59518a44587bb0cd2223ec96a72e80ecb3c58. Main886b6f1837c5201f45975fe18a92df4f268bc5ac has identical tree892657c9f2572fb1e76ce97f582fcf4f1e9e48e8. 132 JVM /39 Android tests, nine export checks passed; lint44warnings. Package com.blackice.bc1.preview, version1.2.0/code21; retained certificate and APK payload verified. See v1.2.0/QA.md. No signing material published or regenerated; older releases retained. Source unchanged during publication. Preview remains Media3; no ICE Lite paused live preview. Physical-device and 4K/120fps qualification remain outstanding.
+
+---
+
 # Published v1.1.2 — October 19, 2026 UTC
 
 Qualified source c986f55cd257267fc2ec0af6ac363fc0c0232cc4, run39178553717: 88 JVM / 28 Android tests, five independent export checks, lint0errors44warnings. Fixes stale diagnostics version assertion; adds bounded recovery for silent seek stalls (including final seek). Upstream main51999d4 had failed fast-scrub and diagnostics tests. This qualification reached READY at2029ms without triggering recovery, so do not claim the Media3 buffering root cause fixed or the recovery path fully exercised. Existing export watchdog intermittency remains unresolved. Phone/desktop screenshots reviewed. Package unchanged, version1.1.2/code20; retained certificate and signed payload verified. See v1.1.2/QA.md. Never publish signing material. Older releases preserved.
