@@ -1,5 +1,13 @@
 # Black Ice Editor 1.1.0 — cinematic redesign preview
 
+## 1.2.0 — ICE Lite engine, timeline and media update
+
+- ICE Lite render/export engine beside Media3 (Setup → Export engine); projects Media3 cannot render are routed to ICE Lite automatically.
+- Export up to 4K and 120 fps (device permitting), H.264 or HEVC, with a size estimate before export.
+- Eight visual layers with staged decoding when decoders run short; 26 blend modes and 36 Black Ice effects.
+- Project schema 5 (audio on tracks 8–11); older projects are migrated when opened.
+- Includes the timeline and media update below. The preview is unchanged from 1.1.2 (Media3); the ICE Lite paused live preview is not included.
+
 ## 1.1.2 — preview scrubbing recovery
 
 - Fixes "Preview error: Error processing video frames" after scrubbing the timeline quickly on single-clip projects (the live preview).
@@ -10,7 +18,7 @@
 - Export diagnostics regression uses the installed version instead of a hardcoded old version.
 - Diagnostics: `BC1Preview` logcat tag, preview state in `PreviewScrubTest` failure messages, preview log kept in CI.
 
-## Timeline and media update (unreleased)
+## Timeline and media update (1.2.0)
 
 - The timeline starts at 0 s beside the layer column with a moving playhead (no more half-screen lead-in). Tap or drag the ruler to move the playhead; drag empty space to scroll; zoom keeps the time under the playhead or pinch in place.
 - Layers can be dragged straight away, without selecting first. Dragging up or down moves a clip to another row; an empty visual and an empty audio row are always offered for creating a new layer.
