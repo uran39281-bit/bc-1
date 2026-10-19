@@ -9,6 +9,12 @@ import androidx.media3.common.MimeTypes;
 import androidx.media3.transformer.*;
 import com.blackice.bc1.EditorActivity;
 import com.blackice.bc1.R;
+import com.blackice.bc1.core.ExportEngine;
+import com.blackice.bc1.engine.bc.BcExporter;
+import com.blackice.bc1.engine.bc.EncoderCaps;
+import com.blackice.bc1.core.ExportPlanner;
+import com.blackice.bc1.core.OutputSpec;
+import com.blackice.bc1.core.VideoCodec;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.*;
@@ -26,14 +32,25 @@ public final class ExportService extends Service {
     private static volatile boolean alive;
     public static boolean isRunning(){return alive;}
     private Transformer transformer;
+    /** Resolution / frame rate chosen for this export. */
+    private ExportPlanner.Plan plan;
+    /** Why this export uses a different engine than the setting (null when it does not). */
+    private String routeNote;
+    /** ICE Lite export thread (engine BC_CORE); progress is written from that thread. */
+    private Thread coreThread;
+    private volatile int coreProgress=-1;
     private File output;
     private Uri destination;
     private boolean copying,finished;
     private final ProgressHolder progress=new ProgressHolder();
+    /** Long exports (e.g. 15 minutes of 8-layer 1080p60) must keep running with the screen off. */
+    private PowerManager.WakeLock wakeLock;
     private final Runnable poll=new Runnable(){@Override public void run(){
-        if(transformer==null || copying || finished)return;
+        if(copying || finished)return;
+        if(coreThread!=null){update(coreProgress<0?"Preparing export…":"Exporting "+coreProgress+"% • ICE Lite • "+plan.label(),coreProgress);main.postDelayed(this,500);return;}
+        if(transformer==null)return;
         int state=transformer.getProgress(progress);
-        update(state==Transformer.PROGRESS_STATE_AVAILABLE?"Exporting "+progress.progress+"%":"Preparing export…",state==Transformer.PROGRESS_STATE_AVAILABLE?progress.progress:-1);
+        update(state==Transformer.PROGRESS_STATE_AVAILABLE?"Exporting "+progress.progress+"% • "+plan.label():"Preparing export…",state==Transformer.PROGRESS_STATE_AVAILABLE?progress.progress:-1);
         main.postDelayed(this,500);
     }};
     @Override public IBinder onBind(Intent intent){return null;}
@@ -41,8 +58,9 @@ public final class ExportService extends Service {
     @Override public int onStartCommand(Intent intent,int flags,int startId) {
         if(intent==null){stopSelf();return START_NOT_STICKY;}
         if(ACTION_CANCEL.equals(intent.getAction())) {cancelExport();return START_NOT_STICKY;}
-        if(transformer!=null || copying)return START_NOT_STICKY;
+        if(transformer!=null || coreThread!=null || copying)return START_NOT_STICKY;
         Notification initial=notification("Preparing export…",-1);
+        if(wakeLock==null){wakeLock=getSystemService(PowerManager.class).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"BC1:export");wakeLock.setReferenceCounted(false);wakeLock.acquire(6L*60*60*1000);}
         if(Build.VERSION.SDK_INT>=35)startForeground(41,initial,ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROCESSING);
         else if(Build.VERSION.SDK_INT>=29)startForeground(41,initial,ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
         else startForeground(41,initial);
@@ -53,18 +71,50 @@ public final class ExportService extends Service {
             EditProject project=ProjectStore.decode(new String(java.nio.file.Files.readAllBytes(new File(path).toPath()),StandardCharsets.UTF_8));
             new File(path).delete();
             output=new File(getCacheDir(),"bc1-export-"+System.currentTimeMillis()+".mp4");
-            transformer=new Transformer.Builder(this).setAssetLoaderFactory(CompositionFactory.assetLoader(this)).setVideoMimeType(MimeTypes.VIDEO_H264).setAudioMimeType(MimeTypes.AUDIO_AAC)
+            // Resolution and frame rate the device can actually encode (may step down from the request).
+            int shortEdge=intent.getIntExtra(ExportPlanner.PREF_RESOLUTION,getSharedPreferences(PREFS,MODE_PRIVATE).getInt(ExportPlanner.PREF_RESOLUTION,OutputSpec.EXPORT_SHORT_EDGE));
+            VideoCodec.Choice codecChoice=VideoCodec.Choice.parse(getSharedPreferences(PREFS,MODE_PRIVATE).getString(VideoCodec.Choice.PREF_KEY,null));
+            plan=EncoderCaps.plan(shortEdge,project.frameRate,project.portrait,codecChoice);
+            // Pre-flight: the MP4 is written privately, then copied, so both copies must fit.
+            long needed=plan.estimatedBytes(project.durationMs())*2+64L*1024*1024,free=new android.os.StatFs(getCacheDir().getPath()).getAvailableBytes();
+            if(free<needed)throw new IOException(String.format(java.util.Locale.US,"Not enough storage: this export needs about %.1f GB free, %.1f GB available.",needed/1e9,free/1e9));
+            project.frameRate=plan.frameRate;
+            getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("plan",plan.describe()).apply();
+            String engineName=intent.getStringExtra(ExportEngine.PREF_KEY);
+            if(engineName==null)engineName=getSharedPreferences(PREFS,MODE_PRIVATE).getString(ExportEngine.PREF_KEY,null);
+            // Heavy projects go to ICE Lite (it can render in passes); HDR clips go to Media3 (it tone-maps).
+            int decoders=0;try{for(int d:new com.blackice.bc1.core.RenderPlan(project,false).decoderDemand())decoders+=d;}catch(IllegalArgumentException noVisual){}
+            ExportEngine.Route route=ExportEngine.route(ExportEngine.resolve(engineName,getPackageName()),decoders,com.blackice.bc1.engine.bc.HdrCheck.anyHdr(this,project),com.blackice.bc1.core.RenderPlan.usesBlend(project));
+            routeNote=route.reason;
+            getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("route",routeNote==null?"":routeNote).apply();
+            if(route.engine==ExportEngine.BC_CORE){startCore(project);return START_NOT_STICKY;}
+            transformer=new Transformer.Builder(this).setAssetLoaderFactory(CompositionFactory.assetLoader(this)).setVideoMimeType(plan.codec.mime).setAudioMimeType(MimeTypes.AUDIO_AAC)
                     .setPortraitEncodingEnabled(true)
                     .setVideoFrameProcessorFactory(CompositionFactory.frameProcessor())
                     .setEncoderFactory(new DefaultEncoderFactory.Builder(this).setEnableFallback(false)
-                            .setRequestedVideoEncoderSettings(new VideoEncoderSettings.Builder().setBitrate(8_000_000).build()).build())
+                            .setRequestedVideoEncoderSettings(new VideoEncoderSettings.Builder().setBitrate(plan.bitrate).build()).build())
                     .addListener(new Transformer.Listener(){
                         @Override public void onCompleted(Composition c,ExportResult result) {publish();}
                         @Override public void onError(Composition c,ExportResult r,ExportException e) {exportFailed("encoding",e);}
                     }).build();
-            transformer.start(CompositionFactory.build(this,project,true),output.getAbsolutePath());main.post(poll);
+            transformer.start(CompositionFactory.buildAtHeight(this,project,plan.shortEdge),output.getAbsolutePath());main.post(poll);
         } catch(Exception e) {exportFailed("preparation",e);}
         return START_NOT_STICKY;
+    }
+    /** ICE Lite renders on its own thread (it owns a GL context); results return to the main thread. */
+    private void startCore(EditProject project) {
+        final File target=output;
+        coreThread=new Thread(()->{
+            try {
+                new BcExporter(this,project,plan,cancelled,p->coreProgress=p).export(target);
+                main.post(()->{if(!cancelled.get()&&!finished)publish();});
+            } catch(CancellationException ignored) {
+            } catch(Throwable t) {
+                Exception e=t instanceof Exception?(Exception)t:new RuntimeException(t);
+                main.post(()->{if(!cancelled.get())exportFailed("encoding",e);});
+            }
+        },"bc1-core-export");
+        coreThread.start();main.post(poll);
     }
     private void recordFailure(String stage,Exception error) {
         // Preserve nested codec/muxer causes for device QA, only in debuggable builds.
@@ -92,7 +142,7 @@ public final class ExportService extends Service {
             } catch(Exception e) {error=e;}
             final Exception failure=error;
             main.post(()->{if(failure!=null&&!cancelled.get())recordFailure("saving",failure);
-                finish(cancelled.get()?"Export cancelled":failure==null?"MP4 saved • 1080p / up to 30 fps":"Save failed: "+failure.getMessage(),failure==null&&!cancelled.get());});
+                finish(cancelled.get()?"Export cancelled":failure==null?"MP4 saved • "+(plan==null?"":plan.describe())+(routeNote==null?"":" • "+routeNote):"Save failed: "+failure.getMessage(),failure==null&&!cancelled.get());});
         });
     }
     private void cancelExport() {
@@ -100,7 +150,7 @@ public final class ExportService extends Service {
         if(!copying)finish("Export cancelled",false);
     }
     private void finish(String message,boolean success) {
-        if(finished)return;finished=true;main.removeCallbacks(poll);
+        if(finished)return;finished=true;main.removeCallbacks(poll);releaseWakeLock();
         if(!success && destination!=null)try {android.provider.DocumentsContract.deleteDocument(getContentResolver(),destination);}catch(Exception ignored){}
         if(destination!=null)try{getContentResolver().releasePersistableUriPermission(destination,Intent.FLAG_GRANT_WRITE_URI_PERMISSION);}catch(SecurityException|IllegalArgumentException ignored){}
         if(output!=null)output.delete();
@@ -122,5 +172,6 @@ public final class ExportService extends Service {
                 .setProgress(100,Math.max(0,percent),percent<0).addAction(new Notification.Action.Builder(null,"Cancel",cancel).build()).build();
     }
     @Override public void onTimeout(int startId,int foregroundServiceType) {cancelExport();}
-    @Override public void onDestroy(){alive=false;main.removeCallbacks(poll);if(transformer!=null&&!finished)transformer.cancel();cancelled.set(true);io.shutdown();super.onDestroy();}
+    private void releaseWakeLock(){if(wakeLock!=null&&wakeLock.isHeld())wakeLock.release();wakeLock=null;}
+    @Override public void onDestroy(){releaseWakeLock();alive=false;main.removeCallbacks(poll);if(transformer!=null&&!finished)transformer.cancel();cancelled.set(true);io.shutdown();super.onDestroy();}
 }

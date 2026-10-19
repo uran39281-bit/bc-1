@@ -47,7 +47,7 @@ final class ToolPanels {
     }
     private boolean locked(){EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();return c!=null?LayerOps.locked(a.project,a.selected):LayerOps.locked(o);}
     static String kind(EditProject.Clip c,EditProject.Overlay o){
-        if(c!=null)return c.track>=4?"Audio":c.image?"Picture":"Video";
+        if(c!=null)return c.track>=EditProject.AUDIO_FIRST?"Audio":c.image?"Picture":"Video";
         return o.imageUri!=null?"Image layer":o.shape>0?"Shape":"Text";
     }
     private void header(LinearLayout into,String title){
@@ -59,7 +59,7 @@ final class ToolPanels {
     /** Pictures, videos, audio, text, shapes and image layers each get only their compatible tools. */
     static List<String> tools(EditProject.Clip c,EditProject.Overlay o){
         List<String> t=new ArrayList<>();
-        if(c!=null&&c.track>=4){Collections.addAll(t,"Split","Trim","Slip","Volume","Fade In","Fade Out","Duplicate");return t;}
+        if(c!=null&&c.track>=EditProject.AUDIO_FIRST){Collections.addAll(t,"Split","Trim","Slip","Volume","Fade In","Fade Out","Duplicate");return t;}
         if(c!=null&&c.image){Collections.addAll(t,"Duration: "+EditorActivity.seconds(c.durationMs())+" s","Transform","Opacity","Effects","Chroma Key","Animation","Duplicate");return t;}
         if(c!=null){Collections.addAll(t,"Split","Trim","Slip","Speed: "+trimZero(c.speed)+"×","Extract Audio","Transform","Opacity","Effects","Chroma Key","Volume","Animation","Duplicate");return t;}
         if(o.imageUri==null&&o.shape==0){Collections.addAll(t,"Edit Text","Font","Size","Color","Alignment","Transform","Opacity","Duration: "+EditorActivity.seconds(o.endMs-o.startMs)+" s","Animation");return t;}
@@ -68,7 +68,7 @@ final class ToolPanels {
     }
     static String trimZero(float v){String s=String.format(Locale.US,"%.2f",v);return s.replaceAll("0+$","").replaceAll("\\.$","");}
     static List<String> categories(EditProject.Clip c,EditProject.Overlay o){
-        List<String> list=new ArrayList<>();if(c!=null&&c.track>=4)return list;
+        List<String> list=new ArrayList<>();if(c!=null&&c.track>=EditProject.AUDIO_FIRST)return list;
         list.add("Move & Transform");list.add("Color & Fill");if(o!=null)list.add("Border & Shadow");list.add("Blending & Opacity");if(c!=null)list.add("Effects");list.add("Presets");
         return list;
     }
@@ -159,10 +159,10 @@ final class ToolPanels {
         a.inspector.addView(row);
         SeekBar slider=new SeekBar(a);slider.setMax(1000);slider.setProgress(Math.round((value-min)/(max-min)*1000));slider.setContentDescription(title);
         slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
-            public void onProgressChanged(SeekBar s,int p,boolean user){if(user)exact.setText(format((min+(max-min)*p/1000f)*displayFactor));}
-            public void onStartTrackingTouch(SeekBar s){a.pausePlayback();}
-            // One slider drag is one undo entry.
-            public void onStopTrackingTouch(SeekBar s){commit(title,min+(max-min)*s.getProgress()/1000f,apply);}
+            // The preview follows the slider live (ICE Lite); one drag is one undo entry.
+            public void onProgressChanged(SeekBar s,int p,boolean user){if(!user)return;float v=min+(max-min)*p/1000f;exact.setText(format(v*displayFactor));a.liveAdjust(()->apply.set(v));}
+            public void onStartTrackingTouch(SeekBar s){a.pausePlayback();a.beginLiveAdjust();}
+            public void onStopTrackingTouch(SeekBar s){float v=min+(max-min)*s.getProgress()/1000f;if(a.liveBefore!=null)a.endLiveAdjust(title+" updated",()->apply.set(v));else commit(title,v,apply);}
         });
         a.inspector.addView(slider,new LinearLayout.LayoutParams(-1,a.dp(44)));
         LinearLayout actions=a.row();
@@ -203,7 +203,7 @@ final class ToolPanels {
     private void durationPanel(){
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
         long start=c!=null?a.project.placements().get(a.selected).startMs:o.startMs,end=c!=null?a.project.placements().get(a.selected).endMs:o.endMs;
-        a.inspector.addView(a.note(c!=null&&!c.image&&c.track<4||c!=null&&c.track>=4?"Video and audio are limited to the available source ("+EditorActivity.seconds(Math.round(c.sourceDurationMs/(double)c.speed))+" s at "+trimZero(c.speed)+"×).":"Pictures, text and shapes can extend to any project length."));
+        a.inspector.addView(a.note(c!=null&&!c.image&&c.track<EditProject.AUDIO_FIRST||c!=null&&c.track>=EditProject.AUDIO_FIRST?"Video and audio are limited to the available source ("+EditorActivity.seconds(Math.round(c.sourceDurationMs/(double)c.speed))+" s at "+trimZero(c.speed)+"×).":"Pictures, text and shapes can extend to any project length."));
         timeField("Duration (seconds)",end-start,value->a.edit("Duration updated",()->{if(c!=null)TimelineEdits.duration(a.project,a.selected,value);else{if(value<EditProject.MIN_CLIP_MS)throw new IllegalArgumentException("Keep at least 0.10 seconds.");o.endMs=Math.addExact(o.startMs,value);}}));
         if(c==null||c.track>0)timeField("Start (seconds)",start,value->a.edit("Start updated",()->{if(c!=null)a.project.setPlacement(a.selected,c.track,value);else{long length=o.endMs-o.startMs;o.startMs=value;o.endMs=value+length;}}));
         else a.inspector.addView(a.note("Main-sequence clips start where the previous clip ends. Move this clip to a layer to set an exact start."));
@@ -281,7 +281,7 @@ final class ToolPanels {
         if(o!=null){a.inspector.addView(a.note("Image layers keep their own colors. Use Border & Shadow or Blending & Opacity."));return;}
         a.inspector.addView(a.note("Color adjustments for this "+(c.image?"picture":"video")+". One color effect is active at a time."));
         int[] ids={0,4,9,10,11};
-        for(int id:ids)a.gridAction((c.effect==id?"● ":"")+EngineSettings.EFFECTS[id],()->{if(a.layerEditable())a.edit("Color updated",()->c.effect=id);});
+        for(int id:ids)a.gridAction((c.effect==id?"● ":"")+com.blackice.bc1.core.EffectCatalog.name(id),()->{if(a.layerEditable())a.edit("Color updated",()->c.effect=id);});
         a.flushGrid();
         if(c.effect!=0)percent("Strength",c.intensity,.6f,v->c.intensity=v,c.motion,Motion.INTENSITY);
     }
@@ -292,10 +292,18 @@ final class ToolPanels {
         valueRow("Shadow",o.shadow,0,1,0,100,"%",v->o.shadow=v,null,0,1);
     }
     private void effectsPanel(){
-        EditProject.Clip c=a.clip();if(c==null||c.track>=4){a.inspector.addView(a.note("Select a video or picture to apply visual effects."));return;}
-        for(int i=0;i<EngineSettings.EFFECTS.length;i++){final int id=i;a.gridAction((c.effect==i?"● ":"")+EngineSettings.EFFECTS[i],()->{if(a.layerEditable())a.edit("Effect applied",()->c.effect=id);});}
-        a.flushGrid();
+        EditProject.Clip c=a.clip();if(c==null||c.track>=EditProject.AUDIO_FIRST){a.inspector.addView(a.note("Select a video or picture to apply visual effects."));return;}
+        // One effect per clip, grouped by category; the Black Ice set is ids 12+ (core.EffectCatalog).
+        a.inspector.addView(a.note("Effect: "+com.blackice.bc1.core.EffectCatalog.name(c.effect)));
+        for(int cat=0;cat<com.blackice.bc1.core.EffectCatalog.CATEGORIES.length;cat++){
+            a.inspector.addView(a.note(com.blackice.bc1.core.EffectCatalog.CATEGORIES[cat]));
+            for(int id:com.blackice.bc1.core.EffectCatalog.inCategory(cat)){final int effect=id;a.gridAction((c.effect==id?"● ":"")+com.blackice.bc1.core.EffectCatalog.name(id),()->{if(a.layerEditable())a.edit("Effect: "+com.blackice.bc1.core.EffectCatalog.name(effect),()->c.effect=effect);});}
+            a.flushGrid();
+        }
         percent("Effect intensity",c.intensity,.6f,v->c.intensity=v,c.motion,Motion.INTENSITY);
+        if(com.blackice.bc1.core.EffectCatalog.centered(c.effect))a.inspector.addView(a.note("50% leaves the picture unchanged; lower reduces, higher increases."));
+        a.select("Blend mode",com.blackice.bc1.core.BlendMode.labels(),com.blackice.bc1.core.BlendMode.of(c.blend).ordinal(),index->{if(a.layerEditable())a.edit("Blend mode: "+com.blackice.bc1.core.BlendMode.of(index).label,()->c.blend=index);});
+        if(c.blend!=0)a.inspector.addView(a.note("Blend modes render with ICE Lite: in exports and in the prepared preview."));
         a.inspector.addView(a.button("Chroma Key…",v->open("Chroma Key",this::chromaPanel)));
         if(c.track==0){
             String[] transitions=new String[EngineSettings.TRANSITIONS.length+1];transitions[0]="Cut (no overlap)";System.arraycopy(EngineSettings.TRANSITIONS,0,transitions,1,EngineSettings.TRANSITIONS.length);
@@ -307,7 +315,7 @@ final class ToolPanels {
     }
     private void effectsHome(){
         EditProject.Clip c=a.clip();
-        if(c==null||c.track>=4){a.inspector.addView(a.note("Select a video or picture to apply visual effects."));return;}
+        if(c==null||c.track>=EditProject.AUDIO_FIRST){a.inspector.addView(a.note("Select a video or picture to apply visual effects."));return;}
         a.inspector.addView(a.note("Selected: "+c.name));effectsPanel();
     }
     private void textPanel(){

@@ -12,7 +12,7 @@ public class MediaFilterTest {
         c.image=true;
         assertTrue(MediaFilter.matches(c,MediaFilter.Kind.IMAGE,""));
         assertFalse(MediaFilter.matches(c,MediaFilter.Kind.VIDEO,""));
-        c.track=4;
+        c.track=EditProject.AUDIO_FIRST;
         assertTrue(MediaFilter.matches(c,MediaFilter.Kind.AUDIO,""));
         assertFalse(MediaFilter.matches(c,MediaFilter.Kind.IMAGE,""));
         assertFalse(MediaFilter.matches(c,MediaFilter.Kind.VIDEO,""));

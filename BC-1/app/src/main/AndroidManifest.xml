@@ -3,6 +3,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Keeps the CPU running during long exports while the screen is off. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <!-- Read-only gallery browsing in the Add drawer; chosen items are copied into the app. -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>

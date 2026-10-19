@@ -52,7 +52,7 @@ public class LayerOpsTest {
         EditProject p=project();p.tracks[1].name="Logos";p.tracks[1].locked=true;LayerOps.swapTracks(p,1,3);
         assertEquals(3,p.clips.get(1).track);assertEquals("Logos",p.tracks[3].name);assertTrue(p.tracks[3].locked);assertEquals(500,p.clips.get(1).startMs);
         try{LayerOps.swapTracks(p,0,2);fail("Main sequence stays at the bottom");}catch(IllegalArgumentException expected){}
-        try{LayerOps.swapTracks(p,2,5);fail("Visual and audio rows do not mix");}catch(IllegalArgumentException expected){}
+        try{LayerOps.swapTracks(p,2,EditProject.AUDIO_FIRST+1);fail("Visual and audio rows do not mix");}catch(IllegalArgumentException expected){}
     }
     @Test public void groupsExpandSelection() {
         EditProject p=project();String id=LayerOps.group(p,List.of(1,3),List.of());Set<Integer> clips=new HashSet<>(List.of(1)),overlays=new HashSet<>();

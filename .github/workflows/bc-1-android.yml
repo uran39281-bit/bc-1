@@ -2,14 +2,21 @@ name: BC-1 Android build and GPU checks
 on:
   # Builds and tests the app whenever its source, this workflow or its scripts change; never for APK-only commits.
   push:
-    branches-ignore: ['qa-screenshots/**']
+    branches-ignore: ['qa-screenshots/**', 'test-apk/**']
     paths: ['BC-1/**', '.github/workflows/bc-1-android.yml', '.github/scripts/bc1-*.sh']
   workflow_dispatch:
 permissions:
   contents: read
+# A newer push to the same branch supersedes the running checks (and their published logs).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Write access is used only to publish the side-by-side test APK to a test-apk/<branch> ref.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -35,6 +42,18 @@ jobs:
           name: BC-1-v1.1.2-apk
           path: BC-1/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+      - name: Publish side-by-side test APK for phones
+        if: github.ref_name != 'main'
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          (cd BC-1 && gradle --no-daemon -Pbc1IceLite assembleDebug)
+          mkdir -p /tmp/apk && cp BC-1/app/build/outputs/apk/debug/app-debug.apk /tmp/apk/BC-1-ICE-Lite-test.apk
+          cd /tmp/apk && sha256sum BC-1-ICE-Lite-test.apk > SHA256SUMS.txt
+          printf 'Test build of %s at %s (run %s). Package com.blackice.bc1.icelite installs beside BC-1.\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" "$GITHUB_RUN_ID" > BUILD.txt
+          git init -q && git checkout -q -b apk && git add . \
+            && git -c user.name=bc1-ci -c user.email=bc1-ci@users.noreply.github.com commit -qm "Test APK for $GITHUB_SHA" \
+            && git push -qf "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "apk:refs/heads/test-apk/${GITHUB_REF_NAME}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -88,6 +107,12 @@ jobs:
           [ -f "$reports/device-checks.log" ] && tail -c 200000 "$reports/device-checks.log" > /tmp/shots/device-checks.log || true
           [ -f "$reports/instrumentation.txt" ] && cp "$reports/instrumentation.txt" /tmp/shots/ || true
           [ -f "$reports/logcat.txt" ] && grep -E "BC1|AndroidRuntime|FATAL|MediaCodec.*(rror|xception)|CodecException|TestRunner" "$reports/logcat.txt" | tail -n 3000 > /tmp/shots/logcat-filtered.txt || true
+          # Full app-process logcat for the first two failed tests (what the filter above hides).
+          if [ -f "$reports/logcat.txt" ]; then
+            grep -oE "TestRunner: failed: [A-Za-z0-9_]+" "$reports/logcat.txt" | head -n 2 | while read -r _ _ name; do
+              awk -v n="$name" 'index($0,"started: " n "(") {on=1} on && !/TestRunner: \t|^\s+at / {print} on && index($0,"finished: " n "(") {exit}' "$reports/logcat.txt" | tail -n 4000 > "/tmp/shots/logcat-$name.txt"
+            done
+          fi
           ls /tmp/shots/* >/dev/null 2>&1 || exit 0
           cd /tmp/shots && git init -q && git checkout -q -b qa && git add . \
             && git -c user.name=bc1-ci -c user.email=bc1-ci@users.noreply.github.com commit -qm "QA screenshots for $GITHUB_SHA (run $GITHUB_RUN_ID)" \

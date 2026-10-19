@@ -6,7 +6,14 @@ import java.util.UUID;
 
 /** Portable edit decision list. Times are integer milliseconds; media is never modified. */
 public final class EditProject {
-    public static final int SCHEMA = 4;
+    /** Schema 5: eight visual tracks (0 main, 1–7 layers) and audio on tracks 8–11 (was 4–7). */
+    public static final int SCHEMA = 5;
+    /** Visual tracks: 0 is the main sequence, 1..VISUAL_TRACKS-1 are independent video/image layers. */
+    public static final int VISUAL_TRACKS = 8;
+    public static final int AUDIO_FIRST = 8, AUDIO_LAST = 11, TRACK_COUNT = 12;
+    public static boolean audioTrack(int track) { return track >= AUDIO_FIRST; }
+    /** Highest independent visual layer track. */
+    public static final int LAST_LAYER = VISUAL_TRACKS - 1;
     public static final long MIN_CLIP_MS = 100;
     public String id = UUID.randomUUID().toString(), name = "Untitled project";
     public boolean portrait;
@@ -19,10 +26,10 @@ public final class EditProject {
     public final List<Clip> library = new ArrayList<>();
     public static final int LIBRARY_LIMIT = 100;
     public Music music;
-    /** Editor frame rate: timeline frame grid, nudging and export cadence. */
+    /** Editor frame rate: timeline frame grid, nudging and export cadence (24–120 fps). */
     public int frameRate = 30;
-    /** Row metadata for tracks 0–7; clips keep their track numbers, so older projects map directly. */
-    public final Track[] tracks = new Track[8];
+    /** Row metadata for tracks 0–11 (see SCHEMA); older projects are remapped when decoded. */
+    public final Track[] tracks = new Track[TRACK_COUNT];
     /** Beat / cue markers in timeline milliseconds, kept sorted. */
     public final List<Long> markers = new ArrayList<>();
     /** Preview-only loop range; negative when unset. Never affects export. */
@@ -33,7 +40,7 @@ public final class EditProject {
         public String name; public int color;
         public boolean hidden, solo, locked, muted, collapsed;
         public Track(String name){this.name=name;color=0xFF40BFFF;}
-        public static String defaultName(int t){return t==0?"Main":t<4?"Layer "+t:"Audio "+(t-3);}
+        public static String defaultName(int t){return t==0?"Main":t<AUDIO_FIRST?"Layer "+t:"Audio "+(t-AUDIO_FIRST+1);}
         public Track copy(){Track c=new Track(name);c.color=color;c.hidden=hidden;c.solo=solo;c.locked=locked;c.muted=muted;c.collapsed=collapsed;return c;}
     }
 
@@ -54,6 +61,8 @@ public final class EditProject {
         public Motion motion=new Motion();
         public long sourceDurationMs, inMs, outMs;
         public int effect, transition = -1, easing = 1;
+        /** Blend mode over the layers below (core.BlendMode id; 0 normal). Rendered by ICE Lite. */
+        public int blend;
         public float intensity = .6f, opacity = 1f, volume = .7f,speed=1f;
         public long transitionMs = 500;
         public long durationMs() { return Math.round((outMs - inMs)/(double)speed); }
@@ -62,7 +71,7 @@ public final class EditProject {
             c.track=track;c.startMs=startMs;c.fadeInMs=fadeInMs;c.fadeOutMs=fadeOutMs;c.x=x;c.y=y;c.scale=scale;c.rotation=rotation;c.chroma=chroma;c.keyColor=keyColor;c.keyTolerance=keyTolerance;c.keySoftness=keySoftness;c.keySpill=keySpill;c.motion=motion.copy();
             c.aspect=aspect;c.skewX=skewX;c.skewY=skewY;c.anchorX=anchorX;c.anchorY=anchorY;c.flipH=flipH;c.flipV=flipV;c.width=width;c.height=height;c.group=group;
             c.sourceDurationMs=sourceDurationMs; c.inMs=inMs; c.outMs=outMs;
-            c.effect=effect; c.transition=transition; c.easing=easing;
+            c.effect=effect; c.transition=transition; c.easing=easing; c.blend=blend;
             c.intensity=intensity; c.opacity=opacity; c.volume=volume; c.transitionMs=transitionMs;c.speed=speed;
             return c;
         }
@@ -127,7 +136,7 @@ public final class EditProject {
         return result;
     }
     public long durationMs(){long total=0;for(Placement p:placements())total=Math.max(total,p.endMs);for(Overlay o:overlays)total=Math.max(total,o.endMs);return total;}
-    public int freeAudioTrack(long start,long duration){for(int t=4;t<=7;t++){boolean free=true;for(Placement p:placements())if(p.clip.track==t&&p.startMs<start+duration&&p.endMs>start)free=false;if(free)return t;}throw new IllegalArgumentException("All four audio tracks are occupied at this time.");}
+    public int freeAudioTrack(long start,long duration){for(int t=AUDIO_FIRST;t<=AUDIO_LAST;t++){boolean free=true;for(Placement p:placements())if(p.clip.track==t&&p.startMs<start+duration&&p.endMs>start)free=false;if(free)return t;}throw new IllegalArgumentException("All four audio tracks are occupied at this time.");}
     public void setPlacement(int index,int track,long start){Clip c=clips.get(index);int old=c.track;long oldStart=c.startMs,oldGap=c.gapMs;c.track=track;c.startMs=start;if(track!=0)c.gapMs=0;try{validate();}catch(RuntimeException e){c.track=old;c.startMs=oldStart;c.gapMs=oldGap;throw e;}}
     public void trim(int index,long in,long out) {
         Clip c=clips.get(index);
@@ -164,7 +173,7 @@ public final class EditProject {
         for(Clip a:library) if(a.uri==null||a.name==null||a.sourceDurationMs<0) throw new IllegalArgumentException("Invalid media bin entry.");
         if(clips.size()>100 || overlays.size()>20) throw new IllegalArgumentException("Preview supports up to 100 clips and 20 overlays.");
         if(previewHeight!=360 && previewHeight!=540 && previewHeight!=1080) throw new IllegalArgumentException("Invalid preview resolution.");
-        if(frameRate!=24&&frameRate!=25&&frameRate!=30) throw new IllegalArgumentException("Use 24, 25 or 30 fps.");
+        if(frameRate!=24&&frameRate!=25&&frameRate!=30&&frameRate!=50&&frameRate!=60&&frameRate!=120) throw new IllegalArgumentException("Use 24, 25, 30, 50, 60 or 120 fps.");
         for(Track t:tracks) if(t==null||t.name==null||t.name.isEmpty()||t.name.length()>60) throw new IllegalArgumentException("Every layer needs a name of up to 60 characters.");
         if(markers.size()>500) throw new IllegalArgumentException("Use at most 500 markers.");
         for(int i=0;i<markers.size();i++) if(markers.get(i)<0||(i>0&&markers.get(i)<=markers.get(i-1))) throw new IllegalArgumentException("Markers must be distinct times from zero.");
@@ -173,10 +182,10 @@ public final class EditProject {
             c.motion.validate();
             if(!(c.aspect>=.05f&&c.aspect<=20)||!(Math.abs(c.skewX)<=80)||!(Math.abs(c.skewY)<=80)||!Motion.allowed(0,c.anchorX)||!Motion.allowed(1,c.anchorY)||c.width<0||c.height<0||(c.group!=null&&c.group.length()>40)) throw new IllegalArgumentException("Invalid transform: "+c.name);
             if(c.gapMs<0||c.gapMs>7_200_000_000L||(c.track!=0&&c.gapMs!=0))throw new IllegalArgumentException("Gaps belong to main-sequence clips: "+c.name);
-            if(c.audioOnly&&c.track<4)throw new IllegalArgumentException("Audio-only media belongs on an audio lane.");
-            if(c.track<0||c.track>7||c.startMs<0||c.fadeInMs<0||c.fadeOutMs<0||c.fadeInMs>c.durationMs()||c.fadeOutMs>c.durationMs()||!Motion.allowed(0,c.x)||!Motion.allowed(1,c.y)||!Motion.allowed(2,c.scale)||!Motion.allowed(3,c.rotation)||!unit(c.keyTolerance)||!unit(c.keySoftness)||c.keySoftness<.001f||!unit(c.keySpill)||(c.track>=4&&c.image))throw new IllegalArgumentException("Invalid track, transform or fade.");
+            if(c.audioOnly&&!audioTrack(c.track))throw new IllegalArgumentException("Audio-only media belongs on an audio lane.");
+            if(c.track<0||c.track>=TRACK_COUNT||c.startMs<0||c.fadeInMs<0||c.fadeOutMs<0||c.fadeInMs>c.durationMs()||c.fadeOutMs>c.durationMs()||!Motion.allowed(0,c.x)||!Motion.allowed(1,c.y)||!Motion.allowed(2,c.scale)||!Motion.allowed(3,c.rotation)||!unit(c.keyTolerance)||!unit(c.keySoftness)||c.keySoftness<.001f||!unit(c.keySpill)||(audioTrack(c.track)&&c.image))throw new IllegalArgumentException("Invalid track, transform or fade.");
             if(c.uri==null || c.name==null || c.inMs<0 || c.outMs>c.sourceDurationMs || c.durationMs()<MIN_CLIP_MS || !Float.isFinite(c.speed)||c.speed<.25f||c.speed>4||(c.image&&c.speed!=1)
-                    || c.effect<0 || c.effect>11 || c.transition< -1 || c.transition>6 || c.easing<0 || c.easing>1
+                    || !com.blackice.bc1.core.EffectCatalog.valid(c.effect) || !com.blackice.bc1.core.BlendMode.valid(c.blend) || c.transition< -1 || c.transition>6 || c.easing<0 || c.easing>1
                     || c.transitionMs<0 || c.transitionMs>5000 || !unit(c.intensity) || !unit(c.opacity) || !unit(c.volume))
                 throw new IllegalArgumentException("Invalid clip: "+c.name);
         }

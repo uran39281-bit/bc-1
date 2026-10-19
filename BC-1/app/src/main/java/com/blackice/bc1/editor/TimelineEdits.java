@@ -36,8 +36,8 @@ public final class TimelineEdits {
      * main-sequence clip keeps its timeline position. Callers restore a snapshot if this throws. */
     public static int place(EditProject p,int index,int track,long start) {
         EditProject.Clip c=p.clips.get(index);
-        if(track<0||track>7)throw new IllegalArgumentException("No such layer.");
-        if((c.track>=4)!=(track>=4))throw new IllegalArgumentException(c.track>=4?"Audio stays on audio layers.":"Video and pictures stay on visual layers.");
+        if(track<0||track>=EditProject.TRACK_COUNT)throw new IllegalArgumentException("No such layer.");
+        if(EditProject.audioTrack(c.track)!=EditProject.audioTrack(track))throw new IllegalArgumentException(EditProject.audioTrack(c.track)?"Audio stays on audio layers.":"Video and pictures stay on visual layers.");
         start=Math.max(0,start);
         java.util.Map<EditProject.Clip,Long> kept=new java.util.IdentityHashMap<>();
         for(EditProject.Placement pl:p.placements())if(pl.clip.track==0&&pl.clip!=c)kept.put(pl.clip,pl.startMs);
