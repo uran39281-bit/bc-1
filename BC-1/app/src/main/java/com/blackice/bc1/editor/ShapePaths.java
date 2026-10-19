@@ -12,7 +12,7 @@ public final class ShapePaths {
    case 5:points(p,h,new float[]{-.3f,-1,.3f,-1,.3f,-.3f,1,-.3f,1,.3f,.3f,.3f,.3f,1,-.3f,1,-.3f,.3f,-1,.3f,-1,-.3f,-.3f,-.3f});break;
    case 6:p.addArc(-h,-h,h,h,30,300);Path q=new Path();android.graphics.Paint pen=new android.graphics.Paint();pen.setStyle(android.graphics.Paint.Style.STROKE);pen.setStrokeWidth(h*.22f);pen.setStrokeCap(android.graphics.Paint.Cap.ROUND);pen.getFillPath(p,q);return q;
    case 7:p.addRoundRect(-h,-h,h,h*.6f,h*.22f,h*.22f,Path.Direction.CW);points(p,h,new float[]{-.5f,.5f,-.5f,1,.2f,.5f});break;
-   case 8:p.moveTo(0,0);p.arcTo(-h,-h,h,h,-45,285);p.close();break;
+   case 8:p.moveTo(0,0);p.arcTo(-h,-h,h,h,-45,285,false);p.close();break;
    case 9:polygon(p,h,6,1);break;
    case 10:for(int i=0;i<5;i++){double t=i*Math.PI*2/5;p.addCircle((float)Math.cos(t)*h*.5f,(float)Math.sin(t)*h*.5f,h*.48f,Path.Direction.CW);}break;
    case 11:points(p,h,new float[]{-1,.6f,.2f,-.6f,-.2f,-1,1,-1,1,.2f,.6f,-.2f,-.6f,1});break;

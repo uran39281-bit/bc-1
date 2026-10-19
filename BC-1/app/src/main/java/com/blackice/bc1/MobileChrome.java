@@ -11,13 +11,13 @@ import com.blackice.bc1.editor.*;
 final class MobileChrome {
     final EditorActivity a;
     FrameLayout stage;LinearLayout sheet;TextView add,undo,redo,duplicate,badge,clock;
-    boolean dismissed;int selection=Integer.MIN_VALUE;float sheetFraction=.46f;
+    boolean dismissed;int selection=Integer.MIN_VALUE;float sheetFraction=.48f;
     MobileChrome(EditorActivity activity){a=activity;}
     int dp(float n){return a.dp(n);}
     TextView control(String icon,String label,View.OnClickListener action){TextView b=a.transportIcon(icon,label,action);b.setMinWidth(dp(48));b.setMinHeight(dp(48));b.setPadding(dp(12),0,dp(12),0);return b;}
     void build(LinearLayout root){
         stage=new FrameLayout(a);root.addView(stage,new LinearLayout.LayoutParams(-1,0,1));
-        LinearLayout content=a.column();content.setPadding(dp(8),0,dp(8),0);stage.addView(content,new FrameLayout.LayoutParams(-1,-1));
+        LinearLayout content=a.column();content.setPadding(dp(8),0,dp(8),dp(68));stage.addView(content,new FrameLayout.LayoutParams(-1,-1));
         a.phonePreview=a.buildMonitor();content.addView(a.phonePreview,new LinearLayout.LayoutParams(-1,dp(220)));
         a.monitor.setClipToOutline(true);GradientDrawable frame=a.buttonBackground(false);frame.setCornerRadius(dp(12));a.monitor.setBackground(frame);
         // Actual preview resolution, never an AI or export-quality claim.
@@ -29,12 +29,12 @@ final class MobileChrome {
         a.phoneTimelineTools=new View(a);a.phoneTimelineTools.setVisibility(View.GONE);a.timelineTools=null;
         a.phoneTimelineArea=a.buildTimeline();content.addView(a.phoneTimelineArea,new LinearLayout.LayoutParams(-1,0,1));
         add=a.button("+",v->openAdd(3));add.setTextSize(32);add.setContentDescription("Add content");GradientDrawable circle=BlackIceTheme.primary(a.getResources().getDisplayMetrics().density);circle.setCornerRadius(dp(32));add.setBackground(circle);add.setElevation(dp(6));
-        FrameLayout.LayoutParams ap=new FrameLayout.LayoutParams(dp(60),dp(60),Gravity.BOTTOM|Gravity.END);ap.setMargins(0,0,dp(16),dp(14));stage.addView(add,ap);
+        FrameLayout.LayoutParams ap=new FrameLayout.LayoutParams(dp(60),dp(60),Gravity.BOTTOM|Gravity.END);ap.setMargins(0,0,dp(16),dp(82));stage.addView(add,ap);
         HorizontalScrollView nav=new HorizontalScrollView(a);nav.setHorizontalScrollBarEnabled(false);nav.setFillViewport(true);LinearLayout tabs=a.row();nav.addView(tabs);String[] labels={"Edit","Audio","Text","Effects","Overlay","Captions","Layers"};String[] icons={"Edit","Audio","Text","Effects","Media","Text","Layers"};
         for(int i=0;i<labels.length;i++){final int index=i;TextView b=a.iconButton(labels[i],v->navigate(index));b.setTextSize(11);b.setCompoundDrawables(null,a.icon(icons[i],EditorActivity.TEXT),null,null);b.setContentDescription(labels[i].equals("Captions")?"Add manual caption":labels[i]);tabs.addView(b,new LinearLayout.LayoutParams(dp(64),dp(68)));}
-        root.addView(nav,new LinearLayout.LayoutParams(-1,dp(68)));
+        stage.addView(nav,new FrameLayout.LayoutParams(-1,dp(68),Gravity.BOTTOM));
         sheet=a.column();sheet.setElevation(dp(12));GradientDrawable bg=a.buttonBackground(false);bg.setCornerRadii(new float[]{dp(24),dp(24),dp(24),dp(24),0,0,0,0});sheet.setBackground(bg);
-        TextView handle=a.label("━━",16,BlackIceTheme.ICE,true);handle.setGravity(Gravity.CENTER);handle.setContentDescription("Resize add and editing panel");handle.setFocusable(true);handle.setOnClickListener(v->{sheetFraction=sheetFraction<.55f?.64f:.46f;update();});sheet.addView(handle,new LinearLayout.LayoutParams(-1,dp(48)));
+        TextView handle=a.label("━━",16,BlackIceTheme.ICE,true);handle.setGravity(Gravity.CENTER);handle.setContentDescription("Resize add and editing panel");handle.setFocusable(true);handle.setOnClickListener(v->{sheetFraction=sheetFraction<.55f?.64f:.48f;update();});sheet.addView(handle,new LinearLayout.LayoutParams(-1,dp(48)));
         handle.setOnTouchListener(new View.OnTouchListener(){float y,f;boolean moved;public boolean onTouch(View v,MotionEvent e){if(e.getActionMasked()==MotionEvent.ACTION_DOWN){y=e.getRawY();f=sheetFraction;moved=false;return true;}if(e.getActionMasked()==MotionEvent.ACTION_MOVE){float dy=y-e.getRawY();moved|=Math.abs(dy)>dp(8);sheetFraction=Math.max(.32f,Math.min(.66f,f+dy/Math.max(1,stage.getHeight())));update();return true;}if(e.getActionMasked()==MotionEvent.ACTION_UP){if(!moved)v.performClick();else if(e.getRawY()-y>dp(100)&&sheetFraction<=.34f)dismiss();return true;}return true;}});
         a.inspector=a.column();a.inspector.setPadding(dp(8),0,dp(8),dp(10));a.phoneDrawer=new ScrollView(a);a.phoneDrawer.setContentDescription("Phone editing drawer");a.phoneDrawer.setFillViewport(true);a.phoneDrawer.addView(a.inspector);sheet.addView(a.phoneDrawer,new LinearLayout.LayoutParams(-1,0,1));
         stage.addView(sheet,new FrameLayout.LayoutParams(-1,dp(300),Gravity.BOTTOM));sheet.setVisibility(View.GONE);
