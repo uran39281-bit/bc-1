@@ -1,0 +1,1 @@
+Test build of release/v1.2.0 at 20a59518a44587bb0cd2223ec96a72e80ecb3c58 (run 39186264263). Package com.blackice.bc1.icelite installs beside BC-1.
