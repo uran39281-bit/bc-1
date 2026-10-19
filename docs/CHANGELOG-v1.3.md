@@ -1,4 +1,4 @@
-# 1.3.0 — Mobile V1 workspace (candidate)
+# 1.3.0 — Mobile V1 workspace (development preview)
 
 Native phone presentation now uses a compact project header, aspect-preserving preview, playback controls, flexible timeline, floating Add button and scrollable contextual navigation. Importing content no longer permanently reserves a tiny panel below the timeline: a resizable bottom sheet opens over the lower workspace without changing the project or playhead.
 

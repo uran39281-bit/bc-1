@@ -1,6 +1,19 @@
-# BC-1 1.3.0 mobile V1 — implementation candidate
+# BC-1 1.3.0 mobile V1 — tested development preview
 
-Status: development, not qualified for release. CI and visual review pending.
+Status: qualified development preview on 2026-10-19; not a claim that every requested feature is implemented or that physical-device performance is certified.
+
+Source: `f3e1e02fc4a37f5ace49ebd2ee776ef8437d7e16` on `ui/v1-mobile-sheet`.
+CI: https://github.com/uran39281-bit/bc-1/actions/runs/39299364162
+
+- Build and 133 JVM tests: passed, zero failures.
+- Lint: zero errors, 50 warnings (including touch accessibility and localization warnings); not warning-free.
+- Android API 35 emulator: 42 tests passed. Covers phone and DeX layouts, timeline gestures, selection/tools, history, persistence, playback, live preview and export.
+- Ten independent ffmpeg/ffprobe checks passed: three repeated 1080p exports, failure recovery, synchronized speed change, ICE Lite 1080p, 60 fps, HEVC, staged export, and vector-only export.
+- New shape restore check waits for real blue pixels from the live texture at the restored time; the earlier black screenshot was taken before frame presentation. No renderer recovery hack was required.
+- Screenshots reviewed: main phone workspace with a rendered circle, Add Shapes, small-phone media picker, and 1920×1080 editor. Narrow phones show a scrollable grid rather than squeezing all 18 shapes into three rows. Media filenames and remaining shapes can require scrolling or expanding the sheet.
+- Earlier iteration: arc API compilation error corrected; three legacy UI tests updated for the new navigation, time display and palette without removing behavioral assertions.
+
+Physical Samsung/Snapdragon, large-font accessibility and system-picker device workflows were not manually verified. The existing intermittent Media3 stall is not claimed eliminated by a UI change.
 Base: main 119e203 (1.2.1), preserving the ICE Lite live preview and existing editor operations.
 
 ## Implementation
@@ -34,4 +47,9 @@ cd BC-1
 gradle --no-daemon -Pbc1SideBySide testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
 ```
 
-GitHub Actions additionally runs the Android instrumentation suite and independent ffmpeg/ffprobe export verification. CI APK signing is not the retained preview certificate; a downloadable update must be separately signed with the retained key and verified before publication. Signing material is never committed.
+GitHub Actions additionally runs the Android instrumentation suite and independent ffmpeg/ffprobe export verification. The downloadable APK is separately signed with the retained preview key. Certificate SHA-256: `3c578586198b9ebadd9496d38e25851ec0e90d918684dc4994e03d1d7f29a29d`. APK verification passed; every non-META-INF ZIP entry matches CI artifact 12211665696. No signing material is committed.
+
+Package: `com.blackice.bc1.preview`; versionName `1.3.0`; versionCode `23`.
+APK SHA-256: `b5187845e9eeaae2a4f61ad224a2ff5f35dca70ccf5c9c6d102adbedfb84f8b9`.
+
+Screenshots and APK: [v1.3.0 release folder](../../v1.3.0/).

@@ -1,3 +1,11 @@
+# Latest checkpoint — 1.3.0 Mobile V1 (2026-10-19)
+
+Qualified source f3e1e02fc4a37f5ace49ebd2ee776ef8437d7e16, based on main 119e203 (1.2.1). CI 39299364162 passed 133 JVM / 42 Android / 10 independent export checks. Signed APK uses the retained preview certificate, package com.blackice.bc1.preview, code 23. See ../v1.3.0/QA.md and qa/BC-1-v1.3.0-MOBILE-V1.md for scope, evidence and limitations. Native phone presentation is in MobileChrome; shared vector geometry is ShapePaths. Do not replace or regenerate signing material. Preserve old release folders.
+
+Remaining stage: freehand/node editing, templates, automatic captions, arbitrary canvas ratios, audio audition/multi-selection staging, close animation and physical-device/accessibility checks. Existing engine track/overlay limits remain.
+
+---
+
 # Published v1.2.0 — October 19, 2026 UTC
 
 Signed qualified CI artifact12158081821 from run39186264263 / source20a59518a44587bb0cd2223ec96a72e80ecb3c58. Main886b6f1837c5201f45975fe18a92df4f268bc5ac has identical tree892657c9f2572fb1e76ce97f582fcf4f1e9e48e8. 132 JVM /39 Android tests, nine export checks passed; lint44warnings. Package com.blackice.bc1.preview, version1.2.0/code21; retained certificate and APK payload verified. See v1.2.0/QA.md. No signing material published or regenerated; older releases retained. Source unchanged during publication. Preview remains Media3; no ICE Lite paused live preview. Physical-device and 4K/120fps qualification remain outstanding.

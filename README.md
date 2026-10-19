@@ -10,7 +10,15 @@ Home of the BC-1 editor (Black Ice Custom Engine): app source in [`BC-1/`](BC-1)
 - Previous development: v1.0.5 (formerly labelled v2.0.0; selection-based workspace, layered timeline, transforms and keyframe animation) — published below with the recovered retained preview signing key. See [docs/qa/BC-1-v1.0.5-QA.md](docs/qa/BC-1-v1.0.5-QA.md).
 - Moved from [Black-Ice-Emulator](https://github.com/uran39281-bit/Black-Ice-Emulator/tree/claude/app-update-4vo05i) at commit `14b8308`; earlier history and version branches remain there.
 
-## Latest: v1.2.0 — ICE Lite engine
+## Latest: v1.3.0 — Mobile V1 workspace
+
+[Download BC-1 v1.3.0 APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.3.0/BC-1-v1.3.0.apk)
+
+Native mobile workspace, floating Add Content sheet, eighteen editable vector shapes, real media/audio/text insertion and retained timeline editing. Uses the latest ICE Lite live preview; phone and DeX share project state. Signed with the retained preview key: package `com.blackice.bc1.preview`, versionCode 23. Install over the existing Preview without uninstalling.
+
+133 JVM tests, 42 Android tests and ten independent export checks passed. Development preview: freehand, editable path nodes, templates, automatic captions and arbitrary project aspect ratios remain outside this stage. Physical-device performance is unverified. [QA, screenshots and limitations](v1.3.0/QA.md) · [Checksum](v1.3.0/SHA256SUMS.txt) · [Changelog](docs/CHANGELOG-v1.3.md) · [Build instructions](docs/qa/BC-1-v1.3.0-MOBILE-V1.md).
+
+## Previous: v1.2.0 — ICE Lite engine
 
 [Download BC-1 v1.2.0 APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.2.0/BC-1-v1.2.0.apk)
 
