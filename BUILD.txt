@@ -1,0 +1,1 @@
+Test build of integrate/ice-lite at a99a78a6be40a7f8bf185d89b6e5d2c83e93622a (run 39183258804). Package com.blackice.bc1.icelite installs beside BC-1.
