@@ -65,10 +65,10 @@ final class AddDrawer {
      * desktop media browser already shows it. */
     private void projectMedia(LinearLayout into,boolean audio){
         if(a.mediaBrowser!=null)return;
-        into.addView(a.label("PROJECT MEDIA",12,EditorActivity.CYAN,true));
+        if(a.mobile==null)into.addView(a.label("PROJECT MEDIA",12,EditorActivity.CYAN,true));
         List<EditProject.Clip> items=new ArrayList<>();for(EditProject.Clip c:a.project.library)if(c.audioOnly==audio)items.add(c);
         if(items.isEmpty()){into.addView(a.note(audio?"Imported audio appears here. Drag it onto an audio row.":"Imported media appears here. Long-press a card and drag it onto the timeline."));return;}
-        into.addView(a.note(a.wideLayout?"Long-press and drag onto a timeline row, or tap for options.":"Tap to add • hold to drag"));
+        if(a.mobile==null)into.addView(a.note("Long-press and drag onto a timeline row, or tap for options."));
         a.binGrid=a.column();a.mediaRows(a.binGrid,items,a.wideLayout?2:3,false);into.addView(a.binGrid);
         into.addView(a.label(audio?"DEVICE AUDIO":"DEVICE GALLERY",12,EditorActivity.CYAN,true));
     }
