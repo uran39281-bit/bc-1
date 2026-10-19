@@ -35,11 +35,7 @@ public final class OverlayPainter {
             if(stroke>0){paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(stroke);paint.setColor(o.borderColor);paint.setAlpha(Math.round(opacity*255));canvas.drawRect(r,paint);}
         } else if(o.shape>0) {
             float half=unit*.2f;paint.setColor(o.color);paint.setAlpha(Math.round(opacity*Color.alpha(o.color)));
-            Path path=new Path();
-            if(o.shape==1) path.addRect(-half,-half,half,half,Path.Direction.CW);
-            else if(o.shape==2) path.addOval(-half,-half,half,half,Path.Direction.CW);
-            else if(o.shape==3){path.moveTo(0,-half);path.lineTo(half,half);path.lineTo(-half,half);path.close();}
-            else path.addRect(-half,-Math.max(1.5f,stroke)/2-unit*.006f,half,Math.max(1.5f,stroke)/2+unit*.006f,Path.Direction.CW);
+            Path path=ShapePaths.create(o.shape,half,Math.max(1.5f,stroke)/2+unit*.006f);
             canvas.drawPath(path,paint);
             if(stroke>0&&o.shape!=4){paint.clearShadowLayer();paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(stroke);paint.setColor(o.borderColor);paint.setAlpha(Math.round(opacity*255));canvas.drawPath(path,paint);}
         } else {

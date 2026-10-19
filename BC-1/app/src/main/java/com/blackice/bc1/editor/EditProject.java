@@ -90,7 +90,7 @@ public final class EditProject {
         public Overlay copy(){Overlay o=new Overlay();o.text=text;o.imageUri=imageUri;o.startMs=startMs;o.endMs=endMs;o.x=x;o.y=y;o.scale=scale;o.opacity=opacity;o.motion=motion.copy();o.font=font;o.color=color;o.alignment=alignment;o.shape=shape;o.name=name;o.group=group;o.hidden=hidden;o.solo=solo;o.locked=locked;o.flipH=flipH;o.flipV=flipV;o.rotation=rotation;o.aspect=aspect;o.skewX=skewX;o.skewY=skewY;o.anchorX=anchorX;o.anchorY=anchorY;o.borderWidth=borderWidth;o.shadow=shadow;o.borderColor=borderColor;o.blend=blend;return o;}
         public String label(){if(name!=null&&!name.isEmpty())return name;if(imageUri!=null)return "Image";if(shape>0)return SHAPES[shape];return text;}
     }
-    public static final String[] SHAPES={"Text","Rectangle","Ellipse","Triangle","Line"};
+    public static final String[] SHAPES={"Text","Rectangle","Ellipse","Triangle","Line","Plus","Arc","Speech bubble","Pie","Hexagon","Flower","Diagonal arrow","Trapezoid","Crescent","Wide rectangle","Star","Thick line","Polygon","Decorative rectangle"};
     public static final String[] BLENDS={"Normal","Multiply","Screen","Overlay","Add","Darken","Lighten"};
     public static final class Music {
         public String uri, name;

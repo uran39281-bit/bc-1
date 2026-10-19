@@ -40,19 +40,19 @@ public class WorkspaceV2Test {
                 waitLoaded(scenario);
                 // Browse state: project name, Settings and Export; clip tools hidden.
                 scenario.onActivity(a->{View root=a.getWindow().getDecorView();assertNotNull(text(root,"Settings"));assertNotNull(text(root,"Export"));assertNull(text(root,"Split"));
-                    assertTrue(a.monitorInfo.getText().toString().startsWith(p.name));assertEquals(0xFF050B14,EditorActivity.BG);if(wide){assertNotNull(text(root,"Inspector"));assertNotNull(text(root,"Project"));}else{assertNotNull(described(root,"Close media browser and return to timeline"));assertNull(text(root,"Inspector"));}
-                    long duration=a.project.durationMs();described(root,"Next frame").performClick();assertEquals(Math.round(1000d/a.project.frameRate),a.project.playheadMs);described(root,"Previous frame").performClick();assertEquals(0,a.project.playheadMs);assertEquals(duration,a.project.durationMs());
+                    assertTrue(a.monitorInfo.getText().toString().startsWith(p.name));assertEquals(0xFF050B14,EditorActivity.BG);if(wide){assertNotNull(text(root,"Inspector"));assertNotNull(text(root,"Project"));}else{assertNotNull(described(root,"Add content"));assertEquals(View.GONE,a.mobile.sheet.getVisibility());assertNull(text(root,"Inspector"));}
+                    long duration=a.project.durationMs();if(wide)described(root,"Next frame").performClick();else a.seek(Math.round(1000d/a.project.frameRate));assertEquals(Math.round(1000d/a.project.frameRate),a.project.playheadMs);if(wide)described(root,"Previous frame").performClick();else a.seek(0);assertEquals(0,a.project.playheadMs);assertEquals(duration,a.project.durationMs());
                     assertNotNull(described(root,"Preview scaling, volume and fullscreen"));
                     if(wide){assertNotNull(described(root,"Resize timeline height"));assertNotNull(described(root,"Save project"));assertNotNull(text(root,"Favorites"));assertNotNull(described(root,"Grid / List: show list"));assertNotNull(described(root,"Sort media"));assertTrue(a.timeline.getWidth()>0);text(a.header,"Audio").performClick();assertEquals(1,a.addDrawer.category);assertTrue(text(a.header,"Audio").isSelected());text(a.header,"Media").performClick();assertEquals(0,a.addDrawer.category);assertTrue(text(a.header,"Media").isSelected());assertEquals("Navigation preserves the project",duration,a.project.durationMs());}
                     assertNull("No separate + Add button repeats the navigation",text(root,"+ Add"));
                     if(wide){text(a.header,"Text").performClick();assertEquals(2,a.addDrawer.category);assertNull("Top-bar tabs replace the panel's own category row",described(root,"Add Media"));assertNotNull("Shapes share the Text tab",text(root,"+ Rectangle"));}
-                    else{text(root,"Add").performClick();for(String category:AddDrawer.CATEGORIES)assertNotNull("Add drawer category "+category,described(root,"Add "+category));
+                    else{described(root,"Add content").performClick();for(String category:AddDrawer.CATEGORIES)assertNotNull("Add drawer category "+category,described(root,"Add "+category));
                         described(root,"Add Audio").performClick();assertNotNull("Insert at playhead by default",text(root,"● At playhead"));described(root,"Add Shapes").performClick();}});
                 Thread.sleep(300);capture(wide?"v2-wide-add-drawer":"v2-phone-add-drawer");
                 scenario.onActivity(a->{View root=a.getWindow().getDecorView();a.seek(1000);text(root,"+ Rectangle").performClick();
                     assertEquals(1,a.project.overlays.size());assertEquals("Inserted at the playhead",1000,a.project.overlays.get(0).startMs);assertEquals(0,a.selectedOverlay);
                     // Selected layer: name, Duplicate, Delete, More replace Settings / Export.
-                    assertNotNull(text(root,"Rectangle"));if(a.wideLayout)assertNotNull(text(root,"Settings"));else assertNull(text(root,"Settings"));assertNotNull(described(root,"Duplicate"));assertNotNull(described(root,"More actions"));
+                    assertNotNull(text(root,"Rectangle"));assertNotNull(text(root,"Settings"));assertNotNull(described(root,"Duplicate"));assertNotNull(described(root,"More actions"));
                     assertNotNull("Shape tools",text(root,"Color"));assertNull("No slip for shapes",text(root,"Slip"));assertNotNull(text(root,"Move & Transform"));
                     text(root,"Opacity").performClick();assertNotNull("Focused panel",text(root,"‹  Back"));
                     View diamond=described(root,"Opacity keyframe: not animated • tap to animate");assertNotNull(diamond);diamond.performClick();

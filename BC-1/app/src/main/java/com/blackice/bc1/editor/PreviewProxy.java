@@ -39,7 +39,7 @@ public final class PreviewProxy implements AutoCloseable {
         directory=new File(context.getCacheDir(),"bc1-preview-v11");
     }
     public static boolean required(EditProject project) {
-        return project.clips.size()>1 || (!project.clips.isEmpty()&&project.clips.get(0).image) || com.blackice.bc1.core.RenderPlan.usesBlend(project);
+        return !project.overlays.isEmpty() || project.clips.size()>1 || (!project.clips.isEmpty()&&project.clips.get(0).image) || com.blackice.bc1.core.RenderPlan.usesBlend(project);
     }
     /** The render in flight, by project key; a second request for the same project joins it instead of restarting. */
     private String runningKey;
@@ -98,6 +98,7 @@ public final class PreviewProxy implements AutoCloseable {
     }
     /** More simultaneous video layers than Media3 can open: ICE Lite renders the preview (in passes if needed). */
     static boolean needsIceLite(EditProject project){
+        if(project.clips.isEmpty()&&!project.overlays.isEmpty())return true;
         if(com.blackice.bc1.core.RenderPlan.usesBlend(project))return true;
         int decoders=0;
         try{for(int d:new com.blackice.bc1.core.RenderPlan(project,true).decoderDemand())decoders+=d;}catch(IllegalArgumentException noVisual){return false;}

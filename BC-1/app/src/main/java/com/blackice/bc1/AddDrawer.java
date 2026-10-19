@@ -22,6 +22,7 @@ final class AddDrawer {
 
     void render(LinearLayout into){
         a.binGrid=null;
+        if(a.mobile!=null){mobile(into);return;}
         // Wide windows switch categories from the top bar, so the panel does not repeat them.
         if(a.topTabs()){content(into);return;}
         LinearLayout tabs=a.row();
@@ -129,10 +130,24 @@ final class AddDrawer {
         if(a.topTabs()){into.addView(a.label("SHAPES",12,EditorActivity.CYAN,true));shapes(into);into.addView(a.label("SAVED ELEMENTS",12,EditorActivity.CYAN,true));saved(into);}
     }
     private void shapes(LinearLayout into){
-        into.addView(a.note("Shapes are vector layers with fill, border, shadow and blending."));
-        for(int i=1;i<EditProject.SHAPES.length;i++){final int shape=i;a.gridAction("+ "+EditProject.SHAPES[i],()->a.addOverlay(shape,"",1));}
-        a.flushGrid();
+        if(a.mobile==null){for(int i=1;i<EditProject.SHAPES.length;i++){final int shape=i;a.gridAction("+ "+EditProject.SHAPES[i],()->a.addOverlay(shape,"",1));}a.flushGrid();return;}
+        int width=a.getResources().getConfiguration().screenWidthDp-92,columns=Math.max(3,Math.min(6,width/58));
+        int[] ids={2,1,5,6,3,7,8,9,10,11,12,13,14,15,4,16,17,18};
+        for(int start=0;start<ids.length;start+=columns){LinearLayout row=a.row();for(int col=0;col<columns;col++){
+            if(start+col>=ids.length)break;final int id=ids[start+col];TextView tile=a.button("+ "+EditProject.SHAPES[id],v->a.addOverlay(id,"",1));tile.setTextSize(8);tile.setPadding(a.dp(2),a.dp(5),a.dp(2),a.dp(2));tile.setContentDescription("Add shape "+EditProject.SHAPES[id]);
+            android.graphics.drawable.Drawable glyph=new android.graphics.drawable.Drawable(){android.graphics.Paint paint=new android.graphics.Paint(3);public void draw(android.graphics.Canvas c){c.save();c.translate(getBounds().centerX(),getBounds().centerY());paint.setColor(EditorActivity.TEXT);c.drawPath(ShapePaths.create(id,getBounds().width()*.42f,1),paint);c.restore();}public void setAlpha(int x){paint.setAlpha(x);}public void setColorFilter(android.graphics.ColorFilter f){paint.setColorFilter(f);}public int getOpacity(){return android.graphics.PixelFormat.TRANSLUCENT;}};
+            glyph.setBounds(0,0,a.dp(28),a.dp(28));tile.setCompoundDrawables(null,glyph,null,null);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,a.dp(60),1);lp.setMargins(a.dp(3),a.dp(3),a.dp(3),a.dp(3));row.addView(tile,lp);
+        }into.addView(row);}
     }
+    private void mobile(LinearLayout into){
+        LinearLayout tabs=a.row();HorizontalScrollView scroll=new HorizontalScrollView(a);scroll.setHorizontalScrollBarEnabled(false);scroll.addView(tabs);into.addView(scroll);
+        int[] categories={3,0,1,4};String[] names={"Shape","Media","Audio","Elements"},icons={"Shapes","Media","Audio","Saved"};
+        for(int i=0;i<categories.length;i++){final int index=categories[i];TextView b=a.iconButton(names[i],v->{category=index;items=null;a.renderInspector();});b.setTextSize(11);b.setCompoundDrawables(null,a.icon(icons[i],category==index?EditorActivity.CYAN:EditorActivity.TEXT),null,null);b.setBackground(a.navBackground(category==index));b.setSelected(category==index);b.setContentDescription("Add "+(index==3?"Shapes":index==4?"Saved":names[i]));tabs.addView(b,new LinearLayout.LayoutParams(a.dp(64),a.dp(64)));}
+        LinearLayout body=a.row(),items=a.column();body.addView(items,new LinearLayout.LayoutParams(0,-2,1));LinearLayout rail=a.column();rail.setPadding(a.dp(4),a.dp(8),0,0);
+        TextView text=a.button("Aa\nText",v->a.mobile.inputText(false));text.setContentDescription("Add Text");rail.addView(text,new LinearLayout.LayoutParams(a.dp(54),a.dp(64)));TextView close=a.button("×",v->a.mobile.dismiss());close.setTextSize(26);close.setContentDescription("Close Add Content");rail.addView(close,new LinearLayout.LayoutParams(a.dp(54),a.dp(56)));body.addView(rail);into.addView(body);
+        content(items);
+    }
+
     private void saved(LinearLayout into){
         into.addView(a.note("Saved elements are grouped layers you can reuse. Select layers and choose More → Save as element."));
         List<PresetStore.Preset> elements=a.presets.list(PresetStore.ELEMENT);

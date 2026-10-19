@@ -62,7 +62,7 @@ public final class BcExporter {
         this.plan = plan;
         project.frameRate = plan.frameRate;
         project.validate();
-        if (project.clips.isEmpty()) throw new IllegalArgumentException("Import a video or image first.");
+        if ((project.clips.isEmpty() && project.overlays.isEmpty())) throw new IllegalArgumentException("Import a video or image first.");
         this.spec = OutputSpec.of(project, plan.shortEdge);
         this.cancelled = cancelled;
         this.listener = listener;

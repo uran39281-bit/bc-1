@@ -184,7 +184,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     }
 
     private void render(EditProject project, long timeMs) throws Exception {
-        if (project.clips.isEmpty()) { egl.makeCurrent(); clearBlack(); egl.swap(); return; }
+        if ((project.clips.isEmpty() && project.overlays.isEmpty())) { egl.makeCurrent(); clearBlack(); egl.swap(); return; }
         long t0 = System.nanoTime();
         OutputSpec spec = OutputSpec.of(project, project.previewHeight);
         if (compositor == null || spec.width != width || spec.height != height) {

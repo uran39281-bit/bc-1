@@ -23,18 +23,18 @@ public class PhoneMediaSpaceTest {
             new ProjectStore(h.inst.getTargetContext()).save(p);
             h.inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("last-project",p.id).putString("mode","PHONE").putBoolean("ui-locked",false).putInt("workspace-focus",0).commit();
             try(ActivityScenario<EditorActivity> scenario=ActivityScenario.launch(EditorActivity.class)){
-                h.waitLoaded(scenario);Thread.sleep(300);
+                h.waitLoaded(scenario);scenario.onActivity(a->a.mobile.openAdd(0));Thread.sleep(300);
                 scenario.onActivity(a->{assertFalse(a.wideLayout);assertEquals(0,a.tab);
-                    assertTrue("Browser has at least 40% of window height",a.phoneDrawer.getHeight()>a.getWindow().getDecorView().getHeight()*.4f);
-                    assertTrue("Browser is more than three times the small drop target",a.phoneDrawer.getHeight()>a.phoneTimelineArea.getHeight()*3);
-                    assertEquals(View.GONE,a.phoneTransport.getVisibility());assertEquals(View.GONE,a.phoneTimelineTools.getVisibility());
+                    assertTrue("Browser has at least 40% of window height",a.mobile.sheet.getHeight()>a.mobile.stage.getHeight()*.4f);
+                    assertTrue("Timeline remains flexible below preview",a.phoneTimelineArea.getHeight()>a.dp(100));
+                    assertEquals(View.VISIBLE,a.phoneTransport.getVisibility());assertEquals(View.GONE,a.phoneTimelineTools.getVisibility());
                     assertNull(WorkspaceV2Test.text(a.inspector,"Inspector"));assertNotNull(WorkspaceV2Test.described(a.inspector,"Media Footage"));
                     assertEquals(0,a.project.clips.size());
                 });
                 h.capture(small?"v111-phone-small-picker":"v111-phone-picker");
                 scenario.onActivity(a->{View surface=a.surface;a.mediaAction(a.project.library.get(0),"Add to main sequence at playhead");assertEquals(1,a.tab);assertEquals(1,a.project.clips.size());assertEquals(3500,a.project.durationMs());assertSame("Opening/closing drawer retains preview surface",surface,a.surface);assertEquals(View.VISIBLE,a.phoneTransport.getVisibility());
                     int balanced=a.phonePreview.getLayoutParams().height;a.workspaceFocus=2;a.sizePhoneDrawer();assertTrue(a.phonePreview.getLayoutParams().height>balanced);
-                    a.workspaceFocus=1;a.sizePhoneDrawer();assertTrue(a.phoneTimelineArea.getLayoutParams().height>a.phonePreview.getLayoutParams().height);a.workspaceFocus=0;a.sizePhoneDrawer();
+                    a.workspaceFocus=1;a.sizePhoneDrawer();assertTrue(a.phonePreview.getLayoutParams().height<balanced);a.workspaceFocus=0;a.sizePhoneDrawer();
                     a.tab=0;a.renderInspector();a.onKeyDown(KeyEvent.KEYCODE_BACK,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_BACK));assertEquals(1,a.tab);assertEquals(3500,a.project.durationMs());a.saveNow();});
                 Thread.sleep(500);scenario.recreate();h.waitLoaded(scenario);scenario.onActivity(a->{assertEquals(1,a.project.clips.size());assertEquals(3500,a.project.durationMs());assertEquals(1,a.project.library.size());});
             }

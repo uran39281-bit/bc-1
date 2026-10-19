@@ -156,7 +156,7 @@ final class TimelineView extends View {
         long delta=chosen&&operation>=OP_OV_START&&operation<=OP_OV_MOVE&&moved?pendingDelta:0;
         float l=x(o.startMs+(operation==OP_OV_START||operation==OP_OV_MOVE?delta:0)),r=x(o.endMs+(operation==OP_OV_END||operation==OP_OV_MOVE?delta:0));
         if(r<left||l>right)return;
-        float radius=a.dp(6);int base=o.imageUri!=null?0xFF4B3591:o.shape>0?0xFF1F5A63:0xFF7A5126,edge=o.imageUri!=null?0xFF9A7BFF:o.shape>0?0xFF4FC3CF:0xFFE0A050;
+        float radius=a.dp(6);int base=o.imageUri!=null?0xFF4B3591:o.shape>0?0xFF1F5A63:0xFF503079,edge=o.imageUri!=null?0xFF9A7BFF:o.shape>0?0xFF4FC3CF:0xFFB38CFF;
         paint.setColor(base);canvas.drawRoundRect(l,y,r,y+bar,radius,radius,paint);
         canvas.save();canvas.clipRect(l+a.dp(6),y,r-a.dp(6),y+bar);paint.setColor(EditorActivity.TEXT);paint.setTextSize(a.dp(11));canvas.drawText((o.shape>0?"◆  ":o.imageUri!=null?"▣  ":"T  ")+o.label(),Math.max(l,left+headerWidth())+a.dp(9),y+bar/2+a.dp(4),paint);canvas.restore();
         if(chosen)drawKeys(canvas,o.motion,l,y,bar,k->x(o.startMs+k),left,right);
