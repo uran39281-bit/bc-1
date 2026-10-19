@@ -103,18 +103,18 @@ public class EditorWorkspaceTest {
                 java.util.concurrent.atomic.AtomicBoolean loaded=new java.util.concurrent.atomic.AtomicBoolean();long loadDeadline=SystemClock.elapsedRealtime()+15000;
                 while(!loaded.get()&&SystemClock.elapsedRealtime()<loadDeadline){scenario.onActivity(a->loaded.set(!a.loading));Thread.sleep(50);}assertTrue("Saved project finishes loading",loaded.get());inst.waitForIdleSync();
                 scenario.onActivity(a->assertEquals("The saved fixture is active",p.id,a.project.id));
-                scenario.onActivity(a->{View root=a.getWindow().getDecorView();assertNull("Clip tools stay hidden until selection",text(root,"Split"));assertNotNull("Settings is reachable",text(root,"Settings"));text(root,"Settings").performClick();assertNotNull("Unlocked settings are visible",text(root,"Lock editing and layout: OFF"));text(root,"Lock editing and layout: OFF").performClick();a.onKeyDown(KeyEvent.KEYCODE_S,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_S));text(root,"Lock editing and layout: ON").performClick();text(root,"Lock editing and layout: OFF").performClick();text(root,"Add").performClick();assertNotNull("Loaded project media is available",described(root,"Media ICE / OPENING"));described(root,"Media ICE / OPENING").performClick();
+                scenario.onActivity(a->{View root=a.getWindow().getDecorView();assertNull("Clip tools stay hidden until selection",text(root,"Split"));assertNotNull("Settings is reachable",text(root,"Settings"));text(root,"Settings").performClick();assertNotNull("Unlocked settings are visible",text(root,"Lock editing and layout: OFF"));text(root,"Lock editing and layout: OFF").performClick();a.onKeyDown(KeyEvent.KEYCODE_S,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_S));text(root,"Lock editing and layout: ON").performClick();text(root,"Lock editing and layout: OFF").performClick();openMobileMedia(a);assertNotNull("Loaded project media is available",described(root,"Media ICE / OPENING"));described(root,"Media ICE / OPENING").performClick();
                     // A selected layer replaces Settings / Export in the top bar with its name, Duplicate, Delete and More.
-                    assertNull("Selection shows layer actions instead of Settings",text(root,"Settings"));assertNotNull(described(root,"More actions"));assertNotNull(described(root,"Delete"));
+                    assertNotNull("Settings remains accessible beside selected-layer actions",text(root,"Settings"));assertNotNull(described(root,"More actions"));assertNotNull(described(root,"Delete"));
                     a.onKeyDown(KeyEvent.KEYCODE_D,new KeyEvent(0,0,KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_D,0,KeyEvent.META_CTRL_ON));assertNotNull("Settings lock guards edits",text(root,"UI locked • unlock editing in Settings"));
-                    described(root,"Deselect").performClick();assertNotNull("Deselecting restores the project bar",text(root,"Settings"));text(root,"Settings").performClick();text(root,"Lock editing and layout: ON").performClick();text(root,"Add").performClick();});
+                    described(root,"Deselect").performClick();assertNotNull("Deselecting restores the project bar",text(root,"Settings"));text(root,"Settings").performClick();text(root,"Lock editing and layout: ON").performClick();openMobileMedia(a);});
                 assertVisiblePreview(scenario);
                 scenario.onActivity(a->assertNotNull("First frame stays paused until Play",described(a.getWindow().getDecorView(),"Play")));
                 capture("v10-paused-first-frame");
-                scenario.onActivity(a->assertNotNull("Preparation must not advance the playhead",text(a.getWindow().getDecorView(),"00:00.00  /  00:03.75")));
+                scenario.onActivity(a->assertNotNull("Preparation must not advance the playhead",text(a.getWindow().getDecorView(),"00:00.00 / 00:03.75")));
                 scenario.onActivity(a->a.onKeyDown(KeyEvent.KEYCODE_DPAD_RIGHT,new KeyEvent(0,0,KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_DPAD_RIGHT,0,KeyEvent.META_SHIFT_ON)));
                 Thread.sleep(500);assertVisiblePreview(scenario);
-                scenario.onActivity(a->{assertNotNull("Paused seek updates the playhead",text(a.getWindow().getDecorView(),"00:01.00  /  00:03.75"));a.onKeyDown(KeyEvent.KEYCODE_DPAD_LEFT,new KeyEvent(0,0,KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_DPAD_LEFT,0,KeyEvent.META_SHIFT_ON));});
+                scenario.onActivity(a->{assertNotNull("Paused seek updates the playhead",text(a.getWindow().getDecorView(),"00:01.00 / 00:03.75"));a.onKeyDown(KeyEvent.KEYCODE_DPAD_LEFT,new KeyEvent(0,0,KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_DPAD_LEFT,0,KeyEvent.META_SHIFT_ON));});
                 scenario.onActivity(a->a.onKeyDown(KeyEvent.KEYCODE_SPACE,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_SPACE)));
                 // A layered project plays from its rendered proxy, prepared in the background after loading;
                 // Play joins that render if it is still running.
@@ -133,8 +133,8 @@ public class EditorWorkspaceTest {
                     assertTrue("Seek leaves the preview paused",a.player==null||!a.player.getPlayWhenReady());assertEquals(1000,a.project.playheadMs);
                 });
                 assertVisiblePreview(scenario);
-                scenario.onActivity(a->{View root=a.getWindow().getDecorView();assertNotNull("Sample project must be loaded before visual checks",text(root,"Ice • First Cut  ▾"));SurfaceView video=surface(root);assertNotNull(video);assertTrue(video.getWidth()>0&&video.getHeight()>0);View parent=(View)video.getParent();text(root,"Effects").performClick();assertSame(parent,video.getParent());assertNotNull(text(root,"GPU EFFECTS"));});
-                scenario.onActivity(a->{View root=a.getWindow().getDecorView();for(int i=0;i<3;i++)text(root,"+").performClick();});
+                scenario.onActivity(a->{View root=a.getWindow().getDecorView();assertTrue("Project title remains accessible",a.projectLabel.getText().toString().startsWith("Ice • First Cut"));SurfaceView video=surface(root);assertNotNull(video);assertTrue(video.getWidth()>0&&video.getHeight()>0);View parent=(View)video.getParent();text(root,"Effects").performClick();assertSame(parent,video.getParent());assertNotNull(text(root,"GPU EFFECTS"));});
+                scenario.onActivity(a->{View root=a.getWindow().getDecorView();for(int i=0;i<3;i++)a.onKeyDown(KeyEvent.KEYCODE_EQUALS,new KeyEvent(0,0,KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_EQUALS,0,KeyEvent.META_CTRL_ON));});
                 Thread.sleep(500);
                 scenario.onActivity(a->{android.widget.HorizontalScrollView scroll=(android.widget.HorizontalScrollView)described(a.getWindow().getDecorView(),"Timeline scroll");scroll.scrollTo(140,0);assertTrue("Timeline scroll is available after zoom",scroll.getScrollX()>0);});capture("v10-phone-9x16");
                 shell("wm size 1920x1080");shell("wm density 160");Thread.sleep(1800);inst.waitForIdleSync();scenario.onActivity(a->{assertTrue(surface(a.getWindow().getDecorView()).getWidth()>500);});assertVisiblePreview(scenario);capture("v10-wide-16x9");
@@ -159,5 +159,10 @@ public class EditorWorkspaceTest {
                 inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("mode","WIDE").commit();shell("wm size 780x420");scenario.recreate();Thread.sleep(2500);inst.waitForIdleSync();scenario.onActivity(a->{View deselect=described(a.getWindow().getDecorView(),"Deselect");if(deselect!=null)deselect.performClick();text(a.getWindow().getDecorView(),"Settings").performClick();assertNotNull("Wide preference must be restored",text(a.getWindow().getDecorView(),"Workspace layout: Wide tablet / DeX"));SurfaceView video=surface(a.getWindow().getDecorView());assertTrue(video.getWidth()>150&&video.getHeight()>60);});assertVisiblePreview(scenario);capture("v10-compact-wide");
             }
         }finally{shell("wm size "+size);shell("wm density "+density);inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("mode","AUTO").putBoolean("ui-locked",false).commit();}
+    }
+    private void openMobileMedia(EditorActivity a){
+        if(a.mobile.sheet.getVisibility()==View.VISIBLE)a.onKeyDown(KeyEvent.KEYCODE_BACK,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_BACK));
+        described(a.getWindow().getDecorView(),"Add content").performClick();
+        described(a.getWindow().getDecorView(),"Add Media").performClick();
     }
 }

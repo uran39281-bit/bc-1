@@ -87,7 +87,6 @@ final class TimelineView extends View {
         for(int i=0;i<rows.size();i++){Row r=rows.get(i);paint.setColor(i%2==0?0xFF08121E:0xFF060D17);canvas.drawRect(left,r.top,right,r.top+a.dp(ROW_DP),paint);paint.setColor(0xFF0E1C2B);canvas.drawRect(left,r.top+a.dp(ROW_DP)-a.dp(1),right,r.top+a.dp(ROW_DP),paint);}
         drawRuler(canvas,left,right,height);
         EditProject p=a.project;List<EditProject.Placement> placements=p.placements();float bar=a.dp(BAR_DP),inset=(a.dp(ROW_DP)-bar)/2f;
-        if(p.clips.isEmpty()&&dropAsset==null){float y=rowTopOfTrackCached(rows,0);paint.setColor(EditorActivity.MUTED);paint.setTextSize(a.dp(11));canvas.drawText("Drag media here from Project Media",Math.max(x(0),left+headerWidth())+a.dp(8),y+a.dp(ROW_DP)/2f+a.dp(4),paint);}
         for(EditProject.Placement pl:placements){float y=rowTopOfTrackCached(rows,pl.clip.track);if(y<0)continue;float l=x(pl.startMs),r=x(pl.endMs);if(r<left||l>right||y+bar<top||y>bottom)continue;drawClip(canvas,pl,l,r,y+inset,bar,left,right);}
         for(Row row:rows)if(row.kind==1){String g=a.project.overlays.get(row.index).group;
             if(g!=null&&a.collapsedGroups.contains(g)){for(int i=0;i<a.project.overlays.size();i++)if(g.equals(a.project.overlays.get(i).group))drawOverlay(canvas,i,row.top+inset,bar,left,right);}
