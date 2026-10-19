@@ -15,7 +15,7 @@ public final class LayerOps {
     /** Export ignores solo; preview isolates soloed rows while keeping hidden rows hidden. */
     public static boolean renders(EditProject p,EditProject.Clip c,boolean preview) {
         EditProject.Track t=p.tracks[c.track];
-        if(c.track>=4) return !t.muted&&(!preview||!anySolo(p)||t.solo);
+        if(EditProject.audioTrack(c.track)) return !t.muted&&(!preview||!anySolo(p)||t.solo);
         return !t.hidden&&(!preview||!anySolo(p)||t.solo);
     }
     public static boolean renders(EditProject p,EditProject.Overlay o,boolean preview) {
@@ -58,10 +58,10 @@ public final class LayerOps {
     /** An overlapping copy on the next free layer above; returns the new clip index. */
     public static int duplicateAbove(EditProject p,int index) {
         EditProject.Clip c=p.clips.get(index);EditProject.Placement placement=p.placements().get(index);
-        int first=c.track>=4?4:1,last=c.track>=4?7:3;
+        boolean audio=EditProject.audioTrack(c.track);int first=audio?EditProject.AUDIO_FIRST:1,last=audio?EditProject.AUDIO_LAST:EditProject.LAST_LAYER;
         for(int track=Math.max(first,c.track+1);track<=last;track++) if(free(p,track,placement.startMs,placement.endMs,-1)) return insertCopy(p,index,track,placement.startMs);
         for(int track=first;track<=last;track++) if(track!=c.track&&free(p,track,placement.startMs,placement.endMs,-1)) return insertCopy(p,index,track,placement.startMs);
-        throw new IllegalArgumentException("No free "+(c.track>=4?"audio":"visual")+" layer is available at this time.");
+        throw new IllegalArgumentException("No free "+(audio?"audio":"visual")+" layer is available at this time.");
     }
     /** A sequential copy starting where the original ends; returns the new clip index. */
     public static int duplicateAfter(EditProject p,int index) {
@@ -94,7 +94,7 @@ public final class LayerOps {
         long removed=0;Snapshot undo=new Snapshot(p);
         try {
             for(int track:tracks){if(track==0){for(EditProject.Clip c:p.clips)if(c.track==0){removed+=c.gapMs;c.gapMs=0;}continue;}
-                if(track<0||track>7)continue;
+                if(track<0||track>=EditProject.TRACK_COUNT)continue;
                 List<EditProject.Clip> row=new ArrayList<>();for(EditProject.Clip c:p.clips)if(c.track==track)row.add(c);
                 row.sort(Comparator.comparingLong(c->c.startMs));
                 for(int i=1;i<row.size();i++){long end=row.get(i-1).startMs+row.get(i-1).durationMs();long gap=row.get(i).startMs-end;if(gap>0){row.get(i).startMs=end;removed+=gap;}}
@@ -118,7 +118,7 @@ public final class LayerOps {
     /** Swap two independent visual or audio layers, including their row settings; timing is untouched. */
     public static void swapTracks(EditProject p,int a,int b) {
         if(a==b) return;
-        if(a<1||b<1||a>7||b>7||(a<4)!=(b<4)) throw new IllegalArgumentException("Reorder within visual layers 1–3 or audio layers 1–4. The main sequence stays at the bottom.");
+        if(a<1||b<1||a>=EditProject.TRACK_COUNT||b>=EditProject.TRACK_COUNT||EditProject.audioTrack(a)!=EditProject.audioTrack(b)) throw new IllegalArgumentException("Reorder within visual layers 1–"+EditProject.LAST_LAYER+" or audio layers 1–4. The main sequence stays at the bottom.");
         for(EditProject.Clip c:p.clips) if(c.track==a)c.track=b; else if(c.track==b)c.track=a;
         EditProject.Track t=p.tracks[a];p.tracks[a]=p.tracks[b];p.tracks[b]=t;
         p.validate();

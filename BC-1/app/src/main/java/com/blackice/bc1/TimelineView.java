@@ -126,17 +126,17 @@ final class TimelineView extends View {
     }
     private boolean multiSelected(int clip){return a.multiClips.contains(clip);}
     /** Reference palette: video navy with thumbnails, pictures violet, audio green (layers 2+ blue). */
-    private static int clipColor(EditProject.Clip c){return c.track>=4?(c.track==4?0xFF145A44:0xFF233A8C):c.image?0xFF4B3591:0xFF15304A;}
-    private static int clipEdge(EditProject.Clip c){return c.track>=4?(c.track==4?0xFF2FB98A:0xFF5A78F0):c.image?0xFF9A7BFF:0xFF3C88C0;}
+    private static int clipColor(EditProject.Clip c){return c.track>=EditProject.AUDIO_FIRST?(c.track==EditProject.AUDIO_FIRST?0xFF145A44:0xFF233A8C):c.image?0xFF4B3591:0xFF15304A;}
+    private static int clipEdge(EditProject.Clip c){return c.track>=EditProject.AUDIO_FIRST?(c.track==EditProject.AUDIO_FIRST?0xFF2FB98A:0xFF5A78F0):c.image?0xFF9A7BFF:0xFF3C88C0;}
     private void drawClip(Canvas canvas,EditProject.Placement pl,float l,float r,float y,float bar,float left,float right){
-        EditProject p=a.project;EditProject.Clip c=pl.clip;boolean selected=pl.index==a.selected||multiSelected(pl.index),hidden=c.track<4?p.tracks[c.track].hidden:p.tracks[c.track].muted;
+        EditProject p=a.project;EditProject.Clip c=pl.clip;boolean selected=pl.index==a.selected||multiSelected(pl.index),hidden=c.track<EditProject.AUDIO_FIRST?p.tracks[c.track].hidden:p.tracks[c.track].muted;
         float radius=a.dp(6);paint.setAlpha(255);paint.setColor(clipColor(c));canvas.drawRoundRect(l,y,r,y+bar,radius,radius,paint);
-        if(c.track<4){Bitmap thumb=a.thumbnails.get(c,a.timelineThumbnailsReady);if(thumb!=null){canvas.save();canvas.clipRect(l+a.dp(1),y+a.dp(1),r-a.dp(1),y+bar-a.dp(1));float tw=bar*thumb.getWidth()/thumb.getHeight();float firstX=l+Math.max(0,(float)Math.floor((left-l)/tw))*tw;for(float tx=firstX;tx<Math.min(r,right);tx+=tw){thumbBounds.set(tx,y,tx+tw,y+bar);canvas.drawBitmap(thumb,null,thumbBounds,paint);}canvas.restore();}}
-        float[] peaks=a.waveforms.get(c.uri);if(peaks!=null){paint.setColor(c.track>=4?(c.track==4?0xFF3EE0A4:0xFF8FA6FF):0xFF74D3C1);for(float xx=Math.max(l,left);xx<Math.min(r,right);xx+=a.dp(2)){long source=c.inMs+(long)((xx-l)/(r-l)*(c.outMs-c.inMs));int bin=(int)Math.min(peaks.length-1,source*peaks.length/Math.max(1,c.sourceDurationMs));float amp=peaks[Math.max(0,bin)]*bar*.38f;canvas.drawLine(xx,y+bar/2-amp,xx,y+bar/2+amp,paint);}}
+        if(c.track<EditProject.AUDIO_FIRST){Bitmap thumb=a.thumbnails.get(c,a.timelineThumbnailsReady);if(thumb!=null){canvas.save();canvas.clipRect(l+a.dp(1),y+a.dp(1),r-a.dp(1),y+bar-a.dp(1));float tw=bar*thumb.getWidth()/thumb.getHeight();float firstX=l+Math.max(0,(float)Math.floor((left-l)/tw))*tw;for(float tx=firstX;tx<Math.min(r,right);tx+=tw){thumbBounds.set(tx,y,tx+tw,y+bar);canvas.drawBitmap(thumb,null,thumbBounds,paint);}canvas.restore();}}
+        float[] peaks=a.waveforms.get(c.uri);if(peaks!=null){paint.setColor(c.track>=EditProject.AUDIO_FIRST?(c.track==EditProject.AUDIO_FIRST?0xFF3EE0A4:0xFF8FA6FF):0xFF74D3C1);for(float xx=Math.max(l,left);xx<Math.min(r,right);xx+=a.dp(2)){long source=c.inMs+(long)((xx-l)/(r-l)*(c.outMs-c.inMs));int bin=(int)Math.min(peaks.length-1,source*peaks.length/Math.max(1,c.sourceDurationMs));float amp=peaks[Math.max(0,bin)]*bar*.38f;canvas.drawLine(xx,y+bar/2-amp,xx,y+bar/2+amp,paint);}}
         if(pl.outgoingMs>0){paint.setColor(0x9940BFFF);canvas.drawRect(x(pl.endMs-pl.outgoingMs),y,r,y+bar,paint);}
         // Name tag in a dark chip so it stays readable over thumbnails and waveforms.
-        canvas.save();canvas.clipRect(l+a.dp(3),y,r-a.dp(3),y+bar);paint.setTextSize(a.dp(11));String label=(c.track>=4?"♫  ":c.image?"▣  ":"")+c.name;float tx=Math.max(l,left+headerWidth())+a.dp(8),tw=paint.measureText(label);
-        if(c.track<4){paint.setColor(0xB3070F19);canvas.drawRoundRect(tx-a.dp(4),y+bar/2-a.dp(9),tx+tw+a.dp(4),y+bar/2+a.dp(9),a.dp(4),a.dp(4),paint);}
+        canvas.save();canvas.clipRect(l+a.dp(3),y,r-a.dp(3),y+bar);paint.setTextSize(a.dp(11));String label=(c.track>=EditProject.AUDIO_FIRST?"♫  ":c.image?"▣  ":"")+c.name;float tx=Math.max(l,left+headerWidth())+a.dp(8),tw=paint.measureText(label);
+        if(c.track<EditProject.AUDIO_FIRST){paint.setColor(0xB3070F19);canvas.drawRoundRect(tx-a.dp(4),y+bar/2-a.dp(9),tx+tw+a.dp(4),y+bar/2+a.dp(9),a.dp(4),a.dp(4),paint);}
         paint.setColor(EditorActivity.TEXT);canvas.drawText(label,tx,y+bar/2+a.dp(4),paint);canvas.restore();
         if(selected)drawKeys(canvas,c.motion,l,y,bar,k->x(pl.startMs+Math.round((k-c.inMs)/(double)c.speed)),left,right);
         if(hidden){paint.setColor(0x99060D13);canvas.drawRoundRect(l,y,r,y+bar,radius,radius,paint);}
@@ -191,7 +191,7 @@ final class TimelineView extends View {
             if(drop){paint.setColor(0x3340BFFF);canvas.drawRoundRect(left+a.dp(4),y+a.dp(3),left+w-a.dp(4),y+a.dp(ROW_DP)-a.dp(3),a.dp(5),a.dp(5),paint);}
             if(r.kind==2){drawIcon(canvas,"Audio",left+a.dp(10),mid-a.dp(9),EditorActivity.MUTED,18);paint.setColor(EditorActivity.MUTED);paint.setTextSize(a.dp(11));canvas.drawText("Music",left+a.dp(34),mid+a.dp(4),paint);continue;}
             boolean overlay=r.kind==1;EditProject.Overlay o=overlay?a.project.overlays.get(r.index):null;EditProject.Track t=overlay?null:a.project.tracks[r.index];
-            boolean audio=!overlay&&r.index>=4,hidden=overlay?o.hidden:audio?t.muted:t.hidden,locked=overlay?o.locked:t.locked,solo=overlay?o.solo:t.solo,empty=!overlay&&a.trackEmpty(r.index);
+            boolean audio=!overlay&&EditProject.audioTrack(r.index),hidden=overlay?o.hidden:audio?t.muted:t.hidden,locked=overlay?o.locked:t.locked,solo=overlay?o.solo:t.solo,empty=!overlay&&a.trackEmpty(r.index);
             int color=overlay?(o.imageUri==null?(o.color|0xFF000000):0xFF9FEAFF):t.color;
             if(r.kind==0&&r.index!=0||overlay){paint.setColor(0xFF4C6378);for(int i=-1;i<=1;i++)canvas.drawRect(left+a.dp(9),mid+i*a.dp(4)-a.dp(.75f),left+a.dp(19),mid+i*a.dp(4)+a.dp(.75f),paint);}
             paint.setColor(color);canvas.drawRect(left+a.dp(23),y+a.dp(10),left+a.dp(26),y+a.dp(ROW_DP)-a.dp(10),paint);
@@ -214,15 +214,15 @@ final class TimelineView extends View {
     /** The row a dragged clip would land on: a row of the same kind (visual / audio) under the finger. */
     int targetTrack(){
         if(original==null)return -1;int track=original.clip.track;Row r=rowAt(lastEventY);
-        if(r!=null&&r.kind==0&&(r.index>=4)==(track>=4))return r.index;return track;
+        if(r!=null&&r.kind==0&&EditProject.audioTrack(r.index)==EditProject.audioTrack(track))return r.index;return track;
     }
     /** Row for media dropped at a point: the row under it when compatible, otherwise a sensible default. */
     int dropTrackFor(EditProject.Clip asset,float yy,long start){
         Row r=rowAt(yy);boolean audio=asset.audioOnly;long end=start+asset.durationMs();
-        if(r!=null&&r.kind==0&&(r.index>=4)==audio)return r.index;
-        if(audio){for(int t=4;t<=7;t++)if(LayerOps.free(a.project,t,start,end,-1))return t;return 4;}
+        if(r!=null&&r.kind==0&&EditProject.audioTrack(r.index)==audio)return r.index;
+        if(audio){for(int t=EditProject.AUDIO_FIRST;t<=EditProject.AUDIO_LAST;t++)if(LayerOps.free(a.project,t,start,end,-1))return t;return EditProject.AUDIO_FIRST;}
         // Above the video rows (text layers or the ruler): the first free layer; below them: the main sequence.
-        if(r==null||r.kind==1){for(int t=1;t<=3;t++)if(LayerOps.free(a.project,t,start,end,-1))return t;}
+        if(r==null||r.kind==1){for(int t=1;t<=EditProject.LAST_LAYER;t++)if(LayerOps.free(a.project,t,start,end,-1))return t;}
         return 0;
     }
 

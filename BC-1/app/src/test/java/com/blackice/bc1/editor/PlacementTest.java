@@ -27,7 +27,7 @@ public class PlacementTest {
         EditProject p=mains();p.clips.add(clip("d",500,1,700));TimelineEdits.place(p,3,3,900);assertEquals(3,p.clips.get(3).track);assertEquals(900,start(p,"d"));
     }
     @Test public void visualAndAudioRowsStaySeparate(){
-        EditProject p=mains();try{TimelineEdits.place(p,0,4,0);fail();}catch(IllegalArgumentException expected){}
+        EditProject p=mains();try{TimelineEdits.place(p,0,EditProject.AUDIO_FIRST,0);fail();}catch(IllegalArgumentException expected){}
     }
     @Test public void gapSuppressesTransitionAndCloseGapsRemovesIt(){
         EditProject p=mains();p.clips.get(0).transition=0;assertEquals(500,start(p,"b"));

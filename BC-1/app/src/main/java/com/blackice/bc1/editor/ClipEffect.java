@@ -32,7 +32,7 @@ public final class ClipEffect implements GlEffect {
                 String vertex,fragment;
                 try(java.io.InputStream in=context.getAssets().open("shaders/video.vert")) { vertex=readShader(in); }
                 try(java.io.InputStream in=context.getAssets().open("shaders/video.frag")) { fragment=readShader(in); }
-                program=new GlProgram(vertex,fragment);
+                program=new GlProgram(vertex,com.blackice.bc1.core.LayerShader.forEffect(fragment,p.clip.effect));
                 program.setBufferAttribute("aPosition",GlUtil.getNormalizedCoordinateBounds(),4);
             } catch(IOException|GlUtil.GlException e) { throw new VideoFrameProcessingException(e); }
         }
@@ -47,15 +47,9 @@ public final class ClipEffect implements GlEffect {
         }
         @Override public void drawFrame(int tex,long timeUs) throws VideoFrameProcessingException {
             long timeMs=timeUs/1000; EditProject.Clip c=p.clip;
-            int type=-1,role=0,easing=c.easing; float progress=0;
-            if(p.incomingMs>0 && timeMs<p.startMs+p.incomingMs && previous!=null) {
-                type=previous.transition; role=1; easing=previous.easing;
-                progress=(float)(timeMs-p.startMs)/p.incomingMs;
-            } else if(p.outgoingMs>0 && timeMs>=p.endMs-p.outgoingMs) {
-                type=c.transition; role=2; progress=(float)(timeMs-(p.endMs-p.outgoingMs))/p.outgoingMs;
-            }
-            progress=Math.max(0,Math.min(1,progress));
-            if(easing==1) progress=progress*progress*(3-2*progress);
+            // Shared with ICE Lite so both engines resolve transitions identically.
+            com.blackice.bc1.core.RenderPlan.Transition transition=com.blackice.bc1.core.RenderPlan.transition(p,previous,timeMs);
+            int type=transition.type,role=transition.role; float progress=transition.progress;
             try {
                 program.use(); program.setSamplerTexIdUniform("uInput",tex,0);
                 long sourceTime=Math.round(Math.max(0,timeMs-p.startMs)*c.speed)+c.inMs;
@@ -67,7 +61,7 @@ public final class ClipEffect implements GlEffect {
                 program.setFloatsUniform("uChroma",new float[]{c.chroma?1:0,c.keyTolerance,c.keySoftness,c.keySpill});
                 program.setIntUniform("uEffect",c.effect); program.setFloatUniform("uIntensity",c.motion.value(5,sourceTime,c.intensity));
                 program.setFloatUniform("uOpacity",visible?c.motion.value(4,sourceTime,c.opacity):0); program.setIntUniform("uTransition",type);
-                program.setIntUniform("uRole",role); program.setIntUniform("uTop",top?1:0);
+                program.setIntUniform("uRole",role); program.setIntUniform("uTop",top?1:0); if(program.getUniformLocation("uTime")>=0)program.setFloatUniform("uTime",sourceTime/1000f); // only effects that animate use it
                 program.setFloatUniform("uProgress",progress); program.bindAttributesAndUniforms();
                 GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP,0,4); GlUtil.checkGlError();
             } catch(GlUtil.GlException e) { throw new VideoFrameProcessingException(e,timeUs); }

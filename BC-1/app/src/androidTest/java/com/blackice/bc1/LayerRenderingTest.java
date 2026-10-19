@@ -49,7 +49,7 @@ public class LayerRenderingTest {
                 }).build();
             t.start(CompositionFactory.buildAtHeight(context,project,360,preview),file.getPath());
         }catch(Exception e){error.set(e);done.countDown();}});
-        assertTrue("Render timed out",done.await(180,TimeUnit.SECONDS));if(error.get()!=null)throw new AssertionError("Render failed",error.get());
+        assertTrue("Render timed out",done.await(180,TimeUnit.SECONDS));if(error.get()!=null){ThreadDump.log("LayerRenderingTest export failed");throw new AssertionError("Render failed",error.get());}
         MediaMetadataRetriever r=new MediaMetadataRetriever();try{r.setDataSource(file.getPath());Bitmap b=r.getFrameAtTime(1_000_000,MediaMetadataRetriever.OPTION_CLOSEST);assertNotNull(b);return b;}finally{r.release();file.delete();}
     }
     private static int at(Bitmap b,float fx,float fy){return b.getPixel(Math.round(fx*(b.getWidth()-1)),Math.round(fy*(b.getHeight()-1)));}

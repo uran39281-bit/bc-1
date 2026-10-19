@@ -29,7 +29,7 @@ final class PreviewEditor extends View {
     /** Selected visual layer is visible at the playhead. */
     boolean available(){
         if(a.previewPending)return false;EditProject.Overlay o=a.overlay();if(o!=null)return a.project.playheadMs>=o.startMs&&a.project.playheadMs<o.endMs;
-        EditProject.Clip c=a.clip();if(c==null||c.track>=4)return false;EditProject.Placement p=a.project.placements().get(a.selected);return a.project.playheadMs>=p.startMs&&a.project.playheadMs<p.endMs;
+        EditProject.Clip c=a.clip();if(c==null||c.track>=EditProject.AUDIO_FIRST)return false;EditProject.Placement p=a.project.placements().get(a.selected);return a.project.playheadMs>=p.startMs&&a.project.playheadMs<p.endMs;
     }
     private float[] corners(TransformMath.Transform t){double[] half=a.layerHalf();float[] c=TransformMath.corners(t,sw(),sh(),half[0],half[1]);for(int i=0;i<4;i++){c[i*2]+=surface().getLeft();c[i*2+1]+=surface().getTop();}return c;}
     private float[] anchorPoint(TransformMath.Transform t){double A=sw()/sh();double ax=t.anchorX*.5*A,ay=t.anchorY*.5,tx=t.x*.5*A,ty=t.y*.5;return new float[]{(float)(surface().getLeft()+sw()/2+(tx+ax)*sh()),(float)(surface().getTop()+sh()/2-(ty+ay)*sh())};}
@@ -147,7 +147,7 @@ final class PreviewEditor extends View {
     private Motion.Key keyWithValue(Motion m,int property,long t,float value){Motion.Key existing=Keyframes.keyAt(m,property,t,0);Motion.Key k=existing!=null?existing.copy():new Motion.Key(t,value);k.value=value;return k;}
     private void moveGroupMembers(float dx,float dy){
         if(dx==0&&dy==0)return;Set<Integer> clips=new HashSet<>(a.selectedClips()),overlays=new HashSet<>(a.selectedOverlays());LayerOps.expandGroups(a.project,clips,overlays);
-        for(int i:clips)if(i!=a.selected){EditProject.Clip c=a.project.clips.get(i);if(c.track<4&&c.motion.curves.get(Motion.X).isEmpty()&&c.motion.curves.get(Motion.Y).isEmpty()){c.x=TransformMath.clamp(c.x+dx,-2,2);c.y=TransformMath.clamp(c.y+dy,-2,2);}}
+        for(int i:clips)if(i!=a.selected){EditProject.Clip c=a.project.clips.get(i);if(c.track<EditProject.AUDIO_FIRST&&c.motion.curves.get(Motion.X).isEmpty()&&c.motion.curves.get(Motion.Y).isEmpty()){c.x=TransformMath.clamp(c.x+dx,-2,2);c.y=TransformMath.clamp(c.y+dy,-2,2);}}
         for(int i:overlays)if(!(a.selected<0&&i==a.selectedOverlay)){EditProject.Overlay o=a.project.overlays.get(i);if(o.motion.curves.get(Motion.X).isEmpty()&&o.motion.curves.get(Motion.Y).isEmpty()){o.x=TransformMath.clamp(o.x+dx,-1,1);o.y=TransformMath.clamp(o.y+dy,-1,1);}}
     }
     /** Visual layers active at the playhead whose transformed bounds contain the point, topmost first. */
@@ -155,7 +155,7 @@ final class PreviewEditor extends View {
         List<int[]> hits=new ArrayList<>();long now=a.project.playheadMs;double A=sw()/(double)sh();
         for(int i=a.project.overlays.size()-1;i>=0;i--){EditProject.Overlay o=a.project.overlays.get(i);if(o.hidden||now<o.startMs||now>=o.endMs)continue;if(contains(TransformMath.of(o,now-o.startMs),halfOf(null,o,A),x,y))hits.add(new int[]{1,i});}
         List<EditProject.Placement> ps=a.project.placements();
-        for(int track=3;track>=0;track--)for(EditProject.Placement p:ps)if(p.clip.track==track&&!a.project.tracks[track].hidden&&now>=p.startMs&&now<p.endMs){EditProject.Clip c=p.clip;long source=c.inMs+Math.round((now-p.startMs)*c.speed);if(contains(TransformMath.of(c,source),halfOf(c,null,A),x,y))hits.add(new int[]{0,p.index});}
+        for(int track=EditProject.LAST_LAYER;track>=0;track--)for(EditProject.Placement p:ps)if(p.clip.track==track&&!a.project.tracks[track].hidden&&now>=p.startMs&&now<p.endMs){EditProject.Clip c=p.clip;long source=c.inMs+Math.round((now-p.startMs)*c.speed);if(contains(TransformMath.of(c,source),halfOf(c,null,A),x,y))hits.add(new int[]{0,p.index});}
         return hits;
     }
     private double[] halfOf(EditProject.Clip c,EditProject.Overlay o,double A){return a.layerHalf(c,o);}

@@ -8,7 +8,9 @@ android {
         applicationId 'com.blackice.bc1'
         // Use a parallel preview install when the earlier signing key is unavailable.
         if (project.hasProperty('bc1SideBySide')) applicationIdSuffix '.preview'
-        manifestPlaceholders = [appLabel: project.hasProperty('bc1SideBySide') ? 'BC-1 v1.1.2' : 'BC-1 Dual Workspace']
+        // ICE Lite test builds install beside the released app and never touch its projects.
+        if (project.hasProperty('bc1IceLite')) { applicationIdSuffix '.icelite'; versionNameSuffix '-icelite' }
+        manifestPlaceholders = [appLabel: project.hasProperty('bc1IceLite') ? 'BC-1 ICE Lite test' : project.hasProperty('bc1SideBySide') ? 'BC-1 v1.1.2' : 'BC-1 Dual Workspace']
         minSdk 26
         targetSdk 35
         versionCode 20
