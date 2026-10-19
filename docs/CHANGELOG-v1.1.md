@@ -1,5 +1,11 @@
 # Black Ice Editor 1.1.0 — cinematic redesign preview
 
+## 1.2.1 — live edits
+
+- Edits show at once while paused: the ICE Lite live preview draws the frame at the playhead, so moving, trimming, effects, sliders, layers and paused scrubbing no longer show "Preparing preview" or need Play to appear.
+- Projects with layers or several clips still play from a rendered preview; it is now prepared in the background after edits settle, and Play joins a render already running.
+- Switching a clip's effect compiles only that effect (a small pass of its own) in the live preview. Export is unchanged.
+
 ## 1.2.0 — ICE Lite engine, timeline and media update
 
 - ICE Lite render/export engine beside Media3 (Setup → Export engine); projects Media3 cannot render are routed to ICE Lite automatically.
