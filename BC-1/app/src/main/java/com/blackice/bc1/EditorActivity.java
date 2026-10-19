@@ -1058,8 +1058,8 @@ public final class EditorActivity extends Activity {
         }catch(Exception e){main.post(()->{exportLaunching=false;tell("Cannot prepare export: "+e.getMessage());});}});
     }
     @Override public boolean onKeyDown(int key,KeyEvent event){
-        if(key==KeyEvent.KEYCODE_BACK&&!wideLayout&&!fullscreenPreview&&tab==0){tab=1;renderInspector();return true;}
         if(key==KeyEvent.KEYCODE_BACK&&mobile!=null&&mobile.dismiss())return true;
+        if(key==KeyEvent.KEYCODE_BACK&&!wideLayout&&!fullscreenPreview&&tab==0){tab=1;renderInspector();return true;}
         if(key==KeyEvent.KEYCODE_BACK&&fullscreenPreview){fullscreenPreview=false;buildWorkspace();return true;}
         if(getCurrentFocus() instanceof EditText)return super.onKeyDown(key,event);
         if(event.isCtrlPressed()&&key==KeyEvent.KEYCODE_S){saveNow();return true;}
