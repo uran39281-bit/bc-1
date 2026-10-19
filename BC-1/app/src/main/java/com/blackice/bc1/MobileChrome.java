@@ -11,7 +11,8 @@ import com.blackice.bc1.editor.*;
 final class MobileChrome {
     final EditorActivity a;
     FrameLayout stage;LinearLayout sheet;TextView add,undo,redo,duplicate,badge,clock;
-    boolean dismissed;int selection=Integer.MIN_VALUE;float sheetFraction=.48f;
+    final java.util.List<TextView> navigation=new java.util.ArrayList<>();
+    boolean dismissed;int activeNav;int selection=Integer.MIN_VALUE;float sheetFraction=.48f;
     MobileChrome(EditorActivity activity){a=activity;}
     int dp(float n){return a.dp(n);}
     TextView control(String icon,String label,View.OnClickListener action){TextView b=a.transportIcon(icon,label,action);b.setMinWidth(dp(48));b.setMinHeight(dp(48));b.setPadding(dp(12),0,dp(12),0);return b;}
@@ -31,7 +32,7 @@ final class MobileChrome {
         add=a.button("+",v->openAdd(3));add.setTextSize(32);add.setContentDescription("Add content");GradientDrawable circle=BlackIceTheme.primary(a.getResources().getDisplayMetrics().density);circle.setCornerRadius(dp(32));add.setBackground(circle);add.setElevation(dp(6));
         FrameLayout.LayoutParams ap=new FrameLayout.LayoutParams(dp(60),dp(60),Gravity.BOTTOM|Gravity.END);ap.setMargins(0,0,dp(16),dp(82));stage.addView(add,ap);
         HorizontalScrollView nav=new HorizontalScrollView(a);nav.setHorizontalScrollBarEnabled(false);nav.setFillViewport(true);LinearLayout tabs=a.row();nav.addView(tabs);String[] labels={"Edit","Audio","Text","Effects","Overlay","Captions","Layers"};String[] icons={"Edit","Audio","Text","Effects","Media","Text","Layers"};
-        for(int i=0;i<labels.length;i++){final int index=i;TextView b=a.iconButton(labels[i],v->navigate(index));b.setTextSize(11);b.setCompoundDrawables(null,a.icon(icons[i],EditorActivity.TEXT),null,null);b.setContentDescription(labels[i].equals("Captions")?"Add manual caption":labels[i]);tabs.addView(b,new LinearLayout.LayoutParams(dp(64),dp(68)));}
+        for(int i=0;i<labels.length;i++){final int index=i;TextView b=a.iconButton(labels[i],v->navigate(index));b.setTextSize(11);b.setCompoundDrawables(null,a.icon(icons[i],EditorActivity.TEXT),null,null);b.setContentDescription(labels[i].equals("Captions")?"Add manual caption":labels[i]);navigation.add(b);tabs.addView(b,new LinearLayout.LayoutParams(dp(64),dp(68)));}
         stage.addView(nav,new FrameLayout.LayoutParams(-1,dp(68),Gravity.BOTTOM));
         sheet=a.column();sheet.setElevation(dp(12));GradientDrawable bg=a.buttonBackground(false);bg.setCornerRadii(new float[]{dp(24),dp(24),dp(24),dp(24),0,0,0,0});sheet.setBackground(bg);
         TextView handle=a.label("━━",16,BlackIceTheme.ICE,true);handle.setGravity(Gravity.CENTER);handle.setContentDescription("Resize add and editing panel");handle.setFocusable(true);handle.setOnClickListener(v->{sheetFraction=sheetFraction<.55f?.64f:.48f;update();});sheet.addView(handle,new LinearLayout.LayoutParams(-1,dp(48)));
@@ -57,12 +58,12 @@ final class MobileChrome {
     void saveAndProjects(){if(a.loading||a.importing)return;EditProject snapshot=ProjectStore.snapshot(a.project);a.io.execute(()->{try{a.store.save(snapshot);a.main.post(()->{if(!a.isDestroyed())a.projectsMenu();});}catch(Exception e){a.main.post(()->new AlertDialog.Builder(a).setTitle("Could not save project").setMessage("Your edits remain open. Retry saving before leaving.").setPositiveButton("Retry",(d,w)->saveAndProjects()).setNegativeButton("Keep editing",null).show());}});}
     void quality(){new AlertDialog.Builder(a).setTitle("Preview quality (export unchanged)").setSingleChoiceItems(new String[]{"360p","540p","1080p"},a.project.previewHeight==360?0:a.project.previewHeight==540?1:2,(d,i)->{if(a.editable())a.edit("Preview quality changed",()->a.project.previewHeight=new int[]{360,540,1080}[i]);d.dismiss();}).setNegativeButton("Back",null).show();}
     void openAdd(int category){dismissed=false;a.addDrawer.category=category;a.tab=0;a.renderInspector();}
-    void navigate(int index){dismissed=false;a.panels.reset();switch(index){case 0:a.tab=1;break;case 1:openAdd(1);return;case 2:inputText(false);return;case 3:a.tab=2;break;case 4:openAdd(0);return;case 5:inputText(true);return;default:a.tab=3;}a.renderInspector();}
+    void navigate(int index){activeNav=index;dismissed=false;a.panels.reset();switch(index){case 0:a.tab=1;break;case 1:openAdd(1);return;case 2:inputText(false);return;case 3:a.tab=2;break;case 4:openAdd(0);return;case 5:inputText(true);return;default:a.tab=3;}a.renderInspector();}
     void inputText(boolean caption){a.numberDialog(caption?"Add manual caption":"Add text","",value->{if(value.isBlank())throw new IllegalArgumentException("Enter text");a.addOverlay(0,value,caption?.5f:1);});}
     void boundary(boolean next){long now=a.project.playheadMs,best=next?a.project.durationMs():0;for(EditProject.Placement p:a.project.placements())for(long t:new long[]{p.startMs,p.endMs})if(next?t>now&&t<best:t<now&&t>best)best=t;for(EditProject.Overlay o:a.project.overlays)for(long t:new long[]{o.startMs,o.endMs})if(next?t>now&&t<best:t<now&&t>best)best=t;for(long t:a.project.markers)if(next?t>now&&t<best:t<now&&t>best)best=t;a.seek(best);}
     boolean dismiss(){if(sheet.getVisibility()!=View.VISIBLE)return false;dismissed=true;a.tab=1;a.renderInspector();return true;}
     void inspectorTitle(LinearLayout into){LinearLayout title=a.row();TextView label=a.label(a.tab==0?"ADD CONTENT":a.tab==4?"SETTINGS":"SELECTED LAYER",12,EditorActivity.CYAN,true);title.addView(label,new LinearLayout.LayoutParams(0,dp(48),1));title.addView(control("Close","Close media browser and return to timeline",v->dismiss()),new LinearLayout.LayoutParams(dp(48),dp(48)));into.addView(title);}
-    void update(){if(stage==null)return;int selected=a.selected*1000+a.selectedOverlay;if(selection!=selected){selection=selected;dismissed=false;}
+    void update(){if(stage==null)return;for(int i=0;i<navigation.size();i++){TextView b=navigation.get(i);boolean on=i==activeNav;b.setSelected(on);b.setTextColor(on?EditorActivity.CYAN:EditorActivity.TEXT);b.setBackground(a.navBackground(on));}int selected=a.selected*1000+a.selectedOverlay;if(selection!=selected){selection=selected;dismissed=false;}
         boolean visible=!dismissed&&(a.tab!=1||a.clip()!=null||a.overlay()!=null||a.multiCount()>1);int h=stage.getHeight();if(h<=0)h=dp(a.getResources().getConfiguration().screenHeightDp-150);
         int preview=Math.min(dp(a.workspaceFocus==2?320:a.workspaceFocus==1?130:250),Math.max(dp(100),(int)(h*(a.workspaceFocus==2?.50f:a.workspaceFocus==1?.23f:.40f))));a.phonePreview.getLayoutParams().height=preview;a.phonePreview.requestLayout();
         int height=Math.max(dp(210),(int)(h*sheetFraction));if(sheet.getLayoutParams().height!=height){sheet.getLayoutParams().height=height;sheet.requestLayout();}

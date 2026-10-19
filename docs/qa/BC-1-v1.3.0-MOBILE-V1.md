@@ -1,0 +1,37 @@
+# BC-1 1.3.0 mobile V1 — implementation candidate
+
+Status: development, not qualified for release. CI and visual review pending.
+Base: main 119e203 (1.2.1), preserving the ICE Lite live preview and existing editor operations.
+
+## Implementation
+
+- Native Android Views; `MobileChrome` owns phone presentation while `EditorActivity` retains editing state, persistence, importing, playback and export.
+- Compact header with save-before-project-navigation, editable project title, real preview-resolution badge, Settings and Export. No fabricated AI UHD option.
+- Undo/redo, boundary navigation, playback, duplicate and preview framing controls directly below preview.
+- Flexible timeline with existing selection, trimming, moving, pinch zoom and snapping; floating Add button and scrollable navigation with 48dp targets.
+- Add Content is an overlay sheet in the same Activity, with resize handle, Shape/Media/Audio/Elements content, Text and close rail. Opening does not rebuild the preview or seek.
+- Eighteen vector shape types share geometry between thumbnails, preview and export. Existing shape IDs and project serialization remain intact. Shape-only/text-only projects use ICE Lite instead of requiring dummy video.
+- Existing tablet/DeX workspace retained, with shared palette and editor state.
+
+## Staged limitations
+
+- Freehand drawing, editable vector nodes, templates and automatic captions are not implemented; no fake controls added. Captions creates manual editable text.
+- Shape geometry is preset; transform, fill, outline, opacity, duration and existing keyframes are editable. Independent X/Y scale and arbitrary node editing are not newly implemented.
+- Existing engine supports landscape 16:9 and portrait 9:16 project canvases; arbitrary project aspect ratios remain outside this stage.
+- Existing limits remain: eight visual tracks, four audio tracks, twenty overlay objects.
+- Audio import and waveform display are retained; library audio audition and multi-selection staging need a later pass.
+- Sheet opens with reduced-motion-aware animation; close currently dismisses immediately. No fake pagination or unsupported assets.
+- Physical Snapdragon/Samsung DeX testing remains necessary. Emulator rendering cannot establish device performance.
+
+## Validation and build
+
+New MobileSheetTest covers sheet state, playhead/preview preservation, shape insertion, undo/redo, persistence and vector-only export. PhoneMediaSpaceTest measures usable media sheet height on two phone sizes. Existing WorkspaceV2Test exercises phone and DeX editing. Existing media export checks are retained, with one additional independently decoded vector-only MP4 check.
+
+Build using JDK 17, Android SDK 36, Gradle 8.11.1:
+
+```
+cd BC-1
+gradle --no-daemon -Pbc1SideBySide testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
+```
+
+GitHub Actions additionally runs the Android instrumentation suite and independent ffmpeg/ffprobe export verification. CI APK signing is not the retained preview certificate; a downloadable update must be separately signed with the retained key and verified before publication. Signing material is never committed.

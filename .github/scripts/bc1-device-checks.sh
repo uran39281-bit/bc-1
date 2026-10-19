@@ -107,3 +107,17 @@ assert any(s['codec_type']=='audio' and s['codec_name']=='aac' for s in report['
 print('Independent ICE Lite check passed:', sys.argv[1], sys.argv[2], sys.argv[3], 'frames + AAC')
 PYVERIFY
 done
+
+# Native shape-only projects must export without a dummy source video.
+SHAPES_MP4="BC-1/app/build/reports/androidTests/qa/v130-shapes-only.mp4"
+ffmpeg -v error -xerror -i "$SHAPES_MP4" -f null -
+ffprobe -v error -count_frames -show_streams -show_format -of json "$SHAPES_MP4" > "$SHAPES_MP4.ffprobe.json"
+python3 - "$SHAPES_MP4.ffprobe.json" <<'PYVERIFY'
+import json,sys
+report=json.load(open(sys.argv[1]))
+video=next(s for s in report['streams'] if s['codec_type']=='video')
+assert video['codec_name']=='h264' and video['height']==180,video
+assert int(video['nb_read_frames'])==30,video
+assert .9<float(report['format']['duration'])<1.2,report['format']
+print('Independent vector-only export check passed: H.264, 180p, 30 frames, one second')
+PYVERIFY
