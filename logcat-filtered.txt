@@ -1,0 +1,527 @@
+10-19 01:41:10.128  3706  3706 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-19 01:41:10.138  3706  3706 I AndroidRuntime: Using default boot image
+10-19 01:41:10.138  3706  3706 I AndroidRuntime: Leaving lock profiling enabled
+10-19 01:41:10.568  3706  3706 D AndroidRuntime: Calling main entry com.android.commands.am.Am
+10-19 01:41:11.669  3749  3783 I TestRunner: run started: 39 tests
+10-19 01:41:11.671  3749  3783 I TestRunner: started: rapidSearchDuringDecodeUpdatesCurrentThumbnail(com.blackice.bc1.EditorWorkspaceTest)
+10-19 01:41:21.888  3749  3783 I TestRunner: finished: rapidSearchDuringDecodeUpdatesCurrentThumbnail(com.blackice.bc1.EditorWorkspaceTest)
+10-19 01:41:21.889  3749  3783 I TestRunner: started: editorAdaptsAndTabsKeepVideoSurface(com.blackice.bc1.EditorWorkspaceTest)
+10-19 01:41:48.112  3749  3749 D BC1Preview: state 2 pos=0 playhead=0
+10-19 01:41:48.951  3749  3749 D BC1Preview: state 3 pos=0 playhead=0
+10-19 01:41:51.216  3749  3749 D BC1Preview: seek 1000 state=3
+10-19 01:41:51.218  3749  3749 D BC1Preview: state 2 pos=1000 playhead=1000
+10-19 01:41:51.353  3749  3749 D BC1Preview: state 3 pos=1000 playhead=1000
+10-19 01:41:51.732  3749  3749 D BC1Preview: seek 0 state=3
+10-19 01:41:51.732  3749  3749 D BC1Preview: state 2 pos=0 playhead=0
+10-19 01:41:51.844  3749  3749 D BC1Preview: state 3 pos=0 playhead=0
+10-19 01:41:54.799  3749  3749 D BC1Preview: seek 1000 state=3
+10-19 01:41:54.800  3749  3749 D BC1Preview: state 2 pos=1000 playhead=1000
+10-19 01:41:55.044  3749  3749 D BC1Preview: state 3 pos=1000 playhead=1000
+10-19 01:41:57.477  3749  3749 D BC1Preview: state 2 pos=1000 playhead=1000
+10-19 01:41:58.552  3749  3749 D BC1Preview: state 3 pos=1000 playhead=1000
+10-19 01:42:00.997  3749  3749 D BC1Preview: seek 750 state=3
+10-19 01:42:00.997  3749  3749 D BC1Preview: state 2 pos=750 playhead=750
+10-19 01:42:01.444  3749  3749 D BC1Preview: state 3 pos=750 playhead=750
+10-19 01:42:01.698  3749  3749 D BC1Preview: state 2 pos=750 playhead=750
+10-19 01:42:02.209  3749  3749 D BC1Preview: state 3 pos=750 playhead=750
+10-19 01:42:05.602  3749  3749 D BC1Preview: seek 0 state=3
+10-19 01:42:05.607  3749  3749 D BC1Preview: state 2 pos=0 playhead=0
+10-19 01:42:06.128  3749  3749 D BC1Preview: state 3 pos=0 playhead=0
+10-19 01:42:06.472  3749  3749 D BC1Preview: state 2 pos=0 playhead=0
+10-19 01:42:06.926  3749  3749 D BC1Preview: state 3 pos=0 playhead=0
+10-19 01:42:10.478  3749  3783 I TestRunner: finished: editorAdaptsAndTabsKeepVideoSurface(com.blackice.bc1.EditorWorkspaceTest)
+10-19 01:42:10.489  3749  3783 I TestRunner: started: setupShowsAndCopiesRedactedReport(com.blackice.bc1.ExportDiagnosticsUiTest)
+10-19 01:42:11.560  3749  3783 I TestRunner: finished: setupShowsAndCopiesRedactedReport(com.blackice.bc1.ExportDiagnosticsUiTest)
+10-19 01:42:11.582  3749  3783 I TestRunner: started: exportHonoursOrderVisibilityAndTransforms(com.blackice.bc1.LayerRenderingTest)
+10-19 01:42:24.974  3749  3783 I TestRunner: finished: exportHonoursOrderVisibilityAndTransforms(com.blackice.bc1.LayerRenderingTest)
+10-19 01:42:24.975  3749  3783 I TestRunner: started: soloIsolatesOnlyInPreview(com.blackice.bc1.LayerRenderingTest)
+10-19 01:42:31.101  3749  3783 I TestRunner: finished: soloIsolatesOnlyInPreview(com.blackice.bc1.LayerRenderingTest)
+10-19 01:42:31.102  3749  3783 I TestRunner: started: mediaBrowserHasSpaceAndReturnsToEditingWithoutProjectLoss(com.blackice.bc1.PhoneMediaSpaceTest)
+10-19 01:42:45.230  3749  3783 I TestRunner: finished: mediaBrowserHasSpaceAndReturnsToEditingWithoutProjectLoss(com.blackice.bc1.PhoneMediaSpaceTest)
+10-19 01:42:45.231  3749  3783 I TestRunner: started: cancellationCacheReuseAndEditInvalidation(com.blackice.bc1.PreviewProxyTest)
+10-19 01:42:52.310  3749  3783 I TestRunner: finished: cancellationCacheReuseAndEditInvalidation(com.blackice.bc1.PreviewProxyTest)
+10-19 01:42:52.311  3749  3783 I TestRunner: started: fastScrubbingKeepsTheLivePreviewWorking(com.blackice.bc1.PreviewScrubTest)
+10-19 01:42:52.366  3749  3749 I BC1Preview: prepare live preview at 0
+10-19 01:42:52.420  3749  3749 D BC1Preview: state 2 pos=0 playhead=0
+10-19 01:42:55.621  3749  3749 D BC1Preview: state 3 pos=0 playhead=0
+10-19 01:42:55.902  3749  3749 D BC1Preview: seek 1510 state=3
+10-19 01:42:55.904  3749  3749 D BC1Preview: state 2 pos=1510 playhead=1510
+10-19 01:42:56.060  3749  3749 D BC1Preview: state 3 pos=1510 playhead=2159
+10-19 01:42:56.061  3749  3749 D BC1Preview: seek 2159 state=3
+10-19 01:42:56.064  3749  3749 D BC1Preview: state 2 pos=2159 playhead=2159
+10-19 01:42:56.230  3749  3749 D BC1Preview: state 3 pos=2159 playhead=2863
+10-19 01:42:56.230  3749  3749 D BC1Preview: seek 2863 state=3
+10-19 01:42:56.230  3749  3749 D BC1Preview: state 2 pos=2863 playhead=2863
+10-19 01:42:56.380  3749  3749 D BC1Preview: state 3 pos=2863 playhead=3013
+10-19 01:42:56.380  3749  3749 D BC1Preview: seek 3013 state=3
+10-19 01:42:56.380  3749  3749 D BC1Preview: state 2 pos=3013 playhead=3013
+10-19 01:42:56.538  3749  3749 D BC1Preview: state 3 pos=3013 playhead=2602
+10-19 01:42:56.538  3749  3749 D BC1Preview: seek 2602 state=3
+10-19 01:42:56.539  3749  3749 D BC1Preview: state 2 pos=2602 playhead=2602
+10-19 01:42:56.696  3749  3749 D BC1Preview: state 3 pos=2602 playhead=1888
+10-19 01:42:56.696  3749  3749 D BC1Preview: seek 1888 state=3
+10-19 01:42:56.697  3749  3749 D BC1Preview: state 2 pos=1888 playhead=1888
+10-19 01:42:56.901  3749  3749 D BC1Preview: state 3 pos=1888 playhead=484
+10-19 01:42:56.901  3749  3749 D BC1Preview: seek 484 state=3
+10-19 01:42:56.903  3749  3749 D BC1Preview: state 2 pos=484 playhead=484
+10-19 01:42:57.085  3749  3749 D BC1Preview: state 3 pos=484 playhead=107
+10-19 01:42:57.085  3749  3749 D BC1Preview: seek 107 state=3
+10-19 01:42:57.092  3749  3749 D BC1Preview: state 2 pos=107 playhead=107
+10-19 01:42:57.238  3749  3749 D BC1Preview: state 3 pos=107 playhead=3
+10-19 01:42:57.238  3749  3749 D BC1Preview: seek 3 state=3
+10-19 01:42:57.238  3749  3749 D BC1Preview: state 2 pos=3 playhead=3
+10-19 01:42:57.298  3749  3749 D BC1Preview: state 3 pos=3 playhead=118
+10-19 01:42:57.363  3749  3749 D BC1Preview: seek 118 state=3
+10-19 01:42:57.365  3749  3749 D BC1Preview: state 2 pos=118 playhead=118
+10-19 01:42:57.425  3749  3749 D BC1Preview: state 3 pos=118 playhead=282
+10-19 01:42:57.453  3749  3749 D BC1Preview: seek 387 state=3
+10-19 01:42:57.458  3749  3749 D BC1Preview: state 2 pos=387 playhead=387
+10-19 01:42:57.575  3749  3749 D BC1Preview: state 3 pos=387 playhead=930
+10-19 01:42:57.575  3749  3749 D BC1Preview: seek 930 state=3
+10-19 01:42:57.583  3749  3749 D BC1Preview: state 2 pos=930 playhead=930
+10-19 01:42:57.719  3749  3749 D BC1Preview: state 3 pos=930 playhead=1586
+10-19 01:42:57.720  3749  3749 D BC1Preview: seek 1586 state=3
+10-19 01:42:57.723  3749  3749 D BC1Preview: state 2 pos=1586 playhead=1586
+10-19 01:42:57.904  3749  3749 D BC1Preview: state 3 pos=1586 playhead=2622
+10-19 01:42:57.904  3749  3749 D BC1Preview: seek 2622 state=3
+10-19 01:42:57.906  3749  3749 D BC1Preview: state 2 pos=2622 playhead=2622
+10-19 01:42:58.076  3749  3749 D BC1Preview: state 3 pos=2622 playhead=3016
+10-19 01:42:58.076  3749  3749 D BC1Preview: seek 3016 state=3
+10-19 01:42:58.080  3749  3749 D BC1Preview: state 2 pos=3016 playhead=3016
+10-19 01:42:58.207  3749  3749 D BC1Preview: state 3 pos=3016 playhead=2850
+10-19 01:42:58.207  3749  3749 D BC1Preview: seek 2850 state=3
+10-19 01:42:58.209  3749  3749 D BC1Preview: state 2 pos=2850 playhead=2850
+10-19 01:42:58.327  3749  3749 D BC1Preview: state 3 pos=2850 playhead=2420
+10-19 01:42:58.327  3749  3749 D BC1Preview: seek 2420 state=3
+10-19 01:42:58.328  3749  3749 D BC1Preview: state 2 pos=2420 playhead=2420
+10-19 01:42:58.494  3749  3749 D BC1Preview: state 3 pos=2420 playhead=1480
+10-19 01:42:58.494  3749  3749 D BC1Preview: seek 1480 state=3
+10-19 01:42:58.497  3749  3749 D BC1Preview: state 2 pos=1480 playhead=1480
+10-19 01:42:58.666  3749  3749 D BC1Preview: state 3 pos=1480 playhead=429
+10-19 01:42:58.666  3749  3749 D BC1Preview: seek 429 state=3
+10-19 01:42:58.667  3749  3749 D BC1Preview: state 2 pos=429 playhead=429
+10-19 01:42:58.751  3749  3749 D BC1Preview: state 3 pos=429 playhead=144
+10-19 01:42:58.788  3749  3749 D BC1Preview: seek 144 state=3
+10-19 01:42:58.789  3749  3749 D BC1Preview: state 2 pos=144 playhead=144
+10-19 01:42:58.843  3749  3749 D BC1Preview: state 3 pos=144 playhead=36
+10-19 01:42:58.880  3749  3749 D BC1Preview: seek 0 state=3
+10-19 01:42:58.883  3749  3749 D BC1Preview: state 2 pos=0 playhead=0
+10-19 01:42:59.022  3749  3749 D BC1Preview: state 3 pos=0 playhead=231
+10-19 01:42:59.022  3749  3749 D BC1Preview: seek 231 state=3
+10-19 01:42:59.024  3749  3749 D BC1Preview: state 2 pos=231 playhead=231
+10-19 01:42:59.202  3749  3749 D BC1Preview: state 3 pos=231 playhead=700
+10-19 01:42:59.202  3749  3749 D BC1Preview: seek 700 state=3
+10-19 01:42:59.203  3749  3749 D BC1Preview: state 2 pos=700 playhead=700
+10-19 01:42:59.374  3749  3749 D BC1Preview: state 3 pos=700 playhead=1326
+10-19 01:42:59.374  3749  3749 D BC1Preview: seek 1326 state=3
+10-19 01:42:59.379  3749  3749 D BC1Preview: state 2 pos=1326 playhead=1326
+10-19 01:42:59.550  3749  3749 D BC1Preview: state 3 pos=1326 playhead=2431
+10-19 01:42:59.550  3749  3749 D BC1Preview: seek 2431 state=3
+10-19 01:42:59.551  3749  3749 D BC1Preview: state 2 pos=2431 playhead=2431
+10-19 01:42:59.735  3749  3749 D BC1Preview: state 3 pos=2431 playhead=2974
+10-19 01:42:59.735  3749  3749 D BC1Preview: seek 2974 state=3
+10-19 01:42:59.738  3749  3749 D BC1Preview: state 2 pos=2974 playhead=2974
+10-19 01:42:59.872  3749  3749 D BC1Preview: state 3 pos=2974 playhead=2949
+10-19 01:42:59.872  3749  3749 D BC1Preview: seek 2949 state=3
+10-19 01:42:59.874  3749  3749 D BC1Preview: state 2 pos=2949 playhead=2949
+10-19 01:42:59.991  3749  3749 D BC1Preview: state 3 pos=2949 playhead=2613
+10-19 01:42:59.991  3749  3749 D BC1Preview: seek 2613 state=3
+10-19 01:42:59.993  3749  3749 D BC1Preview: state 2 pos=2613 playhead=2613
+10-19 01:43:00.139  3749  3749 D BC1Preview: state 3 pos=2613 playhead=1739
+10-19 01:43:00.139  3749  3749 D BC1Preview: seek 1739 state=3
+10-19 01:43:00.144  3749  3749 D BC1Preview: state 2 pos=1739 playhead=1739
+10-19 01:43:00.335  3749  3749 D BC1Preview: state 3 pos=1739 playhead=767
+10-19 01:43:00.336  3749  3749 D BC1Preview: seek 767 state=3
+10-19 01:43:00.339  3749  3749 D BC1Preview: state 2 pos=767 playhead=767
+10-19 01:43:00.471  3749  3749 D BC1Preview: state 3 pos=767 playhead=378
+10-19 01:43:00.471  3749  3749 D BC1Preview: seek 378 state=3
+10-19 01:43:00.471  3749  3749 D BC1Preview: state 2 pos=378 playhead=378
+10-19 01:43:00.605  3749  3749 D BC1Preview: state 3 pos=378 playhead=58
+10-19 01:43:00.605  3749  3749 D BC1Preview: seek 58 state=3
+10-19 01:43:00.606  3749  3749 D BC1Preview: state 2 pos=58 playhead=58
+10-19 01:43:00.726  3749  3749 D BC1Preview: state 3 pos=58 playhead=57
+10-19 01:43:00.727  3749  3749 D BC1Preview: seek 57 state=3
+10-19 01:43:00.729  3749  3749 D BC1Preview: state 2 pos=57 playhead=57
+10-19 01:43:00.819  3749  3749 D BC1Preview: state 3 pos=57 playhead=376
+10-19 01:43:00.819  3749  3749 D BC1Preview: seek 376 state=3
+10-19 01:43:00.831  3749  3749 D BC1Preview: state 2 pos=376 playhead=376
+10-19 01:43:01.028  3749  3749 D BC1Preview: state 3 pos=376 playhead=1072
+10-19 01:43:01.028  3749  3749 D BC1Preview: seek 1072 state=3
+10-19 01:43:01.029  3749  3749 D BC1Preview: state 2 pos=1072 playhead=1072
+10-19 01:43:01.197  3749  3749 D BC1Preview: state 3 pos=1072 playhead=2060
+10-19 01:43:01.197  3749  3749 D BC1Preview: seek 2060 state=3
+10-19 01:43:01.203  3749  3749 D BC1Preview: state 2 pos=2060 playhead=2060
+10-19 01:43:01.365  3749  3749 D BC1Preview: state 3 pos=2060 playhead=2812
+10-19 01:43:01.366  3749  3749 D BC1Preview: seek 2812 state=3
+10-19 01:43:01.369  3749  3749 D BC1Preview: state 2 pos=2812 playhead=2812
+10-19 01:43:01.507  3749  3749 D BC1Preview: state 3 pos=2812 playhead=3020
+10-19 01:43:01.507  3749  3749 D BC1Preview: seek 3020 state=3
+10-19 01:43:01.512  3749  3749 D BC1Preview: state 2 pos=3020 playhead=3020
+10-19 01:43:01.657  3749  3749 D BC1Preview: state 3 pos=3020 playhead=2773
+10-19 01:43:01.657  3749  3749 D BC1Preview: seek 2773 state=3
+10-19 01:43:01.658  3749  3749 D BC1Preview: state 2 pos=2773 playhead=2773
+10-19 01:43:01.812  3749  3749 D BC1Preview: state 3 pos=2773 playhead=1991
+10-19 01:43:01.812  3749  3749 D BC1Preview: seek 1991 state=3
+10-19 01:43:01.812  3749  3749 D BC1Preview: state 2 pos=1991 playhead=1991
+10-19 01:43:01.986  3749  3749 D BC1Preview: state 3 pos=1991 playhead=1003
+10-19 01:43:01.986  3749  3749 D BC1Preview: seek 1003 state=3
+10-19 01:43:01.987  3749  3749 D BC1Preview: state 2 pos=1003 playhead=1003
+10-19 01:43:02.173  3749  3749 D BC1Preview: state 3 pos=1003 playhead=86
+10-19 01:43:02.173  3749  3749 D BC1Preview: seek 86 state=3
+10-19 01:43:02.174  3749  3749 D BC1Preview: state 2 pos=86 playhead=86
+10-19 01:43:02.267  3749  3749 D BC1Preview: state 3 pos=86 playhead=8
+10-19 01:43:02.267  3749  3749 D BC1Preview: seek 8 state=3
+10-19 01:43:02.268  3749  3749 D BC1Preview: state 2 pos=8 playhead=8
+10-19 01:43:02.374  3749  3749 D BC1Preview: state 3 pos=8 playhead=427
+10-19 01:43:02.374  3749  3749 D BC1Preview: seek 427 state=3
+10-19 01:43:02.381  3749  3749 D BC1Preview: state 2 pos=427 playhead=427
+10-19 01:43:02.533  3749  3749 D BC1Preview: state 3 pos=427 playhead=686
+10-19 01:43:02.533  3749  3749 D BC1Preview: seek 686 state=3
+10-19 01:43:02.534  3749  3749 D BC1Preview: state 2 pos=686 playhead=686
+10-19 01:43:02.677  3749  3749 D BC1Preview: state 3 pos=686 playhead=1477
+10-19 01:43:02.678  3749  3749 D BC1Preview: seek 1477 state=3
+10-19 01:43:02.678  3749  3749 D BC1Preview: state 2 pos=1477 playhead=1477
+10-19 01:43:02.812  3749  3749 D BC1Preview: state 3 pos=1477 playhead=2278
+10-19 01:43:02.812  3749  3749 D BC1Preview: seek 2278 state=3
+10-19 01:43:02.820  3749  3749 D BC1Preview: state 2 pos=2278 playhead=2278
+10-19 01:43:03.029  3749  3749 D BC1Preview: state 3 pos=2278 playhead=2970
+10-19 01:43:03.029  3749  3749 D BC1Preview: seek 2970 state=3
+10-19 01:43:03.029  3749  3749 D BC1Preview: state 2 pos=2970 playhead=2970
+10-19 01:43:03.190  3749  3749 D BC1Preview: state 3 pos=2970 playhead=2730
+10-19 01:43:03.190  3749  3749 D BC1Preview: seek 2730 state=3
+10-19 01:43:03.191  3749  3749 D BC1Preview: state 2 pos=2730 playhead=2730
+10-19 01:43:03.312  3749  3749 D BC1Preview: state 3 pos=2730 playhead=2229
+10-19 01:43:03.313  3749  3749 D BC1Preview: seek 2229 state=3
+10-19 01:43:03.314  3749  3749 D BC1Preview: state 2 pos=2229 playhead=2229
+10-19 01:43:03.494  3749  3749 D BC1Preview: state 3 pos=2229 playhead=1091
+10-19 01:43:03.494  3749  3749 D BC1Preview: seek 1091 state=3
+10-19 01:43:03.496  3749  3749 D BC1Preview: state 2 pos=1091 playhead=1091
+10-19 01:43:03.630  3749  3749 D BC1Preview: state 3 pos=1091 playhead=508
+10-19 01:43:03.630  3749  3749 D BC1Preview: seek 508 state=3
+10-19 01:43:03.631  3749  3749 D BC1Preview: state 2 pos=508 playhead=508
+10-19 01:43:03.765  3749  3749 D BC1Preview: state 3 pos=508 playhead=193
+10-19 01:43:03.766  3749  3749 D BC1Preview: seek 193 state=3
+10-19 01:43:03.768  3749  3749 D BC1Preview: state 2 pos=193 playhead=193
+10-19 01:43:03.891  3749  3749 D BC1Preview: state 3 pos=193 playhead=3
+10-19 01:43:03.893  3749  3749 D BC1Preview: seek 3 state=3
+10-19 01:43:03.897  3749  3749 D BC1Preview: state 2 pos=3 playhead=3
+10-19 01:43:03.958  3749  3749 D BC1Preview: state 3 pos=3 playhead=106
+10-19 01:43:03.989  3749  3749 D BC1Preview: seek 263 state=3
+10-19 01:43:03.993  3749  3749 D BC1Preview: state 2 pos=263 playhead=263
+10-19 01:43:04.101  3749  3749 D BC1Preview: state 3 pos=263 playhead=610
+10-19 01:43:04.102  3749  3749 D BC1Preview: seek 610 state=3
+10-19 01:43:04.143  3749  3749 D BC1Preview: state 2 pos=610 playhead=610
+10-19 01:43:04.304  3749  3749 D BC1Preview: state 3 pos=610 playhead=1219
+10-19 01:43:04.304  3749  3749 D BC1Preview: seek 1219 state=3
+10-19 01:43:04.305  3749  3749 D BC1Preview: state 2 pos=1219 playhead=1219
+10-19 01:43:04.489  3749  3749 D BC1Preview: state 3 pos=1219 playhead=2198
+10-19 01:43:04.489  3749  3749 D BC1Preview: seek 2198 state=3
+10-19 01:43:04.492  3749  3749 D BC1Preview: state 2 pos=2198 playhead=2198
+10-19 01:43:04.641  3749  3749 D BC1Preview: state 3 pos=2198 playhead=2803
+10-19 01:43:04.641  3749  3749 D BC1Preview: seek 2803 state=3
+10-19 01:43:04.641  3749  3749 D BC1Preview: state 2 pos=2803 playhead=2803
+10-19 01:43:04.778  3749  3749 D BC1Preview: state 3 pos=2803 playhead=3020
+10-19 01:43:04.779  3749  3749 D BC1Preview: seek 3020 state=3
+10-19 01:43:04.779  3749  3749 D BC1Preview: state 2 pos=3020 playhead=3020
+10-19 01:43:04.905  3749  3749 D BC1Preview: state 3 pos=3020 playhead=2930
+10-19 01:43:04.905  3749  3749 D BC1Preview: seek 2930 state=3
+10-19 01:43:04.906  3749  3749 D BC1Preview: state 2 pos=2930 playhead=2930
+10-19 01:43:05.047  3749  3749 D BC1Preview: state 3 pos=2930 playhead=2446
+10-19 01:43:05.047  3749  3749 D BC1Preview: seek 2446 state=3
+10-19 01:43:05.049  3749  3749 D BC1Preview: state 2 pos=2446 playhead=2446
+10-19 01:43:05.222  3749  3749 D BC1Preview: state 3 pos=2446 playhead=1513
+10-19 01:43:05.222  3749  3749 D BC1Preview: seek 1513 state=3
+10-19 01:43:05.224  3749  3749 D BC1Preview: state 2 pos=1513 playhead=1513
+10-19 01:43:05.360  3749  3749 D BC1Preview: state 3 pos=1513 playhead=863
+10-19 01:43:05.360  3749  3749 D BC1Preview: seek 863 state=3
+10-19 01:43:05.361  3749  3749 D BC1Preview: state 2 pos=863 playhead=863
+10-19 01:43:05.557  3749  3749 D BC1Preview: state 3 pos=863 playhead=158
+10-19 01:43:05.557  3749  3749 D BC1Preview: seek 158 state=3
+10-19 01:43:05.558  3749  3749 D BC1Preview: state 2 pos=158 playhead=158
+10-19 01:43:05.654  3749  3749 D BC1Preview: state 3 pos=158 playhead=0
+10-19 01:43:05.654  3749  3749 D BC1Preview: seek 0 state=3
+10-19 01:43:05.657  3749  3749 D BC1Preview: state 2 pos=0 playhead=0
+10-19 01:43:05.774  3749  3749 D BC1Preview: state 3 pos=0 playhead=75
+10-19 01:43:05.774  3749  3749 D BC1Preview: seek 75 state=3
+10-19 01:43:05.776  3749  3749 D BC1Preview: state 2 pos=75 playhead=75
+10-19 01:43:05.880  3749  3749 D BC1Preview: state 3 pos=75 playhead=307
+10-19 01:43:05.880  3749  3749 D BC1Preview: seek 307 state=3
+10-19 01:43:05.882  3749  3749 D BC1Preview: state 2 pos=307 playhead=307
+10-19 01:43:06.052  3749  3749 D BC1Preview: state 3 pos=307 playhead=538
+10-19 01:43:06.052  3749  3749 D BC1Preview: seek 538 state=3
+10-19 01:43:06.054  3749  3749 D BC1Preview: state 2 pos=538 playhead=538
+10-19 01:43:06.210  3749  3749 D BC1Preview: state 3 pos=538 playhead=1461
+10-19 01:43:06.212  3749  3749 D BC1Preview: seek 1461 state=3
+10-19 01:43:06.216  3749  3749 D BC1Preview: state 2 pos=1461 playhead=1461
+10-19 01:43:06.360  3749  3749 D BC1Preview: state 3 pos=1461 playhead=2115
+10-19 01:43:06.360  3749  3749 D BC1Preview: seek 2115 state=3
+10-19 01:43:06.361  3749  3749 D BC1Preview: state 2 pos=2115 playhead=2115
+10-19 01:43:06.564  3749  3749 D BC1Preview: state 3 pos=2115 playhead=2912
+10-19 01:43:06.564  3749  3749 D BC1Preview: seek 2912 state=3
+10-19 01:43:06.565  3749  3749 D BC1Preview: state 2 pos=2912 playhead=2912
+10-19 01:43:06.729  3749  3749 D BC1Preview: state 3 pos=2912 playhead=2959
+10-19 01:43:06.729  3749  3749 D BC1Preview: seek 2959 state=3
+10-19 01:43:06.730  3749  3749 D BC1Preview: state 2 pos=2959 playhead=2959
+10-19 01:43:06.858  3749  3749 D BC1Preview: state 3 pos=2959 playhead=2635
+10-19 01:43:06.858  3749  3749 D BC1Preview: seek 2635 state=3
+10-19 01:43:06.859  3749  3749 D BC1Preview: state 2 pos=2635 playhead=2635
+10-19 01:43:07.037  3749  3749 D BC1Preview: state 3 pos=2635 playhead=1771
+10-19 01:43:07.037  3749  3749 D BC1Preview: seek 1771 state=3
+10-19 01:43:07.038  3749  3749 D BC1Preview: state 2 pos=1771 playhead=1771
+10-19 01:43:07.197  3749  3749 D BC1Preview: state 3 pos=1771 playhead=948
+10-19 01:43:07.197  3749  3749 D BC1Preview: seek 948 state=3
+10-19 01:43:07.199  3749  3749 D BC1Preview: state 2 pos=948 playhead=948
+10-19 01:43:07.382  3749  3749 D BC1Preview: state 3 pos=948 playhead=202
+10-19 01:43:07.382  3749  3749 D BC1Preview: seek 202 state=3
+10-19 01:43:07.386  3749  3749 D BC1Preview: state 2 pos=202 playhead=202
+10-19 01:43:07.515  3749  3749 D BC1Preview: state 3 pos=202 playhead=27
+10-19 01:43:07.515  3749  3749 D BC1Preview: seek 27 state=3
+10-19 01:43:07.519  3749  3749 D BC1Preview: state 2 pos=27 playhead=27
+10-19 01:43:07.652  3749  3749 D BC1Preview: state 3 pos=27 playhead=16
+10-19 01:43:07.652  3749  3749 D BC1Preview: seek 16 state=3
+10-19 01:43:07.653  3749  3749 D BC1Preview: state 2 pos=16 playhead=16
+10-19 01:43:07.768  3749  3749 D BC1Preview: state 3 pos=16 playhead=169
+10-19 01:43:07.768  3749  3749 D BC1Preview: seek 169 state=3
+10-19 01:43:07.768  3749  3749 D BC1Preview: state 2 pos=169 playhead=169
+10-19 01:43:07.816  3749  3749 D BC1Preview: state 3 pos=169 playhead=254
+10-19 01:43:07.872  3749  3749 D BC1Preview: seek 355 state=3
+10-19 01:43:07.876  3749  3749 D BC1Preview: state 2 pos=355 playhead=355
+10-19 01:43:08.055  3749  3749 D BC1Preview: state 3 pos=355 playhead=1041
+10-19 01:43:08.055  3749  3749 D BC1Preview: seek 1041 state=3
+10-19 01:43:08.059  3749  3749 D BC1Preview: state 2 pos=1041 playhead=1041
+10-19 01:43:08.205  3749  3749 D BC1Preview: state 3 pos=1041 playhead=1869
+10-19 01:43:08.205  3749  3749 D BC1Preview: seek 1869 state=3
+10-19 01:43:08.206  3749  3749 D BC1Preview: state 2 pos=1869 playhead=1869
+10-19 01:43:08.215  3749  3783 I BC1Preview: test: last scrub target 2029
+10-19 01:43:08.348  3749  3749 D BC1Preview: state 3 pos=1869 playhead=2029
+10-19 01:43:08.348  3749  3749 D BC1Preview: seek 2029 state=3
+10-19 01:43:08.354  3749  3749 D BC1Preview: state 2 pos=2029 playhead=2029
+10-19 01:43:08.481  3749  3749 D BC1Preview: state 3 pos=2029 playhead=2029
+10-19 01:43:08.842  3749  3783 I TestRunner: finished: fastScrubbingKeepsTheLivePreviewWorking(com.blackice.bc1.PreviewScrubTest)
+10-19 01:43:08.845  3749  3783 I TestRunner: started: dragLeavesGapsMovesBetweenRowsAndDropsMedia(com.blackice.bc1.TimelineDragTest)
+10-19 01:43:14.370  3749  3783 I TestRunner: finished: dragLeavesGapsMovesBetweenRowsAndDropsMedia(com.blackice.bc1.TimelineDragTest)
+10-19 01:43:14.378  3749  3783 I TestRunner: started: phoneAndDexGesturesHistoryAndSaveReopen(com.blackice.bc1.TimelineInteractionTest)
+10-19 01:43:37.795  3749  3749 D BC1Preview: state 2 pos=500 playhead=500
+10-19 01:43:38.054  3749  3749 D BC1Preview: state 2 pos=500 playhead=500
+10-19 01:43:38.541  3749  3749 D BC1Preview: state 3 pos=500 playhead=500
+10-19 01:43:39.245  3749  3749 D BC1Preview: state 2 pos=500 playhead=500
+10-19 01:43:39.631  3749  3749 D BC1Preview: state 3 pos=500 playhead=500
+10-19 01:44:13.677  3749  3749 D BC1Preview: state 2 pos=500 playhead=500
+10-19 01:44:14.066  3749  3749 D BC1Preview: state 2 pos=500 playhead=500
+10-19 01:44:14.721  3749  3749 D BC1Preview: state 3 pos=500 playhead=500
+10-19 01:44:15.728  3749  3749 D BC1Preview: state 2 pos=500 playhead=500
+10-19 01:44:16.407  3749  3749 D BC1Preview: state 3 pos=500 playhead=500
+10-19 01:44:17.908  3749  3783 I TestRunner: finished: phoneAndDexGesturesHistoryAndSaveReopen(com.blackice.bc1.TimelineInteractionTest)
+10-19 01:44:17.918  3749  3783 I TestRunner: started: extractedAudioLayerOffsetsAndFadesInExport(com.blackice.bc1.VideoEditorTest)
+10-19 01:44:22.689  3749  3783 I TestRunner: finished: extractedAudioLayerOffsetsAndFadesInExport(com.blackice.bc1.VideoEditorTest)
+10-19 01:44:22.690  3749  3783 I TestRunner: started: everyVideoTransitionExportsCorrectEndpointsAndMidpoint(com.blackice.bc1.VideoEditorTest)
+10-19 01:45:20.399  3749  3783 I TestRunner: finished: everyVideoTransitionExportsCorrectEndpointsAndMidpoint(com.blackice.bc1.VideoEditorTest)
+10-19 01:45:20.400  3749  3783 I TestRunner: started: missingMediaRecordsRedactedCauseAndNextExportRecovers(com.blackice.bc1.VideoEditorTest)
+10-19 01:45:21.662  3749  3749 E BC1Export: Export failed
+10-19 01:45:21.662  3749  3749 E BC1Export: androidx.media3.transformer.ExportException: Asset loader error
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.transformer.ExoPlayerAssetLoader$PlayerListener.onPlayerError(ExoPlayerAssetLoader.java:517)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl.lambda$updatePlaybackInfo$21(ExoPlayerImpl.java:2387)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl$$ExternalSyntheticLambda34.invoke(D8$$SyntheticClass:0)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.common.util.ListenerSet$ListenerHolder.invoke(ListenerSet.java:466)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.common.util.ListenerSet.lambda$queueEvent$0(ListenerSet.java:334)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.common.util.ListenerSet$$ExternalSyntheticLambda1.run(D8$$SyntheticClass:0)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.common.util.ListenerSet.flushEvents(ListenerSet.java:358)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl.updatePlaybackInfo(ExoPlayerImpl.java:2450)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl.handlePlaybackInfo(ExoPlayerImpl.java:2273)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl.lambda$new$1$androidx-media3-exoplayer-ExoPlayerImpl(ExoPlayerImpl.java:375)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl$$ExternalSyntheticLambda13.run(D8$$SyntheticClass:0)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at android.os.Handler.handleCallback(Handler.java:959)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at android.os.Handler.dispatchMessage(Handler.java:100)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at android.os.Looper.loopOnce(Looper.java:232)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at android.os.Looper.loop(Looper.java:317)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+10-19 01:45:21.662  3749  3749 E BC1Export: Caused by: androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:1021)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:993)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at android.os.Handler.dispatchMessage(Handler.java:103)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	... 3 more
+10-19 01:45:21.662  3749  3749 E BC1Export: Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: /data/user/0/com.blackice.bc1.preview/cache/private-missing-video.mp4: open failed: ENOENT (No such file or directory)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:203)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:113)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:277)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:89)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1298)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:453)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at java.lang.Thread.run(Thread.java:1012)
+10-19 01:45:21.662  3749  3749 E BC1Export: Caused by: java.io.FileNotFoundException: /data/user/0/com.blackice.bc1.preview/cache/private-missing-video.mp4: open failed: ENOENT (No such file or directory)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at libcore.io.IoBridge.open(IoBridge.java:574)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:183)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	... 8 more
+10-19 01:45:21.662  3749  3749 E BC1Export: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at libcore.io.Linux.open(Native Method)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:563)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:563)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at android.app.ActivityThread$AndroidOs.open(ActivityThread.java:8591)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	at libcore.io.IoBridge.open(IoBridge.java:560)
+10-19 01:45:21.662  3749  3749 E BC1Export: 	... 12 more
+10-19 01:45:54.016  3749  3783 I TestRunner: finished: missingMediaRecordsRedactedCauseAndNextExportRecovers(com.blackice.bc1.VideoEditorTest)
+10-19 01:45:54.018  3749  3783 I TestRunner: started: projectBundlesRoundTripMediaAndRejectTraversal(com.blackice.bc1.VideoEditorTest)
+10-19 01:45:54.142  3749  3783 I TestRunner: finished: projectBundlesRoundTripMediaAndRejectTraversal(com.blackice.bc1.VideoEditorTest)
+10-19 01:45:54.144  3749  3783 I TestRunner: started: corruptOrFutureProjectDoesNotReplaceSavedProject(com.blackice.bc1.VideoEditorTest)
+10-19 01:45:54.181  3749  3783 I TestRunner: finished: corruptOrFutureProjectDoesNotReplaceSavedProject(com.blackice.bc1.VideoEditorTest)
+10-19 01:45:54.182  3749  3783 I TestRunner: started: projectRoundTripEditsMusicTextAnd1080pExport(com.blackice.bc1.VideoEditorTest)
+10-19 01:45:54.197  3749  3783 I BC1ExportTest: 1080p service export iteration 0
+10-19 01:46:32.108  3749  3783 I BC1ExportTest: 1080p service export iteration 1
+10-19 01:47:09.801  3749  3783 I BC1ExportTest: 1080p service export iteration 2
+10-19 01:47:46.864  3749  3783 I TestRunner: finished: projectRoundTripEditsMusicTextAnd1080pExport(com.blackice.bc1.VideoEditorTest)
+10-19 01:47:46.865  3749  3783 I TestRunner: started: previewSeeksAfterTrimAcrossBothTracks(com.blackice.bc1.VideoEditorTest)
+10-19 01:47:54.895  3749  3783 I TestRunner: finished: previewSeeksAfterTrimAcrossBothTracks(com.blackice.bc1.VideoEditorTest)
+10-19 01:47:54.910  3749  3783 I TestRunner: started: videoEffectsAndTimedImageOverlayReachTheExport(com.blackice.bc1.VideoEditorTest)
+10-19 01:48:04.351  3749  3783 I TestRunner: finished: videoEffectsAndTimedImageOverlayReachTheExport(com.blackice.bc1.VideoEditorTest)
+10-19 01:48:04.352  3749  3783 I TestRunner: started: audioWaveformDecodesRealPeaks(com.blackice.bc1.VideoEditorTest)
+10-19 01:48:04.373  3749  3783 I TestRunner: finished: audioWaveformDecodesRealPeaks(com.blackice.bc1.VideoEditorTest)
+10-19 01:48:04.374  3749  3783 I TestRunner: started: independentLayerKeyframesCompositeAndChromaKey(com.blackice.bc1.VideoEditorTest)
+10-19 01:48:19.762  3749  3783 I TestRunner: finished: independentLayerKeyframesCompositeAndChromaKey(com.blackice.bc1.VideoEditorTest)
+10-19 01:48:19.762  3749  3783 I TestRunner: started: foregroundExportCanBeCancelledWithoutPublishing(com.blackice.bc1.VideoEditorTest)
+10-19 01:48:21.306  3749  3783 I TestRunner: finished: foregroundExportCanBeCancelledWithoutPublishing(com.blackice.bc1.VideoEditorTest)
+10-19 01:48:21.311  3749  3783 I TestRunner: started: speedAndTextStyleSurviveReopenAndExport(com.blackice.bc1.VideoEditorTest)
+10-19 01:48:29.693  3749  3783 I TestRunner: finished: speedAndTextStyleSurviveReopenAndExport(com.blackice.bc1.VideoEditorTest)
+10-19 01:48:29.694  3749  3783 I TestRunner: started: emulatorWorkspacesKeepMonitorAndToolsUsable(com.blackice.bc1.WorkspaceTest)
+10-19 01:48:39.727  3749  3783 I TestRunner: finished: emulatorWorkspacesKeepMonitorAndToolsUsable(com.blackice.bc1.WorkspaceTest)
+10-19 01:48:39.739  3749  3783 I TestRunner: started: addDrawerPanelsLayersAndKeyframesOnPhoneAndDex(com.blackice.bc1.WorkspaceV2Test)
+10-19 01:49:07.475  3749  3783 I TestRunner: finished: addDrawerPanelsLayersAndKeyframesOnPhoneAndDex(com.blackice.bc1.WorkspaceV2Test)
+10-19 01:49:07.477  3749  3783 I TestRunner: started: hevcExport(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:49:14.277  3749  3783 I TestRunner: finished: hevcExport(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:49:14.278  3749  3783 I TestRunner: started: eightLayerBenchmarkRuns(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:50:00.427  3749  3783 I BC1Bench: ICE Lite benchmark • Google sdk_gphone64_x86_64 • Android 15
+10-19 01:50:00.427  3749  3783 I BC1Bench: 8 layers × 1080p60, 1.0 s timeline
+10-19 01:50:00.427  3749  3783 I BC1Bench: Export speed: 1.4 frames/s (0.02× real time)
+10-19 01:50:00.427  3749  3783 I BC1Bench: Estimated 15-minute export: 661 min
+10-19 01:50:00.427  3749  3783 I BC1Bench: Render passes: 1 • decoder budget 16 • direct layer drawing: yes
+10-19 01:50:00.427  3749  3783 I TestRunner: finished: eightLayerBenchmarkRuns(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:50:00.428  3749  3783 I TestRunner: started: acceptanceExportIsFrameAccurateWithSoundAndTransition(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:50:12.871  3749  3783 I TestRunner: finished: acceptanceExportIsFrameAccurateWithSoundAndTransition(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:50:12.872  3749  3783 I TestRunner: started: highFrameRateSourceSkipsSupersededFrames(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:50:16.486  3749  3783 I TestRunner: finished: highFrameRateSourceSkipsSupersededFrames(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:50:16.487  3749  3783 I TestRunner: started: deviceReportAndBudget(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:50:16.490  3749  3783 I BC1Report: Google sdk_gphone64_x86_64 • Android 15 (API 35)
+10-19 01:50:16.490  3749  3783 I BC1Report: Chip: AOSP ranchu
+10-19 01:50:16.490  3749  3783 I BC1Report: Memory: 2.6 GB
+10-19 01:50:16.490  3749  3783 I BC1Report: 
+10-19 01:50:16.490  3749  3783 I BC1Report: Export presets (encoder support):
+10-19 01:50:16.490  3749  3783 I BC1Report:   1080p60  H.264 no  HEVC no
+10-19 01:50:16.490  3749  3783 I BC1Report:   1080p120  H.264 no  HEVC no
+10-19 01:50:16.490  3749  3783 I BC1Report:   1440p120  H.264 no  HEVC no
+10-19 01:50:16.490  3749  3783 I BC1Report:   2160p60  H.264 no  HEVC no
+10-19 01:50:16.490  3749  3783 I BC1Report:   2160p120  H.264 no  HEVC no
+10-19 01:50:16.490  3749  3783 I BC1Report: A 4K 120 fps request exports as: 1080p30 H.264 (2160p120 is not supported on this device)
+10-19 01:50:16.490  3749  3783 I BC1Report: 
+10-19 01:50:16.490  3749  3783 I BC1Report: Video codecs:
+10-19 01:50:16.490  3749  3783 I BC1Report:   Decoder c2.goldfish.h264.decoder (hardware)
+10-19 01:50:16.490  3749  3783 I BC1Report:     H.264 up to 4096x4096 • 32 instances • 4K60 yes • 4K120 no
+10-19 01:50:16.490  3749  3783 I BC1Report:   Decoder c2.goldfish.hevc.decoder (hardware)
+10-19 01:50:16.490  3749  3783 I BC1Report:     HEVC up to 4096x4096 • 32 instances • 4K60 yes • 4K120 no
+10-19 01:50:16.490  3749  3783 I BC1Report:   Decoder c2.android.avc.decoder (software)
+10-19 01:50:16.490  3749  3783 I BC1Report:     H.264 up to 4080x4080 • 32 instances • 4K60 yes • 4K120 no
+10-19 01:50:16.490  3749  3783 I BC1Report:   Decoder OMX.google.h264.decoder (software)
+10-19 01:50:16.490  3749  3783 I BC1Report:     H.264 up to 4080x4080 • 32 instances • 4K60 yes • 4K120 no
+10-19 01:50:16.490  3749  3783 I BC1Report:   Encoder c2.android.avc.encoder (software)
+10-19 01:50:16.490  3749  3783 I BC1Report:     H.264 up to 2048x2048 • 32 instances • 4K60 no • 4K120 no
+10-19 01:50:16.490  3749  3783 I BC1Report:   Encoder OMX.google.h264.encoder (software)
+10-19 01:50:16.490  3749  3783 I BC1Report:     H.264 up to 2048x2048 • 32 instances • 4K60 no • 4K120 no
+10-19 01:50:16.490  3749  3783 I BC1Report:   Decoder c2.android.hevc.decoder (software)
+10-19 01:50:16.490  3749  3783 I BC1Report:     HEVC up to 4096x4096 • 32 instances • 4K60 no • 4K120 no
+10-19 01:50:16.490  3749  3783 I BC1Report:   Decoder OMX.google.hevc.decoder (software)
+10-19 01:50:16.490  3749  3783 I BC1Report:     HEVC up to 4096x4096 • 32 instances • 4K60 no • 4K120 no
+10-19 01:50:16.490  3749  3783 I BC1Report:   Encoder c2.android.hevc.encoder (software)
+10-19 01:50:16.490  3749  3783 I BC1Report:     HEVC up to 512x512 • 32 instances • 4K60 no • 4K120 no
+10-19 01:50:16.490  3749  3783 I BC1Report: 
+10-19 01:50:16.490  3749  3783 I BC1Report: Reported limits are what the codecs advertise; real throughput with many 4K layers is measured by an export.
+10-19 01:50:16.524  3749  3783 I BC1Report: Decoder budget 16 (instances 16, memory 49)
+10-19 01:50:16.524  3749  3783 I TestRunner: finished: deviceReportAndBudget(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:50:16.525  3749  3783 I TestRunner: started: blackIceEffectsRenderAndChangeThePicture(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:51:37.805  3749  3783 I BC1Effects: Box Blur mean change 11.5
+10-19 01:51:37.847  3749  3783 I BC1Effects: Motion Blur mean change 6.5
+10-19 01:51:37.886  3749  3783 I BC1Effects: Spin Blur mean change 5.6
+10-19 01:51:37.948  3749  3783 I BC1Effects: Zoom Blur mean change 8.0
+10-19 01:51:37.983  3749  3783 I BC1Effects: Unsharp Mask mean change 3.1
+10-19 01:51:38.011  3749  3783 I BC1Effects: Contrast mean change 9.5
+10-19 01:51:38.051  3749  3783 I BC1Effects: Brightness mean change 19.5
+10-19 01:51:38.092  3749  3783 I BC1Effects: Gamma mean change 11.2
+10-19 01:51:38.142  3749  3783 I BC1Effects: Levels mean change 16.6
+10-19 01:51:38.164  3749  3783 I BC1Effects: Hue Shift mean change 58.2
+10-19 01:51:38.193  3749  3783 I BC1Effects: Warm mean change 9.1
+10-19 01:51:38.242  3749  3783 I BC1Effects: Cool mean change 8.4
+10-19 01:51:38.278  3749  3783 I BC1Effects: Posterize mean change 9.6
+10-19 01:51:38.318  3749  3783 I BC1Effects: Invert mean change 54.6
+10-19 01:51:38.340  3749  3783 I BC1Effects: Sepia mean change 24.5
+10-19 01:51:38.372  3749  3783 I BC1Effects: Ice Duotone mean change 15.4
+10-19 01:51:38.412  3749  3783 I BC1Effects: Light Leak mean change 10.7
+10-19 01:51:38.450  3749  3783 I BC1Effects: Swirl mean change 16.3
+10-19 01:51:38.497  3749  3783 I BC1Effects: Bulge mean change 6.6
+10-19 01:51:38.520  3749  3783 I BC1Effects: Pinch mean change 6.4
+10-19 01:51:38.552  3749  3783 I BC1Effects: Ripple mean change 3.0
+10-19 01:51:38.592  3749  3783 I BC1Effects: Wave mean change 6.8
+10-19 01:51:38.636  3749  3783 I BC1Effects: Fisheye mean change 30.0
+10-19 01:51:38.682  3749  3783 I BC1Effects: Mirror mean change 14.0
+10-19 01:51:38.712  3749  3783 I BC1Effects: Kaleidoscope mean change 45.2
+10-19 01:51:38.748  3749  3783 I BC1Effects: Shake mean change 5.8
+10-19 01:51:38.788  3749  3783 I BC1Effects: Threshold mean change 98.9
+10-19 01:51:38.834  3749  3783 I BC1Effects: Edge Detect mean change 66.1
+10-19 01:51:38.885  3749  3783 I BC1Effects: Emboss mean change 31.4
+10-19 01:51:38.910  3749  3783 I BC1Effects: Luma Key mean change 98.6
+10-19 01:51:38.946  3749  3783 I BC1Effects: Film Grain mean change 12.8
+10-19 01:51:38.988  3749  3783 I BC1Effects: Scanlines mean change 20.1
+10-19 01:51:39.046  3749  3783 I BC1Effects: Glitch mean change 6.8
+10-19 01:51:39.103  3749  3783 I BC1Effects: VHS mean change 11.5
+10-19 01:51:39.133  3749  3783 I BC1Effects: RGB Split mean change 6.6
+10-19 01:51:39.162  3749  3783 I BC1Effects: Halftone mean change 88.6
+10-19 01:51:39.163  3749  3783 I TestRunner: finished: blackIceEffectsRenderAndChangeThePicture(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:51:39.164  3749  3783 I TestRunner: started: stagedRenderingMatchesSinglePassAcrossEightTracks(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:51:58.110  3749  3783 I TestRunner: finished: stagedRenderingMatchesSinglePassAcrossEightTracks(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:51:58.111  3749  3783 I TestRunner: started: planStepsDownOnlyWhenTheEncoderRefuses(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:51:58.112  3749  3783 I BC1Plan : 2160p120 request on this device → 1080p30 H.264 (2160p120 is not supported on this device) @ 8 Mb/s
+10-19 01:51:58.112  3749  3783 I TestRunner: finished: planStepsDownOnlyWhenTheEncoderRefuses(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:51:58.113  3749  3783 I TestRunner: started: blendModesMatchTheReferenceMath(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:52:16.497  3749  3783 I BC1Blend: Normal ffc0803f
+10-19 01:52:16.525  3749  3783 I BC1Blend: Darken ff417f3f
+10-19 01:52:16.552  3749  3783 I BC1Blend: Multiply ff2f402f
+10-19 01:52:16.596  3749  3783 I BC1Blend: Color Burn ff02010a
+10-19 01:52:16.634  3749  3783 I BC1Blend: Linear Burn ff030001
+10-19 01:52:16.663  3749  3783 I BC1Blend: Darker Color ff4080c1
+10-19 01:52:16.696  3749  3783 I BC1Blend: Lighten ffbf81c1
+10-19 01:52:16.728  3749  3783 I BC1Blend: Screen ffcfbfd0
+10-19 01:52:16.770  3749  3783 I BC1Blend: Color Dodge ffffffff
+10-19 01:52:16.821  3749  3783 I BC1Blend: Linear Dodge (Add) ffffffff
+10-19 01:52:16.846  3749  3783 I BC1Blend: Lighter Color ffc0803f
+10-19 01:52:16.874  3749  3783 I BC1Blend: Overlay ff617fa3
+10-19 01:52:16.900  3749  3783 I BC1Blend: Soft Light ff6080aa
+10-19 01:52:16.949  3749  3783 I BC1Blend: Hard Light ffa17f60
+10-19 01:52:16.986  3749  3783 I BC1Blend: Vivid Light ff847f83
+10-19 01:52:17.021  3749  3783 I BC1Blend: Linear Light ffc38042
+10-19 01:52:17.058  3749  3783 I BC1Blend: Pin Light ff82807e
+10-19 01:52:17.099  3749  3783 I BC1Blend: Hard Mix fffd01fc
+10-19 01:52:17.137  3749  3783 I BC1Blend: Difference ff7f0280
+10-19 01:52:17.185  3749  3783 I BC1Blend: Exclusion ff9e809f
+10-19 01:52:17.216  3749  3783 I BC1Blend: Subtract ff000180
+10-19 01:52:17.248  3749  3783 I BC1Blend: Divide ff56fefe
+10-19 01:52:17.279  3749  3783 I BC1Blend: Hue ffa86729
+10-19 01:52:17.308  3749  3783 I BC1Blend: Saturation ff4080c1
+10-19 01:52:17.343  3749  3783 I BC1Blend: Color ffa86729
+10-19 01:52:17.375  3749  3783 I BC1Blend: Luminosity ff5696d7
+10-19 01:52:17.376  3749  3783 I TestRunner: finished: blendModesMatchTheReferenceMath(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:52:17.377  3749  3783 I TestRunner: started: layersPicturesSpeedAndPortrait(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:52:22.035  3749  3783 I TestRunner: finished: layersPicturesSpeedAndPortrait(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:52:22.036  3749  3783 I TestRunner: started: cancellationStopsAndRemovesOutput(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:52:26.150  3749  3783 I TestRunner: finished: cancellationStopsAndRemovesOutput(com.blackice.bc1.engine.BcCoreExportTest)
+10-19 01:52:26.151  3749  3783 I TestRunner: started: blurPreservesImageOrientationAndSurvivesContextLoss(com.blackice.bc1.engine.GpuPipelineTest)
+10-19 01:52:28.135  3749  3783 I TestRunner: finished: blurPreservesImageOrientationAndSurvivesContextLoss(com.blackice.bc1.engine.GpuPipelineTest)
+10-19 01:52:28.136  3749  3783 I TestRunner: started: everyTransitionHasExactEndpoints(com.blackice.bc1.engine.GpuPipelineTest)
+10-19 01:52:28.683  3749  3783 I TestRunner: finished: everyTransitionHasExactEndpoints(com.blackice.bc1.engine.GpuPipelineTest)
+10-19 01:52:28.684  3749  3783 I TestRunner: started: opacityAndDipMidpointAreExact(com.blackice.bc1.engine.GpuPipelineTest)
+10-19 01:52:29.166  3749  3783 I TestRunner: finished: opacityAndDipMidpointAreExact(com.blackice.bc1.engine.GpuPipelineTest)
+10-19 01:52:29.166  3749  3783 I TestRunner: started: everyEffectRendersAtEveryQualityAndStrength(com.blackice.bc1.engine.GpuPipelineTest)
+10-19 01:52:30.832  3749  3783 I TestRunner: finished: everyEffectRendersAtEveryQualityAndStrength(com.blackice.bc1.engine.GpuPipelineTest)
+10-19 01:52:30.838  3749  3783 I TestRunner: run finished: 39 tests, 0 failed, 0 ignored
+10-19 01:52:30.861  3706  3706 I AndroidRuntime: VM exiting with result code 0.
