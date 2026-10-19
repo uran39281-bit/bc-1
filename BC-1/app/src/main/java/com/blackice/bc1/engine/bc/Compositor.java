@@ -68,9 +68,19 @@ final class Compositor {
     private GlKit.Target[] accum;
     private boolean accumulating;
     private int current;
+    /**
+     * Live preview: effects 12+ are applied by a small per-effect pass into {@link #effected}, and the layer is
+     * then drawn with the base program. Switching a clip's effect compiles only that pass (milliseconds even
+     * on software GL) instead of a new copy of the whole layer shader. Export keeps the single-pass programs.
+     */
+    private final boolean effectPasses;
+    private final java.util.Map<Integer, GlKit.Program> effect = new java.util.HashMap<>();
+    private GlKit.Target effected;
 
-    Compositor(Context context, int width, int height) throws IOException {
-        this.width = width; this.height = height;
+    Compositor(Context context, int width, int height) throws IOException { this(context, width, height, false); }
+
+    Compositor(Context context, int width, int height, boolean effectPasses) throws IOException {
+        this.width = width; this.height = height; this.effectPasses = effectPasses;
         quad = new GlKit.Quad();
         fitExternal = new GlKit.Program(FIT_VERTEX, FIT_EXTERNAL);
         fit2d = new GlKit.Program(FIT_VERTEX, FIT_2D);
@@ -82,12 +92,25 @@ final class Compositor {
     private String source(int effect) { return com.blackice.bc1.core.LayerShader.forEffect(fragment, effect); }
     private GlKit.Program layer(int effect) {
         GlKit.Program p = layer.get(effect);
-        if (p == null) layer.put(effect, p = new GlKit.Program(vertex, source(effect)));
+        if (p == null) {
+            long start = System.nanoTime();
+            layer.put(effect, p = new GlKit.Program(vertex, source(effect)));
+            android.util.Log.d("BC1Live", "layer program " + effect + " compiled in " + (System.nanoTime() - start) / 1_000_000 + " ms");
+        }
         return p;
     }
     private GlKit.Program layerBlend(int effect) {
         GlKit.Program p = layerBlend.get(effect);
         if (p == null) layerBlend.put(effect, p = new GlKit.Program(vertex, blendVariant(source(effect))));
+        return p;
+    }
+    private GlKit.Program effectPass(int id) {
+        GlKit.Program p = effect.get(id);
+        if (p == null) {
+            long start = System.nanoTime();
+            effect.put(id, p = new GlKit.Program(vertex, com.blackice.bc1.core.LayerShader.effectPass(fragment, id)));
+            android.util.Log.d("BC1Live", "effect " + id + " pass compiled in " + (System.nanoTime() - start) / 1_000_000 + " ms");
+        }
         return p;
     }
     private GlKit.Program layerExternal(int effect) {
@@ -238,8 +261,8 @@ final class Compositor {
     }
 
     /** Selects the plain or blend program; for a blend layer, targets the other composite buffer. */
-    private GlKit.Program begin(RenderPlan.LayerDraw d, boolean external) {
-        int e = d.clip.effect;
+    private GlKit.Program begin(RenderPlan.LayerDraw d, boolean external) { return begin(d, external, d.clip.effect); }
+    private GlKit.Program begin(RenderPlan.LayerDraw d, boolean external, int e) {
         GlKit.Program blend = accumulating && d.blend != 0 ? (external ? layerExternalBlend(e) : layerBlend(e)) : null;
         if (blend == null) { GlKit.Program plain = external ? layerExternal(e) : layer(e); plain.use(); return plain; }
         int backdrop = accum[current].texture;
@@ -263,13 +286,39 @@ final class Compositor {
 
     /** One layer through the shipping shader, alpha-composited over what is already drawn. */
     void drawLayer(RenderPlan.LayerDraw d, int texture) {
-        GlKit.Program p = begin(d, false);
+        boolean pass = effectPasses && com.blackice.bc1.core.LayerShader.separable(d.clip.effect);
+        int key = pass ? 0 : d.clip.effect;
+        if (pass && com.blackice.bc1.core.LayerShader.separable(d.effect)) texture = applyEffect(d, texture);
+        GlKit.Program p = begin(d, false, key);
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture);
-        boolean blended = p == layerBlend.get(d.clip.effect);
-        drawWith(p, d, blended);
+        boolean blended = p == layerBlend.get(key);
+        drawWith(p, d, blended, pass ? 0 : d.effect);
         end(p, blended);
         GlKit.check("layer");
+    }
+
+    /** Runs the clip's effect over a frame-sized texture with the layer shader's own uniforms; returns the result. */
+    private int applyEffect(RenderPlan.LayerDraw d, int texture) {
+        if (effected == null) effected = new GlKit.Target(width, height);
+        GlKit.Program p = effectPass(d.effect);
+        effected.bind(); clear(0, 0, 0, 0);
+        GLES30.glDisable(GLES30.GL_BLEND);
+        p.use();
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture);
+        p.set("uInput", 0);
+        p.set("uTexel", 1f / width, 1f / height);
+        p.set("uAspect", (float) width / height);
+        p.set("uEffect", d.effect);
+        p.set("uIntensity", d.intensity);
+        p.set("uTime", d.sourceTimeMs / 1000f);
+        quad.draw();
+        GlKit.check("effect pass");
+        // Back to where layers are being composed (begin() binds the other buffer itself for a blend layer).
+        if (accumulating) accum[current].bind();
+        else { GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0); GLES30.glViewport(0, 0, width, height); }
+        return effected.texture;
     }
 
     /** Same, sampling a decoder's external texture directly through the letterbox and rotation. */
@@ -288,7 +337,8 @@ final class Compositor {
         GlKit.check("external layer");
     }
 
-    private void drawWith(GlKit.Program program, RenderPlan.LayerDraw d, boolean blendMode) {
+    private void drawWith(GlKit.Program program, RenderPlan.LayerDraw d, boolean blendMode) { drawWith(program, d, blendMode, d.effect); }
+    private void drawWith(GlKit.Program program, RenderPlan.LayerDraw d, boolean blendMode, int effectId) {
         EditProject.Clip c = d.clip;
         if (blendMode) GLES30.glDisable(GLES30.GL_BLEND); // the shader writes the finished pixel
         else {
@@ -304,7 +354,7 @@ final class Compositor {
         program.set("uAnchor", d.transform.anchorX, d.transform.anchorY);
         program.set("uKeyColor", ((c.keyColor >> 16) & 255) / 255f, ((c.keyColor >> 8) & 255) / 255f, (c.keyColor & 255) / 255f);
         program.set("uChroma", c.chroma ? 1 : 0, c.keyTolerance, c.keySoftness, c.keySpill);
-        program.set("uEffect", d.effect);
+        program.set("uEffect", effectId);
         program.set("uIntensity", d.intensity);
         program.set("uOpacity", d.opacity);
         program.set("uTransition", d.transition);
@@ -334,11 +384,12 @@ final class Compositor {
 
     void release() {
         fitExternal.release(); fit2d.release();
-        for (java.util.Map<Integer, GlKit.Program> m : java.util.List.of(layer, layerBlend, layerExternal, layerExternalBlend)) {
+        for (java.util.Map<Integer, GlKit.Program> m : java.util.List.of(layer, layerBlend, layerExternal, layerExternalBlend, effect)) {
             for (GlKit.Program p : m.values()) p.release();
             m.clear();
         }
         if (accum != null) for (GlKit.Target t : accum) t.release();
+        if (effected != null) effected.release();
         overlay.release(); quad.release();
     }
 }
