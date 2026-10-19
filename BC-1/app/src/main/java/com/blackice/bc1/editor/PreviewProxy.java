@@ -41,19 +41,31 @@ public final class PreviewProxy implements AutoCloseable {
     public static boolean required(EditProject project) {
         return project.clips.size()>1 || (!project.clips.isEmpty()&&project.clips.get(0).image) || com.blackice.bc1.core.RenderPlan.usesBlend(project);
     }
+    /** The render in flight, by project key; a second request for the same project joins it instead of restarting. */
+    private String runningKey;
+    private Listener current;
+    private final Listener relay=new Listener(){
+        @Override public void onProgress(int percent){if(current!=null)current.onProgress(percent);}
+        @Override public void onReady(File file){Listener l=current;runningKey=null;if(l!=null)l.onReady(file);}
+        @Override public void onError(String message){Listener l=current;runningKey=null;if(l!=null)l.onError(message);}
+    };
+    /** Whether a render for this project is in flight or already cached (the editor prepares one in the background). */
+    public boolean preparing(){return runningKey!=null;}
     public void prepare(EditProject project,Listener listener) {
-        cancel();final int request=generation;
         try {
             EditProject snapshot=ProjectStore.snapshot(project);snapshot.playheadMs=0;
-            directory.mkdirs();
             byte[] digest=MessageDigest.getInstance("SHA-256").digest(ProjectStore.encode(snapshot).getBytes(StandardCharsets.UTF_8));
             StringBuilder key=new StringBuilder();for(byte b:digest)key.append(String.format(java.util.Locale.ROOT,"%02x",b&255));
+            if(key.toString().equals(runningKey)&&(transformer!=null||coreStop!=null)){current=listener;return;}
+            cancel();final int request=generation;
+            directory.mkdirs();
             File completed=new File(directory,key+".mp4");
             if(completed.isFile()&&completed.length()>0){completed.setLastModified(System.currentTimeMillis());listener.onReady(completed);return;}
             trimCache(null);
             if(directory.getUsableSpace()<64L*1024*1024)throw new IOException("Free some storage to prepare the preview.");
+            runningKey=key.toString();current=listener;final Listener out=relay;
             partial=new File(directory,key+".part.mp4");partial.delete();
-            if(needsIceLite(snapshot)){prepareWithIceLite(snapshot,completed,request,listener);return;}
+            if(needsIceLite(snapshot)){prepareWithIceLite(snapshot,completed,request,out);return;}
             transformer=new Transformer.Builder(context)
                     .setAssetLoaderFactory(CompositionFactory.assetLoader(context))
                     .setVideoMimeType(MimeTypes.VIDEO_H264).setAudioMimeType(MimeTypes.AUDIO_AAC)
@@ -65,24 +77,24 @@ public final class PreviewProxy implements AutoCloseable {
                         @Override public void onCompleted(Composition composition,ExportResult result){
                             if(request!=generation)return;
                             main.removeCallbacks(poll);transformer=null;
-                            if(partial==null||!partial.renameTo(completed)){fail(request,listener,"Could not save the prepared preview.");return;}
-                            partial=null;trimCache(completed);listener.onReady(completed);
+                            if(partial==null||!partial.renameTo(completed)){fail(request,out,"Could not save the prepared preview.");return;}
+                            partial=null;trimCache(completed);out.onReady(completed);
                         }
                         @Override public void onError(Composition composition,ExportResult result,ExportException error){
-                            fail(request,listener,error.getMessage());
+                            fail(request,out,error.getMessage());
                         }
                     }).build();
             ProgressHolder progress=new ProgressHolder();
             poll=new Runnable(){@Override public void run(){
                 if(request!=generation||transformer==null)return;
-                if(partial.length()>BUDGET||directory.getUsableSpace()<16L*1024*1024){fail(request,listener,"Preview cache is full. Shorten the project or free storage; the project is preserved.");return;}
+                if(partial.length()>BUDGET||directory.getUsableSpace()<16L*1024*1024){fail(request,out,"Preview cache is full. Shorten the project or free storage; the project is preserved.");return;}
                 int state=transformer.getProgress(progress);
-                listener.onProgress(state==Transformer.PROGRESS_STATE_AVAILABLE?progress.progress:-1);
+                out.onProgress(state==Transformer.PROGRESS_STATE_AVAILABLE?progress.progress:-1);
                 main.postDelayed(this,500);
             }};
             transformer.start(CompositionFactory.build(context,snapshot,false),partial.getAbsolutePath());
             main.post(poll);
-        }catch(Exception error){fail(request,listener,error.getMessage());}
+        }catch(Exception error){runningKey=null;cancel();listener.onError(error.getMessage()==null?"Preview preparation failed.":error.getMessage());}
     }
     /** More simultaneous video layers than Media3 can open: ICE Lite renders the preview (in passes if needed). */
     static boolean needsIceLite(EditProject project){
@@ -109,7 +121,7 @@ public final class PreviewProxy implements AutoCloseable {
         },"bc1-ice-preview").start();
     }
     private void fail(int request,Listener listener,String message){
-        if(request!=generation)return;cancel();listener.onError(message==null?"Preview preparation failed.":message);
+        if(request!=generation)return;Listener target=listener==relay?current:listener;cancel();if(target!=null)target.onError(message==null?"Preview preparation failed.":message);
     }
     private void trimCache(File keep){
         File[] files=directory.listFiles((d,n)->n.endsWith(".mp4"));if(files==null)return;
@@ -120,7 +132,7 @@ public final class PreviewProxy implements AutoCloseable {
         }
     }
     public void cancel(){
-        generation++;if(poll!=null)main.removeCallbacks(poll);poll=null;
+        generation++;runningKey=null;current=null;if(poll!=null)main.removeCallbacks(poll);poll=null;
         if(transformer!=null){transformer.cancel();transformer=null;}
         if(coreStop!=null){coreStop.set(true);coreStop=null;}
         if(partial!=null){partial.delete();partial=null;}

@@ -48,4 +48,18 @@ public class ShaderSourceTest {
         assertTrue(specialised.startsWith("#version 300 es\n#define BC_EFFECT 21\n"));
         assertTrue(LayerShader.forEffect(s, 999).contains("#define BC_EFFECT 0\n"));
     }
+
+    /** The live preview applies effects 12+ in a small pass of their own; it keeps the effect code and drops the layer main. */
+    @Test public void effectPassKeepsOnlyTheEffect() throws Exception {
+        String s = shader();
+        String pass = LayerShader.effectPass(s, 25);
+        assertTrue(pass.startsWith("#version 300 es\n#define BC_EFFECT 25\n"));
+        assertEquals("One main", 1, pass.split("void main\\(\\)", -1).length - 1);
+        assertFalse("No transform, keying or opacity in the pass", pass.contains("uTransform.w") || pass.contains("uChroma.x") || pass.contains("uOpacity)"));
+        assertTrue(pass.contains("a=bcEffect(uEffect,uv,a,k);") && pass.contains("uv=bcDistort(uEffect,uv,k);"));
+        assertTrue("Shorter than the layer shader", pass.length() < LayerShader.forEffect(s, 25).length());
+        assertFalse(LayerShader.separable(11));
+        assertTrue(LayerShader.separable(12));
+        try { LayerShader.effectPass(s, 4); fail(); } catch (IllegalArgumentException expected) { }
+    }
 }

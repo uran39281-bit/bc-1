@@ -10,11 +10,11 @@ android {
         if (project.hasProperty('bc1SideBySide')) applicationIdSuffix '.preview'
         // ICE Lite test builds install beside the released app and never touch its projects.
         if (project.hasProperty('bc1IceLite')) { applicationIdSuffix '.icelite'; versionNameSuffix '-icelite' }
-        manifestPlaceholders = [appLabel: project.hasProperty('bc1IceLite') ? 'BC-1 ICE Lite test' : project.hasProperty('bc1SideBySide') ? 'BC-1 v1.2.0' : 'BC-1 Dual Workspace']
+        manifestPlaceholders = [appLabel: project.hasProperty('bc1IceLite') ? 'BC-1 ICE Lite test' : project.hasProperty('bc1SideBySide') ? 'BC-1 v1.2.1' : 'BC-1 Dual Workspace']
         minSdk 26
         targetSdk 35
-        versionCode 21
-        versionName '1.2.0'
+        versionCode 22
+        versionName '1.2.1'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 

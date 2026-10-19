@@ -26,6 +26,10 @@ public class EditorWorkspaceTest {
     private void assertVisiblePreview(ActivityScenario<EditorActivity> scenario)throws Exception{
         long deadline=SystemClock.elapsedRealtime()+90000;
         while(SystemClock.elapsedRealtime()<deadline){
+                // While paused the ICE Lite live preview (a TextureView over the player surface) shows the frame.
+                java.util.concurrent.atomic.AtomicInteger live=new java.util.concurrent.atomic.AtomicInteger(-1);
+                scenario.onActivity(a->{if(a.liveView!=null&&a.liveView.getVisibility()==View.VISIBLE&&a.liveView.isAvailable()){Bitmap b=a.liveView.getBitmap();if(b!=null){live.set(b.getPixel(b.getWidth()/4,b.getHeight()/2));b.recycle();}}});
+                if(live.get()!=-1&&android.graphics.Color.blue(live.get())>30)return;
                 java.util.concurrent.atomic.AtomicReference<SurfaceView> preview=new java.util.concurrent.atomic.AtomicReference<>();
                 scenario.onActivity(a->preview.set(surface(a.getWindow().getDecorView())));
                 Bitmap pixels=Bitmap.createBitmap(preview.get().getWidth(),preview.get().getHeight(),Bitmap.Config.ARGB_8888);
@@ -112,6 +116,11 @@ public class EditorWorkspaceTest {
                 Thread.sleep(500);assertVisiblePreview(scenario);
                 scenario.onActivity(a->{assertNotNull("Paused seek updates the playhead",text(a.getWindow().getDecorView(),"00:01.00  /  00:03.75"));a.onKeyDown(KeyEvent.KEYCODE_DPAD_LEFT,new KeyEvent(0,0,KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_DPAD_LEFT,0,KeyEvent.META_SHIFT_ON));});
                 scenario.onActivity(a->a.onKeyDown(KeyEvent.KEYCODE_SPACE,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_SPACE)));
+                // A layered project plays from its rendered proxy, prepared in the background after loading;
+                // Play joins that render if it is still running.
+                {java.util.concurrent.atomic.AtomicBoolean playing=new java.util.concurrent.atomic.AtomicBoolean();long playDeadline=SystemClock.elapsedRealtime()+60000;
+                while(!playing.get()&&SystemClock.elapsedRealtime()<playDeadline){scenario.onActivity(a->playing.set(a.player!=null&&a.player.isPlaying()));if(!playing.get())Thread.sleep(100);}
+                java.util.concurrent.atomic.AtomicReference<String> state=new java.util.concurrent.atomic.AtomicReference<>();scenario.onActivity(a->state.set(a.previewDebug()));assertTrue("Play starts playback • "+state.get(),playing.get());}
                 Thread.sleep(1500);
                 scenario.onActivity(a->{
                     assertNotNull(a.player);
@@ -120,7 +129,8 @@ public class EditorWorkspaceTest {
                     // Wall-clock scheduling can pause after the first clip ends, where the sampled
                     // quarter-frame legitimately contains black. Seek to a known covered frame.
                     a.seek(1000);
-                    assertFalse("Seek leaves the preview paused",a.player.getPlayWhenReady());
+                    // A paused seek hands the frame to the live preview (the player is prepared again on Play).
+                    assertTrue("Seek leaves the preview paused",a.player==null||!a.player.getPlayWhenReady());assertEquals(1000,a.project.playheadMs);
                 });
                 assertVisiblePreview(scenario);
                 scenario.onActivity(a->{View root=a.getWindow().getDecorView();assertNotNull("Sample project must be loaded before visual checks",text(root,"Ice • First Cut  ▾"));SurfaceView video=surface(root);assertNotNull(video);assertTrue(video.getWidth()>0&&video.getHeight()>0);View parent=(View)video.getParent();text(root,"Effects").performClick();assertSame(parent,video.getParent());assertNotNull(text(root,"GPU EFFECTS"));});

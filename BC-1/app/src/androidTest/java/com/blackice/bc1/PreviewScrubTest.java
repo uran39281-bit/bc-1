@@ -4,7 +4,6 @@ import android.app.Instrumentation;
 import android.net.Uri;
 import android.os.SystemClock;
 import android.widget.TextView;
-import androidx.media3.common.Player;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -16,7 +15,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
 
-/** Fast scrubbing on a single-clip project (the live CompositionPlayer preview) must not leave the preview broken. */
+/** Fast paused scrubbing (the ICE Lite live preview) must end on the last position and never leave the preview broken. */
 @RunWith(AndroidJUnit4.class)
 public class PreviewScrubTest {
     private final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
@@ -50,7 +49,7 @@ public class PreviewScrubTest {
         new ProjectStore(inst.getTargetContext()).save(p);
         inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS, 0).edit().putString("last-project", p.id).putBoolean("ui-locked", false).commit();
         try (ActivityScenario<EditorActivity> scenario = ActivityScenario.launch(EditorActivity.class)) {
-            waitFor(scenario, a -> !a.loading && a.player != null && a.player.getPlaybackState() == Player.STATE_READY, 20_000, "the live preview");
+            waitFor(scenario, a -> !a.loading && a.live != null && a.live.lastFrameMs() >= 0, 20_000, "the live preview's first frame");
             long duration = p.durationMs();
             // About 400 seeks in 2 seconds, sweeping back and forth like a fast finger on the timeline.
             long last = 0;
@@ -62,8 +61,9 @@ public class PreviewScrubTest {
             }
             final long expected = last;
             android.util.Log.i(EditorActivity.PREVIEW_LOG, "test: last scrub target " + expected);
-            waitFor(scenario, a -> a.player != null && a.player.getPlaybackState() == Player.STATE_READY
-                    && Math.abs(a.player.getCurrentPosition() - expected) <= 60, 15_000, "the preview to settle on the last scrub position");
+            waitFor(scenario, a -> a.player == null && a.live.lastFrameMs() == Math.min(expected, a.project.durationMs())
+                    && a.live.lastError() == null, 15_000, "the preview to settle on the last scrub position");
+            scenario.onActivity(a -> assertEquals("Paused scrubbing never starts a player", null, a.player));
             AtomicReference<String> hint = new AtomicReference<>();
             scenario.onActivity(a -> { TextView v = a.emptyPreview; hint.set(v != null && v.getVisibility() == android.view.View.VISIBLE ? v.getText().toString() : ""); });
             assertFalse("Preview left broken: " + hint.get(), hint.get().contains("unavailable"));
