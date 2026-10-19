@@ -1,0 +1,1 @@
+Test build of fix/live-edits at 48a1811dc507bb6542fda4b51315946bd91e22fa (run 39202298595). Package com.blackice.bc1.icelite installs beside BC-1.
