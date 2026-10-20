@@ -88,9 +88,13 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     }
 
     @Override public void onSurfaceTextureAvailable(SurfaceTexture st, int w, int h) {
-        gl.post(() -> bind(new Surface(st), st)); // queued ahead of the redraw below; the UI thread never waits
-        Request last = latest;
-        if (last != null) request(last.project, last.timeMs);
+        gl.post(() -> {
+            bind(new Surface(st), st);
+            // Request AFTER binding on the GL thread. An already queued drain can otherwise
+            // consume the coalesced request before bind, leaving the new window black forever.
+            Request last = latest;
+            if (last != null) request(last.project, last.timeMs);
+        }); // the UI thread never waits for surface attachment or rendering
     }
     @Override public void onSurfaceTextureSizeChanged(SurfaceTexture st, int w, int h) { }
     /** Returns false: the render thread releases the SurfaceTexture after its last frame, so a frame in flight never draws into a dead surface. */
