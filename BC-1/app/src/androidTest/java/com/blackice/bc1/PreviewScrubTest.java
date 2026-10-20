@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 @RunWith(AndroidJUnit4.class)
 public class PreviewScrubTest {
     private final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
+    private final AtomicReference<EditorActivity> activeActivity = new AtomicReference<>();
 
     private String fixture(String name) throws Exception {
         File file = new File(inst.getTargetContext().getFilesDir(), name);
@@ -33,7 +34,8 @@ public class PreviewScrubTest {
         AtomicBoolean ok = new AtomicBoolean();
         long deadline = SystemClock.elapsedRealtime() + timeoutMs;
         while (!ok.get() && SystemClock.elapsedRealtime() < deadline) {
-            scenario.onActivity(a -> ok.set(condition.test(a)));
+            // ActivityScenario waits for UI idleness, which can arrive only after short playback ends.
+            inst.runOnMainSync(() -> ok.set(condition.test(activeActivity.get())));
             if (!ok.get()) Thread.sleep(50);
         }
         // On failure, report the preview's own state so the cause is visible without a device.
@@ -49,6 +51,7 @@ public class PreviewScrubTest {
         new ProjectStore(inst.getTargetContext()).save(p);
         inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS, 0).edit().putString("last-project", p.id).putBoolean("ui-locked", false).commit();
         try (ActivityScenario<EditorActivity> scenario = ActivityScenario.launch(EditorActivity.class)) {
+            scenario.onActivity(activeActivity::set);
             waitFor(scenario, a -> !a.loading && a.live != null && a.live.lastFrameMs() >= 0, 20_000, "the live preview's first frame");
             long duration = p.durationMs();
             // About 400 seeks in 2 seconds, sweeping back and forth like a fast finger on the timeline.
@@ -76,13 +79,14 @@ public class PreviewScrubTest {
         new ProjectStore(inst.getTargetContext()).save(p);
         inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("last-project",p.id).putString("mode","PHONE").putBoolean("ui-locked",false).commit();
         try(ActivityScenario<EditorActivity> scenario=ActivityScenario.launch(EditorActivity.class)){
+            scenario.onActivity(activeActivity::set);
             waitFor(scenario,a->!a.loading&&a.project.id.equals(p.id),15000,"requested project");
             scenario.onActivity(a->a.seek(1000));waitForPixels(scenario,1000,false);
-            scenario.onActivity(a->{int history=a.undo.size();dragLine(a,4000);assertEquals(4000,a.project.playheadMs,2);assertEquals("Scrub does not edit clips",history,a.undo.size());assertEquals(2,a.project.clips.size());assertEquals(0,a.project.placements().get(0).startMs);assertEquals(3000,a.project.placements().get(1).startMs);});
+            scenario.onActivity(a->{int history=a.undo.size();long firstStart=a.project.placements().get(0).startMs,secondStart=a.project.placements().get(1).startMs;dragLine(a,4000);assertEquals(4000,a.project.playheadMs,2);assertEquals("Scrub does not edit clips",history,a.undo.size());assertEquals(2,a.project.clips.size());assertEquals(firstStart,a.project.placements().get(0).startMs);assertEquals(secondStart,a.project.placements().get(1).startMs);});
             waitForPixels(scenario,4000,true);
-            scenario.onActivity(EditorActivity::togglePlay);
+            inst.runOnMainSync(()->activeActivity.get().togglePlay());
             waitFor(scenario,a->a.player!=null&&a.player.isPlaying(),60000,"actual playback");
-            scenario.onActivity(a->{a.pausePlayback();a.seek(4000);});waitForPixels(scenario,4000,true);
+            inst.runOnMainSync(()->{EditorActivity a=activeActivity.get();a.pausePlayback();a.seek(4000);});waitForPixels(scenario,4000,true);
             scenario.onActivity(a->dragLine(a,1000));waitForPixels(scenario,1000,false);
             scenario.onActivity(a->{assertNull("Scrubbing stays paused",a.player);assertEquals(android.view.View.INVISIBLE,a.surface.getVisibility());});
         }finally{inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("mode","AUTO").commit();}

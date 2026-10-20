@@ -115,11 +115,13 @@ public class EditorWorkspaceTest {
                 scenario.onActivity(a->a.onKeyDown(KeyEvent.KEYCODE_DPAD_RIGHT,new KeyEvent(0,0,KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_DPAD_RIGHT,0,KeyEvent.META_SHIFT_ON)));
                 Thread.sleep(500);assertVisiblePreview(scenario);
                 scenario.onActivity(a->{assertNotNull("Paused seek updates the playhead",text(a.getWindow().getDecorView(),"00:01.00 / 00:03.75"));a.onKeyDown(KeyEvent.KEYCODE_DPAD_LEFT,new KeyEvent(0,0,KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_DPAD_LEFT,0,KeyEvent.META_SHIFT_ON));});
-                scenario.onActivity(a->a.onKeyDown(KeyEvent.KEYCODE_SPACE,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_SPACE)));
+                java.util.concurrent.atomic.AtomicReference<EditorActivity> playbackActivity=new java.util.concurrent.atomic.AtomicReference<>();
+                scenario.onActivity(playbackActivity::set);
+                inst.runOnMainSync(()->playbackActivity.get().onKeyDown(KeyEvent.KEYCODE_SPACE,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_SPACE)));
                 // A layered project plays from its rendered proxy, prepared in the background after loading;
                 // Play joins that render if it is still running.
                 {java.util.concurrent.atomic.AtomicBoolean playing=new java.util.concurrent.atomic.AtomicBoolean();long playDeadline=SystemClock.elapsedRealtime()+60000;
-                while(!playing.get()&&SystemClock.elapsedRealtime()<playDeadline){scenario.onActivity(a->playing.set(a.player!=null&&a.player.isPlaying()));if(!playing.get())Thread.sleep(100);}
+                while(!playing.get()&&SystemClock.elapsedRealtime()<playDeadline){inst.runOnMainSync(()->{EditorActivity a=playbackActivity.get();playing.set(a.player!=null&&a.player.isPlaying());});if(!playing.get())Thread.sleep(100);}
                 java.util.concurrent.atomic.AtomicReference<String> state=new java.util.concurrent.atomic.AtomicReference<>();scenario.onActivity(a->state.set(a.previewDebug()));assertTrue("Play starts playback • "+state.get(),playing.get());}
                 Thread.sleep(1500);
                 scenario.onActivity(a->{
