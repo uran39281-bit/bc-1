@@ -161,7 +161,7 @@ public final class EditorActivity extends Activity {
      * prepared again when Play is pressed, so edits, slider drags and paused scrubbing never wait for it.
      */
     void renderLive(){
-        if(live==null||liveView==null||!active||loading)return;
+        if(live==null||liveView==null||!active||loading){android.util.Log.d("BC1Live","live frame skipped: live="+(live!=null)+" view="+(liveView!=null)+" active="+active+" loading="+loading);return;}
         if(project.clips.isEmpty()){liveView.setVisibility(View.GONE);return;}
         try{
             EditProject snapshot=comparing&&compareSnapshot!=null?ProjectStore.decode(compareSnapshot):ProjectStore.snapshot(project);

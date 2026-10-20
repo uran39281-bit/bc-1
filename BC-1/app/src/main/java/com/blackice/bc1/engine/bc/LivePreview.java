@@ -96,6 +96,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     @Override public void onSurfaceTextureUpdated(SurfaceTexture st) { }
 
     private void bind(Surface target, SurfaceTexture st) {
+        android.util.Log.d("BC1Live", "bind window " + (st != null ? "texture view" : "surface") + (egl != null ? ", reusing context" : ""));
         detachWindow();
         surface = target; surfaceTexture = st;
         if (egl != null) {
@@ -113,6 +114,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
 
     /** Lets go of the current window (the view's surface is going away) but keeps the GL context when the driver allows. */
     private void detachWindow() {
+        if (surface != null) android.util.Log.d("BC1Live", "window detached");
         if (egl != null && egl.hasWindow() && !egl.dropWindow()) { unbind(); return; }
         if (surface != null) surface.release();
         if (surfaceTexture != null) surfaceTexture.release(); // handed over by onSurfaceTextureDestroyed
@@ -159,7 +161,10 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
         Request r = pending.getAndSet(null);
         if (r == null) return;
         try {
-            if (egl == null || !egl.hasWindow()) return; // no surface yet: binding one redraws the latest request
+            if (egl == null || !egl.hasWindow()) { // no surface yet: binding one redraws the latest request
+                android.util.Log.d("BC1Live", "frame at " + r.timeMs + " ms waits for a window");
+                return;
+            }
             long start = System.nanoTime();
             render(r.project, r.timeMs);
             lastError = null;

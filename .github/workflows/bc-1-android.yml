@@ -110,7 +110,7 @@ jobs:
           # Full app-process logcat for the first two failed tests (what the filter above hides).
           if [ -f "$reports/logcat.txt" ]; then
             grep -oE "TestRunner: failed: [A-Za-z0-9_]+" "$reports/logcat.txt" | head -n 2 | while read -r _ _ name; do
-              awk -v n="$name" 'index($0,"started: " n "(") {on=1} on && !/TestRunner: \t|^\s+at / {print} on && index($0,"finished: " n "(") {exit}' "$reports/logcat.txt" | tail -n 4000 > "/tmp/shots/logcat-$name.txt"
+              awk -v n="$name" 'index($0,"started: " n "(") {on=1; pid=$3} on && $3==pid && !/TestRunner: \t/ {print} on && index($0,"finished: " n "(") {exit}' "$reports/logcat.txt" | tail -n 4000 > "/tmp/shots/logcat-$name.txt"
             done
           fi
           ls /tmp/shots/* >/dev/null 2>&1 || exit 0

@@ -85,8 +85,11 @@ public class LivePreviewTest {
             int[] red = reader.centre();
             assertTrue("Red clip at 1 s: " + red[0] + "," + red[1] + "," + red[2], red[0] > 200 && red[2] < 50);
 
-            // A parameter change redraws from the frame already decoded: no decoder, so it must be quick.
-            p.clips.get(0).effect = 25; p.clips.get(0).intensity = 1f; // Invert: red becomes cyan
+            // Picking a new effect compiles its shader once (slow only on software GL), then redraws.
+            p.clips.get(0).effect = 25; p.clips.get(0).intensity = .5f; // Invert
+            assertTrue(live.renderNow(ProjectStore.snapshot(p), 1000, 30_000));
+            // A parameter change redraws from the frame already decoded: no decoder, no compile, so it must be quick.
+            p.clips.get(0).intensity = 1f; // full Invert: red becomes cyan
             long start = System.nanoTime();
             assertTrue(live.renderNow(ProjectStore.snapshot(p), 1000, 5_000));
             long redrawMs = (System.nanoTime() - start) / 1_000_000;
