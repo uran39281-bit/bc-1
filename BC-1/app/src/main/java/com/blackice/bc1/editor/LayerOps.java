@@ -59,8 +59,8 @@ public final class LayerOps {
     public static int duplicateAbove(EditProject p,int index) {
         EditProject.Clip c=p.clips.get(index);EditProject.Placement placement=p.placements().get(index);
         boolean audio=EditProject.audioTrack(c.track);int first=audio?EditProject.AUDIO_FIRST:1,last=audio?EditProject.AUDIO_LAST:EditProject.LAST_LAYER;
-        for(int track=Math.max(first,c.track+1);track<=last;track++) if(free(p,track,placement.startMs,placement.endMs,-1)) return insertCopy(p,index,track,placement.startMs);
-        for(int track=first;track<=last;track++) if(track!=c.track&&free(p,track,placement.startMs,placement.endMs,-1)) return insertCopy(p,index,track,placement.startMs);
+        for(int track=Math.max(first,c.track+1);track<=last;track++) if(!p.tracks[track].locked&&free(p,track,placement.startMs,placement.endMs,-1)) return insertCopy(p,index,track,placement.startMs);
+        for(int track=first;track<=last;track++) if(track!=c.track&&!p.tracks[track].locked&&free(p,track,placement.startMs,placement.endMs,-1)) return insertCopy(p,index,track,placement.startMs);
         throw new IllegalArgumentException("No free "+(audio?"audio":"visual")+" layer is available at this time.");
     }
     /** A sequential copy starting where the original ends; returns the new clip index. */
@@ -70,6 +70,22 @@ public final class LayerOps {
         long start=placement.endMs,end=start+c.durationMs();
         if(!free(p,c.track,start,end,-1))throw new IllegalArgumentException("The space after this clip is occupied on its layer.");
         return insertCopy(p,index,c.track,start);
+    }
+    /** Default UI duplicate: never shifts an unrelated clip or inserts into a locked track. */
+    public static int duplicateSafe(EditProject p,int index){
+        EditProject.Clip source=p.clips.get(index);EditProject.Placement at=p.placements().get(index);
+        if(locked(p,index))throw new IllegalArgumentException("Unlock the layer to duplicate it.");
+        if(free(p,source.track,at.endMs,at.endMs+source.durationMs(),-1)&&(source.track!=0||source.transition<0)){
+            Map<EditProject.Clip,Long> kept=new IdentityHashMap<>();for(EditProject.Placement pl:p.placements())if(pl.clip.track==0)kept.put(pl.clip,pl.startMs);
+            int result=duplicateAfter(p,index);
+            if(source.track==0){kept.put(p.clips.get(result),at.endMs);TimelineEdits.regap(p,kept);p.validate();}
+            return result;
+        }
+        int first=EditProject.audioTrack(source.track)?EditProject.AUDIO_FIRST:1,last=EditProject.audioTrack(source.track)?EditProject.AUDIO_LAST:EditProject.LAST_LAYER;
+        for(int track=first;track<=last;track++)if(track!=source.track&&!p.tracks[track].locked&&free(p,track,at.startMs,at.endMs,-1)){
+            int result=insertCopy(p,index,track,at.startMs);p.clips.get(result).transition=source.transition;return result;
+        }
+        throw new IllegalArgumentException("No free unlocked layer is available for the duplicate.");
     }
     public static int duplicateOverlay(EditProject p,int index,boolean after) {
         if(p.overlays.size()>=20) throw new IllegalArgumentException("This project supports up to 20 text, shape and image layers.");

@@ -149,7 +149,7 @@ public class EditorWorkspaceTest {
                     ((android.widget.EditText)described(root,"Search project media")).setText(" detail ");
                     assertNotNull(text(root,"1 / 2 items"));assertNull(described(root,"Media ICE / OPENING"));
                     described(root,"Media ICE / DETAIL").performClick();
-                    assertNotNull("Filtered index maps to the original clip",text(root,"Picture  •  ICE / DETAIL"));
+                    assertEquals("Filtered index maps to the original clip","ICE / DETAIL",a.clip().name);assertNotNull(text(a.inspector,"Footage"));assertNotNull(text(a.inspector,"ICE / DETAIL"));
                     assertTrue(described(root,"Media ICE / DETAIL").isSelected());
                     assertSame("Filtering never recreates the preview surface",previewParent,surface(root).getParent());
                 });

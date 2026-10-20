@@ -29,6 +29,8 @@ final class V1Icon extends Drawable {
             case "Extract Audio":path.moveTo(7,18);path.lineTo(7,5);path.lineTo(16,3);path.lineTo(16,12);path.addOval(2,16,7,21,Path.Direction.CW);line(13,18,22,18);line(19,15,22,18);line(22,18,19,21);break;
             case "Volume":path.moveTo(3,9);path.lineTo(7,9);path.lineTo(12,4);path.lineTo(12,20);path.lineTo(7,15);path.lineTo(3,15);path.close();path.addArc(10,6,20,18,-60,120);path.addArc(8,2,25,22,-55,110);break;
             case "Delete":line(3,6,21,6);line(9,3,15,3);path.moveTo(6,6);path.lineTo(7,21);path.lineTo(17,21);path.lineTo(18,6);line(10,10,10,17);line(14,10,14,17);break;
+            case "Export":line(12,3,12,15);line(12,3,7,8);line(12,3,17,8);path.moveTo(4,12);path.lineTo(4,21);path.lineTo(20,21);path.lineTo(20,12);break;
+            case "Captions":path.addRoundRect(2,5,22,19,2,2,Path.Direction.CW);line(5,10,19,10);line(5,14,11,14);line(14,14,19,14);break;
             case "Save":path.addRect(4,3,21,21,Path.Direction.CW);path.addRect(8,3,17,9,Path.Direction.CW);path.addRect(8,14,17,21,Path.Direction.CW);break;
             case "Undo":line(4,5,4,12);line(4,12,11,12);path.moveTo(4,12);path.cubicTo(6,3,21,5,20,14);path.cubicTo(20,18,16,20,12,20);break;
             case "Redo":line(20,5,20,12);line(20,12,13,12);path.moveTo(20,12);path.cubicTo(18,3,3,5,4,14);path.cubicTo(4,18,8,20,12,20);break;

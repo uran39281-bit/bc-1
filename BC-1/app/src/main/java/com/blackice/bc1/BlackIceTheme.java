@@ -7,7 +7,7 @@ import android.graphics.drawable.*;
 final class BlackIceTheme {
     static final int BACKGROUND=0xFF07111B,PRIMARY=0xFF0C1825,SECONDARY=0xFF0C1825,
         ELEVATED=0xFF101E2C,ACCENT=0xFF48E59F,ICE=0xFF7CD5F3,
-        TEXT=0xFFF2F6FA,MUTED=0xFF97A8BA,BORDER=0xFF213548;
+        ON_ACCENT=0xFF03130D,DISABLED=0xFF526174,TEXT=0xFFF2F6FA,MUTED=0xFF97A8BA,BORDER=0xFF213548;
     static GradientDrawable surface(float density,boolean active){
         GradientDrawable d=new GradientDrawable(GradientDrawable.Orientation.TL_BR,
             new int[]{active?0xFF12456A:0xED0B1C2D,active?0xFF0B2943:0xEE081524});

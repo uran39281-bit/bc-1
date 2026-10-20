@@ -23,5 +23,5 @@ Pending CI qualification. Do not label this build stable or publish a release un
 - Clip effects use the existing single effect plus chroma/animation pipeline; arbitrary effect stack reordering is not introduced.
 - No vector-node/crop editor for raster footage, automatic captions, freehand drawing or AI enhancement is claimed.
 - Existing project canvas choices remain portrait/landscape. This change does not add arbitrary aspect ratios.
-- Existing duplicate collision policy remains: occupied independent placement is refused, rather than overwriting another clip.
+- Default duplication uses free space after the source, or a free unlocked layer at the same time; unrelated clip positions are preserved. If neither fits, it reports the limit.
 - Source imports enter Project Media and are inserted using its real Add at playhead/new-layer command. Overlay navigation chooses new-layer insertion.

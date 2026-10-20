@@ -307,7 +307,7 @@ public final class EditorActivity extends Activity {
         boolean wide=LayoutPolicy.resolve(mode,c.screenWidthDp,c.screenHeightDp,c.smallestScreenWidthDp,display!=null&&display.getDisplayId()!=0)==LayoutPolicy.Workspace.WIDE;
         mobile=null;phonePreview=null;phoneTransport=null;phoneTimelineTools=null;phoneTimelineArea=null;phoneDrawer=null;navTabs.clear();mediaFilterButtons.clear();mediaBrowser=null;mediaGrid=null;mediaCount=null;previewScrubber=null;scrubbing=false;LinearLayout root=column();root.setBackground(BlackIceTheme.backdrop());
         wideLayout=wide;reducedMotion=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("reduced-motion",false);favoriteMedia.clear();favoriteMedia.addAll(getSharedPreferences(PREFS,MODE_PRIVATE).getStringSet("favorite-media",java.util.Collections.emptySet()));header=row();header.setPadding(dp(10),0,dp(8),0);header.setGravity(Gravity.CENTER_VERTICAL);header.setBackground(BlackIceTheme.backdrop());headerKey="";
-        root.addView(header,new LinearLayout.LayoutParams(-1,dp(56)));renderHeader();
+        root.addView(header,new LinearLayout.LayoutParams(-1,dp(wide?56:Math.max(64,Math.min(88,64*c.fontScale)))));renderHeader();
         if(fullscreenPreview){root.addView(buildMonitor(),new LinearLayout.LayoutParams(-1,0,1));root.addView(transport(true));root.addView(button("Exit fullscreen",v->{fullscreenPreview=false;buildWorkspace();}));inspector=column();}
         else if(wide) {
             LinearLayout body=row();root.addView(body,new LinearLayout.LayoutParams(-1,0,1));
@@ -419,7 +419,7 @@ public final class EditorActivity extends Activity {
         transport.addView(controls);return transport;
     }
     TextView transportIcon(String icon,String description,View.OnClickListener l){TextView b=compactButton("",description,l);b.setBackground(null);b.setCompoundDrawables(icon(icon,TEXT),null,null,null);b.setPadding(dp(11),0,dp(11),0);b.setMinWidth(dp(44));b.setMinHeight(dp(44));return b;}
-    void syncPlayButton(){boolean playing=player!=null&&player.isPlaying();if(play==null||Boolean.valueOf(playing).equals(play.getTag()))return;play.setTag(playing);play.setContentDescription(playing?"Pause":"Play");play.setCompoundDrawables(icon(playing?"Pause":"Play",mobile!=null?0xFF03130D:TEXT),null,null,null);play.setPadding(dp(playing?13:15),0,dp(playing?13:11),0);}
+    void syncPlayButton(){boolean playing=player!=null&&player.isPlaying();if(play==null||Boolean.valueOf(playing).equals(play.getTag()))return;play.setTag(playing);play.setContentDescription(playing?"Pause":"Play");play.setCompoundDrawables(icon(playing?"Pause":"Play",mobile!=null?BlackIceTheme.ON_ACCENT:TEXT),null,null,null);play.setPadding(dp(playing?13:15),0,dp(playing?13:11),0);}
     void clipPercent(boolean volume){EditProject.Clip c=clip();if(c==null)return;percentPanel(volume?"Volume":"Opacity",volume?c.volume:c.opacity,volume?.7f:1f,value->{if(volume)c.volume=value;else c.opacity=value;});}
     void percentPanel(String title,float initial,float defaultValue,ValueAction action){
         if(!editable())return;LinearLayout f=form();EditText numeric=field(f,title+" (%)",String.valueOf(Math.round(initial*100)));numeric.setInputType(android.text.InputType.TYPE_CLASS_NUMBER|android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
@@ -665,7 +665,7 @@ public final class EditorActivity extends Activity {
             TextView save=labelledIcon("Save","Save","Save project",v->{saveNow();tell("Saving project…");});header.addView(save);
         }
         header.addView(labelledIcon("Settings","Settings","Settings",v->{tab=4;renderInspector();}));
-        exportButton=button("Export",v->exportMenu());exportButton.setTextSize(14);exportButton.setBackground(BlackIceTheme.primary(getResources().getDisplayMetrics().density));LinearLayout.LayoutParams exportLp=new LinearLayout.LayoutParams(-2,dp(44));exportLp.leftMargin=dp(8);exportButton.setPadding(dp(22),0,dp(22),0);header.addView(exportButton,exportLp);
+        exportButton=button("Export",v->exportMenu());exportButton.setTextSize(14);exportButton.setTextColor(BlackIceTheme.ON_ACCENT);exportButton.setBackground(BlackIceTheme.primary(getResources().getDisplayMetrics().density));LinearLayout.LayoutParams exportLp=new LinearLayout.LayoutParams(-2,dp(48));exportLp.leftMargin=dp(8);exportButton.setPadding(dp(22),0,dp(22),0);header.addView(exportButton,exportLp);
     }
     /** Top-bar section tabs exist only in roomy wide windows. */
     boolean topTabs(){return wideLayout&&getResources().getConfiguration().screenWidthDp>=1100;}
@@ -1029,7 +1029,7 @@ public final class EditorActivity extends Activity {
             EditProject.Clip c=asset.copy();c.track=0;c.startMs=0;int target=track;
             if(c.audioOnly&&target<EditProject.AUDIO_FIRST||!c.audioOnly&&target>=EditProject.AUDIO_FIRST)target=c.audioOnly?EditProject.AUDIO_FIRST:0;
             long end=start+c.durationMs();
-            if(target>0&&!LayerOps.free(project,target,start,end,-1)){int first=target>=EditProject.AUDIO_FIRST?EditProject.AUDIO_FIRST:1,last=target>=EditProject.AUDIO_FIRST?EditProject.AUDIO_LAST:EditProject.LAST_LAYER,found=-1;for(int t=first;t<=last&&found<0;t++)if(LayerOps.free(project,t,start,end,-1))found=t;if(found<0)throw new IllegalArgumentException("No free "+(target>=EditProject.AUDIO_FIRST?"audio":"video")+" layer at "+seconds(start)+" s.");target=found;}
+            if(project.tracks[target].locked||target>0&&!LayerOps.free(project,target,start,end,-1)){int first=target>=EditProject.AUDIO_FIRST?EditProject.AUDIO_FIRST:1,last=target>=EditProject.AUDIO_FIRST?EditProject.AUDIO_LAST:EditProject.LAST_LAYER,found=-1;for(int t=first;t<=last&&found<0;t++)if(!project.tracks[t].locked&&LayerOps.free(project,t,start,end,-1))found=t;if(found<0)throw new IllegalArgumentException("No free "+(target>=EditProject.AUDIO_FIRST?"audio":"video")+" layer at "+seconds(start)+" s.");target=found;}
             if(target>=EditProject.AUDIO_FIRST){c.track=target;c.startMs=start;project.clips.add(c);selected=project.clips.size()-1;}
             else{if(c.audioOnly)throw new IllegalArgumentException("Audio belongs on an audio layer.");c.track=0;project.clips.add(project.lastBase()+1,c);selected=TimelineEdits.place(project,project.lastBase(),target,start);}
             selectedOverlay=-1;multiClips.clear();multiOverlays.clear();tab=1;
@@ -1057,6 +1057,11 @@ public final class EditorActivity extends Activity {
             main.post(()->{exportLaunching=false;try{startForegroundService(new Intent(this,ExportService.class).putExtra("project",file.getAbsolutePath()).putExtra("destination",destination.toString()));message="Export started";}catch(Exception e){file.delete();tell("Cannot start export: "+e.getMessage());}});
         }catch(Exception e){main.post(()->{exportLaunching=false;tell("Cannot prepare export: "+e.getMessage());});}});
     }
+    void saveAndProjects(){
+        if(loading||importing)return;EditProject snapshot=ProjectStore.snapshot(project);
+        io.execute(()->{try{store.save(snapshot);main.post(()->{if(!isDestroyed())projectsMenu();});}
+            catch(Exception error){main.post(()->{if(!isDestroyed())new AlertDialog.Builder(this).setTitle("Could not save project").setMessage("Your edits remain open. Retry saving before leaving.").setPositiveButton("Retry",(dialog,which)->saveAndProjects()).setNegativeButton("Keep editing",null).show();});}});
+    }
     /** System gesture Back follows the same state hierarchy as the toolbar and keyboard. */
     @SuppressWarnings("deprecation") @Override public void onBackPressed(){
         if(fullscreenPreview){fullscreenPreview=false;buildWorkspace();return;}
@@ -1064,7 +1069,7 @@ public final class EditorActivity extends Activity {
         if(panels.showing()){panels.back();return;}
         if(clip()!=null||overlay()!=null||multiCount()>0){deselect();return;}
         if(tab!=1){tab=1;renderInspector();return;}
-        saveNow();super.onBackPressed();
+        saveAndProjects();
     }
     @Override public boolean onKeyDown(int key,KeyEvent event){
         if(key==KeyEvent.KEYCODE_BACK&&mobile!=null){mobile.back();return true;}
@@ -1093,10 +1098,10 @@ public final class EditorActivity extends Activity {
         if(key==KeyEvent.KEYCODE_LEFT_BRACKET||key==KeyEvent.KEYCODE_RIGHT_BRACKET){jumpKeyframe(key==KeyEvent.KEYCODE_RIGHT_BRACKET);return true;}
         return super.onKeyDown(key,event);
     }
-    /** Duplicate After by default: a sequential copy on the same row. */
+    /** Duplicate after when free, otherwise onto an unlocked layer without moving other clips. */
     void duplicateSelected(){if(multiCount()>1){multiAction("Duplicate");return;}duplicate(false);}
     void duplicate(boolean above){EditProject.Clip c=clip();EditProject.Overlay o=overlay();if(c==null&&o==null||!layerEditable())return;
-        if(c!=null)edit(above?"Duplicated above":"Clip duplicated",()->{selected=above?LayerOps.duplicateAbove(project,selected):LayerOps.duplicateAfter(project,selected);});
+        if(c!=null)edit(above?"Duplicated above":"Clip duplicated",()->{selected=above?LayerOps.duplicateAbove(project,selected):LayerOps.duplicateSafe(project,selected);});
         else edit(above?"Duplicated above":"Layer duplicated",()->selectedOverlay=LayerOps.duplicateOverlay(project,selectedOverlay,!above));}
     void placementDialog(){EditProject.Clip c=clip();if(c==null||!editable())return;LinearLayout f=form();EditText track=field(f,"0: main sequence · 1–"+EditProject.LAST_LAYER+": video layers · "+EditProject.AUDIO_FIRST+"–"+EditProject.AUDIO_LAST+": audio",String.valueOf(c.track)),start=field(f,"Timeline start (seconds)",seconds(project.placements().get(selected).startMs));dialog("Layer placement",f,()->{int t=Integer.parseInt(track.getText().toString());long ms=parseMs(start.getText().toString());edit("Layer placement updated",()->selected=TimelineEdits.place(project,selected,t,ms));},null);}
     void fadeDialog(){EditProject.Clip c=clip();LinearLayout f=form();EditText in=field(f,"Fade in (seconds)",seconds(c.fadeInMs)),out=field(f,"Fade out (seconds)",seconds(c.fadeOutMs));dialog("Audio fades",f,()->{long a=parseMs(in.getText().toString()),b=parseMs(out.getText().toString());if(a<0||b<0||a>c.durationMs()||b>c.durationMs())throw new IllegalArgumentException("Fades must fit inside the clip");remember();c.fadeInMs=a;c.fadeOutMs=b;changed("Audio fades updated");},null);}
