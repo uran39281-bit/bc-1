@@ -302,6 +302,7 @@ public final class EditorActivity extends Activity {
 
     void buildWorkspace() {
         // Layout switches keep selection, playhead and zoom (fields) and the layer list's vertical scroll.
+        int timeScroll=timelineScroll!=null?timelineScroll.getScrollX():0;
         int layerScroll=timelineScroll!=null&&timelineScroll.getParent() instanceof ScrollView?((ScrollView)timelineScroll.getParent()).getScrollY():0;
         Configuration c=getResources().getConfiguration();android.view.Display display=getWindowManager().getDefaultDisplay();
         boolean wide=LayoutPolicy.resolve(mode,c.screenWidthDp,c.screenHeightDp,c.smallestScreenWidthDp,display!=null&&display.getDisplayId()!=0)==LayoutPolicy.Workspace.WIDE;
@@ -337,7 +338,7 @@ public final class EditorActivity extends Activity {
         }
         status=label(message,10,MUTED,false);status.setSingleLine(true);status.setPadding(dp(10),0,dp(10),dp(3));status.setOnClickListener(v->new AlertDialog.Builder(this).setMessage(status.getText()).setPositiveButton("OK",null).show());root.addView(status,new LinearLayout.LayoutParams(-1,dp(24)));
         root.setOnApplyWindowInsetsListener((v,insets)->{v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets.consumeSystemWindowInsets();});
-        setContentView(root);root.requestApplyInsets();if(layerScroll>0&&timelineScroll!=null)timelineScroll.post(()->{if(timelineScroll.getParent() instanceof ScrollView)((ScrollView)timelineScroll.getParent()).scrollTo(0,layerScroll);});if(player!=null)player.setVideoSurfaceView(surface);renderInspector();syncPosition();if(previewPending)previewHint("Preparing preview…\nTap to cancel");
+        setContentView(root);root.requestApplyInsets();if(timeScroll>0&&timelineScroll!=null){final HorizontalScrollView restoredTimeline=timelineScroll;restoredTimeline.post(()->restoredTimeline.scrollTo(timeScroll,0));}if(layerScroll>0&&timelineScroll!=null)timelineScroll.post(()->{if(timelineScroll.getParent() instanceof ScrollView)((ScrollView)timelineScroll.getParent()).scrollTo(0,layerScroll);});if(player!=null)player.setVideoSurfaceView(surface);renderInspector();syncPosition();if(previewPending)previewHint("Preparing preview…\nTap to cancel");
     }
     View buildMonitor() {
         if(surface==null){surface=new SurfaceView(this);surface.setContentDescription("Video project preview");}
