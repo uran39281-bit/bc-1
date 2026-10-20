@@ -1,0 +1,1 @@
+Test build of engine/bc-core at 233bebb49eb1f7524ff6ecf06d013709e50e8e0a (run 39435049450). Package com.blackice.bc1.icelite installs beside BC-1.
