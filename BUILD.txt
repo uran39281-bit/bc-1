@@ -1,0 +1,1 @@
+Test build of ui/mint-footage at 0e90227ddf82ec927450428920935c6a98468076 (run 39472715226). Package com.blackice.bc1.icelite installs beside BC-1.
