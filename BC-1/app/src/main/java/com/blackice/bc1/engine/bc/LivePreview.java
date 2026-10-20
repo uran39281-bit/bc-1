@@ -71,7 +71,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     private int width, height;
     private long frames;
     private final Map<String, Slot> slots = new HashMap<>();
-    private long lastRequestNs;
+    private long lastRequestNs, lastLogMs;
     // Playback (render thread, except the volatile fields read by the editor).
     private volatile boolean playing;
     private volatile EditProject playProject;
@@ -199,6 +199,13 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
 
     public boolean isPlaying() { return playing; }
 
+    /** One-line state for diagnostics and test failures. */
+    public String debugState() {
+        Request l = latest;
+        return "playing=" + playing + " position=" + positionMs() + " latest=" + (l == null ? "none" : l.timeMs + (l.exact ? " exact" : " approx"))
+                + " frames=" + frames + " played=" + playedFrames + " lastError=" + lastError;
+    }
+
     /** Where playback is now (or stopped). */
     public long positionMs() {
         PlaybackAudio a = audio;
@@ -211,6 +218,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
 
     private void startPlayback(EditProject snapshot, long fromMs, long untilMs, PlaybackListener l) {
         endPlayback();
+        android.util.Log.d("BC1Live", "playback " + (playing ? "starts" : "was stopped before starting") + " at " + fromMs + " ms, until " + untilMs + " ms");
         if (!playing) return; // stopped before it started
         playbackListener = l; playedFrames = 0; droppedFrames = 0;
         PlaybackAudio a = new PlaybackAudio(context, com.blackice.bc1.core.AudioPlan.of(snapshot, true), fromMs, untilMs);
@@ -257,6 +265,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     private void endPlayback() {
         if (choreographer != null) choreographer.removeFrameCallback(playbackFrame);
         PlaybackAudio a = audio;
+        if (a != null) android.util.Log.d("BC1Live", "playback ends: " + playedFrames + " frames drawn, " + droppedFrames + " skipped");
         audio = null;
         if (a != null) a.release();
         lastDrawnMs = -1;
@@ -285,7 +294,9 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
                 if (latest == r && !playing) { Request exact = new Request(r.project, r.timeMs, null, true); if (pending.getAndSet(exact) == null) drain(); }
             }, SETTLE_MS);
             long took = (System.nanoTime() - start) / 1_000_000;
-            if (++frames % 20 == 1 || took > 250) android.util.Log.d("BC1Live", "frame " + frames + " at " + r.timeMs + " ms took " + took + " ms, " + slots.size() + " sources open");
+            long nowMs = System.currentTimeMillis();
+            if (++frames % 20 == 1 || took > 250 || nowMs - lastLogMs > 1000) { lastLogMs = nowMs; } else took = -1;
+            if (took >= 0) android.util.Log.d("BC1Live", "frame " + frames + " at " + r.timeMs + " ms took " + took + " ms, " + slots.size() + " sources open");
             FrameListener l = listener;
             if (l != null) l.onFrame(r.timeMs, (System.nanoTime() - start) / 1_000_000);
         } catch (Throwable t) {

@@ -148,6 +148,11 @@ public class LivePreviewTest {
         try (Reader reader = new Reader(640, 360)) {
             live.attach(reader.reader.getSurface());
             EditProject p = project(); // red 0-2 s, blue 2-4 s
+            // Compile both effect programs first (seconds each on the emulator's software GL; instant on phones).
+            p.clips.get(1).effect = 25; p.clips.get(1).intensity = 0f;
+            assertTrue(live.renderNow(ProjectStore.snapshot(p), 3000, 30_000));
+            p.clips.get(1).effect = 0;
+            assertTrue(live.renderNow(ProjectStore.snapshot(p), 1000, 30_000));
             java.util.concurrent.CountDownLatch ended = new java.util.concurrent.CountDownLatch(1);
             java.util.concurrent.atomic.AtomicLong endAt = new java.util.concurrent.atomic.AtomicLong(-1);
             long start = System.nanoTime();

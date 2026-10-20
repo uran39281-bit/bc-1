@@ -41,7 +41,10 @@ public class EditorWorkspaceTest {
                 Thread.sleep(250);
         }
         ThreadDump.log("No preview pixels");
-        fail("Preview must render real image pixels without pressing Play");
+        java.util.concurrent.atomic.AtomicReference<String> state=new java.util.concurrent.atomic.AtomicReference<>("");
+        scenario.onActivity(a->{String px="none";if(a.liveView!=null&&a.liveView.isAvailable()){Bitmap b=a.liveView.getBitmap();if(b!=null){px=Integer.toHexString(b.getPixel(b.getWidth()/4,b.getHeight()/2));b.recycle();}}
+            state.set("live view "+(a.liveView==null?"missing":(a.liveView.getVisibility()==View.VISIBLE?"visible":"hidden")+" available="+a.liveView.isAvailable()+" pixel="+px)+" • "+(a.live==null?"no live preview":a.live.debugState())+" • playhead="+a.project.playheadMs);});
+        fail("Preview must render real image pixels without pressing Play: "+state.get());
     }
     @Test public void rapidSearchDuringDecodeUpdatesCurrentThumbnail()throws Exception{
         assumeTrue(Build.HARDWARE.contains("ranchu")||Build.HARDWARE.contains("goldfish"));
