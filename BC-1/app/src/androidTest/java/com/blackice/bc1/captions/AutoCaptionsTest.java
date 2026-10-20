@@ -92,7 +92,7 @@ public class AutoCaptionsTest {
         lead.name = "lead"; lead.inMs = 0; lead.outMs = 2000; lead.volume = 0; p.clips.add(lead);
         EditProject.Clip speech = new MediaImporter(context).importClip(Uri.parse(fixture("speech.mp4")), false);
         speech.name = "speech"; p.clips.add(speech);
-        p.music = new EditProject.Music(); p.music.uri = fixture("music.wav"); p.music.sourceDurationMs = 1000; p.music.inMs = 0; p.music.outMs = 1000; p.music.loop = true; p.music.volume = .5f;
+        p.music = new EditProject.Music(); p.music.name = "music"; p.music.uri = fixture("music.wav"); p.music.sourceDurationMs = 1000; p.music.inMs = 0; p.music.outMs = 1000; p.music.loop = true; p.music.volume = .5f;
         p.validate();
         Transcriber.Options o = new Transcriber.Options(); o.model = MODEL;
         AtomicBoolean progressed = new AtomicBoolean();
