@@ -84,4 +84,14 @@ public class CaptionBuilderTest {
         assertTrue("Cut inside the pause: " + cut, cut >= rate * 17 && cut <= rate * 17 + rate / 5);
         assertTrue(SpeechChunks.quietestCut(a, 100, rate, rate) >= 1);
     }
+
+    @Test public void segmentsTightenToTheActualSpeech() {
+        int rate = 16_000; float[] a = new float[rate * 6];
+        for (int i = rate * 3; i < rate * 5; i++) a[i] = (float) Math.sin(i * .07) * .4f; // speech 3-5 s after silence
+        long[] t = SpeechChunks.tighten(a, rate, 0, 6000);
+        assertTrue("Starts at the speech, not at 0: " + t[0], t[0] >= 2800 && t[0] <= 3000);
+        assertTrue("Ends just after the speech: " + t[1], t[1] >= 5000 && t[1] <= 5300);
+        long[] silent = SpeechChunks.tighten(new float[rate * 2], rate, 100, 1500);
+        assertArrayEquals("Silence keeps whisper's times", new long[]{100, 1500}, silent);
+    }
 }

@@ -28,4 +28,29 @@ public final class SpeechChunks {
         }
         return Math.max(1, Math.min(length, best));
     }
+
+    /**
+     * Narrows a recognised segment to where there is actually sound. Whisper's segment times are only
+     * roughly aligned (a first segment after silence often starts at 0), so captions would appear early;
+     * this moves the start to the first voiced 20 ms and the end to the last. Returns {startMs, endMs}.
+     */
+    public static long[] tighten(float[] pcm, int rate, long startMs, long endMs) {
+        int window = rate / 50;
+        int from = (int) Math.max(0, Math.min(pcm.length, startMs * rate / 1000)), to = (int) Math.max(from, Math.min(pcm.length, endMs * rate / 1000));
+        int windows = (to - from) / window;
+        if (windows < 2) return new long[]{startMs, endMs};
+        double[] rms = new double[windows]; double peak = 0;
+        for (int w = 0; w < windows; w++) {
+            double e = 0;
+            for (int i = from + w * window, end = i + window; i < end; i++) e += pcm[i] * pcm[i];
+            rms[w] = Math.sqrt(e / window); peak = Math.max(peak, rms[w]);
+        }
+        double threshold = Math.max(.004, peak * .12);
+        int first = -1, last = -1;
+        for (int w = 0; w < windows; w++) if (rms[w] >= threshold) { if (first < 0) first = w; last = w; }
+        if (first < 0) return new long[]{startMs, endMs};
+        long voicedStart = (from + (long) first * window) * 1000 / rate, voicedEnd = (from + (long) (last + 1) * window) * 1000 / rate;
+        // Keep a little lead-in so the caption is up as the first syllable starts.
+        return new long[]{Math.max(startMs, voicedStart - 100), Math.min(endMs, Math.max(voicedEnd + 150, voicedStart + 300))};
+    }
 }

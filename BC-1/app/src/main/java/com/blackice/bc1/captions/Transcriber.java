@@ -105,7 +105,10 @@ public final class Transcriber {
                 finally { poll.interrupt(); }
                 if ("auto".equals(language)) language = w.language();
                 long baseMs = base * 1000 / rate;
-                for (WhisperLib.Segment s : segments) { times.add(new long[]{s.startMs + baseMs, s.endMs + baseMs}); texts.add(s.text); }
+                for (WhisperLib.Segment s : segments) {
+                    long[] t = SpeechChunks.tighten(piece, rate, s.startMs, s.endMs); // align to the actual sound
+                    times.add(new long[]{t[0] + baseMs, t[1] + baseMs}); texts.add(s.text);
+                }
                 System.arraycopy(buffer, cut, buffer, 0, filled - cut);
                 filled -= cut; consumed += cut;
                 if (end && filled == 0) break;
