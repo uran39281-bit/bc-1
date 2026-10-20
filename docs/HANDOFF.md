@@ -1,3 +1,7 @@
+# v1.3.3 centered playhead — qualified source
+
+Source a4f8d98ee31b7bd79e25cfdf6208cddd5c2d2a61, run39510438799: build/unit/lint passed, 44 Android tests /10 independent export checks passed. Playhead stays centered; timeline swipes seek, touch hold-drag moves layers, trim grips remain direct. Zoom/fit and rebuilds retain current time at center. Actual screenshot reviewed. See qa/BC-1-v1.3.3-CENTERED-PLAYHEAD.md for test APK and signing limitation. Normal upgrade remains blocked; retain original key and all prior releases.
+
 # v1.3.2 scrub fix — source qualified, upgrade signing blocked
 
 Qualified source ec6e3e9c8725bd13a8f8ddb69bf52bc75794af56, run39492323400:137 JVM /44 Android /10 independent export checks passed. TimelineView hit-tests the visible playhead below the ruler; paused rendering hides the inactive playback SurfaceView. Visible screen pixels are checked after actual gestures, including playback/pause. See qa/BC-1-v1.3.2-PLAYHEAD.md for failed first run, corrected test assumptions, separate test APK and limitations. Normal preview upgrade signing remains blocked: retained private backup located but authorized materialization denied. Never regenerate or publish signing material. Existing releases remain untouched. User's physical device/footage still needs confirmation.

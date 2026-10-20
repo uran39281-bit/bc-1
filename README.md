@@ -1,6 +1,6 @@
 # BC-1 — Black Ice editor
 
-**v1.3.2 source update:** paused playhead-scrubbing fix passed 137 JVM tests, 44 Android tests and 10 export checks. Normal upgrade APK awaits retained signing-key access. [Separate test APK and QA](docs/qa/BC-1-v1.3.2-PLAYHEAD.md); it installs beside Preview and does not share existing project storage. The signed release below remains v1.3.1.
+**v1.3.3 source update:** centered playhead with timeline swiping, live paused scrubbing, hold-to-move clips and centered zoom/fit. Build/unit/lint, 44 Android tests and 10 export checks passed. Normal upgrade APK awaits retained signing-key access. [Separate test APK, screenshot and QA](docs/qa/BC-1-v1.3.3-CENTERED-PLAYHEAD.md). The signed release below remains v1.3.1.
 
 Home of the BC-1 editor (Black Ice Custom Engine): app source in [`BC-1/`](BC-1), released APKs in the version folders below.
 
