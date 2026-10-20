@@ -456,17 +456,21 @@ public final class EditorActivity extends Activity {
         timeline.zoomAround(before,anchor);syncZoomSlider();
     }
     void setTimelineZoom(float value){zoomTimeline(value/pixelsPerSecond,Float.NaN);}
-    /** Fit Entire Project: the whole project is visible from 0 s. */
-    void fitTimeline(){
-        if(timeline==null)return;long duration=project.durationMs();if(duration<=0)return;float span=timeline.viewport()-timeline.pad()-dp(24);
-        pixelsPerSecond=Math.max(8,Math.min(2400,span/dp(1)/(duration/1000f)));timeline.requestLayout();timeline.reveal(0);syncZoomSlider();
+    /** Fit a time range while retaining the centered playhead and current preview frame. */
+    void fitTimelineRange(long start,long end){
+        float left=Math.max(dp(8),timeline.pad()-timeline.headerWidth()-dp(14));
+        float right=Math.max(dp(8),timeline.viewport()-timeline.pad()-dp(24));
+        float before=Math.max(0,project.playheadMs-start)/1000f,after=Math.max(0,end-project.playheadMs)/1000f;
+        float scale=Math.min(before>0?left/before:Float.POSITIVE_INFINITY,after>0?right/after:Float.POSITIVE_INFINITY);
+        pixelsPerSecond=Math.max(8,Math.min(2400,scale/dp(1)));timeline.requestLayout();timeline.reveal(start);syncZoomSlider();
     }
+    void fitTimeline(){if(timeline!=null&&project.durationMs()>0)fitTimelineRange(0,project.durationMs());}
     /** Zoom to Selection: frames the selected layers. */
     void zoomToSelection(){
         if(timeline==null)return;long start=Long.MAX_VALUE,end=0;for(int i:selectedClips()){EditProject.Placement pl=project.placements().get(i);start=Math.min(start,pl.startMs);end=Math.max(end,pl.endMs);}
         for(int i:selectedOverlays()){EditProject.Overlay o=project.overlays.get(i);start=Math.min(start,o.startMs);end=Math.max(end,o.endMs);}
         if(start==Long.MAX_VALUE){tell("Select a layer to zoom to it.");return;}
-        float span=timeline.viewport()-timeline.pad()-dp(40);pixelsPerSecond=Math.max(8,Math.min(2400,span/dp(1)/(Math.max(100,end-start)/1000f)));timeline.requestLayout();timeline.reveal(start);syncZoomSlider();
+        fitTimelineRange(start,end);
     }
     void toggleMarkerAt(long time){if(!editable())return;long tolerance=Math.max(1,Math.round(dp(6)*1000/timeline.timelineScale()));edit("Marker toggled",()->LayerOps.toggleMarker(project,Math.max(0,time),tolerance));}
     /** Row-handle reordering: moves one row to the target position, one swap at a time, in one undo step. */
