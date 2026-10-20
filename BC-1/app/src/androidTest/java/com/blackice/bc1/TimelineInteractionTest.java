@@ -49,7 +49,9 @@ public class TimelineInteractionTest {
             inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("last-project",p.id).putString("mode","AUTO").putBoolean("ui-locked",false).putBoolean("snapping",false).putInt("workspace-focus",0).commit();
             try(ActivityScenario<EditorActivity> scenario=ActivityScenario.launch(EditorActivity.class)){
                 waitLoaded(scenario);
-                scenario.onActivity(a->{View root=a.getWindow().getDecorView();text(root,"Edit").performClick();assertNull(text(root,"Opacity"));assertNull(text(root,"Split"));View scroll=(View)get(a,"timelineScroll");float y=rowY(a,0);
+                // Open the Edit tab and let its layout settle before measuring (the first live frame can delay layout).
+                scenario.onActivity(a->text(a.getWindow().getDecorView(),"Edit").performClick());inst.waitForIdleSync();Thread.sleep(300);inst.waitForIdleSync();
+                scenario.onActivity(a->{View root=a.getWindow().getDecorView();assertNull(text(root,"Opacity"));assertNull(text(root,"Split"));View scroll=(View)get(a,"timelineScroll");float y=rowY(a,0);
                     assertEquals("Centred playhead: time zero sits under the viewport centre",scroll.getWidth()/2f,vx(a,0),1);
                     touch(scroll,vx(a,1500),y,vx(a,1500),y,false);assertEquals(0,get(a,"selected"));assertNotNull(text(root,"Duration: 3.00 s"));assertNotNull(text(root,"Opacity"));assertNull("No slip for pictures",text(root,"Slip"));assertNull("No video-only tools",text(root,"Extract Audio"));
                     float scale=timeline(a).timelineScale();touch(scroll,vx(a,3000),y,vx(a,3000)+scale/2,y,false);assertEquals("Selected picture extends by half a second",3500,project(a).clips.get(0).durationMs());assertEquals(1,((java.util.Deque<?>)get(a,"undo")).size());
