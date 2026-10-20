@@ -27,7 +27,7 @@ public final class ExportService extends Service {
     public static final String PREFS="bc1-export";
     public static final String LAST_FAILURE="lastFailure";
     private final Handler main=new Handler(Looper.getMainLooper());
-    private final ExecutorService io=Executors.newSingleThreadExecutor();
+    private final ExecutorService io=com.blackice.bc1.CrashLog.worker("bc1-export-io");
     private final AtomicBoolean cancelled=new AtomicBoolean();
     private static volatile boolean alive;
     public static boolean isRunning(){return alive;}

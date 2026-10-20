@@ -17,7 +17,7 @@ import java.util.concurrent.*;
 public final class ThumbnailCache implements AutoCloseable {
     private final Context context;
     private final Handler main=new Handler(Looper.getMainLooper());
-    private final ExecutorService worker=Executors.newSingleThreadExecutor();
+    private final ExecutorService worker=com.blackice.bc1.CrashLog.worker("bc1-thumbnails");
     private final LruCache<String,Bitmap> cache=new LruCache<String,Bitmap>(8*1024*1024){
         @Override protected int sizeOf(String key,Bitmap bitmap){return bitmap.getByteCount();}
     };

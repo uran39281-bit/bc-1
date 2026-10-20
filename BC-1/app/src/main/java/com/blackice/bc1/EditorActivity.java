@@ -41,7 +41,7 @@ public final class EditorActivity extends Activity {
     float previewMoveX=Float.NaN,previewMoveY=Float.NaN,previewZoom=1,previewPanX,previewPanY;
     String compareSnapshot;
     final Handler main=new Handler(Looper.getMainLooper());
-    final ExecutorService io=Executors.newSingleThreadExecutor();
+    final ExecutorService io=com.blackice.bc1.CrashLog.worker("bc1-editor-io");
     ProjectStore store;
     EditProject project=new EditProject();
     Player player;
@@ -124,6 +124,7 @@ public final class EditorActivity extends Activity {
         if(state!=null){selected=state.getInt("selected",-1);selectedOverlay=state.getInt("selected-overlay",-1);pixelsPerSecond=state.getFloat("timeline-zoom",48);tab=state.getInt("tab",0);mediaQuery=state.getString("media-query","");try{mediaKind=MediaFilter.Kind.valueOf(state.getString("media-kind","ALL"));}catch(IllegalArgumentException ignored){}}
         buildWorkspace();
         String id=getSharedPreferences(PREFS,MODE_PRIVATE).getString("last-project",null);
+        io.execute(()->{CrashLog.collectSystemExits(this);main.post(this::offerCrashReport);});
         io.execute(()->{
             EditProject loaded=null;String failure=null;
             if(id!=null)try {loaded=store.load(id);}catch(Exception e){failure="Could not reopen the last project. Its file was preserved.";}
@@ -134,8 +135,8 @@ public final class EditorActivity extends Activity {
             });
         });
     }
-    @Override protected void onStart(){super.onStart();active=true;main.post(pulse);if(!loading)showLive();}
-    @Override protected void onStop(){active=false;main.removeCallbacks(pulse);saveNow();releasePreview();if(live!=null)live.releaseDecoders();super.onStop();}
+    @Override protected void onStart(){super.onStart();CrashLog.note("Editor opened");active=true;main.post(pulse);if(!loading)showLive();}
+    @Override protected void onStop(){CrashLog.note("Editor in background");active=false;main.removeCallbacks(pulse);saveNow();releasePreview();if(live!=null)live.releaseDecoders();super.onStop();}
     @Override protected void onDestroy(){main.removeCallbacks(autosave);if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
     @Override protected void onSaveInstanceState(Bundle state){state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());saveNow();super.onSaveInstanceState(state);}
     @Override public void onConfigurationChanged(Configuration config){super.onConfigurationChanged(config);buildWorkspace();}
@@ -363,6 +364,7 @@ public final class EditorActivity extends Activity {
         }else if(finished>captionsSeen&&!captions.getBoolean("running",false)){captionsSeen=finished;tell(captions.getString("status","Captions finished"));}
     }
     void edit(String message,Runnable operation){
+        CrashLog.note("Edit: "+message);
         if(!editable())return;String before;try{before=ProjectStore.encode(project);}catch(Exception e){tell(e.getMessage());return;}
         int selection=selected;
         try{operation.run();project.validate();if(!before.equals(ProjectStore.encode(project))){pushUndo(before);changed(message);}}
@@ -438,6 +440,7 @@ public final class EditorActivity extends Activity {
             addAction("Restore project bundle",()->pick(RESTORE,"*/*"));
             addAction("Projects / New / Rename",()->projectsMenu());
             addAction("Export diagnostics",()->exportDiagnostics());
+            addAction("Crash reports",()->crashReports());
             addAction("Device video capabilities",()->deviceVideoReport());
             addAction("Engine benchmark (8 layers × 1080p60)",()->engineBenchmark());
             addAction("Captions speed test",()->speechBenchmark());
@@ -788,6 +791,26 @@ public final class EditorActivity extends Activity {
         addAction("Timing / advanced",()->overlayDialog(o));
         addAction("Remove overlay",()->edit("Overlay removed",()->{project.overlays.remove(o);selectedOverlay=-1;}));
     }
+    /** After an unexpected close, offers the report once so it can be copied and shared. */
+    void offerCrashReport(){
+        if(isDestroyed())return;
+        java.io.File[] fresh=CrashLog.unseen(this);
+        if(fresh.length==0)return;
+        CrashLog.markShown(this);
+        String report=CrashLog.read(fresh[0]);
+        new AlertDialog.Builder(this).setTitle("BC-1 closed unexpectedly").setMessage("A report was saved on this phone. Copy it and send it so the problem can be fixed.\n\n"+(report.length()>1500?report.substring(0,1500)+"…":report))
+            .setPositiveButton("Copy report",(d,w)->copyText("BC-1 crash report",report)).setNeutralButton("All reports",(d,w)->crashReports()).setNegativeButton("Close",null).show();
+    }
+    void crashReports(){
+        java.io.File[] all=CrashLog.all();
+        if(all.length==0){tell("No crash reports • the app has not closed unexpectedly");return;}
+        String[] rows=new String[all.length];
+        for(int i=0;i<all.length;i++){String first=CrashLog.read(all[i]).split("\n",2)[0];rows[i]=first;}
+        new AlertDialog.Builder(this).setTitle("Crash reports").setItems(rows,(d,which)->{String report=CrashLog.read(all[which]);
+            new AlertDialog.Builder(this).setTitle(rows[which]).setMessage(report).setPositiveButton("Copy report",(d2,w)->copyText("BC-1 crash report",report)).setNegativeButton("Close",null).show();})
+            .setNegativeButton("Close",null).show();
+    }
+    void copyText(String label,String text){((android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(android.content.ClipData.newPlainText(label,text));tell("Copied • paste it in the chat");}
     /** Auto captions: whisper speech-to-text on the timeline (or the selected clip), added as a caption text group. */
     void autoCaptions(){
         if(!editable())return;
@@ -1158,7 +1181,7 @@ public final class EditorActivity extends Activity {
             }
         }
     }
-    void tell(String text){message=text==null?"Something went wrong.":text;if(status!=null)status.setText(message);}
+    void tell(String text){message=text==null?"Something went wrong.":text;CrashLog.note("Message: "+message);if(status!=null)status.setText(message);}
     int dp(float value){return Math.round(value*getResources().getDisplayMetrics().density);}
     LinearLayout column(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);return l;}
     LinearLayout row(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.HORIZONTAL);return l;}

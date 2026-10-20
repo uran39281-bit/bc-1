@@ -81,12 +81,12 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     }
 
     @Override public void onSurfaceTextureAvailable(SurfaceTexture st, int w, int h) {
-        gl.post(() -> bind(new Surface(st), st)); // the UI thread never waits for the render thread
+        gl.post(guarded("binding the preview surface", () -> bind(new Surface(st), st))); // the UI thread never waits for the render thread
     }
     @Override public void onSurfaceTextureSizeChanged(SurfaceTexture st, int w, int h) { }
     /** Returns false: the render thread releases the SurfaceTexture after its last frame, so a frame in flight never draws into a dead surface. */
     @Override public boolean onSurfaceTextureDestroyed(SurfaceTexture st) {
-        if (!gl.post(this::detachWindow)) st.release();
+        if (!gl.post(guarded("releasing the preview surface", this::detachWindow))) st.release();
         return false;
     }
     @Override public void onSurfaceTextureUpdated(SurfaceTexture st) { }
@@ -152,7 +152,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     }
 
     /** Closes decoders (frees hardware for playback or export); the next frame reopens what it needs. */
-    public void releaseDecoders() { gl.post(this::releaseSources); }
+    public void releaseDecoders() { gl.post(guarded("closing preview decoders", this::releaseSources)); }
 
     /** Stops the render thread. */
     public void release() { runOnGl(this::unbind); thread.quitSafely(); }
@@ -257,10 +257,28 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
         slots.clear();
     }
 
+    /**
+     * Render-thread work that must never close the app: a failure (a surface the system already took
+     * back, a driver error) is recorded and the preview starts over cleanly on the next frame.
+     */
+    private Runnable guarded(String what, Runnable task) {
+        return () -> {
+            try { task.run(); }
+            catch (Throwable t) {
+                com.blackice.bc1.CrashLog.handled("live preview: " + what, t);
+                lastError = String.valueOf(t.getMessage());
+                // Start over, but leave a TextureView's SurfaceTexture alone: the view still owns it.
+                surfaceTexture = null;
+                try { unbind(); } catch (Throwable ignored) { }
+            }
+        };
+    }
+
     private void runOnGl(Runnable task) {
         if (Thread.currentThread() == thread) { task.run(); return; }
         CountDownLatch done = new CountDownLatch(1);
-        if (!gl.post(() -> { try { task.run(); } finally { done.countDown(); } })) return;
+        Runnable safe = guarded("preview setup", task);
+        if (!gl.post(() -> { try { safe.run(); } finally { done.countDown(); } })) return;
         try { done.await(5, TimeUnit.SECONDS); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
     }
 }

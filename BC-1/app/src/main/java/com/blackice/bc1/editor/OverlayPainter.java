@@ -27,8 +27,15 @@ public final class OverlayPainter {
         if(o.shadow>0) paint.setShadowLayer(o.shadow*unit*.04f,0,o.shadow*unit*.015f,Color.argb(Math.round(200*opacity),0,0,0));
         if(o.imageUri!=null) {
             Bitmap image=images.get(o.imageUri);
-            if(image==null) try(java.io.InputStream in=context.getContentResolver().openInputStream(Uri.parse(o.imageUri))) {
-                image=BitmapFactory.decodeStream(in); if(image==null) throw new java.io.IOException("Cannot decode overlay image"); images.put(o.imageUri,image);
+            if(image==null){
+                // Sampled to at most 2× the frame width: a full-resolution phone photo would cost hundreds of MB.
+                BitmapFactory.Options bounds=new BitmapFactory.Options();bounds.inJustDecodeBounds=true;
+                try(java.io.InputStream in=context.getContentResolver().openInputStream(Uri.parse(o.imageUri))){BitmapFactory.decodeStream(in,null,bounds);}
+                BitmapFactory.Options options=new BitmapFactory.Options();options.inSampleSize=1;
+                int limit=Math.max(512,Math.min(4096,width*2));
+                while(Math.max(bounds.outWidth,bounds.outHeight)/(options.inSampleSize*2)>=limit)options.inSampleSize*=2;
+                try(java.io.InputStream in=context.getContentResolver().openInputStream(Uri.parse(o.imageUri))){image=BitmapFactory.decodeStream(in,null,options);}
+                if(image==null) throw new java.io.IOException("Cannot decode overlay image"); images.put(o.imageUri,image);
             }
             float iw=width*.45f,ih=iw*image.getHeight()/image.getWidth();RectF r=new RectF(-iw/2,-ih/2,iw/2,ih/2);
             canvas.drawBitmap(image,null,r,paint);

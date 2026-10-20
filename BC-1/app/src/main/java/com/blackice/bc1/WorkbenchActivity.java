@@ -80,7 +80,7 @@ public final class WorkbenchActivity extends Activity {
     private int requestedImageSlot;
     private long lastFrameNs;
     private boolean resumed;
-    private final ExecutorService imageWorker=Executors.newSingleThreadExecutor();
+    private final ExecutorService imageWorker=com.blackice.bc1.CrashLog.worker("bc1-workbench-images");
     private final ArrayList<TextView> tabButtons=new ArrayList<>();
     private final String[] inputNames={"ICE / DEMO", "EMBER / DEMO"};
     private boolean importing;
