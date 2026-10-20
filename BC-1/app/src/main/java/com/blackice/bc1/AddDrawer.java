@@ -113,6 +113,7 @@ final class AddDrawer {
         into.addView(a.note("Text is added as its own layer at "+(atStart?"the project start":"the playhead")+"."));
         String[][] presets={{"Title","BLACK ICE","1.1"},{"Subtitle","Subtitle","0.7"},{"Caption","Caption text","0.5"}};
         for(String[] p:presets)a.gridAction("+ "+p[0],()->a.addOverlay(0,p[1],Float.parseFloat(p[2])));
+        a.gridAction("Auto captions…",a::autoCaptions);
         a.flushGrid();
     }
     private void shapes(LinearLayout into){

@@ -3,6 +3,8 @@ plugins { id 'com.android.application' }
 android {
     namespace 'com.blackice.bc1'
     compileSdk 36
+    // Auto captions: whisper.cpp built from the pinned submodule in BC-1/third_party.
+    ndkVersion '27.2.12479018'
 
     defaultConfig {
         applicationId 'com.blackice.bc1'
@@ -16,6 +18,17 @@ android {
         versionCode 17
         versionName '1.0.5'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        // Phones (arm64) and the x86_64 emulator used by CI; other CPU types run without auto captions.
+        // -Pbc1Abis=x86_64 limits a build (the emulator checks) to one CPU type.
+        ndk { abiFilters.addAll(project.hasProperty('bc1Abis') ? project.property('bc1Abis').toString().split(',').toList() : ['arm64-v8a', 'x86_64']) }
+        externalNativeBuild { cmake { arguments '-DCMAKE_BUILD_TYPE=Release', '-DANDROID_STL=c++_static' } }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path 'src/main/cpp/CMakeLists.txt'
+            version '3.22.1'
+        }
     }
 
     compileOptions {

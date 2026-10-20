@@ -78,14 +78,10 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     /** Draws into an arbitrary surface (an ImageReader in tests). Blocks until attached. */
     public void attach(Surface target) {
         runOnGl(() -> bind(target, null));
-        Request last = latest;
-        if (last != null) request(last.project, last.timeMs);
     }
 
     @Override public void onSurfaceTextureAvailable(SurfaceTexture st, int w, int h) {
-        gl.post(() -> bind(new Surface(st), st)); // queued ahead of the redraw below; the UI thread never waits
-        Request last = latest;
-        if (last != null) request(last.project, last.timeMs);
+        gl.post(() -> bind(new Surface(st), st)); // the UI thread never waits for the render thread
     }
     @Override public void onSurfaceTextureSizeChanged(SurfaceTexture st, int w, int h) { }
     /** Returns false: the render thread releases the SurfaceTexture after its last frame, so a frame in flight never draws into a dead surface. */
@@ -110,6 +106,10 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
             }
         } else egl = new EglCore(target);
         if (st != null && width > 0) st.setDefaultBufferSize(width, height);
+        // Redraw the newest frame asked for. Done here, on the render thread after binding, because a
+        // request made just before may already have been drained (and dropped) without a window.
+        Request last = latest;
+        if (last != null) request(last.project, last.timeMs);
     }
 
     /** Lets go of the current window (the view's surface is going away) but keeps the GL context when the driver allows. */

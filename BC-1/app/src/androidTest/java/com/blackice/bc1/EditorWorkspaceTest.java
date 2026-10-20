@@ -40,6 +40,7 @@ public class EditorWorkspaceTest {
                 if(result.get()==PixelCopy.SUCCESS&&android.graphics.Color.blue(color)>30)return;
                 Thread.sleep(250);
         }
+        ThreadDump.log("No preview pixels");
         fail("Preview must render real image pixels without pressing Play");
     }
     @Test public void rapidSearchDuringDecodeUpdatesCurrentThumbnail()throws Exception{

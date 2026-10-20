@@ -115,6 +115,10 @@ are neutral at 50%. Animated effects (Ripple, Wave, Shake, Light Leak, Film Grai
 clip's source time (`uTime`). A contact sheet rendered from the shader is in
 `docs/effects/black-ice-effects-sheet.png`.
 
+Each effect's code is guarded by `BC_EFFECT` in the shader, and both engines compile one program per
+effect (`core/LayerShader.forEffect`): a clip pays only for its own effect. Compiling all 48 at once took
+20–30 s on the emulator's software GL, which stalled the first preview frame and Media3's export watchdog.
+
 ## Live preview
 
 While paused, the editor's preview is drawn by ICE Lite (`engine/bc/LivePreview`, a TextureView above the
@@ -124,6 +128,29 @@ dragging (one undo entry per drag). Decoders and pictures stay open between fram
 only redraws, forward scrubbing continues the open decoders, and a backward jump reopens them. Requests are
 coalesced so fast drags never queue up. The Media3 playback player is prepared only when Play is pressed;
 its first frame replaces the live frame, and the live decoders are closed to free the hardware.
+The preview keeps one GL context across surfaces (rotation, layout changes), so compiled shaders, open
+decoders and the last frame carry over; video is drawn through a preview-sized copy with the plain layer
+shader. Choosing an effect for the first time compiles its program once; later slider moves only redraw.
+
+## Auto captions (speech to text)
+
+Text drawer → **Auto captions…** transcribes speech on the phone with
+[whisper.cpp](https://github.com/ggml-org/whisper.cpp) (MIT, pinned submodule `third_party/whisper.cpp`,
+v1.9.5), built with the NDK for arm64-v8a and x86_64 (`app/src/main/cpp`, JNI bridge `bc1_whisper.cpp`,
+Java `captions/WhisperLib`). Nothing is uploaded; only the model is downloaded once, on first use, from the
+whisper.cpp model repository (multilingual, 5-bit quantised: Tiny ~32 MB, Base ~60 MB, Small ~190 MB).
+
+- **Audio:** the project's sound is mixed by the export AudioMixer at 16 kHz mono (`engine/bc/SpeechAudio`),
+  music bed excluded; or only the selected clip's sound. Long timelines are transcribed in ~10-minute
+  chunks cut at the quietest moment near each chunk's end (`core/SpeechChunks`), so memory stays small.
+- **Options:** spoken language (or automatic detection) and translation to English.
+- **Captions:** segments become cues of at most two lines, held long enough to read, never overlapping
+  (`core/CaptionBuilder`), added as the **Captions** text group near the bottom. Re-running replaces that
+  group; the whole change is one undo step. Portrait projects get shorter lines.
+- **Background:** `captions/CaptionService` runs in the foreground with progress and Cancel in the
+  notification, with the screen off; the editor adds the result when it is next open.
+- **Setup:** *Captions speed test* transcribes a built-in 11 s public-domain speech sample and reports
+  speed; *Speech models* shows and deletes downloaded models; *Open-source licenses* shows the MIT notice.
 
 ## Engine routing
 

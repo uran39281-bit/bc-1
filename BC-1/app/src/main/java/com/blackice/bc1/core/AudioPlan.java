@@ -49,8 +49,8 @@ public final class AudioPlan {
             if (c.image) continue;
             boolean renders = LayerOps.renders(project, c, preview);
             float volume = c.volume;
-            if (c.track >= 4 && !renders) volume = 0;
-            if (c.track < 4 && solo && !renders) volume = 0;
+            if (c.track >= EditProject.AUDIO_FIRST && !renders) volume = 0; // audio tracks: hidden or muted, or another layer soloed
+            if (c.track < EditProject.AUDIO_FIRST && solo && !renders) volume = 0;
             if (volume <= 0) continue;
             list.add(new Segment(c.uri, p.startMs, c.durationMs(), c.inMs, c.speed, volume, c.fadeInMs, c.fadeOutMs, false));
         }
@@ -65,6 +65,13 @@ public final class AudioPlan {
             } while (m.loop && cursor < duration);
         }
         return new AudioPlan(list, duration);
+    }
+
+    /** The same timeline with only the segments {@code keep} accepts (e.g. speech without the music bed). */
+    public AudioPlan filter(java.util.function.Predicate<Segment> keep) {
+        List<Segment> kept = new ArrayList<>();
+        for (Segment s : segments) if (keep.test(s)) kept.add(s);
+        return new AudioPlan(kept, durationMs);
     }
 
     /** Segments that produce sound inside [fromMs, toMs). */

@@ -13,3 +13,7 @@ ffmpeg -hide_banner -loglevel error -y -f lavfi -i "color=c=red:s=320x180:r=120:
 for spec in warm:0xC08040 cool:0x4080C0; do
   ffmpeg -hide_banner -loglevel error -y -f lavfi -i "color=c=${spec#*:}:s=320x180:r=30:d=6" -c:v libx264 -pix_fmt yuv420p "BC-1/app/src/androidTest/assets/${spec%%:*}.mp4"
 done
+# Speech for auto-captions tests: the whisper.cpp JFK sample (11 s, public domain) at 48 kHz stereo AAC
+# behind 1 s of silence, over a grey picture; and a music bed that must not be captioned.
+ffmpeg -hide_banner -loglevel error -y -f lavfi -i "color=c=gray:s=320x180:r=30:d=12" -f lavfi -i "anullsrc=r=48000:cl=stereo:d=1" -i BC-1/third_party/whisper.cpp/samples/jfk.wav \
+  -filter_complex "[2:a]aresample=48000,aformat=channel_layouts=stereo[s];[1:a][s]concat=n=2:v=0:a=1[a]" -map 0:v -map "[a]" -c:v libx264 -pix_fmt yuv420p -c:a aac -b:a 128k -shortest BC-1/app/src/androidTest/assets/speech.mp4

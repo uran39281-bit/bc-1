@@ -105,7 +105,10 @@ public final class EditorActivity extends Activity {
         if(!running&&!exportLaunching&&!loading&&(wasExporting||completed>lastExportSeen)){lastExportSeen=completed;tell(export.getString("status","Export ended"));if(wasExporting)showLive();}
         wasExporting=running;
         if(exportButton!=null)exportButton.setText(running?"Cancel":"Export");
-        if(status!=null)status.setText(running?export.getString("status","Exporting…"):message);
+        android.content.SharedPreferences captions=getSharedPreferences(com.blackice.bc1.captions.CaptionService.PREFS,MODE_PRIVATE);
+        boolean captioning=captions.getBoolean("running",false)&&com.blackice.bc1.captions.CaptionService.isRunning();
+        if(status!=null)status.setText(running?export.getString("status","Exporting…"):captioning?captions.getString("status","Captioning…"):message);
+        if(++captionPolls%10==0)collectCaptions(captions);
         main.postDelayed(this,player!=null&&player.isPlaying()?33:100);
     }};
     @Override public void onCreate(Bundle state) {
@@ -345,6 +348,20 @@ public final class EditorActivity extends Activity {
     void effectsDialog(){EditProject.Clip c=clip();if(c==null||c.track>=EditProject.AUDIO_FIRST||!editable())return;new AlertDialog.Builder(this).setTitle("Effect").setSingleChoiceItems(com.blackice.bc1.core.EffectCatalog.NAMES,c.effect,(d,i)->{d.dismiss();edit("Effect applied",()->c.effect=i);}).setNegativeButton("Back",null).show();}
     void splitSelected(){if(clip()!=null)edit("Clip split",()->project.split(selected,project.playheadMs));}
     /** Failed/no-op commands do not consume undo or discard redo. */
+    private int captionPolls;private long captionsSeen=-1;
+    /** Adds finished auto captions to this project (one undoable edit) and reports how the job ended. */
+    void collectCaptions(android.content.SharedPreferences captions){
+        if(loading||uiLocked||importing||exporting())return;
+        long finished=captions.getLong("finishedAt",0);
+        if(captionsSeen<0)captionsSeen=finished;
+        com.blackice.bc1.captions.CaptionService.Taken result=com.blackice.bc1.captions.CaptionService.takeResult(this,project.id);
+        if(result!=null){
+            captionsSeen=finished;
+            if(result.cues.isEmpty()){tell(result.summary);return;}
+            edit("Auto captions added • "+result.summary,()->com.blackice.bc1.core.CaptionBuilder.apply(project,result.cues));
+            renderLive();
+        }else if(finished>captionsSeen&&!captions.getBoolean("running",false)){captionsSeen=finished;tell(captions.getString("status","Captions finished"));}
+    }
     void edit(String message,Runnable operation){
         if(!editable())return;String before;try{before=ProjectStore.encode(project);}catch(Exception e){tell(e.getMessage());return;}
         int selection=selected;
@@ -423,6 +440,10 @@ public final class EditorActivity extends Activity {
             addAction("Export diagnostics",()->exportDiagnostics());
             addAction("Device video capabilities",()->deviceVideoReport());
             addAction("Engine benchmark (8 layers × 1080p60)",()->engineBenchmark());
+            addAction("Captions speed test",()->speechBenchmark());
+            addAction("Speech models (auto captions)",()->speechModels());
+            addAction("Open-source licenses",()->{String text;try(java.io.InputStream in=getAssets().open("licenses/whisper.cpp.txt")){java.io.ByteArrayOutputStream out=new java.io.ByteArrayOutputStream();byte[] b=new byte[8192];int n;while((n=in.read(b))!=-1)out.write(b,0,n);text="Auto captions use whisper.cpp (github.com/ggml-org/whisper.cpp) and ggml.\n\n"+out.toString("UTF-8");}catch(java.io.IOException e){text=e.getMessage();}
+                new AlertDialog.Builder(this).setTitle("Open-source licenses").setMessage(text).setPositiveButton("Close",null).show();});
             addAction("Open v0.3 effects lab",()->startActivity(new Intent(this,WorkbenchActivity.class)));
             inspector.addView(note("BC-1 v1.0.5\nExport: H.264 MP4 + AAC, 1080p to 4K, 24 to 120 fps (device permitting). Lower-rate sources keep their cadence.\nSpace: play • Ctrl+Z/Y: undo/redo • Ctrl+S: save\nS: split • arrows: frame step • Ctrl+D: duplicate\nCtrl+wheel: zoom • Shift+wheel: scroll • right-click: clip menu\n3D Page Curl remains excluded."));
     }
@@ -766,6 +787,78 @@ public final class EditorActivity extends Activity {
         addAction("Keyframes",()->motionDialog(o.motion,Math.max(0,project.playheadMs-o.startMs),o.endMs-o.startMs,new float[]{o.x,o.y,o.scale,0,o.opacity,0},false));
         addAction("Timing / advanced",()->overlayDialog(o));
         addAction("Remove overlay",()->edit("Overlay removed",()->{project.overlays.remove(o);selectedOverlay=-1;}));
+    }
+    /** Auto captions: whisper speech-to-text on the timeline (or the selected clip), added as a caption text group. */
+    void autoCaptions(){
+        if(!editable())return;
+        if(com.blackice.bc1.captions.CaptionService.isRunning()){
+            new AlertDialog.Builder(this).setTitle("Auto captions running").setMessage(getSharedPreferences(com.blackice.bc1.captions.CaptionService.PREFS,MODE_PRIVATE).getString("status","Captioning…"))
+                .setPositiveButton("Cancel captions",(d,w)->com.blackice.bc1.captions.CaptionService.cancel(this)).setNegativeButton("Keep going",null).show();return;}
+        if(!com.blackice.bc1.captions.WhisperLib.available()){tell("Auto captions are not available on this device's CPU type.");return;}
+        if(project.clips.isEmpty()){tell("Add a video with speech first.");return;}
+        android.content.SharedPreferences prefs=getSharedPreferences(com.blackice.bc1.captions.CaptionService.PREFS,MODE_PRIVATE);
+        LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(dp(20),dp(8),dp(20),0);
+        com.blackice.bc1.captions.SpeechModels.Model[] models=com.blackice.bc1.captions.SpeechModels.Model.values();
+        String[] modelLabels=new String[models.length];
+        for(int i=0;i<models.length;i++)modelLabels[i]=models[i].describe()+(com.blackice.bc1.captions.SpeechModels.installed(this,models[i])?" • downloaded":"");
+        android.widget.Spinner model=spinner(box,"Speech model",modelLabels,Math.max(0,java.util.Arrays.asList(models).indexOf(modelOr(prefs.getString("model","BASE")))));
+        String[] languageLabels=new String[com.blackice.bc1.captions.Transcriber.LANGUAGES.length];int languageIndex=0;
+        for(int i=0;i<languageLabels.length;i++){languageLabels[i]=com.blackice.bc1.captions.Transcriber.LANGUAGES[i][1];if(com.blackice.bc1.captions.Transcriber.LANGUAGES[i][0].equals(prefs.getString("language","auto")))languageIndex=i;}
+        android.widget.Spinner language=spinner(box,"Spoken language",languageLabels,languageIndex);
+        android.widget.CheckBox translate=new android.widget.CheckBox(this);translate.setText("Translate captions to English");translate.setChecked(prefs.getBoolean("translate",false));box.addView(translate);
+        EditProject.Clip clip=selected>=0&&selected<project.clips.size()?project.clips.get(selected):null;
+        android.widget.CheckBox onlyClip=new android.widget.CheckBox(this);
+        if(clip!=null&&!clip.image){onlyClip.setText("Only the selected clip ("+clip.name+")");box.addView(onlyClip);}
+        int existing=0;for(EditProject.Overlay o:project.overlays)if(com.blackice.bc1.core.CaptionBuilder.GROUP.equals(o.group))existing++;
+        TextView info=new TextView(this);info.setTextColor(0xFFB8C7D9);info.setPadding(0,dp(10),0,0);
+        info.setText("Speech is recognised on this phone; only the model is downloaded once (Wi-Fi recommended). Music is not captioned."+(existing>0?"\n\nThe "+existing+" existing captions will be replaced (Undo restores them).":"")+"\n\nYou can leave the app while it runs.");
+        box.addView(info);
+        new AlertDialog.Builder(this).setTitle("Auto captions").setView(box).setNegativeButton("Cancel",null)
+            .setPositiveButton("Start",(d,w)->{
+                com.blackice.bc1.captions.Transcriber.Options o=new com.blackice.bc1.captions.Transcriber.Options();
+                o.model=models[model.getSelectedItemPosition()];o.language=com.blackice.bc1.captions.Transcriber.LANGUAGES[language.getSelectedItemPosition()][0];
+                o.translate=translate.isChecked();o.clipId=clip!=null&&onlyClip.isChecked()?clip.id:null;
+                prefs.edit().putString("model",o.model.name()).putString("language",o.language).putBoolean("translate",o.translate).apply();
+                saveNow();
+                try{com.blackice.bc1.captions.CaptionService.start(this,ProjectStore.snapshot(project),o);tell("Auto captions started");}
+                catch(Exception e){tell("Cannot start captions: "+e.getMessage());}
+            }).show();
+    }
+    private static com.blackice.bc1.captions.SpeechModels.Model modelOr(String name){try{return com.blackice.bc1.captions.SpeechModels.Model.valueOf(name);}catch(RuntimeException e){return com.blackice.bc1.captions.SpeechModels.Model.BASE;}}
+    private android.widget.Spinner spinner(LinearLayout into,String label,String[] items,int index){
+        TextView title=new TextView(this);title.setText(label);title.setTextColor(0xFFB8C7D9);title.setPadding(0,dp(8),0,0);into.addView(title);
+        android.widget.Spinner s=new android.widget.Spinner(this);s.setAdapter(new android.widget.ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,items));s.setSelection(index);s.setContentDescription(label);into.addView(s);return s;
+    }
+    /** Downloaded speech models: sizes and delete. */
+    void speechModels(){
+        com.blackice.bc1.captions.SpeechModels.Model[] models=com.blackice.bc1.captions.SpeechModels.Model.values();
+        String[] rows=new String[models.length];
+        for(int i=0;i<models.length;i++){java.io.File f=com.blackice.bc1.captions.SpeechModels.file(this,models[i]);boolean have=com.blackice.bc1.captions.SpeechModels.installed(this,models[i]);
+            rows[i]=models[i].label+": "+(have?String.format(java.util.Locale.US,"downloaded, %.0f MB • tap to delete",f.length()/1e6):"not downloaded");}
+        new AlertDialog.Builder(this).setTitle("Speech models (auto captions)").setItems(rows,(d,which)->{
+            if(!com.blackice.bc1.captions.SpeechModels.installed(this,models[which])){tell(models[which].label+" downloads when you first use it in Auto captions.");return;}
+            new AlertDialog.Builder(this).setTitle("Delete "+models[which].label+" model?").setMessage("It will download again the next time you use it.")
+                .setPositiveButton("Delete",(d2,w2)->{com.blackice.bc1.captions.SpeechModels.delete(this,models[which]);tell(models[which].label+" speech model deleted");}).setNegativeButton("Keep",null).show();
+        }).setNegativeButton("Close",null).show();
+    }
+    /** Transcribes a built-in 11-second speech sample with the chosen model and reports speed. */
+    void speechBenchmark(){
+        com.blackice.bc1.captions.SpeechModels.Model[] models=com.blackice.bc1.captions.SpeechModels.Model.values();
+        String[] labels=new String[models.length];for(int i=0;i<models.length;i++)labels[i]=models[i].describe()+(com.blackice.bc1.captions.SpeechModels.installed(this,models[i])?" • downloaded":"");
+        new AlertDialog.Builder(this).setTitle("Captions speed test: pick a model").setItems(labels,(d,which)->{
+            java.util.concurrent.atomic.AtomicBoolean stop=new java.util.concurrent.atomic.AtomicBoolean();
+            AlertDialog running=new AlertDialog.Builder(this).setTitle("Captions speed test").setMessage("Preparing…").setNegativeButton("Stop",(d2,w)->stop.set(true)).setCancelable(false).show();
+            new Thread(()->{String report;
+                try{report=com.blackice.bc1.captions.SpeechBenchmark.run(this,models[which],stop,text->main.post(()->{if(running.isShowing())running.setMessage(text);}));}
+                catch(java.util.concurrent.CancellationException e){report=null;}
+                catch(Throwable t){report="Speed test failed: "+t.getMessage();}
+                final String text=report;
+                main.post(()->{if(running.isShowing())running.dismiss();if(text==null||isDestroyed())return;
+                    new AlertDialog.Builder(this).setTitle("Captions speed test").setMessage(text)
+                        .setPositiveButton("Copy result",(d3,w)->{((android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(android.content.ClipData.newPlainText("BC-1 captions speed test",text));tell("Result copied");})
+                        .setNegativeButton("Close",null).show();});
+            },"bc1-speech-benchmark").start();
+        }).setNegativeButton("Close",null).show();
     }
     /** Runs ICE Lite on a generated 8-layer 1080p60 project and reports speed and a 15-minute estimate. */
     void engineBenchmark(){

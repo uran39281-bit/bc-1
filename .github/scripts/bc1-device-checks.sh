@@ -3,7 +3,7 @@ set -euo pipefail
 bash .github/scripts/bc1-media-fixtures.sh
 (
   cd BC-1
-  gradle --no-daemon -Pbc1SideBySide assembleDebug assembleDebugAndroidTest
+  gradle --no-daemon -Pbc1SideBySide -Pbc1Abis=x86_64 assembleDebug assembleDebugAndroidTest
 )
 mkdir -p BC-1/app/build/reports/androidTests
 adb install -r BC-1/app/build/outputs/apk/debug/app-debug.apk

@@ -96,6 +96,18 @@ public class AudioEngineTest {
         assertEquals(1, AudioPlan.of(p, false).segments.size());
     }
 
+    /** Upper video layers (4-7 since schema 5) behave like the main track: hiding the picture keeps its sound. */
+    @Test public void hiddenUpperVideoLayerKeepsSound() {
+        EditProject p = project(); p.music = null;
+        EditProject.Clip layer = RenderPlanTest.clip("layer6", 1000, 6, 0); p.clips.add(layer);
+        int before = AudioPlan.of(p, false).segments.size();
+        p.tracks[6].hidden = true;
+        assertEquals(before, AudioPlan.of(p, false).segments.size());
+        EditProject.Clip voice = RenderPlanTest.clip("voice", 1000, EditProject.AUDIO_LAST, 0); voice.audioOnly = true; p.clips.add(voice);
+        p.tracks[EditProject.AUDIO_LAST].muted = true;
+        assertEquals("A muted audio lane is silent", before, AudioPlan.of(p, false).segments.size());
+    }
+
     @Test public void gainEnvelope() {
         AudioPlan.Segment s = AudioPlan.of(project(), false).segments.get(0);
         assertEquals(0f, s.gainAt(0), 1e-6);

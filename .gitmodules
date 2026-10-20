@@ -1,0 +1,3 @@
+[submodule "BC-1/third_party/whisper.cpp"]
+	path = BC-1/third_party/whisper.cpp
+	url = https://github.com/ggml-org/whisper.cpp
