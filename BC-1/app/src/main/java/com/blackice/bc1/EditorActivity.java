@@ -1057,6 +1057,15 @@ public final class EditorActivity extends Activity {
             main.post(()->{exportLaunching=false;try{startForegroundService(new Intent(this,ExportService.class).putExtra("project",file.getAbsolutePath()).putExtra("destination",destination.toString()));message="Export started";}catch(Exception e){file.delete();tell("Cannot start export: "+e.getMessage());}});
         }catch(Exception e){main.post(()->{exportLaunching=false;tell("Cannot prepare export: "+e.getMessage());});}});
     }
+    /** System gesture Back follows the same state hierarchy as the toolbar and keyboard. */
+    @SuppressWarnings("deprecation") @Override public void onBackPressed(){
+        if(fullscreenPreview){fullscreenPreview=false;buildWorkspace();return;}
+        if(mobile!=null){mobile.back();return;}
+        if(panels.showing()){panels.back();return;}
+        if(clip()!=null||overlay()!=null||multiCount()>0){deselect();return;}
+        if(tab!=1){tab=1;renderInspector();return;}
+        saveNow();super.onBackPressed();
+    }
     @Override public boolean onKeyDown(int key,KeyEvent event){
         if(key==KeyEvent.KEYCODE_BACK&&mobile!=null){mobile.back();return true;}
         if(key==KeyEvent.KEYCODE_BACK&&!wideLayout&&!fullscreenPreview&&tab==0){tab=1;renderInspector();return true;}
