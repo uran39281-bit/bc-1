@@ -1,3 +1,7 @@
+# v1.3.2 scrub fix — source qualified, upgrade signing blocked
+
+Qualified source ec6e3e9c8725bd13a8f8ddb69bf52bc75794af56, run39492323400:137 JVM /44 Android /10 independent export checks passed. TimelineView hit-tests the visible playhead below the ruler; paused rendering hides the inactive playback SurfaceView. Visible screen pixels are checked after actual gestures, including playback/pause. See qa/BC-1-v1.3.2-PLAYHEAD.md for failed first run, corrected test assumptions, separate test APK and limitations. Normal preview upgrade signing remains blocked: retained private backup located but authorized materialization denied. Never regenerate or publish signing material. Existing releases remain untouched. User's physical device/footage still needs confirmation.
+
 # Latest checkpoint — 1.3.1 two-state workspace (2026-10-20)
 
 Qualified source `0e90227ddf82ec927450428920935c6a98468076`, run39472715226:137 JVM/43 Android/10 independent export checks passed, lint0errors49warnings. Source branch ui/mint-footage. Version1.3.1/code24, retained preview certificate. See ../v1.3.1/QA.md for screenshots and limitations. Native presentation remains MobileChrome/ToolPanels/TimelineView. LivePreview now queues redraw after GL surface binding; save callbacks ignore destroyed Activities and mismatched projects. Preserve old releases and signing material.
