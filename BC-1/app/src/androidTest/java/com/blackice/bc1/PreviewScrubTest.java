@@ -73,7 +73,7 @@ public class PreviewScrubTest {
         }
     }
     /** Exercise the visible line through the real timeline gesture handler, including player handoff. */
-    @Test public void draggingPlayheadShowsPixelsWithoutPressingPlay() throws Exception {
+    @Test public void scrollingUnderCenteredPlayheadShowsPixelsWithoutPressingPlay() throws Exception {
         EditProject p=new EditProject();p.name="Visible playhead QA";
         for(String name:new String[]{"red.mp4","blue.mp4"})p.clips.add(new MediaImporter(inst.getTargetContext()).importClip(Uri.parse(fixture(name)),false));
         new ProjectStore(inst.getTargetContext()).save(p);
@@ -82,21 +82,24 @@ public class PreviewScrubTest {
             scenario.onActivity(activeActivity::set);
             waitFor(scenario,a->!a.loading&&a.project.id.equals(p.id),15000,"requested project");
             scenario.onActivity(a->a.seek(1000));waitForPixels(scenario,1000,false);
-            scenario.onActivity(a->{int history=a.undo.size();long firstStart=a.project.placements().get(0).startMs,secondStart=a.project.placements().get(1).startMs;dragLine(a,4000);assertEquals(4000,a.project.playheadMs,2);assertEquals("Scrub does not edit clips",history,a.undo.size());assertEquals(2,a.project.clips.size());assertEquals(firstStart,a.project.placements().get(0).startMs);assertEquals(secondStart,a.project.placements().get(1).startMs);});
+            scenario.onActivity(a->{int history=a.undo.size();long firstStart=a.project.placements().get(0).startMs,secondStart=a.project.placements().get(1).startMs;dragTimeline(a,4000);assertEquals(4000,a.project.playheadMs,2);assertEquals("Scrub does not edit clips",history,a.undo.size());assertEquals(2,a.project.clips.size());assertEquals(firstStart,a.project.placements().get(0).startMs);assertEquals(secondStart,a.project.placements().get(1).startMs);});
             waitForPixels(scenario,4000,true);
             inst.runOnMainSync(()->activeActivity.get().togglePlay());
             waitFor(scenario,a->a.player!=null&&a.player.isPlaying(),60000,"actual playback");
             inst.runOnMainSync(()->{EditorActivity a=activeActivity.get();a.pausePlayback();a.seek(4000);});waitForPixels(scenario,4000,true);
-            scenario.onActivity(a->dragLine(a,1000));waitForPixels(scenario,1000,false);
-            scenario.onActivity(a->{assertNull("Scrubbing stays paused",a.player);assertEquals(android.view.View.INVISIBLE,a.surface.getVisibility());});
+            scenario.onActivity(a->dragTimeline(a,1000));waitForPixels(scenario,1000,false);
+            scenario.onActivity(a->{long time=a.project.playheadMs;float scale=a.timeline.timelineScale();a.zoomTimeline(1.5f,10);assertEquals("Zoom preserves current time",time,a.project.playheadMs);assertTrue(a.timeline.timelineScale()>scale);assertEquals(a.timeline.viewport()/2f,a.timeline.x(time)-a.timelineScroll.getScrollX(),1f);assertNull("Scrubbing stays paused",a.player);assertEquals(android.view.View.INVISIBLE,a.surface.getVisibility());});
         }finally{inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("mode","AUTO").commit();}
     }
-    private void dragLine(EditorActivity a,long target){
-        float y=a.timeline.rowTopOfTrack(0)+a.dp(26),from=a.timeline.x(a.project.playheadMs),to=a.timeline.x(target);
+    private void dragTimeline(EditorActivity a,long target){
+        float y=a.timeline.rowTopOfTrack(0)+a.dp(26),from=a.timeline.pad()+a.dp(20);
+        float to=from-(target-a.project.playheadMs)/1000f*a.timeline.timelineScale();
         long now=SystemClock.uptimeMillis();
         int[] actions={android.view.MotionEvent.ACTION_DOWN,android.view.MotionEvent.ACTION_MOVE,android.view.MotionEvent.ACTION_UP};
-        for(int i=0;i<3;i++){android.view.MotionEvent e=android.view.MotionEvent.obtain(now,now+i*40,actions[i],i==0?from:to,y,0);a.timeline.dispatchTouchEvent(e);e.recycle();}
+        for(int i=0;i<3;i++){android.view.MotionEvent e=android.view.MotionEvent.obtain(now,now+i*40,actions[i],i==0?from:to,y,0);a.timelineScroll.dispatchTouchEvent(e);e.recycle();}
+        assertEquals("Playhead stays centered while the timeline moves",a.timeline.viewport()/2f,a.timeline.x(a.project.playheadMs)-a.timelineScroll.getScrollX(),1f);
     }
+
     private void waitForPixels(ActivityScenario<EditorActivity> scenario,long expected,boolean blue)throws Exception{
         waitFor(scenario,a->{if(a.live.lastFrameMs()!=expected||a.liveView.getVisibility()!=android.view.View.VISIBLE)return false;
             android.graphics.Bitmap frame=a.liveView.getBitmap();if(frame==null)return false;

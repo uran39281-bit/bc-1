@@ -6,7 +6,7 @@ import android.widget.ScrollView;
 import com.blackice.bc1.editor.*;
 import java.util.*;
 
-/** Layered timeline that starts at 0 s beside the pinned layer column, with a moving playhead.
+/** Layered timeline with a fixed center playhead; the timeline moves underneath it.
  * Gestures: drag a layer to move it in time, or up/down onto another row (the empty row creates a new
  * layer); drag a selected layer's edges to trim; tap or drag the ruler to scrub; drag empty space to
  * scroll; pinch to zoom; drag a row's ≡ handle to reorder layers. Media dragged from Project Media drops
@@ -24,7 +24,7 @@ final class TimelineView extends View {
     private float downX,downY,lastRawX,lastRawY,lastEventX,lastEventY;private int lastEventScroll;private long downTime;
     private boolean pinching,moved,vertical;
     private int operation,hitClip=-1,hitOverlay=-1,headerZone=-1,reorderFrom=-1,reorderTo=-1,pendingClip=-1,pendingOverlay=-1;
-    private long pendingDelta,guide=-1;
+    private long pendingDelta,guide=-1,downPlayhead;private float downRawX;
     private EditProject.Placement original;private EditProject.Overlay originalOverlay;
     private final Runnable autoScroll=new Runnable(){@Override public void run(){autoScrollStep();}};
     private int autoDirection;
@@ -34,7 +34,7 @@ final class TimelineView extends View {
 
     TimelineView(EditorActivity activity){
         super(activity);a=activity;setFocusable(true);
-        setContentDescription("Timeline: drag a layer to move it in time or onto another row, drag a selected layer's edges to trim, tap or drag the ruler to move the playhead, drag empty space to scroll, pinch to zoom. Drop media from Project Media onto a row.");
+        setContentDescription("Timeline: hold then drag a layer to move it in time or onto another row, drag a selected layer's edges to trim, drag the timeline beneath the centered playhead to scrub, tap the ruler to seek, pinch to zoom. Drop media from Project Media onto a row.");
         pinch=new ScaleGestureDetector(activity,new ScaleGestureDetector.SimpleOnScaleGestureListener(){
             public boolean onScaleBegin(ScaleGestureDetector d){pinching=true;operation=0;pendingDelta=0;guide=-1;stopAutoScroll();return true;}
             public boolean onScale(ScaleGestureDetector d){a.zoomTimeline(d.getScaleFactor(),d.getFocusX()-a.timelineScroll.getScrollX());return true;}
@@ -57,8 +57,8 @@ final class TimelineView extends View {
     @Override public boolean dispatchHoverEvent(MotionEvent e){if(inHeader(e.getX())){Row r=rowAt(e.getY());if(r!=null&&r.kind!=2){android.view.accessibility.AccessibilityEvent event=android.view.accessibility.AccessibilityEvent.obtain(e.getAction()==MotionEvent.ACTION_HOVER_EXIT?256:128);event.setSource(this,rows.indexOf(r));getParent().requestSendAccessibilityEvent(this,event);return true;}}return super.dispatchHoverEvent(e);}
     // ---- Geometry ---------------------------------------------------------------------------------
     int viewport(){int w=a.timelineScroll==null?0:a.timelineScroll.getWidth();return w>0?w:getResources().getDisplayMetrics().widthPixels;}
-    /** Time zero sits just right of the pinned layer column. */
-    float pad(){return headerWidth()+a.dp(14);}
+    /** Time zero starts centered, with enough leading space to scrub back to the beginning. */
+    float pad(){return viewport()/2f;}
     float timelineScale(){return Math.min(a.dp(a.pixelsPerSecond),16_000_000f/Math.max(1f,a.project.durationMs()/1000f));}
     float x(long ms){return pad()+ms/1000f*timelineScale();}
     long time(float x){return Math.round((x-pad())/timelineScale()*1000);}
@@ -75,24 +75,19 @@ final class TimelineView extends View {
     /** Room after the last clip so layers can be dragged, and media dropped, past the current end. */
     private float tail(){return Math.max(viewport()*.75f,a.dp(320));}
     @Override protected void onMeasure(int w,int h){setMeasuredDimension(Math.max(viewport()+1,Math.round(pad()+a.project.durationMs()/1000f*timelineScale()+tail())),Math.round(contentHeight()));}
-    private long followed=-1;
-    /** Keeps a moving playhead on screen: the view pages forward during playback and follows seeks, but
-     * edits that leave the playhead where it was never pull the view away from where the user scrolled. */
+    /** Every seek and playback tick leaves the playhead at the viewport center. */
     void syncScroll(){
-        if(a.timelineScroll==null)return;int scroll=a.timelineScroll.getScrollX();long playhead=a.project.playheadMs;float px=x(playhead),visibleLeft=scroll+headerWidth(),visibleRight=scroll+viewport();
-        if(operation==0&&playhead!=followed&&(px<visibleLeft+a.dp(4)||px>visibleRight-a.dp(12)))a.timelineScroll.scrollTo(Math.max(0,Math.round(px-headerWidth()-(viewport()-headerWidth())*.15f)),0);
-        followed=playhead;invalidate();
+        if(a.timelineScroll==null)return;
+        a.timelineScroll.scrollTo(Math.max(0,Math.round(x(a.project.playheadMs)-pad())),0);
+        invalidate();
     }
-    /** Display-scale change that keeps the time under the anchor (viewport x) in place. */
+    /** Zoom keeps the time at the fixed playhead unchanged. */
     void zoomAround(float before,float anchor){
-        if(a.timelineScroll==null)return;float scroll=a.timelineScroll.getScrollX();
-        if(!Float.isFinite(anchor)){float px=pad()+a.project.playheadMs/1000f*before-scroll;anchor=px>=headerWidth()&&px<=viewport()?px:(headerWidth()+viewport())/2f;}
-        long at=Math.round((scroll+anchor-pad())/before*1000);float local=anchor;
-        // Apply now (smooth pinch) and again after layout, when a wider view can scroll further.
-        a.timelineScroll.scrollTo(Math.max(0,Math.round(x(at)-local)),0);requestLayout();invalidate();a.timelineScroll.post(()->{a.timelineScroll.scrollTo(Math.max(0,Math.round(x(at)-local)),0);invalidate();});
+        requestLayout();syncScroll();a.timelineScroll.post(this::syncScroll);
     }
-    /** Scrolls so the range starts just right of the layer column. */
-    void reveal(long ms){if(a.timelineScroll!=null)a.timelineScroll.post(()->{a.timelineScroll.scrollTo(Math.max(0,Math.round(x(ms)-pad())),0);invalidate();});}
+    /** Fit changes display scale only; retain the current time at the fixed playhead. */
+    void reveal(long ms){requestLayout();a.timelineScroll.post(this::syncScroll);}
+
 
     // ---- Drawing ----------------------------------------------------------------------------------
     @Override protected void onDraw(Canvas canvas){
@@ -115,7 +110,7 @@ final class TimelineView extends View {
         drawPlayhead(canvas,left,height);
     }
     private void drawPlayhead(Canvas canvas,float left,int height){
-        float px=x(a.project.playheadMs);if(px<left+headerWidth()-a.dp(1)||px>left+viewport()+a.dp(8))return;
+        float px=left+pad();
         paint.setColor(EditorActivity.CYAN);paint.setStrokeWidth(a.dp(2));canvas.drawLine(px,a.dp(12),px,height,paint);
         Path head=new Path();float w=a.dp(7);head.moveTo(px-w,a.dp(2));head.lineTo(px+w,a.dp(2));head.lineTo(px+w,a.dp(10));head.lineTo(px,a.dp(16));head.lineTo(px-w,a.dp(10));head.close();canvas.drawPath(head,paint);
         if(operation==OP_SCRUB){String label=EditorActivity.clock(a.project.playheadMs)+"  f"+frame(a.project.playheadMs);paint.setTextSize(a.dp(11));paint.setTypeface(Typeface.DEFAULT_BOLD);float tw=paint.measureText(label),lx=Math.max(left+headerWidth()+tw/2+a.dp(8),px);
@@ -240,28 +235,16 @@ final class TimelineView extends View {
     }
     private boolean down(MotionEvent e){
         rows();downX=e.getX();downY=e.getY();lastEventX=downX;lastEventY=downY;lastEventScroll=a.timelineScroll.getScrollX();lastRawX=e.getRawX();lastRawY=e.getRawY();downTime=e.getEventTime();
-        moved=false;pinching=false;vertical=false;operation=0;hitClip=-1;hitOverlay=-1;pendingDelta=0;guide=-1;original=null;originalOverlay=null;headerZone=-1;reorderFrom=-1;reorderTo=-1;pendingClip=-1;pendingOverlay=-1;
+        downRawX=e.getRawX();downPlayhead=a.project.playheadMs;moved=false;pinching=false;vertical=false;operation=0;hitClip=-1;hitOverlay=-1;pendingDelta=0;guide=-1;original=null;originalOverlay=null;headerZone=-1;reorderFrom=-1;reorderTo=-1;pendingClip=-1;pendingOverlay=-1;
         getParent().requestDisallowInterceptTouchEvent(true);a.pausePlayback();
         if(downY>=a.dp(RULER_DP)&&inHeader(downX)){Row r=rowAt(downY);if(r!=null&&r.kind!=2){float local=downX-a.timelineScroll.getScrollX();int w=headerWidth();
             headerZone=2;}return true;}
         // The ruler moves the playhead: tap to jump, drag to scrub.
-        if(downY<a.dp(RULER_DP)){if(!inHeader(downX)){operation=OP_SCRUB;a.seek(Math.max(0,time(downX)));}return true;}
+        if(downY<a.dp(RULER_DP)){if(!inHeader(downX)){operation=OP_SCRUB;}return true;}
         hitClip=hitClip(downX,downY);hitOverlay=hitClip>=0?-1:hitOverlay(downX,downY);
         // Edge handles of the selected clip win even slightly outside its bar.
         if(a.multiCount()<=1&&a.clip()!=null&&!LayerOps.locked(a.project,a.selected)){EditProject.Placement chosen=a.project.placements().get(a.selected);float y=rowTopOfTrack(chosen.clip.track);
             if(y>=0&&downY>=y&&downY<=y+a.dp(ROW_DP)&&Math.min(Math.abs(downX-x(chosen.startMs)),Math.abs(downX-x(chosen.endMs)))<=a.dp(16))hitClip=a.selected;}
-        // The visible playhead is draggable below the ruler too. Otherwise grabbing the
-        // green line over footage starts a clip move instead of showing another frame.
-        boolean trimGrip=false;
-        if(a.clip()!=null&&hitClip==a.selected&&!LayerOps.locked(a.project,a.selected)){
-            EditProject.Placement chosen=a.project.placements().get(a.selected);
-            trimGrip=Math.min(Math.abs(downX-x(chosen.startMs)),Math.abs(downX-x(chosen.endMs)))<=a.dp(16);
-        }
-        if(a.overlay()!=null&&hitOverlay==a.selectedOverlay&&!a.overlay().locked)
-            trimGrip=Math.min(Math.abs(downX-x(a.overlay().startMs)),Math.abs(downX-x(a.overlay().endMs)))<=a.dp(16);
-        if(!trimGrip&&!inHeader(downX)&&Math.abs(downX-x(a.project.playheadMs))<=a.dp(12)){
-            operation=OP_SCRUB;return true;
-        }
         if(a.uiLocked||a.loading||a.importing||a.exporting())return true;
         if(a.multiCount()>1&&(hitClip>=0&&a.multiClips.contains(hitClip)||hitOverlay>=0&&a.multiOverlays.contains(hitOverlay))){boolean anyLocked=false;for(int i:a.selectedClips())anyLocked|=LayerOps.locked(a.project,i);for(int i:a.selectedOverlays())anyLocked|=a.project.overlays.get(i).locked;if(!anyLocked)operation=OP_MULTI;return true;}
         if(hitClip>=0&&!LayerOps.locked(a.project,hitClip)){original=a.project.placements().get(hitClip);
@@ -277,15 +260,21 @@ final class TimelineView extends View {
     private boolean move(MotionEvent e){
         float dx=e.getRawX()-lastRawX,dy=e.getRawY()-lastRawY;
         if(!moved&&Math.hypot(e.getX()-downX,e.getY()-downY)>a.dp(6)){moved=true;vertical=Math.abs(e.getY()-downY)>Math.abs(e.getX()-downX)*1.3f;
+            // A normal horizontal swipe navigates time. Hold first to move a layer;
+            // mouse drags and selected trim handles retain their editing behavior.
+            boolean mouse=(e.getSource()&android.view.InputDevice.SOURCE_MOUSE)==android.view.InputDevice.SOURCE_MOUSE;
+            if(!mouse&&(operation==OP_MOVE||operation==OP_OV_MOVE||operation==OP_MULTI)&&e.getEventTime()-downTime<ViewConfiguration.getLongPressTimeout()){
+                operation=vertical?0:OP_SCRUB;pendingClip=-1;pendingOverlay=-1;
+            }
             if(pendingClip>=0){a.selectClip(pendingClip,false);pendingClip=-1;}if(pendingOverlay>=0){a.selectOverlay(pendingOverlay);pendingOverlay=-1;}}
         if(!moved)return true;
-        if(operation==OP_SCRUB){a.seek(Math.max(0,time(e.getX())));lastRawX=e.getRawX();lastRawY=e.getRawY();return true;}
+        if(operation==OP_SCRUB){scrub(e);lastRawX=e.getRawX();lastRawY=e.getRawY();return true;}
         if(reorderFrom>=0){Row r=rowAt(e.getY());reorderTo=r==null||r.kind==2?-1:rows.indexOf(r);invalidate();return true;}
         if(headerZone>=0){((ScrollView)a.timelineScroll.getParent()).scrollBy(0,Math.round(-dy));lastRawX=e.getRawX();lastRawY=e.getRawY();return true;}
         if(operation!=0){lastEventX=e.getX();lastEventY=e.getY();lastEventScroll=a.timelineScroll.getScrollX();updateDrag();updateAutoScroll();return true;}
         // Empty space: drag to scroll the timeline (horizontal) or the layer list (vertical).
         if(vertical)((ScrollView)a.timelineScroll.getParent()).scrollBy(0,Math.round(-dy));
-        else{a.timelineScroll.scrollBy(Math.round(-dx),0);invalidate();}
+        else{operation=OP_SCRUB;scrub(e);}
         lastRawX=e.getRawX();lastRawY=e.getRawY();return true;
     }
     /** The finger's content x: the last event position plus any auto-scroll since that event. */
@@ -313,15 +302,17 @@ final class TimelineView extends View {
         if(direction!=autoDirection){autoDirection=direction;removeCallbacks(autoScroll);if(direction!=0)postOnAnimation(autoScroll);}
     }
     private void autoScrollStep(){
-        if(autoDirection==0||operation==0)return;int before=a.timelineScroll.getScrollX();a.timelineScroll.scrollBy(autoDirection*a.dp(8),0);
+        if(autoDirection==0||operation==0)return;int before=a.timelineScroll.getScrollX();a.seek(a.project.playheadMs+Math.round(autoDirection*a.dp(8)/timelineScale()*1000));
         if(a.timelineScroll.getScrollX()==before){autoDirection=0;return;}
         updateDrag();postOnAnimation(autoScroll);
     }
+    private void scrub(MotionEvent e){a.seek(downPlayhead+Math.round((downRawX-e.getRawX())/timelineScale()*1000));}
     private void stopAutoScroll(){autoDirection=0;removeCallbacks(autoScroll);}
     private boolean up(MotionEvent e){
         stopAutoScroll();boolean longPress=e.getEventTime()-downTime>=ViewConfiguration.getLongPressTimeout();
         if(operation==OP_SCRUB){
-            if(moved)a.seek(Math.max(0,time(e.getX())));
+            if(moved)scrub(e);
+            else if(downY<a.dp(RULER_DP))a.seek(Math.max(0,time(downX)));
             else if(downY>=a.dp(RULER_DP)){if(hitClip>=0)a.selectClip(hitClip,false);else if(hitOverlay>=0)a.selectOverlay(hitOverlay);}
             reset();performClick();return true;
         }
@@ -378,7 +369,7 @@ final class TimelineView extends View {
         if(event.getAction()==MotionEvent.ACTION_SCROLL){float wheel=event.getAxisValue(MotionEvent.AXIS_VSCROLL),horizontal=event.getAxisValue(MotionEvent.AXIS_HSCROLL);
             if((event.getMetaState()&KeyEvent.META_CTRL_ON)!=0){a.zoomTimeline(wheel>0?1.2f:1/1.2f,event.getX()-a.timelineScroll.getScrollX());return true;}
             boolean sideways=(event.getMetaState()&KeyEvent.META_SHIFT_ON)!=0||horizontal!=0||contentHeight()<=((View)a.timelineScroll.getParent()).getHeight();
-            if(sideways){float amount=horizontal!=0?horizontal:wheel;a.timelineScroll.scrollBy(Math.round(-amount*a.dp(70)),0);invalidate();}
+            if(sideways){float amount=horizontal!=0?horizontal:wheel;a.pausePlayback();a.seek(a.project.playheadMs-Math.round(amount*a.dp(70)/timelineScale()*1000));}
             else((ScrollView)a.timelineScroll.getParent()).smoothScrollBy(0,Math.round(-wheel*a.dp(52)));
             return true;}
         return super.onGenericMotionEvent(event);

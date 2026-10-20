@@ -22,7 +22,7 @@ public class TimelineDragTest {
     final Instrumentation inst=InstrumentationRegistry.getInstrumentation();
     String shell(String command)throws Exception{try(ParcelFileDescriptor fd=inst.getUiAutomation().executeShellCommand(command);InputStream in=new ParcelFileDescriptor.AutoCloseInputStream(fd)){return new String(in.readAllBytes(),java.nio.charset.StandardCharsets.UTF_8);}}
     String override(String value){for(String line:value.split("\n"))if(line.startsWith("Override"))return line.substring(line.indexOf(':')+1).trim();return "reset";}
-    void touch(View v,float x,float y,float endX,float endY){long t=SystemClock.uptimeMillis();for(int i=0;i<3;i++){int action=i==0?MotionEvent.ACTION_DOWN:i==1?MotionEvent.ACTION_MOVE:MotionEvent.ACTION_UP;MotionEvent e=MotionEvent.obtain(t,t+i*40,action,i==0?x:endX,i==0?y:endY,0);v.dispatchTouchEvent(e);e.recycle();}}
+    void touch(View v,float x,float y,float endX,float endY){long t=SystemClock.uptimeMillis();for(int i=0;i<3;i++){int action=i==0?MotionEvent.ACTION_DOWN:i==1?MotionEvent.ACTION_MOVE:MotionEvent.ACTION_UP;MotionEvent e=MotionEvent.obtain(t,t+(i==0?0:ViewConfiguration.getLongPressTimeout()+i*40),action,i==0?x:endX,i==0?y:endY,0);v.dispatchTouchEvent(e);e.recycle();}}
     static float vx(EditorActivity a,long ms){return a.timeline.x(ms)-a.timelineScroll.getScrollX();}
     static float rowY(EditorActivity a,int track){return a.timeline.rowTopOfTrack(track)+a.dp(TimelineView.ROW_DP/2f);}
     static long start(EditorActivity a,int clip){return a.project.placements().get(clip).startMs;}
@@ -42,7 +42,7 @@ public class TimelineDragTest {
                 scenario.onActivity(a->{
                     assertEquals("Timeline sources are listed in Project Media",2,a.project.library.size());
                     // Drag the unselected second clip one second to the right: a gap opens, the first clip stays.
-                    float y=rowY(a,0);touch(a.timelineScroll,vx(a,4500),y,vx(a,5500),y);
+                    a.seek(4500);float y=rowY(a,0);touch(a.timelineScroll,vx(a,4500),y,vx(a,5500),y);
                     assertEquals(0,start(a,0));assertEquals("Main-sequence clips can leave a gap",4000,start(a,1),3);assertEquals(1,a.selected);
                     // Drag it down onto the empty layer row: it becomes a layer at the same time.
                     assertTrue("An empty layer row is offered as a drop target",a.timeline.rowTopOfTrack(1)>=0);
