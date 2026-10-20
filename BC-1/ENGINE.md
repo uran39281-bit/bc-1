@@ -132,6 +132,19 @@ The preview keeps one GL context across surfaces (rotation, layout changes), so 
 decoders and the last frame carry over; video is drawn through a preview-sized copy with the plain layer
 shader. Choosing an effect for the first time compiles its program once; later slider moves only redraw.
 
+### Playback and scrubbing
+
+**Play** runs through ICE Lite too (Setup → *Playback engine* switches back to the Media3 player). Sound
+comes from the export audio mixer through an AudioTrack, and its position is the clock: each display
+refresh draws the frame at the time being heard, so frames that cannot be drawn in time are skipped
+instead of delaying sound. Every layer, effect, blend mode and title plays live; edits made while playing
+apply to the next frame; decoders for clips starting within 0.5 s open ahead of the cut. Playback from
+the middle opens each audio segment at the playhead instead of decoding up to it. If the audio clock
+stalls (no audio output) the picture continues on the system clock.
+
+While scrubbing (requests closer than 120 ms), a decoder that has to be opened shows its key frame at
+once; 150 ms after the scrub stops, the exact frame replaces it, continuing the same decoder.
+
 ## Auto captions (speech to text)
 
 Text drawer → **Auto captions…** transcribes speech on the phone with

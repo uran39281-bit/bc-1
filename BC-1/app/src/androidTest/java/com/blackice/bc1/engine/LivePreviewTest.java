@@ -141,4 +141,40 @@ public class LivePreviewTest {
             live.release();
         }
     }
+
+    /** Playback renders frames on the clock, follows edits made while playing, and ends at the stop time. */
+    @Test public void playbackRendersFramesAndEndsOnTime() throws Exception {
+        LivePreview live = new LivePreview(context);
+        try (Reader reader = new Reader(640, 360)) {
+            live.attach(reader.reader.getSurface());
+            EditProject p = project(); // red 0-2 s, blue 2-4 s
+            java.util.concurrent.CountDownLatch ended = new java.util.concurrent.CountDownLatch(1);
+            java.util.concurrent.atomic.AtomicLong endAt = new java.util.concurrent.atomic.AtomicLong(-1);
+            long start = System.nanoTime();
+            live.play(ProjectStore.snapshot(p), 1000, 3000, at -> { endAt.set(at); ended.countDown(); });
+            Thread.sleep(400);
+            assertTrue(live.isPlaying());
+            // An edit while playing applies to the frames that follow: invert the blue clip.
+            p.clips.get(1).effect = 25; p.clips.get(1).intensity = 1f;
+            live.request(ProjectStore.snapshot(p), 0);
+            assertTrue("Playback ends", ended.await(15, java.util.concurrent.TimeUnit.SECONDS));
+            long tookMs = (System.nanoTime() - start) / 1_000_000;
+            assertEquals(3000, endAt.get());
+            assertFalse(live.isPlaying());
+            long[] stats = live.playbackStats();
+            android.util.Log.i("BC1Live", "Played 2 s in " + tookMs + " ms: " + stats[0] + " frames drawn, " + stats[1] + " skipped");
+            assertTrue("About real time: " + tookMs + " ms", tookMs >= 1800 && tookMs < 6000);
+            assertTrue("Frames drawn: " + stats[0], stats[0] >= 8);
+            int[] last = reader.centre();
+            assertTrue("Last frame is the inverted blue clip (yellow): " + last[0] + "," + last[1] + "," + last[2], last[0] > 200 && last[1] > 200 && last[2] < 60);
+            assertEquals(3000, live.positionMs());
+            assertNull(live.lastError());
+            // Still frames work again after playback.
+            assertTrue(live.renderNow(ProjectStore.snapshot(p), 500, 10_000));
+            int[] red = reader.centre();
+            assertTrue("Red after playback: " + red[0] + "," + red[2], red[0] > 200 && red[2] < 50);
+        } finally {
+            live.release();
+        }
+    }
 }

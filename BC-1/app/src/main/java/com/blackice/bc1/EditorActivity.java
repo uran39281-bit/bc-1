@@ -94,11 +94,12 @@ public final class EditorActivity extends Activity {
     final Runnable autosave=()->saveNow();
     final Runnable pulse=new Runnable(){@Override public void run(){
         if(!active)return;
+        if(live!=null&&live.isPlaying()){long at=live.positionMs();if(at>=0){project.playheadMs=Math.min(project.durationMs(),at);syncPosition();}}
         if(player!=null && player.isPlaying()) {project.playheadMs=Math.min(project.durationMs(),Math.max(0,player.getCurrentPosition()));
             // Preview-only loop range.
             if(project.loopInMs>=0&&project.playheadMs>=project.loopOutMs){player.seekTo(project.loopInMs);project.playheadMs=project.loopInMs;}
             syncPosition();}
-        if(play!=null)play.setText(player!=null&&player.isPlaying()?"Ⅱ  Pause":"▶  Play");
+        if(play!=null)play.setText(playing()?"Ⅱ  Pause":"▶  Play");
         android.content.SharedPreferences export=getSharedPreferences(ExportService.PREFS,MODE_PRIVATE);
         boolean running=export.getBoolean("running",false);
         long completed=export.getLong("finishedAt",0);
@@ -109,7 +110,7 @@ public final class EditorActivity extends Activity {
         boolean captioning=captions.getBoolean("running",false)&&com.blackice.bc1.captions.CaptionService.isRunning();
         if(status!=null)status.setText(running?export.getString("status","Exporting…"):captioning?captions.getString("status","Captioning…"):message);
         if(++captionPolls%10==0)collectCaptions(captions);
-        main.postDelayed(this,player!=null&&player.isPlaying()?33:100);
+        main.postDelayed(this,playing()?33:100);
     }};
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);getWindow().setStatusBarColor(BG);getWindow().setNavigationBarColor(BG);
@@ -136,7 +137,7 @@ public final class EditorActivity extends Activity {
         });
     }
     @Override protected void onStart(){super.onStart();CrashLog.note("Editor opened");active=true;main.post(pulse);if(!loading)showLive();}
-    @Override protected void onStop(){CrashLog.note("Editor in background");active=false;main.removeCallbacks(pulse);saveNow();releasePreview();if(live!=null)live.releaseDecoders();super.onStop();}
+    @Override protected void onStop(){CrashLog.note("Editor in background");stopLive();active=false;main.removeCallbacks(pulse);saveNow();releasePreview();if(live!=null)live.releaseDecoders();super.onStop();}
     @Override protected void onDestroy(){main.removeCallbacks(autosave);if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
     @Override protected void onSaveInstanceState(Bundle state){state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());saveNow();super.onSaveInstanceState(state);}
     @Override public void onConfigurationChanged(Configuration config){super.onConfigurationChanged(config);buildWorkspace();}
@@ -232,6 +233,7 @@ public final class EditorActivity extends Activity {
     void syncPosition(){if(previewControls!=null)previewControls.invalidate();if(time!=null)time.setText(clock(project.playheadMs)+"  /  "+clock(project.durationMs()));if(timeline!=null)timeline.syncScroll();if(previewScrubber!=null&&!scrubbing)previewScrubber.setProgress((int)(1000*project.playheadMs/Math.max(1,project.durationMs())));}
     long seekTarget(){return Math.min(project.playheadMs,Math.max(0,project.durationMs()-1));}
     void seek(long ms){
+        if(live!=null&&live.isPlaying())live.stop(); // seeking pauses, like the player did
         project.playheadMs=Math.max(0,Math.min(ms,project.durationMs()));
         // Paused scrubbing always goes through the ICE Lite live preview: Media3's player failed under rapid
         // seeking on some decoders. Playback (and seeking during it) still uses the player.
@@ -243,7 +245,27 @@ public final class EditorActivity extends Activity {
         }else renderLive();
         syncPosition();
     }
-    void togglePlay(){if(previewPending){previewAutoplay=!previewAutoplay;tell(previewAutoplay?"Playback will start when the preview is ready.":"Preview will stay paused when ready.");return;}if(player==null){if(project.clips.isEmpty())tell("Import a video or image first.");else preparePreview(true);return;}if(player.getPlayWhenReady())player.pause();else{if(seekQueued){main.removeCallbacks(flushSeek);flushSeek.run();}if(player.getPlaybackState()==Player.STATE_ENDED||project.playheadMs>=project.durationMs())player.seekTo(0);player.play();}}
+    /** Playback through ICE Lite (default) or the Media3 player (Setup > Playback engine). */
+    boolean icePlayback(){return !"media3".equals(getSharedPreferences(PREFS,MODE_PRIVATE).getString("playback-engine","ice"));}
+    boolean playing(){return (live!=null&&live.isPlaying())||(player!=null&&player.isPlaying());}
+    /** Plays from the playhead with every layer, effect and blend mode drawn live; edits apply while playing. */
+    void startLive(){
+        if(project.clips.isEmpty()){tell("Import a video or image first.");return;}
+        if(player!=null||previewPending)releasePreview();
+        long duration=project.durationMs();
+        long from=project.playheadMs>=duration-1?0:project.playheadMs;
+        boolean loop=project.loopInMs>=0&&project.loopOutMs>project.loopInMs&&from<project.loopOutMs;
+        long until=loop?project.loopOutMs:duration;
+        liveView.setVisibility(View.VISIBLE);if(emptyPreview!=null)emptyPreview.setVisibility(View.GONE);
+        CrashLog.note("Play (ICE Lite) from "+from+" ms");
+        live.play(ProjectStore.snapshot(project),from,until,end->main.post(()->{
+            if(isDestroyed())return;
+            if(loop&&live!=null&&!live.isPlaying()&&project.loopInMs>=0){project.playheadMs=project.loopInMs;syncPosition();startLive();return;}
+            project.playheadMs=Math.min(project.durationMs(),end);syncPosition();renderLive();
+        }));
+    }
+    void stopLive(){if(live==null||!live.isPlaying())return;long at=live.stop();if(at>=0)project.playheadMs=Math.min(project.durationMs(),at);syncPosition();renderLive();}
+    void togglePlay(){if(icePlayback()&&live!=null){if(live.isPlaying())stopLive();else startLive();return;}if(previewPending){previewAutoplay=!previewAutoplay;tell(previewAutoplay?"Playback will start when the preview is ready.":"Preview will stay paused when ready.");return;}if(player==null){if(project.clips.isEmpty())tell("Import a video or image first.");else preparePreview(true);return;}if(player.getPlayWhenReady())player.pause();else{if(seekQueued){main.removeCallbacks(flushSeek);flushSeek.run();}if(player.getPlaybackState()==Player.STATE_ENDED||project.playheadMs>=project.durationMs())player.seekTo(0);player.play();}}
 
     void buildWorkspace() {
         // Layout switches keep selection, playhead and zoom (fields) and the layer list's vertical scroll.
@@ -443,6 +465,7 @@ public final class EditorActivity extends Activity {
             addAction("Crash reports",()->crashReports());
             addAction("Device video capabilities",()->deviceVideoReport());
             addAction("Engine benchmark (8 layers × 1080p60)",()->engineBenchmark());
+            addAction("Playback engine: "+(icePlayback()?"ICE Lite (live effects)":"Media3 player"),()->{getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("playback-engine",icePlayback()?"media3":"ice").apply();stopLive();renderInspector();tell(icePlayback()?"Playback uses ICE Lite":"Playback uses the Media3 player");});
             addAction("Captions speed test",()->speechBenchmark());
             addAction("Speech models (auto captions)",()->speechModels());
             addAction("Open-source licenses",()->{String text;try(java.io.InputStream in=getAssets().open("licenses/whisper.cpp.txt")){java.io.ByteArrayOutputStream out=new java.io.ByteArrayOutputStream();byte[] b=new byte[8192];int n;while((n=in.read(b))!=-1)out.write(b,0,n);text="Auto captions use whisper.cpp (github.com/ggml-org/whisper.cpp) and ggml.\n\n"+out.toString("UTF-8");}catch(java.io.IOException e){text=e.getMessage();}
@@ -530,7 +553,7 @@ public final class EditorActivity extends Activity {
     java.util.List<Integer> selectedOverlays(){java.util.List<Integer> l=new ArrayList<>(multiOverlays);if(l.isEmpty()&&selectedOverlay>=0&&selected<0)l.add(selectedOverlay);return l;}
     /** Workspace lock (Settings) and per-layer locks are separate; both block edits. */
     boolean layerEditable(){if(!editable())return false;for(int i:selectedClips())if(LayerOps.locked(project,i)){tell("Layer locked • unlock it in Layers to edit");return false;}for(int i:selectedOverlays())if(project.overlays.get(i).locked){tell("Layer locked • unlock it in Layers to edit");return false;}return true;}
-    void pausePlayback(){if(player!=null)player.pause();}
+    void pausePlayback(){if(player!=null)player.pause();stopLive();}
     /** Slider drag start: remember the project for one undo entry and switch to the live preview. */
     void beginLiveAdjust(){if(!layerEditable())return;try{liveBefore=ProjectStore.encode(project);}catch(Exception e){liveBefore=null;return;}if(player!=null||previewPending)releasePreview();}
     /** During a drag: apply the value and redraw at once, without validation or undo. */
@@ -1021,7 +1044,7 @@ public final class EditorActivity extends Activity {
                 +String.format(java.util.Locale.US,"\nAbout %.2f GB",plan.estimatedBytes(project.durationMs())/1e9);
     }
     void startExport(Uri destination) {
-        if(exporting()){tell("An export is already running.");return;}saveNow();releasePreview();if(live!=null)live.releaseDecoders();exportLaunching=true;
+        if(exporting()){tell("An export is already running.");return;}saveNow();releasePreview();stopLive();if(live!=null)live.releaseDecoders();exportLaunching=true;
         EditProject snapshot=ProjectStore.snapshot(project);io.execute(()->{try{
             File file=new File(getCacheDir(),"export-project-"+System.currentTimeMillis()+".json");try(FileOutputStream out=new FileOutputStream(file)){out.write(ProjectStore.encode(snapshot).getBytes(java.nio.charset.StandardCharsets.UTF_8));}
             main.post(()->{exportLaunching=false;try{startForegroundService(new Intent(this,ExportService.class).putExtra("project",file.getAbsolutePath()).putExtra("destination",destination.toString()));message="Export started";}catch(Exception e){file.delete();tell("Cannot start export: "+e.getMessage());}});

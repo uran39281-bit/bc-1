@@ -56,6 +56,8 @@ final class VideoSource implements FrameSource {
     private final int rotation;
     private final double displayAspect;
     private final long endUs;
+    /** Time of the key frame decoding starts from (the quickest frame this source can show). */
+    final long syncUs;
     private final float[] stMatrix = new float[16];
     private final Object frameLock = new Object();
     private boolean frameAvailable;
@@ -81,6 +83,7 @@ final class VideoSource implements FrameSource {
         if (track < 0) { extractor.release(); throw new IllegalArgumentException("No video track in a visual clip."); }
         extractor.selectTrack(track);
         extractor.seekTo(inMs * 1000, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+        syncUs = Math.max(0, extractor.getSampleTime());
         rotation = format.containsKey("rotation-degrees") ? ((format.getInteger("rotation-degrees") % 360) + 360) % 360 : 0;
         int w = format.getInteger(MediaFormat.KEY_WIDTH), h = format.getInteger(MediaFormat.KEY_HEIGHT);
         displayAspect = rotation == 90 || rotation == 270 ? h / (double) w : w / (double) h;

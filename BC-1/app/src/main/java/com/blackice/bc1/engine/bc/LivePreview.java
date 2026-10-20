@@ -6,7 +6,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.view.Surface;
 import android.view.TextureView;
-import android.opengl.GLES30;
 import com.blackice.bc1.core.OutputSpec;
 import com.blackice.bc1.core.RenderPlan;
 import com.blackice.bc1.editor.EditProject;
@@ -35,10 +34,20 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
 
     private static final long REUSE_WINDOW_US = 3_000_000; // forward jumps up to 3 s reuse the open decoder
 
+    /** Requests closer together than this are a scrub: newly opened decoders show their key frame at once. */
+    private static final long SCRUB_GAP_NS = 120_000_000L;
+    /** After a scrub stops, the exact frame replaces the key-frame approximation this much later. */
+    private static final long SETTLE_MS = 150;
+    /** Playback opens decoders this far ahead of a clip's first frame. */
+    private static final long PREROLL_MS = 500;
+
     private static final class Request {
-        final EditProject project; final long timeMs; final CountDownLatch done;
-        Request(EditProject project, long timeMs, CountDownLatch done) { this.project = project; this.timeMs = timeMs; this.done = done; }
+        final EditProject project; final long timeMs; final CountDownLatch done; final boolean exact;
+        Request(EditProject project, long timeMs, CountDownLatch done, boolean exact) { this.project = project; this.timeMs = timeMs; this.done = done; this.exact = exact; }
     }
+
+    /** Playback events, on the render thread. */
+    public interface PlaybackListener { void onEnded(long positionMs); }
 
     private static final class Slot {
         final FrameSource source; final String key; long lastUs;
@@ -62,6 +71,15 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     private int width, height;
     private long frames;
     private final Map<String, Slot> slots = new HashMap<>();
+    private long lastRequestNs;
+    // Playback (render thread, except the volatile fields read by the editor).
+    private volatile boolean playing;
+    private volatile EditProject playProject;
+    private volatile PlaybackAudio audio;
+    private volatile long stoppedAtMs = -1;
+    private PlaybackListener playbackListener;
+    private android.view.Choreographer choreographer;
+    private long playedFrames, droppedFrames;
 
     public LivePreview(Context context) {
         this.context = context.getApplicationContext();
@@ -134,28 +152,121 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
 
     // ---- Requests -----------------------------------------------------------------------------
 
-    /** Shows the frame at {@code timeMs}. Returns at once; the newest request wins. The project must be a private copy. */
+    /**
+     * Shows the frame at {@code timeMs}. Returns at once; the newest request wins. The project must be a
+     * private copy. While playing, the project replaces the one being played (edits show live).
+     */
     public void request(EditProject snapshot, long timeMs) {
-        Request r = new Request(snapshot, timeMs, null);
+        if (playing) { playProject = snapshot; return; }
+        long now = System.nanoTime();
+        boolean scrubbing = now - lastRequestNs < SCRUB_GAP_NS;
+        lastRequestNs = now;
+        Request r = new Request(snapshot, timeMs, null, !scrubbing);
         latest = r;
         if (pending.getAndSet(r) == null) gl.post(this::drain);
     }
 
-    /** Renders synchronously (tests). Returns false on timeout or error. */
+    /** Renders synchronously and exactly (tests). Returns false on timeout or error. */
     public boolean renderNow(EditProject snapshot, long timeMs, long timeoutMs) throws InterruptedException {
         CountDownLatch done = new CountDownLatch(1);
-        Request r = new Request(snapshot, timeMs, done);
+        Request r = new Request(snapshot, timeMs, done, true);
         latest = r;
         pending.set(r);
         gl.post(this::drain);
         return done.await(timeoutMs, TimeUnit.MILLISECONDS) && lastError == null;
     }
 
+    // ---- Playback ------------------------------------------------------------------------------
+
+    /**
+     * Plays {@code snapshot} from {@code fromMs} until {@code untilMs} with sound, rendering every frame
+     * through ICE Lite (all layers, effects, blend modes, titles) on the audio clock. Frames that cannot
+     * be drawn in time are skipped, never delayed, so picture and sound stay together.
+     */
+    public void play(EditProject snapshot, long fromMs, long untilMs, PlaybackListener l) {
+        playProject = snapshot; stoppedAtMs = -1; playing = true;
+        gl.post(guarded("starting playback", () -> startPlayback(snapshot, fromMs, untilMs, l)));
+    }
+
+    /** Stops playback; the picture stays on the last frame. Returns where it stopped. */
+    public long stop() {
+        long at = positionMs();
+        playing = false;
+        stoppedAtMs = at;
+        gl.post(guarded("stopping playback", this::endPlayback));
+        return at;
+    }
+
+    public boolean isPlaying() { return playing; }
+
+    /** Where playback is now (or stopped). */
+    public long positionMs() {
+        PlaybackAudio a = audio;
+        if (a != null && playing) return Math.min(a.positionMs(), a.untilMs());
+        return stoppedAtMs;
+    }
+
+    /** Frames drawn and frames skipped during the last playback (diagnostics and tests). */
+    public long[] playbackStats() { return new long[]{playedFrames, droppedFrames}; }
+
+    private void startPlayback(EditProject snapshot, long fromMs, long untilMs, PlaybackListener l) {
+        endPlayback();
+        if (!playing) return; // stopped before it started
+        playbackListener = l; playedFrames = 0; droppedFrames = 0;
+        PlaybackAudio a = new PlaybackAudio(context, com.blackice.bc1.core.AudioPlan.of(snapshot, true), fromMs, untilMs);
+        audio = a;
+        a.start();
+        if (choreographer == null) choreographer = android.view.Choreographer.getInstance();
+        choreographer.postFrameCallback(playbackFrame);
+    }
+
+    private long lastDrawnMs = -1;
+    private final android.view.Choreographer.FrameCallback playbackFrame = new android.view.Choreographer.FrameCallback() {
+        @Override public void doFrame(long frameTimeNanos) {
+            PlaybackAudio a = audio;
+            if (!playing || a == null) return;
+            long t = Math.min(a.positionMs(), a.untilMs());
+            if (t >= a.untilMs()) {
+                long end = a.untilMs();
+                endPlayback(); playing = false; stoppedAtMs = end;
+                PlaybackListener l = playbackListener;
+                if (l != null) l.onEnded(end);
+                return;
+            }
+            EditProject p = playProject;
+            int fps = Math.max(1, p.frameRate);
+            long frameMs = t - t % Math.max(1, 1000 / fps); // project frame grid
+            try {
+                if (frameMs != lastDrawnMs && egl != null && egl.hasWindow()) {
+                    long before = lastDrawnMs;
+                    render(p, frameMs, true);
+                    if (before >= 0 && frameMs - before > 1000 / fps * 3 / 2) droppedFrames += (frameMs - before) / Math.max(1, 1000 / fps) - 1;
+                    lastDrawnMs = frameMs; playedFrames++;
+                    FrameListener fl = listener;
+                    if (fl != null) fl.onFrame(frameMs, 0);
+                }
+            } catch (Throwable error) {
+                com.blackice.bc1.CrashLog.handled("playback frame", error);
+                lastError = String.valueOf(error.getMessage());
+                releaseSources();
+            }
+            if (playing) choreographer.postFrameCallback(this);
+        }
+    };
+
+    private void endPlayback() {
+        if (choreographer != null) choreographer.removeFrameCallback(playbackFrame);
+        PlaybackAudio a = audio;
+        audio = null;
+        if (a != null) a.release();
+        lastDrawnMs = -1;
+    }
+
     /** Closes decoders (frees hardware for playback or export); the next frame reopens what it needs. */
     public void releaseDecoders() { gl.post(guarded("closing preview decoders", this::releaseSources)); }
 
     /** Stops the render thread. */
-    public void release() { runOnGl(this::unbind); thread.quitSafely(); }
+    public void release() { playing = false; runOnGl(() -> { endPlayback(); unbind(); }); thread.quitSafely(); }
 
     private void drain() {
         Request r = pending.getAndSet(null);
@@ -165,9 +276,14 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
                 android.util.Log.d("BC1Live", "frame at " + r.timeMs + " ms waits for a window");
                 return;
             }
+            if (playing) return; // playback owns the picture
             long start = System.nanoTime();
-            render(r.project, r.timeMs);
+            render(r.project, r.timeMs, r.exact);
             lastError = null;
+            // A scrub shows key frames; once it stops, draw the exact frame.
+            if (!r.exact) gl.postDelayed(() -> {
+                if (latest == r && !playing) { Request exact = new Request(r.project, r.timeMs, null, true); if (pending.getAndSet(exact) == null) drain(); }
+            }, SETTLE_MS);
             long took = (System.nanoTime() - start) / 1_000_000;
             if (++frames % 20 == 1 || took > 250) android.util.Log.d("BC1Live", "frame " + frames + " at " + r.timeMs + " ms took " + took + " ms, " + slots.size() + " sources open");
             FrameListener l = listener;
@@ -181,7 +297,8 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
         }
     }
 
-    private void render(EditProject project, long timeMs) throws Exception {
+    /** @param exact false while scrubbing: a decoder opened for this frame shows its key frame instead of decoding up to the time */
+    private void render(EditProject project, long timeMs, boolean exact) throws Exception {
         if (project.clips.isEmpty()) { egl.makeCurrent(); clearBlack(); egl.swap(); return; }
         long t0 = System.nanoTime();
         OutputSpec spec = OutputSpec.of(project, project.previewHeight);
@@ -217,6 +334,8 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
                         : new VideoSource(context, c.uri, d.sourceTimeMs, Math.max(c.outMs, d.sourceTimeMs + 1), compositor, true);
                 slot = new Slot(source, identity, sourceUs);
                 slots.put(key, slot);
+                // Scrubbing: the key frame is ready at once; decoding up to the exact time waits until the scrub stops.
+                if (!exact && source instanceof VideoSource) sourceUs = Math.min(sourceUs, ((VideoSource) source).syncUs);
             }
             slot.lastUs = sourceUs;
             frame[i] = slot.source;
@@ -226,8 +345,20 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
         long tPrepare = System.nanoTime();
         for (FrameSource s : frame) s.latch();
         long tLatch = System.nanoTime();
-        // Decoders not on screen are closed so a few layers never hold every hardware decoder.
-        for (String key : new ArrayList<>(slots.keySet())) if (!used.contains(key)) slots.remove(key).source.release();
+        // Playback: open decoders for clips starting within the next half second, so a cut never waits
+        // for a decoder to start (they begin decoding in the background right away).
+        Set<String> upcoming = new HashSet<>();
+        if (playing) for (RenderPlan.LayerDraw d : plan.layersAt(Math.min(project.durationMs() - 1, time + PREROLL_MS))) {
+            EditProject.Clip c = d.clip;
+            if (c.image || used.contains(c.id)) continue;
+            upcoming.add(c.id);
+            if (!slots.containsKey(c.id)) {
+                VideoSource next = new VideoSource(context, c.uri, c.inMs, Math.max(c.outMs, c.inMs + 1), compositor, true);
+                slots.put(c.id, new Slot(next, c.uri + "|" + c.image + "|" + c.outMs, c.inMs * 1000));
+            }
+        }
+        // Decoders not on screen (or about to be) are closed so a few layers never hold every hardware decoder.
+        for (String key : new ArrayList<>(slots.keySet())) if (!used.contains(key) && !upcoming.contains(key)) slots.remove(key).source.release();
 
         egl.makeCurrent();
         boolean blend = false;
@@ -235,16 +366,15 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
         compositor.beginFrame(blend);
         for (int i = 0; i < layers.size(); i++) frame[i].draw(compositor, layers.get(i));
         compositor.endLayers();
-        GLES30.glFinish();
         long tDraw = System.nanoTime();
         List<EditProject.Overlay> active = plan.overlaysAt(time);
         if (!active.isEmpty()) compositor.drawOverlay(overlays.texture(active, time));
         egl.swap();
         long tSwap = System.nanoTime();
-        if (tSwap - t0 > 250_000_000L) android.util.Log.d("BC1Live", String.format(java.util.Locale.US,
+        if (!playing && tSwap - t0 > 250_000_000L) android.util.Log.d("BC1Live", String.format(java.util.Locale.US,
                 "slow frame: setup %d ms, open+prepare %d ms, latch %d ms, draw %d ms, swap %d ms",
                 (tCompositor - t0) / 1_000_000, (tPrepare - tCompositor) / 1_000_000, (tLatch - tPrepare) / 1_000_000,
-                (tDraw - tLatch) / 1_000_000, (tSwap - tDraw) / 1_000_000));
+                (tDraw - tLatch) / 1_000_000, (tSwap - tDraw) / 1_000_000)); // draw and swap overlap on the GPU
     }
 
     private static void clearBlack() {

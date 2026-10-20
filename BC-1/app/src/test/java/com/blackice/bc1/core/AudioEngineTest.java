@@ -146,4 +146,45 @@ public class AudioEngineTest {
             assertEquals(0, mixer.render(block, 4096));
         }
     }
+
+    /** Ramp scaled into -1..1 so the mixer's clamp does not hide differences. */
+    static Resampler.Source smallRamp(long frames) {
+        Resampler.Source r = ramp(frames);
+        return (stereo, max) -> { int n = r.read(stereo, max); for (int i = 0; i < Math.max(0, n) * 2; i++) stereo[i] *= 1e-4f; return n; };
+    }
+
+    /** Playback from the middle: a seeking opener starts each segment at the right point, matching a full render. */
+    @Test public void mixerStartsMidTimeline() throws Exception {
+        EditProject p = project(); p.music = null;
+        p.clips.get(0).fadeInMs = 0; p.clips.get(0).volume = 1f;
+        AudioPlan plan = AudioPlan.of(p, false);
+        int rate = 1000;
+        float[] full = new float[2 * 3000];
+        try (AudioMixer mixer = new AudioMixer(plan, s -> new AudioMixer.Opened(smallRamp(9_000), rate, null), rate)) {
+            int total = 0, n; float[] block = new float[2 * 256];
+            while ((n = mixer.render(block, 256)) > 0) { System.arraycopy(block, 0, full, total * 2, n * 2); total += n; }
+        }
+        long[] openedAt = {-1};
+        AudioMixer.Opener seeking = new AudioMixer.Opener() {
+            @Override public AudioMixer.Opened open(AudioPlan.Segment s) { return new AudioMixer.Opened(smallRamp(9_000), rate, null); }
+            @Override public AudioMixer.Opened openAt(AudioPlan.Segment s, long localMs) {
+                openedAt[0] = localMs;
+                Resampler.Source r = smallRamp(9_000);
+                try { float[] skip = new float[2 * (int) localMs]; r.read(skip, (int) localMs); } catch (Exception e) { throw new RuntimeException(e); }
+                return new AudioMixer.Opened(r, rate, null);
+            }
+            @Override public boolean seeks() { return true; }
+        };
+        try (AudioMixer mixer = new AudioMixer(plan, seeking, rate)) {
+            mixer.seek(700);
+            assertEquals(700, mixer.position());
+            float[] block = new float[2 * 100];
+            assertEquals(100, mixer.render(block, 100));
+            assertEquals("Opened 700 ms into the segment", 700 - plan.segments.get(0).timelineStartMs, openedAt[0]);
+            for (int f = 0; f < 100; f++) assertEquals("Frame " + (700 + f), full[2 * (700 + f)], block[2 * f], 1e-6);
+            assertTrue("Non-trivial signal", Math.abs(block[0]) > 1e-3);
+        }
+        try { AudioMixer m = new AudioMixer(plan, seeking, rate); float[] b = new float[20]; m.render(b, 10); m.seek(5); fail("Seek after rendering"); }
+        catch (IllegalStateException expected) { }
+    }
 }

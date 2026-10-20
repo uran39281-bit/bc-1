@@ -25,8 +25,12 @@ final class AudioDecoderSource implements Resampler.Source, AutoCloseable {
     private int pendingFrames, pendingOffset;
 
     /** Opens a segment, or returns null when the media has no audio track. */
-    static AudioMixer.Opened open(Context context, AudioPlan.Segment segment) throws Exception {
-        AudioDecoderSource source = new AudioDecoderSource(context, segment.uri, segment.sourceInMs * 1000);
+    static AudioMixer.Opened open(Context context, AudioPlan.Segment segment) throws Exception { return openAt(context, segment, 0); }
+
+    /** Opens a segment {@code localMs} of timeline time into it (speed applied to find the source time). */
+    static AudioMixer.Opened openAt(Context context, AudioPlan.Segment segment, long localMs) throws Exception {
+        long sourceUs = segment.sourceInMs * 1000 + Math.round(localMs * 1000.0 * segment.speed);
+        AudioDecoderSource source = new AudioDecoderSource(context, segment.uri, sourceUs);
         if (source.codec == null) { source.close(); return null; }
         return new AudioMixer.Opened(source, source.rate, source);
     }
