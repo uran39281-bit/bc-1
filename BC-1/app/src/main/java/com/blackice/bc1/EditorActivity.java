@@ -268,7 +268,7 @@ public final class EditorActivity extends Activity {
         main.removeCallbacks(autosave);if(loading)return;
         if(player!=null)project.playheadMs=Math.min(project.durationMs(),Math.max(0,player.getCurrentPosition()));
         EditProject snapshot=ProjectStore.snapshot(project);long savingRevision=editRevision;
-        io.execute(()->{try{store.save(snapshot);main.post(()->{getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("last-project",snapshot.id).apply();if(project.id.equals(snapshot.id)&&savingRevision==editRevision){dirty=false;renderHeader();}});}
+        io.execute(()->{try{store.save(snapshot);main.post(()->{if(isDestroyed()||!project.id.equals(snapshot.id))return;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("last-project",snapshot.id).apply();if(savingRevision==editRevision){dirty=false;renderHeader();}});}
             catch(Exception e){main.post(()->tell("Save failed: "+e.getMessage()));}});
     }
     void undo(boolean forward) {
