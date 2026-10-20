@@ -1,0 +1,840 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.11.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:javaPreCompileDebug
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:mergeDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:mergeDebugShaders
+> Task :app:processDebugManifestForPackage
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :app:compressDebugAssets
+> Task :app:processDebugJavaRes NO-SOURCE
+> Task :app:processDebugResources
+> Task :app:mergeDebugJniLibFolders
+> Task :app:checkDebugDuplicateClasses
+> Task :app:mergeDebugJavaResource
+
+> Task :app:compileDebugJavaWithJavac
+warning: unknown enum constant Scope.LIBRARY_GROUP
+  reason: class file for androidx.annotation.RestrictTo$Scope not found
+warning: unknown enum constant Scope.LIBRARY_GROUP
+warning: unknown enum constant Scope.LIBRARY_GROUP
+warning: unknown enum constant Scope.LIBRARY_GROUP
+warning: unknown enum constant Scope.LIBRARY_GROUP
+warning: unknown enum constant Scope.LIBRARY_GROUP
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+6 warnings
+
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics
+> Task :app:mergeLibDexDebug
+> Task :app:mergeDebugNativeLibs NO-SOURCE
+> Task :app:stripDebugDebugSymbols NO-SOURCE
+> Task :app:mergeProjectDexDebug
+> Task :app:validateSigningDebug
+> Task :app:writeDebugAppMetadata
+> Task :app:writeDebugSigningConfigVersions
+> Task :app:preDebugAndroidTestBuild SKIPPED
+> Task :app:javaPreCompileDebugAndroidTest
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:generateDebugAndroidTestResValues
+> Task :app:checkDebugAndroidTestAarMetadata
+> Task :app:mapDebugAndroidTestSourceSetPaths
+> Task :app:generateDebugAndroidTestResources
+> Task :app:mergeDebugAndroidTestResources
+> Task :app:processDebugAndroidTestManifest
+> Task :app:mergeDebugAndroidTestShaders
+> Task :app:compileDebugAndroidTestShaders NO-SOURCE
+> Task :app:generateDebugAndroidTestAssets UP-TO-DATE
+> Task :app:mergeDebugAndroidTestAssets
+> Task :app:compressDebugAndroidTestAssets
+> Task :app:desugarDebugAndroidTestFileDependencies
+> Task :app:processDebugAndroidTestJavaRes NO-SOURCE
+> Task :app:checkDebugAndroidTestDuplicateClasses
+> Task :app:mergeDebugAndroidTestJavaResource
+> Task :app:processDebugAndroidTestResources
+> Task :app:mergeLibDexDebugAndroidTest
+> Task :app:mergeExtDexDebugAndroidTest
+> Task :app:compileDebugAndroidTestJavaWithJavac
+> Task :app:dexBuilderDebugAndroidTest
+> Task :app:mergeDebugAndroidTestGlobalSynthetics
+> Task :app:mergeDebugAndroidTestJniLibFolders
+> Task :app:mergeDebugAndroidTestNativeLibs NO-SOURCE
+> Task :app:stripDebugAndroidTestDebugSymbols NO-SOURCE
+> Task :app:validateSigningDebugAndroidTest
+> Task :app:writeDebugAndroidTestSigningConfigVersions
+> Task :app:mergeProjectDexDebugAndroidTest
+> Task :app:mergeExtDexDebug
+> Task :app:packageDebugAndroidTest
+> Task :app:createDebugAndroidTestApkListingFileRedirect
+> Task :app:assembleDebugAndroidTest
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect
+> Task :app:assembleDebug
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__reactivecircus_android-emulator-runner-1792536541323.json
+[Incubating] Problems report is available at: file:///home/runner/work/bc-1/bc-1/BC-1/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 41s
+58 actionable tasks: 58 executed
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.EditorWorkspaceTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+com.blackice.bc1.EditorWorkspaceTest:
+INSTRUMENTATION_STATUS: test=rapidSearchDuringDecodeUpdatesCurrentThumbnail
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.EditorWorkspaceTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=rapidSearchDuringDecodeUpdatesCurrentThumbnail
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.EditorWorkspaceTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=editorAdaptsAndTabsKeepVideoSurface
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.EditorWorkspaceTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=editorAdaptsAndTabsKeepVideoSurface
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.ExportDiagnosticsUiTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+com.blackice.bc1.ExportDiagnosticsUiTest:
+INSTRUMENTATION_STATUS: test=setupShowsAndCopiesRedactedReport
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.ExportDiagnosticsUiTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=setupShowsAndCopiesRedactedReport
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.FootageWorkspaceTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+com.blackice.bc1.FootageWorkspaceTest:
+INSTRUMENTATION_STATUS: test=mainAndFootageShareStateAndKeepTimelineAccessible
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.FootageWorkspaceTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=mainAndFootageShareStateAndKeepTimelineAccessible
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.LayerRenderingTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+com.blackice.bc1.LayerRenderingTest:
+INSTRUMENTATION_STATUS: test=exportHonoursOrderVisibilityAndTransforms
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.LayerRenderingTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=exportHonoursOrderVisibilityAndTransforms
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.LayerRenderingTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=soloIsolatesOnlyInPreview
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.LayerRenderingTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=soloIsolatesOnlyInPreview
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.MobileSheetTest
+INSTRUMENTATION_STATUS: current=7
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+com.blackice.bc1.MobileSheetTest:
+INSTRUMENTATION_STATUS: test=emptyProjectShapeSheetPreservesFrameAndPersistsVectors
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.MobileSheetTest
+INSTRUMENTATION_STATUS: current=7
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=emptyProjectShapeSheetPreservesFrameAndPersistsVectors
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.PhoneMediaSpaceTest
+INSTRUMENTATION_STATUS: current=8
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+com.blackice.bc1.PhoneMediaSpaceTest:
+INSTRUMENTATION_STATUS: test=mediaBrowserHasSpaceAndReturnsToEditingWithoutProjectLoss
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.PhoneMediaSpaceTest
+INSTRUMENTATION_STATUS: current=8
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=mediaBrowserHasSpaceAndReturnsToEditingWithoutProjectLoss
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.PreviewProxyTest
+INSTRUMENTATION_STATUS: current=9
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+com.blackice.bc1.PreviewProxyTest:
+INSTRUMENTATION_STATUS: test=cancellationCacheReuseAndEditInvalidation
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.PreviewProxyTest
+INSTRUMENTATION_STATUS: current=9
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=cancellationCacheReuseAndEditInvalidation
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.PreviewScrubTest
+INSTRUMENTATION_STATUS: current=10
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+com.blackice.bc1.PreviewScrubTest:
+INSTRUMENTATION_STATUS: test=fastScrubbingKeepsTheLivePreviewWorking
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.PreviewScrubTest
+INSTRUMENTATION_STATUS: current=10
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=fastScrubbingKeepsTheLivePreviewWorking
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.PreviewScrubTest
+INSTRUMENTATION_STATUS: current=11
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=scrollingUnderCenteredPlayheadShowsPixelsWithoutPressingPlay
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.PreviewScrubTest
+INSTRUMENTATION_STATUS: current=11
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=scrollingUnderCenteredPlayheadShowsPixelsWithoutPressingPlay
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.TimelineDragTest
+INSTRUMENTATION_STATUS: current=12
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+com.blackice.bc1.TimelineDragTest:
+INSTRUMENTATION_STATUS: test=dragLeavesGapsMovesBetweenRowsAndDropsMedia
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.TimelineDragTest
+INSTRUMENTATION_STATUS: current=12
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=dragLeavesGapsMovesBetweenRowsAndDropsMedia
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.TimelineInteractionTest
+INSTRUMENTATION_STATUS: current=13
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+com.blackice.bc1.TimelineInteractionTest:
+INSTRUMENTATION_STATUS: test=phoneAndDexGesturesHistoryAndSaveReopen
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.TimelineInteractionTest
+INSTRUMENTATION_STATUS: current=13
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=phoneAndDexGesturesHistoryAndSaveReopen
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=14
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+com.blackice.bc1.VideoEditorTest:
+INSTRUMENTATION_STATUS: test=extractedAudioLayerOffsetsAndFadesInExport
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=14
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=extractedAudioLayerOffsetsAndFadesInExport
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=15
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=everyVideoTransitionExportsCorrectEndpointsAndMidpoint
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=15
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=everyVideoTransitionExportsCorrectEndpointsAndMidpoint
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=16
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=missingMediaRecordsRedactedCauseAndNextExportRecovers
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=16
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=missingMediaRecordsRedactedCauseAndNextExportRecovers
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=17
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=projectBundlesRoundTripMediaAndRejectTraversal
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=17
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=projectBundlesRoundTripMediaAndRejectTraversal
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=18
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=corruptOrFutureProjectDoesNotReplaceSavedProject
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=18
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=corruptOrFutureProjectDoesNotReplaceSavedProject
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=19
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=projectRoundTripEditsMusicTextAnd1080pExport
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=19
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=projectRoundTripEditsMusicTextAnd1080pExport
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=20
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=previewSeeksAfterTrimAcrossBothTracks
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=20
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=previewSeeksAfterTrimAcrossBothTracks
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=21
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=videoEffectsAndTimedImageOverlayReachTheExport
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=21
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=videoEffectsAndTimedImageOverlayReachTheExport
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=22
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=audioWaveformDecodesRealPeaks
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=22
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=audioWaveformDecodesRealPeaks
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=23
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=independentLayerKeyframesCompositeAndChromaKey
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=23
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=independentLayerKeyframesCompositeAndChromaKey
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=24
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=foregroundExportCanBeCancelledWithoutPublishing
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=24
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=foregroundExportCanBeCancelledWithoutPublishing
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=25
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=speedAndTextStyleSurviveReopenAndExport
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.VideoEditorTest
+INSTRUMENTATION_STATUS: current=25
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=speedAndTextStyleSurviveReopenAndExport
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.WorkspaceTest
+INSTRUMENTATION_STATUS: current=26
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+com.blackice.bc1.WorkspaceTest:
+INSTRUMENTATION_STATUS: test=emulatorWorkspacesKeepMonitorAndToolsUsable
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.WorkspaceTest
+INSTRUMENTATION_STATUS: current=26
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=emulatorWorkspacesKeepMonitorAndToolsUsable
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.WorkspaceV2Test
+INSTRUMENTATION_STATUS: current=27
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+com.blackice.bc1.WorkspaceV2Test:
+INSTRUMENTATION_STATUS: test=addDrawerPanelsLayersAndKeyframesOnPhoneAndDex
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.WorkspaceV2Test
+INSTRUMENTATION_STATUS: current=27
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=addDrawerPanelsLayersAndKeyframesOnPhoneAndDex
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=28
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+com.blackice.bc1.engine.BcCoreExportTest:
+INSTRUMENTATION_STATUS: test=hevcExport
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=28
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=hevcExport
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=29
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=eightLayerBenchmarkRuns
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=29
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=eightLayerBenchmarkRuns
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=30
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=acceptanceExportIsFrameAccurateWithSoundAndTransition
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=30
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=acceptanceExportIsFrameAccurateWithSoundAndTransition
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=31
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=highFrameRateSourceSkipsSupersededFrames
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=31
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=highFrameRateSourceSkipsSupersededFrames
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=32
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=deviceReportAndBudget
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=32
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=deviceReportAndBudget
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=33
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=blackIceEffectsRenderAndChangeThePicture
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=33
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=blackIceEffectsRenderAndChangeThePicture
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=34
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=stagedRenderingMatchesSinglePassAcrossEightTracks
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=34
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=stagedRenderingMatchesSinglePassAcrossEightTracks
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=35
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=planStepsDownOnlyWhenTheEncoderRefuses
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=35
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=planStepsDownOnlyWhenTheEncoderRefuses
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=36
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=blendModesMatchTheReferenceMath
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=36
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=blendModesMatchTheReferenceMath
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=37
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=layersPicturesSpeedAndPortrait
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=37
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=layersPicturesSpeedAndPortrait
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=38
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=cancellationStopsAndRemovesOutput
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.BcCoreExportTest
+INSTRUMENTATION_STATUS: current=38
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=cancellationStopsAndRemovesOutput
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.GpuPipelineTest
+INSTRUMENTATION_STATUS: current=39
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+com.blackice.bc1.engine.GpuPipelineTest:
+INSTRUMENTATION_STATUS: test=blurPreservesImageOrientationAndSurvivesContextLoss
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.GpuPipelineTest
+INSTRUMENTATION_STATUS: current=39
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=blurPreservesImageOrientationAndSurvivesContextLoss
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.GpuPipelineTest
+INSTRUMENTATION_STATUS: current=40
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=everyTransitionHasExactEndpoints
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.GpuPipelineTest
+INSTRUMENTATION_STATUS: current=40
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=everyTransitionHasExactEndpoints
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.GpuPipelineTest
+INSTRUMENTATION_STATUS: current=41
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=opacityAndDipMidpointAreExact
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.GpuPipelineTest
+INSTRUMENTATION_STATUS: current=41
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=opacityAndDipMidpointAreExact
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.GpuPipelineTest
+INSTRUMENTATION_STATUS: current=42
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=everyEffectRendersAtEveryQualityAndStrength
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.GpuPipelineTest
+INSTRUMENTATION_STATUS: current=42
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=everyEffectRendersAtEveryQualityAndStrength
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.LivePreviewTest
+INSTRUMENTATION_STATUS: current=43
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+com.blackice.bc1.engine.LivePreviewTest:
+INSTRUMENTATION_STATUS: test=framesFollowEditsAndScrubbing
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.LivePreviewTest
+INSTRUMENTATION_STATUS: current=43
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=framesFollowEditsAndScrubbing
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.LivePreviewTest
+INSTRUMENTATION_STATUS: current=44
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=frameRequestedBeforeTheSurfaceIsDrawnWhenItArrives
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.blackice.bc1.engine.LivePreviewTest
+INSTRUMENTATION_STATUS: current=44
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=44
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=frameRequestedBeforeTheSurfaceIsDrawnWhenItArrives
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 723.619
+
+OK (44 tests)
+
+
+INSTRUMENTATION_CODE: -1
+58638:10-20 22:54:55.101  3422  3422 E BC1Export: Export failed
+58639:10-20 22:54:55.101  3422  3422 E BC1Export: androidx.media3.transformer.ExportException: Asset loader error
+58640:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.transformer.ExoPlayerAssetLoader$PlayerListener.onPlayerError(ExoPlayerAssetLoader.java:517)
+58641:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl.lambda$updatePlaybackInfo$21(ExoPlayerImpl.java:2387)
+58642:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl$$ExternalSyntheticLambda34.invoke(D8$$SyntheticClass:0)
+58643:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.common.util.ListenerSet$ListenerHolder.invoke(ListenerSet.java:466)
+58644:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.common.util.ListenerSet.lambda$queueEvent$0(ListenerSet.java:334)
+58645:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.common.util.ListenerSet$$ExternalSyntheticLambda1.run(D8$$SyntheticClass:0)
+58646:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.common.util.ListenerSet.flushEvents(ListenerSet.java:358)
+58647:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl.updatePlaybackInfo(ExoPlayerImpl.java:2450)
+58648:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl.handlePlaybackInfo(ExoPlayerImpl.java:2273)
+58649:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl.lambda$new$1$androidx-media3-exoplayer-ExoPlayerImpl(ExoPlayerImpl.java:375)
+58650:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl$$ExternalSyntheticLambda13.run(D8$$SyntheticClass:0)
+58651:10-20 22:54:55.101  3422  3422 E BC1Export: 	at android.os.Handler.handleCallback(Handler.java:959)
+58652:10-20 22:54:55.101  3422  3422 E BC1Export: 	at android.os.Handler.dispatchMessage(Handler.java:100)
+58653:10-20 22:54:55.101  3422  3422 E BC1Export: 	at android.os.Looper.loopOnce(Looper.java:232)
+58654:10-20 22:54:55.101  3422  3422 E BC1Export: 	at android.os.Looper.loop(Looper.java:317)
+58655:10-20 22:54:55.101  3422  3422 E BC1Export: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+58656:10-20 22:54:55.101  3422  3422 E BC1Export: Caused by: androidx.media3.exoplayer.ExoPlaybackException: Source error
+58657:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:1021)
+58658:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:993)
+58659:10-20 22:54:55.101  3422  3422 E BC1Export: 	at android.os.Handler.dispatchMessage(Handler.java:103)
+58660:10-20 22:54:55.101  3422  3422 E BC1Export: 	... 3 more
+58661:10-20 22:54:55.101  3422  3422 E BC1Export: Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: /data/user/0/com.blackice.bc1.preview/cache/private-missing-video.mp4: open failed: ENOENT (No such file or directory)
+58662:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:203)
+58663:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:113)
+58664:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:277)
+58665:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:89)
+58666:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1298)
+58667:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:453)
+58668:10-20 22:54:55.101  3422  3422 E BC1Export: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+58669:10-20 22:54:55.101  3422  3422 E BC1Export: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+58670:10-20 22:54:55.101  3422  3422 E BC1Export: 	at java.lang.Thread.run(Thread.java:1012)
+58671:10-20 22:54:55.101  3422  3422 E BC1Export: Caused by: java.io.FileNotFoundException: /data/user/0/com.blackice.bc1.preview/cache/private-missing-video.mp4: open failed: ENOENT (No such file or directory)
+58672:10-20 22:54:55.101  3422  3422 E BC1Export: 	at libcore.io.IoBridge.open(IoBridge.java:574)
+58673:10-20 22:54:55.101  3422  3422 E BC1Export: 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+58674:10-20 22:54:55.101  3422  3422 E BC1Export: 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+58675:10-20 22:54:55.101  3422  3422 E BC1Export: 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+58676:10-20 22:54:55.101  3422  3422 E BC1Export: 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:183)
+58677:10-20 22:54:55.101  3422  3422 E BC1Export: 	... 8 more
+58678:10-20 22:54:55.101  3422  3422 E BC1Export: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+58679:10-20 22:54:55.101  3422  3422 E BC1Export: 	at libcore.io.Linux.open(Native Method)
+58680:10-20 22:54:55.101  3422  3422 E BC1Export: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:563)
+58681:10-20 22:54:55.101  3422  3422 E BC1Export: 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+58682:10-20 22:54:55.101  3422  3422 E BC1Export: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:563)
+58683:10-20 22:54:55.101  3422  3422 E BC1Export: 	at android.app.ActivityThread$AndroidOs.open(ActivityThread.java:8591)
+58684:10-20 22:54:55.101  3422  3422 E BC1Export: 	at libcore.io.IoBridge.open(IoBridge.java:560)
+58685:10-20 22:54:55.101  3422  3422 E BC1Export: 	... 12 more
+58686-10-20 22:54:55.103  3422  3422 E ActivityThread: Failed to find provider info for 
+58687-10-20 22:54:55.104  3422  3422 W DocumentsContract: Failed to delete document
+58688-10-20 22:54:55.104  3422  3422 W DocumentsContract: java.lang.IllegalArgumentException: Unknown authority 
+58689-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at android.content.ContentResolver.call(ContentResolver.java:2463)
+58690-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at android.provider.DocumentsContract.deleteDocument(DocumentsContract.java:1469)
+58691-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at com.blackice.bc1.editor.ExportService.finish(ExportService.java:154)
+58692-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at com.blackice.bc1.editor.ExportService.exportFailed(ExportService.java:131)
+58693-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at com.blackice.bc1.editor.ExportService.-$$Nest$mexportFailed(Unknown Source:0)
+58694-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at com.blackice.bc1.editor.ExportService$2.onError(ExportService.java:98)
+58695-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at androidx.media3.transformer.Transformer$ExportOperationListener.lambda$onError$1$androidx-media3-transformer-Transformer$ExportOperationListener(Transformer.java:1512)
+58696-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at androidx.media3.transformer.Transformer$ExportOperationListener$$ExternalSyntheticLambda1.invoke(D8$$SyntheticClass:0)
+58697-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at androidx.media3.common.util.ListenerSet$ListenerHolder.invoke(ListenerSet.java:466)
+58698-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at androidx.media3.common.util.ListenerSet.lambda$queueEvent$0(ListenerSet.java:334)
+58699-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at androidx.media3.common.util.ListenerSet$$ExternalSyntheticLambda1.run(D8$$SyntheticClass:0)
+58700-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at androidx.media3.common.util.ListenerSet.flushEvents(ListenerSet.java:358)
+58701-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at androidx.media3.common.util.ListenerSet.sendEvent(ListenerSet.java:386)
+58702-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at androidx.media3.common.util.ListenerSet.sendEvent(ListenerSet.java:373)
+58703-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at androidx.media3.transformer.Transformer$ExportOperationListener.onError(Transformer.java:1511)
+58704-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at androidx.media3.transformer.DefaultExportOperation$ComponentListener.onError(DefaultExportOperation.java:194)
+58705-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at androidx.media3.transformer.TransformerInternal.lambda$endInternal$0$androidx-media3-transformer-TransformerInternal(TransformerInternal.java:521)
+58706-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at androidx.media3.transformer.TransformerInternal$$ExternalSyntheticLambda2.run(D8$$SyntheticClass:0)
+58707-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at android.os.Handler.handleCallback(Handler.java:959)
+58708-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at android.os.Handler.dispatchMessage(Handler.java:100)
+58709-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at android.os.Looper.loopOnce(Looper.java:232)
+58710-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at android.os.Looper.loop(Looper.java:317)
+58711-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at android.app.ActivityThread.main(ActivityThread.java:8705)
+58712-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at java.lang.reflect.Method.invoke(Native Method)
+58713-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+58714-10-20 22:54:55.104  3422  3422 W DocumentsContract: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)
+58715-10-20 22:54:55.106   560  1557 D ActivityManager: Stop FGS timeout: ServiceRecord{51ad6a8 u0 com.blackice.bc1.preview/com.blackice.bc1.editor.ExportService c:com.blackice.bc1.preview}
+58716-10-20 22:54:55.106   560  1557 W ForegroundServiceTypeLoggerModule: FGS stop call for: 10209 has no types!
+58717-10-20 22:54:55.110   560  1557 V MediaMetricsManagerService: Releasing sessionId 2mXRm3OxlAhFdfrO for userId 0 [NOP]
+58718-10-20 22:54:55.173  3422  3603 D BufferPoolAccessor2.0: evictor expired: 2, evicted: 0
+58719-10-20 22:54:55.413   505   910 D BufferPoolAccessor2.0: evictor expired: 1, evicted: 0
+58723-10-20 22:54:55.442   560  1829 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10210, packageName = null, attributionTag = null, token = android.os.Binder@af48afd, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+Preview log: 8 lines (errors and lifecycle first, then the last seeks)
+29742:10-20 22:52:19.618  3422  5559 W TransformerInternal:   Caused by: androidx.media3.common.VideoFrameProcessingException:  @UNSET
+35143:10-20 22:52:47.551  3422  3479 I BC1Preview: test: last scrub target 2029
+58604:10-20 22:54:55.096  3422  7803 E ExoPlayerImplInternal:   androidx.media3.exoplayer.ExoPlaybackException: Source error
+58656:10-20 22:54:55.101  3422  3422 E BC1Export: Caused by: androidx.media3.exoplayer.ExoPlaybackException: Source error
+4236:10-20 22:50:51.885  3422  3422 D BC1Preview: playback render ready
+5646:10-20 22:50:58.117  3422  3422 D BC1Preview: playback render ready
+38558:10-20 22:53:12.231  3422  3422 D BC1Preview: state 2 pos=4000 playhead=4000
+38839:10-20 22:53:12.800  3422  3422 D BC1Preview: state 3 pos=4010 playhead=4000
+OK (44 tests)
+Independent MP4 check passed: BC-1/app/build/reports/androidTests/qa/acceptance-1080p-0.mp4.ffprobe.json H.264 1920x1080 + AAC; decoded without errors
+Independent MP4 check passed: BC-1/app/build/reports/androidTests/qa/acceptance-1080p-1.mp4.ffprobe.json H.264 1920x1080 + AAC; decoded without errors
+Independent MP4 check passed: BC-1/app/build/reports/androidTests/qa/acceptance-1080p-2.mp4.ffprobe.json H.264 1920x1080 + AAC; decoded without errors
+Independent MP4 check passed: BC-1/app/build/reports/androidTests/qa/recovery-1080p.mp4.ffprobe.json H.264 1920x1080 + AAC; decoded without errors
+Independent speed MP4 check passed: synchronized H.264/AAC, five seconds
+Independent ICE Lite MP4 check passed: H.264 1920x1080 105 frames + AAC 48 kHz stereo, synchronized
+Independent ICE Lite 60 fps check passed: 120 frames at 60/1
+Independent ICE Lite check passed: BC-1/app/build/reports/androidTests/qa/bc-core-hevc.mp4.ffprobe.json hevc 105 frames + AAC
+Independent ICE Lite check passed: BC-1/app/build/reports/androidTests/qa/bc-core-staged.mp4.ffprobe.json h264 60 frames + AAC
+Independent vector-only export check passed: H.264, 180p, 30 frames, one second
