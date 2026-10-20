@@ -1,3 +1,11 @@
+# Latest checkpoint — 1.3.1 two-state workspace (2026-10-20)
+
+Qualified source `0e90227ddf82ec927450428920935c6a98468076`, run39472715226:137 JVM/43 Android/10 independent export checks passed, lint0errors49warnings. Source branch ui/mint-footage. Version1.3.1/code24, retained preview certificate. See ../v1.3.1/QA.md for screenshots and limitations. Native presentation remains MobileChrome/ToolPanels/TimelineView. LivePreview now queues redraw after GL surface binding; save callbacks ignore destroyed Activities and mismatched projects. Preserve old releases and signing material.
+
+Physical-device/accessibility testing and unsupported shape/effect-stack capabilities remain outstanding. Large-font Footage properties scroll. Do not claim every requested feature complete or production-stable.
+
+---
+
 # Latest checkpoint — 1.3.0 Mobile V1 (2026-10-19)
 
 Qualified source f3e1e02fc4a37f5ace49ebd2ee776ef8437d7e16, based on main 119e203 (1.2.1). CI 39299364162 passed 133 JVM / 42 Android / 10 independent export checks. Signed APK uses the retained preview certificate, package com.blackice.bc1.preview, code 23. See ../v1.3.0/QA.md and qa/BC-1-v1.3.0-MOBILE-V1.md for scope, evidence and limitations. Native phone presentation is in MobileChrome; shared vector geometry is ShapePaths. Do not replace or regenerate signing material. Preserve old release folders.

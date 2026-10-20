@@ -10,7 +10,15 @@ Home of the BC-1 editor (Black Ice Custom Engine): app source in [`BC-1/`](BC-1)
 - Previous development: v1.0.5 (formerly labelled v2.0.0; selection-based workspace, layered timeline, transforms and keyframe animation) — published below with the recovered retained preview signing key. See [docs/qa/BC-1-v1.0.5-QA.md](docs/qa/BC-1-v1.0.5-QA.md).
 - Moved from [Black-Ice-Emulator](https://github.com/uran39281-bit/Black-Ice-Emulator/tree/claude/app-update-4vo05i) at commit `14b8308`; earlier history and version branches remain there.
 
-## Latest: v1.3.0 — Mobile V1 workspace
+## Latest: v1.3.1 — Main workspace and Footage tools
+
+[Download BC-1 v1.3.1 APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.3.1/BC-1-v1.3.1.apk)
+
+Mint/navy native mobile redesign with a 56dp icon-only track strip. Selecting footage opens its tools; + opens Add. Includes playhead trim, safe duplication, selected-clip mute, nested Back navigation, large-font layout and retained timeline position across resizing. Existing project, media, preview and export services are preserved.
+
+137 JVM tests, 43 Android tests and ten independent export checks passed. Package `com.blackice.bc1.preview`, versionCode 24, signed with the retained preview certificate. Install over the existing Preview without uninstalling. See [QA, actual screenshots and limitations](v1.3.1/QA.md), [checksum](v1.3.1/SHA256SUMS.txt), and [changelog/build instructions](docs/CHANGELOG-v1.3.1.md). Physical Samsung performance, full accessibility validation and unsupported shape/effect tools remain outside this qualification.
+
+## Previous: v1.3.0 — Mobile V1 workspace
 
 [Download BC-1 v1.3.0 APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.3.0/BC-1-v1.3.0.apk)
 
