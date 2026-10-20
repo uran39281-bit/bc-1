@@ -183,7 +183,7 @@ public final class EditorActivity extends Activity {
     }
     void previewHint(String text){if(emptyPreview!=null){emptyPreview.setText(text);emptyPreview.setBackgroundColor(liveView!=null&&liveView.getVisibility()==View.VISIBLE?0x99000000:Color.BLACK);emptyPreview.setVisibility(View.VISIBLE);}}
     void attachPreview(Player prepared){
-        player=prepared;prepared.setVolume(monitorVolume);prepared.setVideoSurfaceView(surface);
+        player=prepared;surface.setVisibility(View.VISIBLE);prepared.setVolume(monitorVolume);prepared.setVideoSurfaceView(surface);
         prepared.addListener(new Player.Listener(){
             // The player's first frame replaces the live frame; the live decoders are closed to free the hardware.
             @Override public void onRenderedFirstFrame(){if(player!=prepared)return;if(emptyPreview!=null){emptyPreview.setVisibility(View.GONE);emptyPreview.setBackgroundColor(Color.BLACK);}if(liveView!=null)liveView.setVisibility(View.GONE);if(live!=null)live.releaseDecoders();}
@@ -205,6 +205,9 @@ public final class EditorActivity extends Activity {
         try{
             EditProject snapshot=comparing&&compareSnapshot!=null?ProjectStore.decode(compareSnapshot):ProjectStore.snapshot(project);
             snapshot.playheadMs=project.playheadMs;
+            // Only the live TextureView owns paused frames. Do not leave the inactive
+            // SurfaceView's separate surface/hole covering it on device compositors.
+            surface.setVisibility(View.INVISIBLE);
             liveView.setVisibility(View.VISIBLE);if(emptyPreview!=null)emptyPreview.setVisibility(View.GONE);
             live.request(snapshot,project.playheadMs);
         }catch(Exception e){tell("Live preview: "+e.getMessage());}

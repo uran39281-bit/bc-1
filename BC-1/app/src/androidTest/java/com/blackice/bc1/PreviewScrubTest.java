@@ -69,4 +69,40 @@ public class PreviewScrubTest {
             assertFalse("Preview left broken: " + hint.get(), hint.get().contains("unavailable"));
         }
     }
+    /** Exercise the visible line through the real timeline gesture handler, including player handoff. */
+    @Test public void draggingPlayheadShowsPixelsWithoutPressingPlay() throws Exception {
+        EditProject p=new EditProject();p.name="Visible playhead QA";
+        for(String name:new String[]{"red.mp4","blue.mp4"})p.clips.add(new MediaImporter(inst.getTargetContext()).importClip(Uri.parse(fixture(name)),false));
+        new ProjectStore(inst.getTargetContext()).save(p);
+        inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("last-project",p.id).putString("mode","PHONE").putBoolean("ui-locked",false).commit();
+        try(ActivityScenario<EditorActivity> scenario=ActivityScenario.launch(EditorActivity.class)){
+            waitFor(scenario,a->!a.loading&&a.project.id.equals(p.id),15000,"requested project");
+            scenario.onActivity(a->a.seek(1000));waitForPixels(scenario,1000,false);
+            scenario.onActivity(a->{int history=a.undo.size();dragLine(a,4000);assertEquals(4000,a.project.playheadMs,2);assertEquals("Scrub does not edit clips",history,a.undo.size());assertEquals(2,a.project.clips.size());assertEquals(0,a.project.placements().get(0).startMs);assertEquals(3000,a.project.placements().get(1).startMs);});
+            waitForPixels(scenario,4000,true);
+            scenario.onActivity(EditorActivity::togglePlay);
+            waitFor(scenario,a->a.player!=null&&a.player.isPlaying(),60000,"actual playback");
+            scenario.onActivity(a->{a.pausePlayback();a.seek(4000);});waitForPixels(scenario,4000,true);
+            scenario.onActivity(a->dragLine(a,1000));waitForPixels(scenario,1000,false);
+            scenario.onActivity(a->{assertNull("Scrubbing stays paused",a.player);assertEquals(android.view.View.INVISIBLE,a.surface.getVisibility());});
+        }finally{inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("mode","AUTO").commit();}
+    }
+    private void dragLine(EditorActivity a,long target){
+        float y=a.timeline.rowTopOfTrack(0)+a.dp(26),from=a.timeline.x(a.project.playheadMs),to=a.timeline.x(target);
+        long now=SystemClock.uptimeMillis();
+        int[] actions={android.view.MotionEvent.ACTION_DOWN,android.view.MotionEvent.ACTION_MOVE,android.view.MotionEvent.ACTION_UP};
+        for(int i=0;i<3;i++){android.view.MotionEvent e=android.view.MotionEvent.obtain(now,now+i*40,actions[i],i==0?from:to,y,0);a.timeline.dispatchTouchEvent(e);e.recycle();}
+    }
+    private void waitForPixels(ActivityScenario<EditorActivity> scenario,long expected,boolean blue)throws Exception{
+        waitFor(scenario,a->{if(a.live.lastFrameMs()!=expected||a.liveView.getVisibility()!=android.view.View.VISIBLE)return false;
+            android.graphics.Bitmap frame=a.liveView.getBitmap();if(frame==null)return false;
+            int pixel=frame.getPixel(frame.getWidth()/3,frame.getHeight()/3);frame.recycle();
+            return blue?android.graphics.Color.blue(pixel)>150&&android.graphics.Color.red(pixel)<100:android.graphics.Color.red(pixel)>150&&android.graphics.Color.blue(pixel)<100;
+        },30000,"visible "+(blue?"blue":"red")+" video frame at "+expected);
+        // Also sample the actual screen: a correct off-screen texture alone must not pass.
+        inst.waitForIdleSync();int[] point=new int[2];scenario.onActivity(a->{a.liveView.getLocationOnScreen(point);point[0]+=a.liveView.getWidth()/3;point[1]+=a.liveView.getHeight()/3;});
+        android.graphics.Bitmap screen=inst.getUiAutomation().takeScreenshot();assertNotNull(screen);int pixel=screen.getPixel(point[0],point[1]);screen.recycle();
+        assertTrue("Rendered video must be visible on screen",blue?android.graphics.Color.blue(pixel)>150&&android.graphics.Color.red(pixel)<100:android.graphics.Color.red(pixel)>150&&android.graphics.Color.blue(pixel)<100);
+    }
+
 }

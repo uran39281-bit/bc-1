@@ -250,6 +250,18 @@ final class TimelineView extends View {
         // Edge handles of the selected clip win even slightly outside its bar.
         if(a.multiCount()<=1&&a.clip()!=null&&!LayerOps.locked(a.project,a.selected)){EditProject.Placement chosen=a.project.placements().get(a.selected);float y=rowTopOfTrack(chosen.clip.track);
             if(y>=0&&downY>=y&&downY<=y+a.dp(ROW_DP)&&Math.min(Math.abs(downX-x(chosen.startMs)),Math.abs(downX-x(chosen.endMs)))<=a.dp(16))hitClip=a.selected;}
+        // The visible playhead is draggable below the ruler too. Otherwise grabbing the
+        // green line over footage starts a clip move instead of showing another frame.
+        boolean trimGrip=false;
+        if(a.clip()!=null&&hitClip==a.selected&&!LayerOps.locked(a.project,a.selected)){
+            EditProject.Placement chosen=a.project.placements().get(a.selected);
+            trimGrip=Math.min(Math.abs(downX-x(chosen.startMs)),Math.abs(downX-x(chosen.endMs)))<=a.dp(16);
+        }
+        if(a.overlay()!=null&&hitOverlay==a.selectedOverlay&&!a.overlay().locked)
+            trimGrip=Math.min(Math.abs(downX-x(a.overlay().startMs)),Math.abs(downX-x(a.overlay().endMs)))<=a.dp(16);
+        if(!trimGrip&&!inHeader(downX)&&Math.abs(downX-x(a.project.playheadMs))<=a.dp(12)){
+            operation=OP_SCRUB;return true;
+        }
         if(a.uiLocked||a.loading||a.importing||a.exporting())return true;
         if(a.multiCount()>1&&(hitClip>=0&&a.multiClips.contains(hitClip)||hitOverlay>=0&&a.multiOverlays.contains(hitOverlay))){boolean anyLocked=false;for(int i:a.selectedClips())anyLocked|=LayerOps.locked(a.project,i);for(int i:a.selectedOverlays())anyLocked|=a.project.overlays.get(i).locked;if(!anyLocked)operation=OP_MULTI;return true;}
         if(hitClip>=0&&!LayerOps.locked(a.project,hitClip)){original=a.project.placements().get(hitClip);
@@ -308,7 +320,11 @@ final class TimelineView extends View {
     private void stopAutoScroll(){autoDirection=0;removeCallbacks(autoScroll);}
     private boolean up(MotionEvent e){
         stopAutoScroll();boolean longPress=e.getEventTime()-downTime>=ViewConfiguration.getLongPressTimeout();
-        if(operation==OP_SCRUB){reset();performClick();return true;}
+        if(operation==OP_SCRUB){
+            if(moved)a.seek(Math.max(0,time(e.getX())));
+            else if(downY>=a.dp(RULER_DP)){if(hitClip>=0)a.selectClip(hitClip,false);else if(hitOverlay>=0)a.selectOverlay(hitOverlay);}
+            reset();performClick();return true;
+        }
         if(reorderFrom>=0){int from=reorderFrom,to=reorderTo;reset();if(moved&&to>=0&&to!=from)a.reorderRows(from,to);else if(!moved)a.tell("Drag the ≡ handle up or down to reorder layers.");return true;}
         if(headerZone>=0&&!moved){Row r=rowAt(downY);int zone=headerZone;reset();if(r!=null)headerTap(r,zone,longPress);return true;}
         if(!pinching&&operation!=0&&moved&&(pendingDelta!=0||operation==OP_MOVE&&targetTrack()!=original.clip.track))commit();
