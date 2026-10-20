@@ -419,7 +419,7 @@ public final class EditorActivity extends Activity {
         transport.addView(controls);return transport;
     }
     TextView transportIcon(String icon,String description,View.OnClickListener l){TextView b=compactButton("",description,l);b.setBackground(null);b.setCompoundDrawables(icon(icon,TEXT),null,null,null);b.setPadding(dp(11),0,dp(11),0);b.setMinWidth(dp(44));b.setMinHeight(dp(44));return b;}
-    void syncPlayButton(){boolean playing=player!=null&&player.isPlaying();if(play==null||Boolean.valueOf(playing).equals(play.getTag()))return;play.setTag(playing);play.setContentDescription(playing?"Pause":"Play");play.setCompoundDrawables(icon(playing?"Pause":"Play",TEXT),null,null,null);play.setPadding(dp(playing?13:15),0,dp(playing?13:11),0);}
+    void syncPlayButton(){boolean playing=player!=null&&player.isPlaying();if(play==null||Boolean.valueOf(playing).equals(play.getTag()))return;play.setTag(playing);play.setContentDescription(playing?"Pause":"Play");play.setCompoundDrawables(icon(playing?"Pause":"Play",mobile!=null?0xFF03130D:TEXT),null,null,null);play.setPadding(dp(playing?13:15),0,dp(playing?13:11),0);}
     void clipPercent(boolean volume){EditProject.Clip c=clip();if(c==null)return;percentPanel(volume?"Volume":"Opacity",volume?c.volume:c.opacity,volume?.7f:1f,value->{if(volume)c.volume=value;else c.opacity=value;});}
     void percentPanel(String title,float initial,float defaultValue,ValueAction action){
         if(!editable())return;LinearLayout f=form();EditText numeric=field(f,title+" (%)",String.valueOf(Math.round(initial*100)));numeric.setInputType(android.text.InputType.TYPE_CLASS_NUMBER|android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
@@ -502,9 +502,9 @@ public final class EditorActivity extends Activity {
         LinearLayout inspectorTabs=row();inspectorTabs.setGravity(Gravity.CENTER_VERTICAL);for(int i=0;i<2;i++){final boolean settings=i==1;boolean on=settings?tab==4:tab!=4;TextView t=button(settings?"Project":"Inspector",v->{tab=settings?4:1;panels.reset();renderInspector();});t.setTextSize(13);t.setTextColor(on?TEXT:MUTED);t.setBackground(navBackground(on));inspectorTabs.addView(t,new LinearLayout.LayoutParams(0,dp(44),1));}LinearLayout.LayoutParams tabsLp=new LinearLayout.LayoutParams(-1,-2);tabsLp.bottomMargin=dp(10);inspector.addView(inspectorTabs,tabsLp);
         }
         if(!reducedMotion&&android.animation.ValueAnimator.areAnimatorsEnabled()){inspector.animate().cancel();inspector.setAlpha(.8f);inspector.animate().alpha(1).setDuration(180).start();}else inspector.setAlpha(1);
-        if((wideLayout||mobile!=null)&&(clip()!=null||overlay()!=null||multiCount()>1)&&tab!=0){LinearLayout actions=row();TextView selectedName=label(multiCount()>1?multiCount()+" layers selected":clip()!=null?clip().name:overlay().label(),12,TEXT,true);selectedName.setSingleLine(true);selectedName.setEllipsize(android.text.TextUtils.TruncateAt.END);selectedName.setOnClickListener(v->renameSelection());inspector.addView(selectedName);actions.addView(headerIcon("Close","Deselect",v->deselect()));actions.addView(headerIcon(multiCount()>1?"Group":"Duplicate",multiCount()>1?"Group selected layers":"Duplicate",v->{if(multiCount()>1)multiAction("Group");else duplicateSelected();}));actions.addView(headerIcon("Delete","Delete",v->deleteSelection()));actions.addView(headerIcon("More","More actions",v->moreMenu()));inspector.addView(actions);}
+        if(!panels.footage()&&(wideLayout||mobile!=null)&&(clip()!=null||overlay()!=null||multiCount()>1)&&tab!=0){LinearLayout actions=row();TextView selectedName=label(multiCount()>1?multiCount()+" layers selected":clip()!=null?clip().name:overlay().label(),12,TEXT,true);selectedName.setSingleLine(true);selectedName.setEllipsize(android.text.TextUtils.TruncateAt.END);selectedName.setOnClickListener(v->renameSelection());inspector.addView(selectedName);actions.addView(headerIcon("Close","Deselect",v->deselect()));actions.addView(headerIcon(multiCount()>1?"Group":"Duplicate",multiCount()>1?"Group selected layers":"Duplicate",v->{if(multiCount()>1)multiAction("Group");else duplicateSelected();}));actions.addView(headerIcon("Delete","Delete",v->deleteSelection()));actions.addView(headerIcon("More","More actions",v->moreMenu()));inspector.addView(actions);}
         String[] headings={"ADD","CLIP EDITOR","GPU EFFECTS","LAYERS","PROJECT SETTINGS"};
-        TextView heading=label(headings[tab],12,CYAN,true);if(!(tab==1&&clip()==null&&overlay()==null&&multiCount()<=1)&&!(tab==0&&topTabs()))if(wideLayout||tab!=0)inspector.addView(heading);heading.setContentDescription(headings[tab]+". Long press and drag to dock the tool panel in wide mode.");heading.setOnLongClickListener(v->{if(uiLocked)return false;if(inspector.getParent() instanceof ScrollView){v.startDragAndDrop(ClipData.newPlainText("panel","tools"),new View.DragShadowBuilder(v),inspector.getParent(),0);return true;}return false;});
+        TextView heading=label(headings[tab],12,CYAN,true);if(!(tab==1&&clip()==null&&overlay()==null&&multiCount()<=1)&&!(tab==0&&topTabs()))if((wideLayout||tab!=0)&&!panels.footage())inspector.addView(heading);heading.setContentDescription(headings[tab]+". Long press and drag to dock the tool panel in wide mode.");heading.setOnLongClickListener(v->{if(uiLocked)return false;if(inspector.getParent() instanceof ScrollView){v.startDragAndDrop(ClipData.newPlainText("panel","tools"),new View.DragShadowBuilder(v),inspector.getParent(),0);return true;}return false;});
         if(tab==0)addDrawer.render(inspector);
         else if(tab==1||tab==2)panels.render(inspector);
         else if(tab==3)layersPanel();
@@ -1058,7 +1058,7 @@ public final class EditorActivity extends Activity {
         }catch(Exception e){main.post(()->{exportLaunching=false;tell("Cannot prepare export: "+e.getMessage());});}});
     }
     @Override public boolean onKeyDown(int key,KeyEvent event){
-        if(key==KeyEvent.KEYCODE_BACK&&mobile!=null&&mobile.dismiss())return true;
+        if(key==KeyEvent.KEYCODE_BACK&&mobile!=null){mobile.back();return true;}
         if(key==KeyEvent.KEYCODE_BACK&&!wideLayout&&!fullscreenPreview&&tab==0){tab=1;renderInspector();return true;}
         if(key==KeyEvent.KEYCODE_BACK&&fullscreenPreview){fullscreenPreview=false;buildWorkspace();return true;}
         if(getCurrentFocus() instanceof EditText)return super.onKeyDown(key,event);
@@ -1212,6 +1212,7 @@ public final class EditorActivity extends Activity {
     }
     /** Tap on a Project Media item: select the clip using it, or add it at the playhead. */
     void mediaActions(EditProject.Clip asset){
+        if(mobile!=null&&mobile.overlayInsert&&!asset.audioOnly){mediaAction(asset,"Add as new layer at playhead");return;}
         java.util.List<String> items=new ArrayList<>();int used=-1;for(int i=0;i<project.clips.size()&&used<0;i++)if(project.clips.get(i).uri.equals(asset.uri))used=i;
         if(used>=0){selectClip(used,true);renderMediaGrid();return;}
         items.add(asset.audioOnly?"Add to an audio layer at playhead":"Add to main sequence at playhead");if(!asset.audioOnly)items.add("Add as new layer at playhead");

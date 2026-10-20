@@ -19,6 +19,9 @@ final class V1Icon extends Drawable {
             case "Effects":path.moveTo(12,2);path.lineTo(15,9);path.lineTo(22,12);path.lineTo(15,15);path.lineTo(12,22);path.lineTo(9,15);path.lineTo(2,12);path.lineTo(9,9);path.close();break;
             case "Layers":path.moveTo(12,3);path.lineTo(22,8);path.lineTo(12,13);path.lineTo(2,8);path.close();path.moveTo(2,13);path.lineTo(12,18);path.lineTo(22,13);path.moveTo(2,18);path.lineTo(12,23);path.lineTo(22,18);break;
             case "Setup":line(3,6,21,6);line(3,12,21,12);line(3,18,21,18);path.addCircle(8,6,2,Path.Direction.CW);path.addCircle(16,12,2,Path.Direction.CW);path.addCircle(10,18,2,Path.Direction.CW);break;
+            case "Time":path.addCircle(12,12,9,Path.Direction.CW);line(12,5,12,12);line(12,12,17,15);break;
+            case "TrimStart":line(8,3,8,21);line(12,6,12,18);line(12,6,21,6);line(12,18,21,18);line(2,7,4,7);line(2,12,4,12);line(2,17,4,17);break;
+            case "TrimEnd":line(16,3,16,21);line(12,6,12,18);line(3,6,12,6);line(3,18,12,18);line(20,7,22,7);line(20,12,22,12);line(20,17,22,17);break;
             case "Trim":line(5,3,5,21);line(19,3,19,21);line(9,6,9,18);line(9,6,15,6);line(9,18,15,18);break;
             case "Duplicate":path.addRect(8,8,21,21,Path.Direction.CW);path.moveTo(16,4);path.lineTo(3,4);path.lineTo(3,17);break;
             case "Opacity":path.addCircle(12,12,9,Path.Direction.CW);line(12,3,12,21);for(int y=6;y<=18;y+=3)line(12,y,18,y);break;

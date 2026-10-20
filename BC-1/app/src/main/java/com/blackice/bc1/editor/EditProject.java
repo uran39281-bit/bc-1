@@ -63,6 +63,7 @@ public final class EditProject {
         public int effect, transition = -1, easing = 1;
         /** Blend mode over the layers below (core.BlendMode id; 0 normal). Rendered by ICE Lite. */
         public int blend;
+        public float unmutedVolume=-1;
         public float intensity = .6f, opacity = 1f, volume = .7f,speed=1f;
         public long transitionMs = 500;
         public long durationMs() { return Math.round((outMs - inMs)/(double)speed); }
@@ -72,7 +73,7 @@ public final class EditProject {
             c.aspect=aspect;c.skewX=skewX;c.skewY=skewY;c.anchorX=anchorX;c.anchorY=anchorY;c.flipH=flipH;c.flipV=flipV;c.width=width;c.height=height;c.group=group;
             c.sourceDurationMs=sourceDurationMs; c.inMs=inMs; c.outMs=outMs;
             c.effect=effect; c.transition=transition; c.easing=easing; c.blend=blend;
-            c.intensity=intensity; c.opacity=opacity; c.volume=volume; c.transitionMs=transitionMs;c.speed=speed;
+            c.intensity=intensity; c.opacity=opacity; c.volume=volume;c.unmutedVolume=unmutedVolume; c.transitionMs=transitionMs;c.speed=speed;
             return c;
         }
     }
@@ -186,7 +187,7 @@ public final class EditProject {
             if(c.track<0||c.track>=TRACK_COUNT||c.startMs<0||c.fadeInMs<0||c.fadeOutMs<0||c.fadeInMs>c.durationMs()||c.fadeOutMs>c.durationMs()||!Motion.allowed(0,c.x)||!Motion.allowed(1,c.y)||!Motion.allowed(2,c.scale)||!Motion.allowed(3,c.rotation)||!unit(c.keyTolerance)||!unit(c.keySoftness)||c.keySoftness<.001f||!unit(c.keySpill)||(audioTrack(c.track)&&c.image))throw new IllegalArgumentException("Invalid track, transform or fade.");
             if(c.uri==null || c.name==null || c.inMs<0 || c.outMs>c.sourceDurationMs || c.durationMs()<MIN_CLIP_MS || !Float.isFinite(c.speed)||c.speed<.25f||c.speed>4||(c.image&&c.speed!=1)
                     || !com.blackice.bc1.core.EffectCatalog.valid(c.effect) || !com.blackice.bc1.core.BlendMode.valid(c.blend) || c.transition< -1 || c.transition>6 || c.easing<0 || c.easing>1
-                    || c.transitionMs<0 || c.transitionMs>5000 || !unit(c.intensity) || !unit(c.opacity) || !unit(c.volume))
+                    || !Float.isFinite(c.unmutedVolume)||c.unmutedVolume < -1||c.unmutedVolume>1 || c.transitionMs<0 || c.transitionMs>5000 || !unit(c.intensity) || !unit(c.opacity) || !unit(c.volume))
                 throw new IllegalArgumentException("Invalid clip: "+c.name);
         }
         List<Placement> ps=placements();

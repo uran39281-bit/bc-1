@@ -108,7 +108,10 @@ public final class LayerOps {
         EditProject.Placement placement=p.placements().get(index);long playhead=p.playheadMs;
         if(playhead-placement.startMs<EditProject.MIN_CLIP_MS||placement.endMs-playhead<EditProject.MIN_CLIP_MS)
             throw new IllegalArgumentException("Place the playhead inside the clip, at least 0.10 seconds from either edge.");
+        java.util.Map<EditProject.Clip,Long> kept=new java.util.IdentityHashMap<>();
+        for(EditProject.Placement pl:p.placements())if(pl.clip.track==0)kept.put(pl.clip,pl.startMs);
         TimelineEdits.edge(p,index,start,start?playhead-placement.startMs:playhead-placement.endMs);
+        if(placement.clip.track==0){if(start)kept.put(placement.clip,playhead);TimelineEdits.regap(p,kept);p.validate();}
     }
     public static boolean canSplitOrTrim(EditProject p,int index) {
         if(index<0||index>=p.clips.size()) return false;

@@ -37,6 +37,7 @@ final class ToolPanels {
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
         if(a.multiCount()>1){multiTools();return;}
         if(c==null&&o==null){browseHome();return;}
+        if(footage()){footagePanel(into);return;}
         String kind=kind(c,o);
         into.addView(a.note(kind+"  •  "+(c!=null?c.name:o.label())+(locked()?"  •  Layer locked":"")));
         renderCategories(c,o);
@@ -44,6 +45,30 @@ final class ToolPanels {
         for(String tool:tools(c,o))a.gridAction(tool,()->runTool(tool));
         a.flushGrid();
         into.addView(a.note(c!=null&&c.track==0?"Drag handles to ripple trim; drag the selected body to reorder the main sequence. Drag empty space to scrub.":"Drag handles to trim; drag the selected body to move. Drag empty space to scrub; pinch to zoom."));
+    }
+    /** Visual footage has one compact contextual home; its tools still use shared editor commands. */
+    boolean footage(){EditProject.Clip c=a.clip();return a.tab==1&&a.multiCount()<=1&&c!=null&&c.track<EditProject.AUDIO_FIRST;}
+    private final Map<String,Boolean> audioSources=new HashMap<>();
+    private final Set<String> checkingAudio=new HashSet<>();
+    private void checkAudio(EditProject.Clip c){if(c.image||audioSources.containsKey(c.uri)||!checkingAudio.add(c.uri))return;String uri=c.uri;a.io.execute(()->{boolean found=false;try{found=AudioWaveform.hasAudio(a,uri);}catch(Exception ignored){}final boolean result=found;a.main.post(()->{checkingAudio.remove(uri);audioSources.put(uri,result);if(!a.isDestroyed()&&a.clip()!=null&&uri.equals(a.clip().uri)&&footage()&&!showing())a.renderInspector();});});}
+    private TextView tile(String icon,String label,String description,Runnable action,boolean enabled){TextView b=a.iconButton(label,v->action.run());b.setTextSize(11);b.setCompoundDrawables(null,a.icon(icon,enabled?EditorActivity.TEXT:EditorActivity.MUTED),null,null);b.setContentDescription(description);b.setTooltipText(description);EditorActivity.dim(b,enabled);return b;}
+    private void footagePanel(LinearLayout into){
+        EditProject.Clip c=a.clip();boolean editable=!locked()&&!a.uiLocked;checkAudio(c);
+        LinearLayout title=a.row();title.setGravity(Gravity.CENTER_VERTICAL);TextView heading=a.label("Footage",18,EditorActivity.TEXT,true);title.addView(heading,new LinearLayout.LayoutParams(0,a.dp(48),1));
+        title.addView(a.headerIcon("Duplicate","Duplicate",v->a.duplicateSelected()));title.addView(a.headerIcon("Delete","Delete",v->a.deleteSelection()));title.addView(a.headerIcon("More","More actions",v->a.moreMenu()));into.addView(title);
+        TextView source=a.label(c.name+(locked()?" • Locked":""),11,EditorActivity.MUTED,false);source.setSingleLine(true);source.setEllipsize(android.text.TextUtils.TruncateAt.END);source.setContentDescription("Selected footage "+c.name);into.addView(source);
+        boolean inside=editable&&LayerOps.canSplitOrTrim(a.project,a.selected),audio=editable&&!c.image&&Boolean.TRUE.equals(audioSources.get(c.uri));
+        String[] labels={c.image?"Duration":"Speed","Trim Start","Split","Trim End",c.unmutedVolume>=0?"Unmute":"Mute"};String[] icons={c.image?"Time":"Speed","TrimStart","Edit","TrimEnd","Mute"};
+        int columns=a.getResources().getConfiguration().fontScale>1.25f?3:5;LinearLayout row=null;
+        for(int i=0;i<5;i++){final int index=i;if(i%columns==0){row=a.row();into.addView(row);}boolean enabled=i==0?editable:i==4?audio:inside;String desc=i==0?labels[i]:i==4?(c.image?"Mute unavailable for pictures":audio?labels[i]:"Mute unavailable: source has no audio or is still being checked"):labels[i]+" at playhead";
+            TextView b=tile(icons[i],labels[i],desc,()->{if(index==0)runTool(c.image?"Duration":"Speed");else if(index==4){if(a.layerEditable())a.edit(c.unmutedVolume>=0?"Clip unmuted":"Clip muted",()->ClipAudio.toggleMute(c));}else playheadEdit(index-1);},enabled);
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,a.dp(68),1);lp.setMargins(a.dp(2),a.dp(6),a.dp(2),a.dp(6));row.addView(b,lp);}
+        View divider=new View(a);divider.setBackgroundColor(BlackIceTheme.BORDER);into.addView(divider,new LinearLayout.LayoutParams(-1,a.dp(1)));
+        String[] names={"Blending & Opacity","Move & Transform","Edit Shape","Effects"};String[] glyphs={"Opacity","Transform","Shapes","Effects"};
+        for(int i=0;i<4;i++){final String name=names[i];if(i%2==0){row=a.row();into.addView(row);}TextView b=a.button(name,v->category(name));b.setTextSize(12);b.setCompoundDrawables(a.icon(glyphs[i],EditorActivity.TEXT),null,null,null);b.setContentDescription(i==2?"Available for shape layers":name);b.setTooltipText(b.getContentDescription());EditorActivity.dim(b,editable&&i!=2);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,a.dp(a.getResources().getConfiguration().fontScale>1.25f?80:60),1);lp.setMargins(a.dp(3),a.dp(4),a.dp(3),a.dp(4));row.addView(b,lp);}
+        // Secondary supported operations remain reachable without returning the removed category tiles.
+        TextView extra=a.button("More footage tools",v->open("More footage tools",()->{for(String tool:tools(a.clip(),null))a.gridAction(tool,()->runTool(tool));a.flushGrid();}));extra.setContentDescription("Slip, chroma key, audio extraction and animation tools");into.addView(extra,new LinearLayout.LayoutParams(-1,a.dp(48)));
+        if(c.track==0)into.addView(a.note("Main sequence: edge dragging uses ripple trim. Trim Start/End at playhead preserve other clip positions."));
     }
     private boolean locked(){EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();return c!=null?LayerOps.locked(a.project,a.selected):LayerOps.locked(o);}
     static String kind(EditProject.Clip c,EditProject.Overlay o){
@@ -69,7 +94,7 @@ final class ToolPanels {
     static String trimZero(float v){String s=String.format(Locale.US,"%.2f",v);return s.replaceAll("0+$","").replaceAll("\\.$","");}
     static List<String> categories(EditProject.Clip c,EditProject.Overlay o){
         List<String> list=new ArrayList<>();if(c!=null&&c.track>=EditProject.AUDIO_FIRST)return list;
-        list.add("Move & Transform");list.add("Color & Fill");if(o!=null)list.add("Border & Shadow");list.add("Blending & Opacity");if(c!=null)list.add("Effects");list.add("Presets");
+        list.add("Move & Transform");list.add("Blending & Opacity");if(c!=null)list.add("Effects");
         return list;
     }
     private void renderCategories(EditProject.Clip c,EditProject.Overlay o){
@@ -102,7 +127,7 @@ final class ToolPanels {
             case "Transform":category("Move & Transform");return;
             case "Effects":category("Effects");return;
             case "Opacity":open("Opacity",()->opacityPanel());return;
-            case "Volume":open("Volume",()->percent("Volume",c.volume,.7f,v->c.volume=v,null,0));return;
+            case "Volume":open("Volume",()->percent("Volume",c.volume,.7f,v->{c.volume=v;c.unmutedVolume=-1;},null,0));return;
             case "Duration":open("Duration",this::durationPanel);return;
             case "Trim":open("Trim",this::trimPanel);return;
             case "Slip":open("Slip",this::slipPanel);return;

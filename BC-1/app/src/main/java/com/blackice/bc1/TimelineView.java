@@ -12,7 +12,7 @@ import java.util.*;
  * scroll; pinch to zoom; drag a row's ≡ handle to reorder layers. Media dragged from Project Media drops
  * onto the row and time under the finger. One continuous drag is one undo entry. */
 final class TimelineView extends View {
-    static final int RULER_DP=30,ROW_DP=46,BAR_DP=40;
+    static final int RULER_DP=30,ROW_DP=52,BAR_DP=40;
     private final EditorActivity a;
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF thumbBounds=new RectF();
@@ -40,6 +40,21 @@ final class TimelineView extends View {
             public boolean onScale(ScaleGestureDetector d){a.zoomTimeline(d.getScaleFactor(),d.getFocusX()-a.timelineScroll.getScrollX());return true;}
         });
     }
+    private int accessibleFocus=-1;
+    @Override public android.view.accessibility.AccessibilityNodeProvider getAccessibilityNodeProvider(){return new android.view.accessibility.AccessibilityNodeProvider(){
+        @Override public android.view.accessibility.AccessibilityNodeInfo createAccessibilityNodeInfo(int id){
+            android.view.accessibility.AccessibilityNodeInfo n=android.view.accessibility.AccessibilityNodeInfo.obtain();
+            if(id==View.NO_ID){onInitializeAccessibilityNodeInfo(n);for(int i=0;i<rows().size();i++)if(rows.get(i).kind!=2)n.addChild(TimelineView.this,i);return n;}
+            List<Row> list=rows();if(id<0||id>=list.size())return null;Row r=list.get(id);if(r.kind==2)return null;
+            n.setSource(TimelineView.this,id);n.setParent(TimelineView.this);n.setPackageName(a.getPackageName());n.setClassName("android.widget.Button");n.setEnabled(true);n.setFocusable(true);n.setClickable(true);n.setLongClickable(true);n.setAccessibilityFocused(id==accessibleFocus);
+            boolean ov=r.kind==1;boolean hidden=ov?a.project.overlays.get(r.index).hidden:EditProject.audioTrack(r.index)?a.project.tracks[r.index].muted:a.project.tracks[r.index].hidden;boolean locked=ov?a.project.overlays.get(r.index).locked:a.project.tracks[r.index].locked;
+            n.setContentDescription(a.rowName(new int[]{r.kind,r.index})+", "+(ov?"overlay ":EditProject.audioTrack(r.index)?"audio track ":"visual track ")+(r.index+1)+", "+(hidden?"hidden or muted":"enabled")+(locked?", locked":"")+". Tap to toggle visibility or mute. Long press for lock and layer options.");
+            Rect bounds=new Rect(a.timelineScroll.getScrollX(),Math.round(r.top),a.timelineScroll.getScrollX()+headerWidth(),Math.round(r.top)+a.dp(ROW_DP));n.setBoundsInParent(bounds);int[] location=new int[2];getLocationOnScreen(location);bounds.offset(location[0],location[1]);n.setBoundsInScreen(bounds);Rect visible=new Rect();n.setVisibleToUser(getGlobalVisibleRect(visible)&&Rect.intersects(bounds,visible));
+            n.addAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK);n.addAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_LONG_CLICK);n.addAction(id==accessibleFocus?android.view.accessibility.AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS:android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);return n;
+        }
+        @Override public boolean performAction(int id,int action,android.os.Bundle args){List<Row> list=rows();if(id<0||id>=list.size())return false;if(action==16||action==32){headerTap(list.get(id),2,action==32);return true;}if(action==64||action==128){accessibleFocus=action==64?id:-1;android.view.accessibility.AccessibilityEvent e=android.view.accessibility.AccessibilityEvent.obtain(action==64?32768:65536);e.setSource(TimelineView.this,id);getParent().requestSendAccessibilityEvent(TimelineView.this,e);return true;}return false;}
+    };}
+    @Override public boolean dispatchHoverEvent(MotionEvent e){if(inHeader(e.getX())){Row r=rowAt(e.getY());if(r!=null&&r.kind!=2){android.view.accessibility.AccessibilityEvent event=android.view.accessibility.AccessibilityEvent.obtain(e.getAction()==MotionEvent.ACTION_HOVER_EXIT?256:128);event.setSource(this,rows.indexOf(r));getParent().requestSendAccessibilityEvent(this,event);return true;}}return super.dispatchHoverEvent(e);}
     // ---- Geometry ---------------------------------------------------------------------------------
     int viewport(){int w=a.timelineScroll==null?0:a.timelineScroll.getWidth();return w>0?w:getResources().getDisplayMetrics().widthPixels;}
     /** Time zero sits just right of the pinned layer column. */
@@ -47,7 +62,7 @@ final class TimelineView extends View {
     float timelineScale(){return Math.min(a.dp(a.pixelsPerSecond),16_000_000f/Math.max(1f,a.project.durationMs()/1000f));}
     float x(long ms){return pad()+ms/1000f*timelineScale();}
     long time(float x){return Math.round((x-pad())/timelineScale()*1000);}
-    int headerWidth(){return a.dp(a.wideLayout?150:116);}
+    int headerWidth(){return a.dp(56);}
     List<Row> rows(){
         List<Row> list=new ArrayList<>();float y=a.dp(RULER_DP);
         for(int[] r:a.layerRows()){Row row=new Row(r[0],r[1]);row.top=y;y+=a.dp(ROW_DP);list.add(row);}
@@ -180,28 +195,16 @@ final class TimelineView extends View {
     }
     /** Pinned left column: ≡ reorder handle, color, name, visibility and lock per row. */
     private void drawHeaders(Canvas canvas,List<Row> rows,float left){
-        int w=headerWidth();paint.setColor(0xFF07101A);canvas.drawRect(left,0,left+w,getHeight(),paint);
-        paint.setColor(0xFF1D3346);paint.setStrokeWidth(a.dp(1));canvas.drawLine(left+w,0,left+w,getHeight(),paint);
-        // Corner: the current time, above the layer names.
-        paint.setColor(EditorActivity.CYAN);paint.setTextSize(a.dp(11));paint.setTypeface(Typeface.DEFAULT_BOLD);canvas.drawText(EditorActivity.clock(a.project.playheadMs),left+a.dp(10),a.dp(19),paint);paint.setTypeface(Typeface.DEFAULT);
-        for(Row r:rows){
-            float y=r.top,mid=y+a.dp(ROW_DP)/2f;boolean drop=reorderFrom>=0&&reorderTo==rows.indexOf(r)||(dropAsset!=null&&r.kind==0&&r.index==dropTrack)||(operation==OP_MOVE&&moved&&r.kind==0&&r.index==targetTrack());
-            paint.setColor(0xFF0B1826);canvas.drawRoundRect(left+a.dp(4),y+a.dp(3),left+w-a.dp(4),y+a.dp(ROW_DP)-a.dp(3),a.dp(5),a.dp(5),paint);
-            if(drop){paint.setColor(0x3340BFFF);canvas.drawRoundRect(left+a.dp(4),y+a.dp(3),left+w-a.dp(4),y+a.dp(ROW_DP)-a.dp(3),a.dp(5),a.dp(5),paint);}
-            if(r.kind==2){drawIcon(canvas,"Audio",left+a.dp(10),mid-a.dp(9),EditorActivity.MUTED,18);paint.setColor(EditorActivity.MUTED);paint.setTextSize(a.dp(11));canvas.drawText("Music",left+a.dp(34),mid+a.dp(4),paint);continue;}
+        int w=headerWidth();paint.setColor(BlackIceTheme.PRIMARY);canvas.drawRect(left,0,left+w,getHeight(),paint);
+        paint.setColor(BlackIceTheme.BORDER);paint.setStrokeWidth(a.dp(1));canvas.drawLine(left+w,0,left+w,getHeight(),paint);
+        paint.setColor(EditorActivity.CYAN);paint.setTextSize(a.dp(10));canvas.drawText(EditorActivity.clock(a.project.playheadMs),left+a.dp(2),a.dp(19),paint);
+        for(Row r:rows){float mid=r.top+a.dp(ROW_DP)/2f;
+            if(r.kind==2){drawIcon(canvas,"Audio",left+a.dp(16),mid-a.dp(12),EditorActivity.MUTED,24);continue;}
             boolean overlay=r.kind==1;EditProject.Overlay o=overlay?a.project.overlays.get(r.index):null;EditProject.Track t=overlay?null:a.project.tracks[r.index];
-            boolean audio=!overlay&&EditProject.audioTrack(r.index),hidden=overlay?o.hidden:audio?t.muted:t.hidden,locked=overlay?o.locked:t.locked,solo=overlay?o.solo:t.solo,empty=!overlay&&a.trackEmpty(r.index);
-            int color=overlay?(o.imageUri==null?(o.color|0xFF000000):0xFF9FEAFF):t.color;
-            if(r.kind==0&&r.index!=0||overlay){paint.setColor(0xFF4C6378);for(int i=-1;i<=1;i++)canvas.drawRect(left+a.dp(9),mid+i*a.dp(4)-a.dp(.75f),left+a.dp(19),mid+i*a.dp(4)+a.dp(.75f),paint);}
-            paint.setColor(color);canvas.drawRect(left+a.dp(23),y+a.dp(10),left+a.dp(26),y+a.dp(ROW_DP)-a.dp(10),paint);
-            float textLeft=a.dp(31);
-            paint.setColor(hidden||empty?EditorActivity.MUTED:EditorActivity.TEXT);paint.setTextSize(a.dp(12));paint.setTypeface(Typeface.DEFAULT_BOLD);
-            String name=a.rowName(new int[]{r.kind,r.index});canvas.save();canvas.clipRect(left+textLeft,y,left+w-a.dp(50),y+a.dp(ROW_DP));canvas.drawText(name,left+textLeft,mid-(empty?-a.dp(4):a.dp(1)),paint);canvas.restore();paint.setTypeface(Typeface.DEFAULT);
-            if(!empty){paint.setTextSize(a.dp(9));paint.setColor(EditorActivity.MUTED);canvas.drawText(overlay?(o.group!=null&&a.collapsedGroups.contains(o.group)?"group":o.imageUri!=null?"image":o.shape>0?"shape":"text"):r.index==0?"main":audio?"audio":"video",left+textLeft,mid+a.dp(12),paint);}
-            if(solo){paint.setColor(0xFFFFC145);paint.setTextSize(a.dp(9));canvas.drawText("S",left+textLeft+a.dp(40),mid+a.dp(12),paint);}
-            if(empty&&!drop){paint.setColor(0xFF4C6378);paint.setTextSize(a.dp(10));canvas.drawText("Drop media or drag a layer here",Math.max(x(0),left+w)+a.dp(8),mid+a.dp(4),paint);}
-            drawIcon(canvas,audio?(hidden?"Mute":"Volume"):hidden?"Hidden":"Eye",left+w-a.dp(48),mid-a.dp(9),hidden?EditorActivity.MUTED:0xFFB9C8D8,18);
-            drawIcon(canvas,locked?"Lock":"Unlock",left+w-a.dp(26),mid-a.dp(9),locked?EditorActivity.CYAN:EditorActivity.MUTED,18);
+            boolean audio=!overlay&&EditProject.audioTrack(r.index),hidden=overlay?o.hidden:audio?t.muted:t.hidden,locked=overlay?o.locked:t.locked;
+            drawIcon(canvas,audio?(hidden?"Mute":"Volume"):hidden?"Hidden":"Eye",left+a.dp(16),mid-a.dp(12),hidden?EditorActivity.MUTED:EditorActivity.TEXT,24);
+            drawIcon(canvas,locked?"Lock":overlay?(o.shape>0?"Shapes":o.imageUri!=null?"Media":"Text"):audio?"Audio":"Media",left+a.dp(2),r.top+a.dp(2),locked?EditorActivity.CYAN:EditorActivity.MUTED,12);
+            if(!overlay&&a.trackEmpty(r.index)){paint.setColor(EditorActivity.MUTED);paint.setTextSize(a.dp(10));canvas.drawText("Drop media here",Math.max(x(0),left+w)+a.dp(8),mid+a.dp(4),paint);}
         }
     }
     private void drawIcon(Canvas canvas,String name,float x,float y,int color,int size){V1Icon icon=new V1Icon(name,color);icon.setBounds(Math.round(x),Math.round(y),Math.round(x+a.dp(size)),Math.round(y+a.dp(size)));icon.draw(canvas);}
@@ -240,7 +243,7 @@ final class TimelineView extends View {
         moved=false;pinching=false;vertical=false;operation=0;hitClip=-1;hitOverlay=-1;pendingDelta=0;guide=-1;original=null;originalOverlay=null;headerZone=-1;reorderFrom=-1;reorderTo=-1;pendingClip=-1;pendingOverlay=-1;
         getParent().requestDisallowInterceptTouchEvent(true);a.pausePlayback();
         if(downY>=a.dp(RULER_DP)&&inHeader(downX)){Row r=rowAt(downY);if(r!=null&&r.kind!=2){float local=downX-a.timelineScroll.getScrollX();int w=headerWidth();
-            headerZone=local<a.dp(22)?0:local>w-a.dp(28)?3:local>w-a.dp(52)?2:1;if(headerZone==0&&(r.kind==1||r.index!=0))reorderFrom=rows.indexOf(r);}return true;}
+            headerZone=2;}return true;}
         // The ruler moves the playhead: tap to jump, drag to scrub.
         if(downY<a.dp(RULER_DP)){if(!inHeader(downX)){operation=OP_SCRUB;a.seek(Math.max(0,time(downX)));}return true;}
         hitClip=hitClip(downX,downY);hitOverlay=hitClip>=0?-1:hitOverlay(downX,downY);
@@ -321,10 +324,8 @@ final class TimelineView extends View {
     }
     private void headerTap(Row r,int zone,boolean longPress){
         int[] row={r.kind,r.index};
-        if(zone==3){a.rowFlag(row,"lock");return;}
-        if(zone==2){a.rowFlag(row,"hide");return;}
-        if(longPress){a.renameRow(row);return;}
-        if(r.kind==1)a.selectOverlay(r.index);else for(int i=0;i<a.project.clips.size();i++)if(a.project.clips.get(i).track==r.index){a.selectClip(i,false);return;}
+        if(longPress){String name=a.rowName(row);new android.app.AlertDialog.Builder(a).setTitle(name).setItems(new String[]{"Toggle visibility / mute","Lock / unlock","Select layer","Rename layer","Layer management"},(d,i)->{if(i<2)a.rowFlag(row,i==0?"hide":"lock");else if(i==3)a.renameRow(row);else if(i==4){a.tab=3;if(a.mobile!=null)a.mobile.dismissed=false;a.renderInspector();}else if(r.kind==1)a.selectOverlay(r.index);else for(int n=0;n<a.project.clips.size();n++)if(a.project.clips.get(n).track==r.index){a.selectClip(n,false);break;}}).show();return;}
+        a.rowFlag(row,"hide");
     }
     private void commit(){
         int op=operation;long delta=pendingDelta;EditProject.Placement origin=original;EditProject.Overlay ov=originalOverlay;int track=op==OP_MOVE?targetTrack():-1;

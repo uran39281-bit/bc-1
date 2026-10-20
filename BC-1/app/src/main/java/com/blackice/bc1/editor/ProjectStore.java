@@ -47,7 +47,7 @@ public final class ProjectStore {
         JSONArray clips=new JSONArray();
         for(EditProject.Clip c:p.clips) clips.put(new JSONObject().put("id",c.id).put("uri",c.uri).put("name",c.name)
                 .put("audioOnly",c.audioOnly).put("image",c.image).put("sourceDurationMs",c.sourceDurationMs).put("inMs",c.inMs).put("outMs",c.outMs)
-                .put("effect",c.effect).put("intensity",c.intensity).put("opacity",c.opacity).put("volume",c.volume).put("speed",c.speed)
+                .put("effect",c.effect).put("intensity",c.intensity).put("opacity",c.opacity).put("volume",c.volume).put("unmutedVolume",c.unmutedVolume).put("speed",c.speed)
                 .put("track",c.track).put("startMs",c.startMs).put("gapMs",c.gapMs).put("fadeInMs",c.fadeInMs).put("fadeOutMs",c.fadeOutMs)
                 .put("x",c.x).put("y",c.y).put("scale",c.scale).put("rotation",c.rotation).put("motion",motion(c.motion))
                 .put("chroma",c.chroma).put("keyColor",c.keyColor).put("keyTolerance",c.keyTolerance).put("keySoftness",c.keySoftness).put("keySpill",c.keySpill)
@@ -92,7 +92,7 @@ public final class ProjectStore {
             c.id=v.getString("id"); c.uri=v.getString("uri"); c.name=v.getString("name"); c.image=v.getBoolean("image");c.audioOnly=v.optBoolean("audioOnly",false);
             c.sourceDurationMs=v.getLong("sourceDurationMs"); c.inMs=v.getLong("inMs"); c.outMs=v.getLong("outMs");
             c.effect=v.getInt("effect"); c.intensity=(float)v.getDouble("intensity"); c.opacity=(float)v.getDouble("opacity");
-            c.volume=(float)v.getDouble("volume");c.speed=(float)v.optDouble("speed",1); c.transition=v.getInt("transition"); c.transitionMs=v.getLong("transitionMs"); c.easing=v.getInt("easing");c.blend=v.optInt("blend",0);
+            c.volume=(float)v.getDouble("volume");c.unmutedVolume=(float)v.optDouble("unmutedVolume",-1);c.speed=(float)v.optDouble("speed",1); c.transition=v.getInt("transition"); c.transitionMs=v.getLong("transitionMs"); c.easing=v.getInt("easing");c.blend=v.optInt("blend",0);
             c.aspect=(float)v.optDouble("aspect",1); c.skewX=(float)v.optDouble("skewX",0); c.skewY=(float)v.optDouble("skewY",0); c.anchorX=(float)v.optDouble("anchorX",0); c.anchorY=(float)v.optDouble("anchorY",0);
             c.flipH=v.optBoolean("flipH"); c.flipV=v.optBoolean("flipV"); c.width=v.optInt("width",0); c.height=v.optInt("height",0); c.group=v.isNull("group")?null:v.optString("group",null); p.clips.add(c); }
         // The media bin is optional: older files rebuild it from their timeline sources.
