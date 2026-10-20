@@ -86,7 +86,7 @@ final class TimelineView extends View {
         requestLayout();syncScroll();a.timelineScroll.post(this::syncScroll);
     }
     /** Fit changes display scale only; retain the current time at the fixed playhead. */
-    void reveal(long ms){requestLayout();a.timelineScroll.post(this::syncScroll);}
+    void reveal(long ms){requestLayout();syncScroll();a.timelineScroll.post(this::syncScroll);}
 
 
     // ---- Drawing ----------------------------------------------------------------------------------
