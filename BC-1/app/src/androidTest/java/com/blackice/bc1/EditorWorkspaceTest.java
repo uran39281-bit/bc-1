@@ -107,7 +107,7 @@ public class EditorWorkspaceTest {
                     // A selected layer replaces Settings / Export in the top bar with its name, Duplicate, Delete and More.
                     assertNotNull("Settings remains accessible beside selected-layer actions",text(root,"Settings"));assertNotNull(described(root,"More actions"));assertNotNull(described(root,"Delete"));
                     a.onKeyDown(KeyEvent.KEYCODE_D,new KeyEvent(0,0,KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_D,0,KeyEvent.META_CTRL_ON));assertNotNull("Settings lock guards edits",text(root,"UI locked • unlock editing in Settings"));
-                    described(root,"Deselect").performClick();assertNotNull("Deselecting restores the project bar",text(root,"Settings"));text(root,"Settings").performClick();text(root,"Lock editing and layout: ON").performClick();openMobileMedia(a);});
+                    a.onKeyDown(KeyEvent.KEYCODE_ESCAPE,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_ESCAPE));assertNotNull("Deselecting restores the project bar",text(root,"Settings"));text(root,"Settings").performClick();text(root,"Lock editing and layout: ON").performClick();openMobileMedia(a);});
                 assertVisiblePreview(scenario);
                 scenario.onActivity(a->assertNotNull("First frame stays paused until Play",described(a.getWindow().getDecorView(),"Play")));
                 capture("v10-paused-first-frame");

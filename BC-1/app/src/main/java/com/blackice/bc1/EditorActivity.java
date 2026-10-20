@@ -576,7 +576,7 @@ public final class EditorActivity extends Activity {
             inspector.addView(row);
         }
         if(project.music!=null)inspector.addView(note("Music: "+project.music.name+" (always below the timeline layers)"));
-        inspector.addView(note("Drag the ≡ handle in the timeline's layer column to reorder without changing timing."));
+        inspector.addView(note("Use the up/down controls to reorder without changing timing. Long-press a timeline header for layer options."));
     }
     TextView rowToggle(String icon,String description,boolean on,View.OnClickListener l){TextView b=compactButton("",description,l);b.setCompoundDrawables(icon(icon,on?CYAN:TEXT),null,null,null);b.setPadding(dp(11),0,dp(11),0);b.setSelected(on);b.setBackground(buttonBackground(on));b.setMinWidth(dp(44));return b;}
     void rowFlag(int[] r,String flag){
@@ -1061,6 +1061,8 @@ public final class EditorActivity extends Activity {
         if(key==KeyEvent.KEYCODE_BACK&&mobile!=null){mobile.back();return true;}
         if(key==KeyEvent.KEYCODE_BACK&&!wideLayout&&!fullscreenPreview&&tab==0){tab=1;renderInspector();return true;}
         if(key==KeyEvent.KEYCODE_BACK&&fullscreenPreview){fullscreenPreview=false;buildWorkspace();return true;}
+        if(key==KeyEvent.KEYCODE_BACK&&panels.showing()){panels.back();return true;}
+        if(key==KeyEvent.KEYCODE_BACK&&(clip()!=null||overlay()!=null)){deselect();return true;}
         if(getCurrentFocus() instanceof EditText)return super.onKeyDown(key,event);
         if(event.isCtrlPressed()&&key==KeyEvent.KEYCODE_S){saveNow();return true;}
         if(event.isCtrlPressed()&&(key==KeyEvent.KEYCODE_Z||key==KeyEvent.KEYCODE_Y)){undo(key==KeyEvent.KEYCODE_Y||event.isShiftPressed());return true;}
