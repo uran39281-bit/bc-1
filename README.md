@@ -2,6 +2,8 @@
 
 **New development upgrade: v1.4.0-dev** — rotation crash/orientation fixes, private crash logs, simplified landscape Media Settings, immediate media dragging and export quality/progress controls. **139 JVM tests, 46 Android tests and 14 independent export checks passed.** [Download the signed Preview upgrade](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.4.0-dev/BC-1-v1.4.0-dev.apk). [QA, screenshots, build instructions and remaining limitations](docs/qa/BC-1-v1.4.0-LANDSCAPE-STABILITY.md). Install over the existing Preview without uninstalling; older releases remain below.
 
+[**All versions and APK downloads ↓**](#all-versions--downloads)
+
 Home of the BC-1 editor (Black Ice Custom Engine): app source in [`BC-1/`](BC-1), released APKs in the version folders below.
 
 ## Source
@@ -86,8 +88,21 @@ Closer to the official V1 phone/desktop references: monoline icons, editing shor
 
 V1 dark/cyan interface, phone and tablet/DeX workspaces, UI Lock, thumbnail timeline, desktop media browser, GPU effects and transitions, keyframes, chroma controls, audio layers and project bundles. Image/multilayer previews are prepared and cached for reliable paused frames and seeking; edits require preparation again. No 3D Page Curl.
 
+## All versions — downloads
+
+Every versioned APK currently published in this repository, newest first. Source-only checkpoints are not listed as downloadable builds. Test counts describe the recorded automated checks, not production-stability certification.
+
 | Version | Download | Verification |
 | --- | --- | --- |
+| v1.4.0-dev — Landscape stability (latest Preview upgrade) | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.4.0-dev/BC-1-v1.4.0-dev.apk) | 139 unit + 46 Android tests; 14 export checks; retained-key signed; [QA](docs/qa/BC-1-v1.4.0-LANDSCAPE-STABILITY.md) |
+| v1.3.3 — Centered playhead (separate test app) | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.3.3-test/BC-1-v1.3.3-test.apk) | 44 Android tests; 10 export checks; **not a Preview upgrade**; [QA](docs/qa/BC-1-v1.3.3-CENTERED-PLAYHEAD.md) |
+| v1.3.1 — Main workspace & Footage tools | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.3.1/BC-1-v1.3.1.apk) | 137 unit + 43 Android tests; 10 export checks; [QA](v1.3.1/QA.md) |
+| v1.3.0 — Mobile V1 workspace | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.3.0/BC-1-v1.3.0.apk) | 133 unit + 42 Android tests; 10 export checks; [QA](v1.3.0/QA.md) |
+| v1.2.0 — ICE Lite engine | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.2.0/BC-1-v1.2.0.apk) | 132 unit + 39 Android tests; 9 export checks; [QA](v1.2.0/QA.md) |
+| v1.1.2 — Preview scrubbing recovery | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.1.2/BC-1-v1.1.2.apk) | 88 unit + 28 Android tests; 5 export checks; [QA](v1.1.2/QA.md) |
+| v1.1.1 — Phone media space | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.1.1/BC-1-v1.1.1.apk) | 88 unit + 27 Android tests; 5 export checks; [QA](v1.1.1/QA.md) |
+| v1.1.0 — Cinematic redesign | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.1.0/BC-1-v1.1.0.apk) | 78 unit + 25 Android tests; 5 export checks; export-stall caveat in [QA](v1.1.0/QA.md) |
+| v1.0.5 — Editing essentials | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.0.5/BC-1-v1.0.5.apk) | 78 unit + 25 Android tests; 5 export checks; [QA](v1.0.5/QA.md) |
 | v1.0.4 Export diagnostics | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.0.4/BC-1-v1.0.4.apk) | 36 unit +20 Android tests; four independent MP4 checks |
 | v1.0.3 Thumbnail reliability | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.0.3/BC-1-v1.0.3.apk) | 33 unit +18 Android tests; MP4 decode passed on rerun; see export caveat above |
 | v1.0.2 Media browser | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.0.2/BC-1-v1.0.2.apk) | 33 unit + 17 Android tests; independent MP4 decode passed |
@@ -96,8 +111,8 @@ V1 dark/cyan interface, phone and tablet/DeX workspaces, UI Lock, thumbnail time
 | v0.5 Motion & Layers | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v0.5/BC-1-v0.5-Preview.apk) | 29 unit + 16 Android tests passed |
 | v0.4 Timeline & Export | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v0.4/BC-1-v0.4-Preview.apk) | Previous preview preserved |
 
-Package `com.blackice.bc1.preview`, retained BC-1 preview signing certificate. Install over your existing Preview to retain projects; do not uninstall it first. v1.0.4 is versionCode16, versionName1.0.4.
+**Latest Preview upgrade:** `com.blackice.bc1.preview`, v1.4.0-dev, versionCode 27, retained Preview signing certificate. Install over your existing Preview to retain projects; do not uninstall it first. The v1.3.3 test APK uses the separate `com.blackice.bc1.icelite` package.
 
-[QA evidence and limitations](v1.0.4/QA.md) · [SHA256 checksum](v1.0.4/SHA256SUMS.txt)
+[Latest QA and limitations](docs/qa/BC-1-v1.4.0-LANDSCAPE-STABILITY.md) · [Latest SHA256 checksum](v1.4.0-dev/SHA256SUMS.txt)
 
 Checks use an Android API35 emulator. Physical Snapdragon 8 Gen 3 and Samsung DeX performance remains unmeasured. RTX integration is a future backend. Versioned APKs are retained and never replaced with different builds.
