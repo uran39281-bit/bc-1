@@ -25,7 +25,7 @@ public final class CrashLogs extends Application {
     public static void record(String stage,Throwable error){CrashLogs a=app;if(a==null)return;
         StringBuilder b=new StringBuilder(stage).append('\n');Set<Throwable> seen=Collections.newSetFromMap(new IdentityHashMap<>());
         for(int n=0;error!=null&&n<6&&seen.add(error);n++,error=error.getCause()){
-            b.append(error.getClass().getName()).append('\n');StackTraceElement[] stack=error.getStackTrace();
+            b.append(error.getClass().getName()).append('\n');if(error instanceof android.media.MediaCodec.CodecException){android.media.MediaCodec.CodecException codec=(android.media.MediaCodec.CodecException)error;b.append("Decoder code: ").append(codec.getErrorCode()).append(" recoverable=").append(codec.isRecoverable()).append(" transient=").append(codec.isTransient()).append('\n');}StackTraceElement[] stack=error.getStackTrace();
             for(int i=0;i<Math.min(80,stack.length);i++)b.append("  at ").append(stack[i]).append('\n');}
         a.persist(b.toString());
     }

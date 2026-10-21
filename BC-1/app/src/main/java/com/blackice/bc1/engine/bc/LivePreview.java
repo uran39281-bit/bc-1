@@ -36,7 +36,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     private static final long REUSE_WINDOW_US = 3_000_000; // forward jumps up to 3 s reuse the open decoder
 
     private static final class Request {
-        final EditProject project; final long timeMs; final CountDownLatch done;
+        final EditProject project; final long timeMs; final CountDownLatch done; volatile boolean presented;
         Request(EditProject project, long timeMs, CountDownLatch done) { this.project = project; this.timeMs = timeMs; this.done = done; }
     }
 
@@ -105,6 +105,11 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     @Override public void onSurfaceTextureUpdated(SurfaceTexture st) { }
 
     private void bind(Surface target, SurfaceTexture st) {
+        if(target==null||!target.isValid()){lastError="Preview surface is unavailable";com.blackice.bc1.CrashLogs.record("Preview surface unavailable",new IllegalStateException());return;}
+        try { bindValid(target,st); }
+        catch(RuntimeException error){lastError="Preview surface attachment failed: "+error.getClass().getSimpleName();com.blackice.bc1.CrashLogs.record("Preview surface attachment failed",error);unbind();}
+    }
+    private void bindValid(Surface target, SurfaceTexture st) {
         android.util.Log.d("BC1Live", "surface attached" + (st == null ? " (reader)" : ""));
         detachWindow();
         surface = target; surfaceTexture = st;
@@ -156,7 +161,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
         latest = r;
         pending.set(r);
         gl.post(this::drain);
-        return done.await(timeoutMs, TimeUnit.MILLISECONDS) && lastError == null;
+        return done.await(timeoutMs, TimeUnit.MILLISECONDS) && r.presented && lastError == null;
     }
 
     /** Closes decoders (frees hardware for playback or export); the next frame reopens what it needs. */
@@ -173,7 +178,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
             long start = System.nanoTime();
             render(r.project, r.timeMs);
             lastError = null;
-            lastFrameMs = r.timeMs;
+            lastFrameMs = r.timeMs; r.presented=true;
             long took = (System.nanoTime() - start) / 1_000_000;
             if (++frames % 20 == 1 || took > 250) android.util.Log.d("BC1Live", "frame " + frames + " at " + r.timeMs + " ms took " + took + " ms, " + slots.size() + " sources open");
             FrameListener l = listener;

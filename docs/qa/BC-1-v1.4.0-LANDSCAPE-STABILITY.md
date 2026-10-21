@@ -17,9 +17,9 @@ Based on main 821c363. Not a qualified release until CI and device evidence belo
 - Physical Samsung crash reproduction and real Android camera/screen-recording/third-party orientation fixtures remain unverified.
 - Destination-provider free capacity is unavailable before selecting a URI; shown as unknown, not fabricated.
 - Audio encoder bitrate/sample-rate controls are still fixed, not exposed as fake adjustable options.
-- Full progress screen, reliable ETA and Open Location remain to implement; existing foreground export status/cancel/play/share retained.
+- Export progress now shows stage, percentage, elapsed time, output bytes and approximate ETA after sufficient progress, plus cancel/play/share. Provider-specific Open Location remains unavailable.
 - Arbitrary canvas/background/save-location choices and new perspective editing are not implemented.
 - No retained signing key has been recovered in this run; CI test APK installs separately.
 
 ## Validation
-Pending CI. Added transform-release/undo/save regression, diagnostics privacy check, and saved-effect preservation test. Existing engine/export suites must pass before publishing a test APK.
+Pending CI. Added transform-release/undo/save regression, diagnostics privacy check, saved-effect preservation and bitrate tests. Added 0/90/180/270° metadata fixtures with live preview + export marker-pixel comparisons against Android decoding, and four independent export decode checks. Existing engine/export suites must pass before publishing a test APK.

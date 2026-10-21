@@ -24,6 +24,14 @@ public final class EncoderCaps {
         return false;
     }
 
+    public static boolean supportsBitrate(com.blackice.bc1.core.ExportPlanner.Plan plan){
+        for(MediaCodecInfo info:new MediaCodecList(MediaCodecList.REGULAR_CODECS).getCodecInfos()){
+            if(!info.isEncoder())continue;for(String type:info.getSupportedTypes())if(type.equalsIgnoreCase(plan.codec.mime))try{
+                MediaCodecInfo.VideoCapabilities video=info.getCapabilitiesForType(type).getVideoCapabilities();
+                if(video!=null&&video.areSizeAndRateSupported(plan.width,plan.height,plan.frameRate)&&video.getBitrateRange().contains(plan.bitrate))return true;
+            }catch(IllegalArgumentException ignored){}
+        }return false;
+    }
     public static boolean supports(int width, int height, int fps) { return supports(VideoCodec.H264, width, height, fps); }
 
     public static ExportPlanner.Plan plan(int shortEdge, int fps, boolean portrait, VideoCodec.Choice choice) {

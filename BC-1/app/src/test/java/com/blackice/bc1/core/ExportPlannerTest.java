@@ -94,4 +94,10 @@ public class ExportPlannerTest {
         p.frameRate = 48;
         try { p.validate(); fail(); } catch (IllegalArgumentException expected) { }
     }
+    @org.junit.Test public void customBitrateChangesEstimateWithoutChangingCanvas(){
+        ExportPlanner.Plan base=ExportPlanner.choose(1080,30,false,(codec,w,h,f)->true);
+        ExportPlanner.Plan custom=base.withBitrate(12000000);
+        org.junit.Assert.assertEquals(base.width,custom.width);org.junit.Assert.assertEquals(base.frameRate,custom.frameRate);
+        org.junit.Assert.assertEquals(12000000,custom.bitrate);org.junit.Assert.assertTrue(custom.estimatedBytes(10000)>base.estimatedBytes(10000));
+    }
 }
