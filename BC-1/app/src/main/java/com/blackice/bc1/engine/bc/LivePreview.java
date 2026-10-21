@@ -99,7 +99,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     @Override public void onSurfaceTextureSizeChanged(SurfaceTexture st, int w, int h) { }
     /** Returns false: the render thread releases the SurfaceTexture after its last frame, so a frame in flight never draws into a dead surface. */
     @Override public boolean onSurfaceTextureDestroyed(SurfaceTexture st) {
-        if (!gl.post(this::detachWindow)) st.release();
+        if (!gl.post(() -> { if(surfaceTexture==st)detachWindow();else st.release(); })) st.release();
         return false;
     }
     @Override public void onSurfaceTextureUpdated(SurfaceTexture st) { }
@@ -178,9 +178,10 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
             if (++frames % 20 == 1 || took > 250) android.util.Log.d("BC1Live", "frame " + frames + " at " + r.timeMs + " ms took " + took + " ms, " + slots.size() + " sources open");
             FrameListener l = listener;
             if (l != null) l.onFrame(r.timeMs, (System.nanoTime() - start) / 1_000_000);
-        } catch (Throwable t) {
+        } catch (Exception t) {
             lastError = String.valueOf(t.getMessage());
             android.util.Log.w("BC1Live", "Live preview frame failed", t);
+            com.blackice.bc1.CrashLogs.record("Live renderer frame failed",t);
             releaseSources(); // reopen cleanly next time
         } finally {
             if (r.done != null) r.done.countDown();

@@ -37,6 +37,7 @@ final class ToolPanels {
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
         if(a.multiCount()>1){multiTools();return;}
         if(c==null&&o==null){browseHome();return;}
+        if(a.wideLayout){landscapeMediaSettings(into);return;}
         if(footage()){footagePanel(into);return;}
         String kind=kind(c,o);
         into.addView(a.note(kind+"  •  "+(c!=null?c.name:o.label())+(locked()?"  •  Layer locked":"")));
@@ -69,6 +70,22 @@ final class ToolPanels {
         // Secondary supported operations remain reachable without returning the removed category tiles.
         TextView extra=a.button("More footage tools",v->open("More footage tools",()->{for(String tool:tools(a.clip(),a.overlay()))a.gridAction(tool,()->runTool(tool));a.flushGrid();a.inspector.addView(a.button("Compare before / after",compareView->a.compare(!a.comparing)));}));extra.setContentDescription("Slip, chroma key, audio extraction and animation tools");into.addView(extra,new LinearLayout.LayoutParams(-1,a.dp(48)));
         if(c!=null&&c.track==0)into.addView(a.note("Main sequence: edge dragging uses ripple trim. Trim Start/End at playhead preserve other clip positions."));
+    }
+    private void landscapeMediaSettings(LinearLayout into){
+        EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();boolean visual=c==null||c.track<EditProject.AUDIO_FIRST;
+        LinearLayout title=a.row();title.addView(a.label("Media Settings",18,EditorActivity.TEXT,true),new LinearLayout.LayoutParams(0,a.dp(48),1));title.addView(a.headerIcon("More","Selected media actions",v->a.moreMenu()));into.addView(title);
+        into.addView(a.note(c!=null?c.name:o.label()));
+        String[] names={"Move & Transform","Blending & Opacity","Effects — Coming Later","Audio"};
+        for(int i=0;i<names.length;i++){final int which=i;TextView b=a.button(names[i],v->{if(which==3)open("Audio",this::audioPanel);else category(names[which]);});b.setGravity(Gravity.CENTER_VERTICAL|Gravity.LEFT);b.setTooltipText(names[i]);EditorActivity.dim(b,!locked()&&!a.uiLocked&&(i==3?c!=null&&!c.image:i!=2&&visual));into.addView(b,new LinearLayout.LayoutParams(-1,a.dp(60)));}
+
+    }
+    private void audioPanel(){
+        EditProject.Clip c=a.clip();if(c==null||c.image){a.inspector.addView(a.note("This media has no audio."));return;}
+        a.inspector.addView(a.button(c.unmutedVolume>=0?"Unmute":"Mute",v->{if(a.layerEditable())a.edit("Audio mute updated",()->ClipAudio.toggleMute(c));}));
+        percent("Volume",c.volume,1,v->{c.volume=v;c.unmutedVolume=-1;},null,0);
+        fadePanel(true);fadePanel(false);
+        if(c.track<EditProject.AUDIO_FIRST)a.inspector.addView(a.button("Extract Audio",v->runTool("Extract Audio")));
+        a.inspector.addView(a.button("Reset Audio Settings",v->{if(a.layerEditable())a.edit("Audio reset",()->{c.volume=1;c.unmutedVolume=-1;c.fadeInMs=0;c.fadeOutMs=0;});}));
     }
     private boolean locked(){EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();return c!=null?LayerOps.locked(a.project,a.selected):LayerOps.locked(o);}
     static String kind(EditProject.Clip c,EditProject.Overlay o){
@@ -110,7 +127,7 @@ final class ToolPanels {
             b.setContentDescription(names[i]+(valid?"":" (move the playhead inside the selected layer)"));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,a.dp(52),1);lp.rightMargin=a.dp(3);row.addView(b,lp);}
         a.inspector.addView(row);
     }
-    private void playheadEdit(int which){
+    void playheadEdit(int which){
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();if(!a.layerEditable())return;
         if(c!=null){if(which==1)a.splitSelected();else a.edit(which==0?"Trimmed start to playhead":"Trimmed end to playhead",()->LayerOps.trimToPlayhead(a.project,a.selected,which==0));return;}
         long t=a.project.playheadMs;
@@ -218,12 +235,10 @@ final class ToolPanels {
         a.inspector.addView(a.note("0% is fully transparent. Lower layers show through transparent regions."));
     }
     private void blendPanel(){
-        opacityPanel();EditProject.Overlay o=a.overlay();
-        if(o==null){a.inspector.addView(a.note("Video and picture layers use normal blending."));return;}
-        a.inspector.addView(a.note("Blend mode (text, shape and image layers)"));
-        for(int i=0;i<EditProject.BLENDS.length;i++){final int mode=i;a.gridAction((o.blend==i?"● ":"")+EditProject.BLENDS[i],()->{if(a.layerEditable())a.edit("Blend mode updated",()->o.blend=mode);});}
-        a.flushGrid();
-        a.inspector.addView(a.note("Blend modes combine with the text, shape and image layers beneath this one."));
+        opacityPanel();EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
+        if(c!=null){a.inspector.addView(a.note("ICE Lite blend modes • Normal / Darken / Lighten / Contrast"));
+            for(com.blackice.bc1.core.BlendMode mode:com.blackice.bc1.core.BlendMode.values()){a.gridAction((c.blend==mode.ordinal()?"● ":"")+mode.label,()->{if(a.layerEditable())a.edit("Blend mode updated",()->c.blend=mode.ordinal());});}a.flushGrid();
+        }else{for(int i=0;i<EditProject.BLENDS.length;i++){final int mode=i;a.gridAction((o.blend==i?"● ":"")+EditProject.BLENDS[i],()->{if(a.layerEditable())a.edit("Blend mode updated",()->o.blend=mode);});}a.flushGrid();}
     }
     private void durationPanel(){
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
@@ -316,28 +331,7 @@ final class ToolPanels {
         swatches("Border color",o.borderColor,PALETTE,value->o.borderColor=value);
         valueRow("Shadow",o.shadow,0,1,0,100,"%",v->o.shadow=v,null,0,1);
     }
-    private void effectsPanel(){
-        EditProject.Clip c=a.clip();if(c==null||c.track>=EditProject.AUDIO_FIRST){a.inspector.addView(a.note("Select a video or picture to apply visual effects."));return;}
-        // One effect per clip, grouped by category; the Black Ice set is ids 12+ (core.EffectCatalog).
-        a.inspector.addView(a.note("Effect: "+com.blackice.bc1.core.EffectCatalog.name(c.effect)));
-        for(int cat=0;cat<com.blackice.bc1.core.EffectCatalog.CATEGORIES.length;cat++){
-            a.inspector.addView(a.note(com.blackice.bc1.core.EffectCatalog.CATEGORIES[cat]));
-            for(int id:com.blackice.bc1.core.EffectCatalog.inCategory(cat)){final int effect=id;a.gridAction((c.effect==id?"● ":"")+com.blackice.bc1.core.EffectCatalog.name(id),()->{if(a.layerEditable())a.edit("Effect: "+com.blackice.bc1.core.EffectCatalog.name(effect),()->c.effect=effect);});}
-            a.flushGrid();
-        }
-        percent("Effect intensity",c.intensity,.6f,v->c.intensity=v,c.motion,Motion.INTENSITY);
-        if(com.blackice.bc1.core.EffectCatalog.centered(c.effect))a.inspector.addView(a.note("50% leaves the picture unchanged; lower reduces, higher increases."));
-        a.select("Blend mode",com.blackice.bc1.core.BlendMode.labels(),com.blackice.bc1.core.BlendMode.of(c.blend).ordinal(),index->{if(a.layerEditable())a.edit("Blend mode: "+com.blackice.bc1.core.BlendMode.of(index).label,()->c.blend=index);});
-        if(c.blend!=0)a.inspector.addView(a.note("Blend modes render with ICE Lite: in exports and in the prepared preview."));
-        a.inspector.addView(a.button("Chroma Key…",v->open("Chroma Key",this::chromaPanel)));
-        if(c.track==0){
-            String[] transitions=new String[EngineSettings.TRANSITIONS.length+1];transitions[0]="Cut (no overlap)";System.arraycopy(EngineSettings.TRANSITIONS,0,transitions,1,EngineSettings.TRANSITIONS.length);
-            a.inspector.addView(a.note("Transition to next clip"));
-            for(int i=0;i<transitions.length;i++){final int id=i-1;a.gridAction((c.transition==id?"● ":"")+transitions[i],()->{if(a.layerEditable())a.edit("Transition updated",()->c.transition=id);});}
-            a.flushGrid();
-            if(c.transition>=0)valueRow("Transition length",c.transitionMs/1000f,0,5,.5f,1,"s",v->c.transitionMs=Math.round(v*1000),null,0,1);
-        }
-    }
+    private void effectsPanel(){a.inspector.addView(a.note("Effects — Coming Later. Existing effect values are retained in saved projects but bypassed during preview and export."));}
     private void effectsHome(){
         EditProject.Clip c=a.clip();
         if(c==null||c.track>=EditProject.AUDIO_FIRST){a.inspector.addView(a.note("Select a video or picture to apply visual effects."));return;}

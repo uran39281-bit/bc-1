@@ -40,12 +40,12 @@ public class WorkspaceV2Test {
                 waitLoaded(scenario);
                 // Browse state: project name, Settings and Export; clip tools hidden.
                 scenario.onActivity(a->{View root=a.getWindow().getDecorView();assertNotNull(text(root,"Settings"));assertNotNull(text(root,"Export"));assertNull(text(root,"Split"));
-                    assertEquals("The requested project is loaded, not a stale save from the previous Activity",p.id,a.project.id);assertTrue(a.monitorInfo.getText().toString().startsWith(p.name));assertEquals(0xFF07111B,EditorActivity.BG);if(wide){assertNotNull(text(root,"Inspector"));assertNotNull(text(root,"Project"));}else{assertNotNull(described(root,"Add content"));assertEquals(View.GONE,a.mobile.sheet.getVisibility());assertNull(text(root,"Inspector"));}
+                    assertEquals("The requested project is loaded, not a stale save from the previous Activity",p.id,a.project.id);assertTrue(a.monitorInfo.getText().toString().startsWith(p.name));assertEquals(0xFF07111B,EditorActivity.BG);if(wide){assertNotNull(text(root,"Media Settings"));assertNull(text(root,"Project"));}else{assertNotNull(described(root,"Add content"));assertEquals(View.GONE,a.mobile.sheet.getVisibility());assertNull(text(root,"Inspector"));}
                     long duration=a.project.durationMs();if(wide)described(root,"Next frame").performClick();else a.seek(Math.round(1000d/a.project.frameRate));assertEquals(Math.round(1000d/a.project.frameRate),a.project.playheadMs);if(wide)described(root,"Previous frame").performClick();else a.seek(0);assertEquals(0,a.project.playheadMs);assertEquals(duration,a.project.durationMs());
                     assertNotNull(described(root,wide?"Preview scaling, volume and fullscreen":"Preview resolution"));
-                    if(wide){assertNotNull(described(root,"Resize timeline height"));assertNotNull(described(root,"Save project"));assertNotNull(text(root,"Favorites"));assertNotNull(described(root,"Grid / List: show list"));assertNotNull(described(root,"Sort media"));assertTrue(a.timeline.getWidth()>0);text(a.header,"Audio").performClick();assertEquals(1,a.addDrawer.category);assertTrue(text(a.header,"Audio").isSelected());text(a.header,"Media").performClick();assertEquals(0,a.addDrawer.category);assertTrue(text(a.header,"Media").isSelected());assertEquals("Navigation preserves the project",duration,a.project.durationMs());}
+                    if(wide){assertNotNull(described(root,"Resize timeline height"));assertNotNull(described(root,"Save project"));assertNotNull(text(root,"Favorites"));assertNotNull(described(root,"Grid / List: show list"));assertNotNull(described(root,"Sort media"));assertTrue(a.timeline.getWidth()>0);assertNull(text(a.header,"Audio"));text(root,"Add content").performClick();a.addDrawer.category=1;a.renderInspector();assertEquals(1,a.addDrawer.category);a.addDrawer.category=0;a.renderInspector();assertEquals("Navigation preserves the project",duration,a.project.durationMs());}
                     assertNull("No separate + Add button repeats the navigation",text(root,"+ Add"));
-                    if(wide){text(a.header,"Text").performClick();assertEquals(2,a.addDrawer.category);assertNull("Top-bar tabs replace the panel's own category row",described(root,"Add Media"));assertNotNull("Shapes share the Text tab",text(root,"+ Rectangle"));}
+                    if(wide){a.tab=0;a.addDrawer.category=2;a.renderInspector();assertEquals(2,a.addDrawer.category);assertNull("Top-bar tabs replace the panel's own category row",described(root,"Add Media"));assertNotNull("Shapes share the Text tab",text(root,"+ Rectangle"));}
                     else{described(root,"Add content").performClick();for(String category:AddDrawer.CATEGORIES)assertNotNull("Add drawer category "+category,described(root,"Add "+category));
                         described(root,"Add Audio").performClick();assertNotNull("Insert at playhead by default",text(root,"● At playhead"));described(root,"Add Shapes").performClick();}});
                 Thread.sleep(300);capture(wide?"v2-wide-add-drawer":"v2-phone-add-drawer");
@@ -53,15 +53,15 @@ public class WorkspaceV2Test {
                     assertEquals(1,a.project.overlays.size());assertEquals("Inserted at the playhead",1000,a.project.overlays.get(0).startMs);assertEquals(0,a.selectedOverlay);
                     // Selected layer: name, Duplicate, Delete, More replace Settings / Export.
                     assertNotNull(text(root,"Rectangle"));assertNotNull(text(root,"Settings"));assertNotNull(described(root,"Duplicate"));assertNotNull(described(root,"More actions"));
-                    assertNotNull("Shape tools",text(root,"Color"));assertNull("No slip for shapes",text(root,"Slip"));assertNotNull(text(root,"Move & Transform"));
-                    text(root,"Opacity").performClick();assertNotNull("Focused panel",text(root,"‹  Back"));
+                    if(wide)assertNotNull(text(root,"Media Settings"));else assertNotNull("Shape tools",text(root,"Color"));assertNull("No slip for shapes",text(root,"Slip"));assertNotNull(text(root,"Move & Transform"));
+                    text(root,wide?"Blending & Opacity":"Opacity").performClick();assertNotNull("Focused panel",text(root,"‹  Back"));
                     View diamond=described(root,"Opacity keyframe: not animated • tap to animate");assertNotNull(diamond);diamond.performClick();
                     assertEquals("Diamond enables animation with a key at the playhead",1,a.project.overlays.get(0).motion.curves.get(Motion.OPACITY).size());
                     assertNotNull(described(a.getWindow().getDecorView(),"Opacity keyframe: keyframe at playhead • tap to remove"));
                     a.seek(2500);a.renderInspector();EditText exact=field(a.getWindow().getDecorView(),"Opacity exact value in %");assertNotNull(exact);exact.setText("40");text(a.getWindow().getDecorView(),"Apply").performClick();
                     assertEquals("Edit while animated creates a second keyframe",2,a.project.overlays.get(0).motion.curves.get(Motion.OPACITY).size());
                     assertEquals(.4f,a.project.overlays.get(0).motion.value(Motion.OPACITY,1500,1),1e-3);
-                    text(a.getWindow().getDecorView(),"‹  Back").performClick();assertEquals("Back keeps the selection",0,a.selectedOverlay);assertEquals("Back keeps the playhead",2500,a.project.playheadMs);assertNotNull(text(a.getWindow().getDecorView(),"Color"));
+                    text(a.getWindow().getDecorView(),"‹  Back").performClick();assertEquals("Back keeps the selection",0,a.selectedOverlay);assertEquals("Back keeps the playhead",2500,a.project.playheadMs);if(wide){a.moreAction("Color");a.panels.back();}else assertNotNull(text(a.getWindow().getDecorView(),"Color"));
                     text(a.getWindow().getDecorView(),"Move & Transform").performClick();});
                 Thread.sleep(300);capture(wide?"v2-wide-transform":"v2-phone-transform");
                 scenario.onActivity(a->{View root=a.getWindow().getDecorView();
@@ -73,7 +73,7 @@ public class WorkspaceV2Test {
                     described(a.getWindow().getDecorView(),"Delete").performClick();assertTrue(a.project.overlays.isEmpty());a.undo(false);assertEquals("Delete is undoable",1,a.project.overlays.size());
                     a.deselect();a.tab=0;a.addDrawer.category=2;a.renderInspector();text(a.getWindow().getDecorView(),"+ Title").performClick();
                     assertEquals(2,a.project.overlays.size());assertEquals("BLACK ICE",a.project.overlays.get(1).text);
-                    assertNotNull("Text tools",text(a.getWindow().getDecorView(),"Edit Text"));assertNotNull(text(a.getWindow().getDecorView(),"Font"));
+                    if(wide){a.moreAction("Edit Text");assertNotNull(text(a.inspector,"Apply text"));a.panels.back();}else{assertNotNull("Text tools",text(a.getWindow().getDecorView(),"Edit Text"));assertNotNull(text(a.getWindow().getDecorView(),"Font"));}
                     // Multi-select and group.
                     a.toggleMulti(-1,0);assertEquals(2,a.multiCount());assertNotNull(text(a.getWindow().getDecorView(),"2 layers selected"));a.multiAction("Group");
                     assertNotNull(a.project.overlays.get(0).group);assertEquals(a.project.overlays.get(0).group,a.project.overlays.get(1).group);

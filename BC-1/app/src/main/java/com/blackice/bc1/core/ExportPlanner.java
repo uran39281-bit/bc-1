@@ -33,6 +33,8 @@ public final class ExportPlanner {
             this.requestedShortEdge = requestedShortEdge; this.requestedFrameRate = requestedFrameRate;
             reduced = shortEdge != requestedShortEdge || frameRate != requestedFrameRate;
         }
+        private Plan(Plan source,int bitrate){shortEdge=source.shortEdge;frameRate=source.frameRate;width=source.width;height=source.height;codec=source.codec;reduced=source.reduced;requestedShortEdge=source.requestedShortEdge;requestedFrameRate=source.requestedFrameRate;this.bitrate=bitrate;}
+        public Plan withBitrate(int bits){if(bits<500_000||bits>150_000_000)throw new IllegalArgumentException("Bitrate must be 0.5–150 Mb/s");return new Plan(this,bits);}
         public String label() { return shortEdge + "p" + frameRate; }
         /** One line for the export status, e.g. "2160p120 HEVC" or "2160p60 H.264 (2160p120 is not supported on this device)". */
         public String describe() {

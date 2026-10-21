@@ -1,0 +1,26 @@
+package com.blackice.bc1;
+import android.app.*;
+import android.content.*;
+import android.os.StatFs;
+import android.widget.*;
+import com.blackice.bc1.core.*;
+import com.blackice.bc1.editor.*;
+/** Native export form backed by the existing foreground exporter and document picker. */
+final class ExportWorkspace {
+ static void show(EditorActivity a){
+  SharedPreferences prefs=a.getSharedPreferences(ExportService.PREFS,0);LinearLayout content=a.column();content.setPadding(a.dp(16),a.dp(8),a.dp(16),a.dp(8));ScrollView scroll=new ScrollView(a);scroll.addView(content);
+  content.addView(a.label(a.project.name,18,EditorActivity.TEXT,true));content.addView(a.note((a.project.portrait?"1080 × 1920 • 9:16":"1920 × 1080 • 16:9")+" • "+a.project.frameRate+" fps\nDuration: "+EditorActivity.clock(a.project.durationMs())));
+  EditText filename=new EditText(a);filename.setText(a.project.name.replaceAll("[^a-zA-Z0-9 ._-]","_")+".mp4");filename.setTextColor(EditorActivity.TEXT);filename.setSingleLine();filename.setContentDescription("Export filename");content.addView(filename);
+  TextView summary=a.note("");Runnable refresh=()->{try{ExportPlanner.Plan p=ExportOptions.plan(a.project,prefs);summary.setText(p.width+" × "+p.height+" • "+p.describe()+"\nVideo: "+p.bitrate/1000000f+" Mb/s • AAC "+OutputSpec.AUDIO_BITRATE/1000+" kb/s\nEstimated file: "+String.format(java.util.Locale.US,"%.1f MB",p.estimatedBytes(a.project.durationMs())/1e6)+"\nApp staging storage available: "+String.format(java.util.Locale.US,"%.1f GB",new StatFs(a.getCacheDir().getPath()).getAvailableBytes()/1e9)+"\nDestination: choose a file below. Destination free space may be unavailable from its provider.");}catch(RuntimeException e){summary.setText("Encoder settings unavailable: "+e.getMessage());}};
+  choice(a,content,"Quality",new String[]{"Low","Medium","High","Maximum","Custom"},prefs.getInt("export-quality",2),i->{prefs.edit().putInt("export-quality",i).apply();refresh.run();});
+  choice(a,content,"Resolution",ExportPlanner.RESOLUTION_LABELS,ExportPlanner.resolutionIndex(prefs.getInt(ExportPlanner.PREF_RESOLUTION,1080)),i->{prefs.edit().putInt(ExportPlanner.PREF_RESOLUTION,ExportPlanner.SHORT_EDGES[i]).apply();refresh.run();});
+  String[] fps=new String[ExportPlanner.FRAME_RATES.length];int selected=0;for(int i=0;i<fps.length;i++){fps[i]=ExportPlanner.FRAME_RATES[i]+" fps";if(ExportPlanner.FRAME_RATES[i]==prefs.getInt("export-fps",a.project.frameRate))selected=i;}
+  choice(a,content,"Output frame rate",fps,selected,i->{prefs.edit().putInt("export-fps",ExportPlanner.FRAME_RATES[i]).apply();refresh.run();});
+  choice(a,content,"Codec",VideoCodec.Choice.labels(),VideoCodec.Choice.parse(prefs.getString(VideoCodec.Choice.PREF_KEY,null)).ordinal(),i->{prefs.edit().putString(VideoCodec.Choice.PREF_KEY,VideoCodec.Choice.values()[i].name()).apply();refresh.run();});
+  content.addView(a.button("Custom video bitrate (Mb/s)",v->a.numberDialog("Video bitrate: 0.5–150 Mb/s",String.valueOf(prefs.getInt("export-bitrate",8000000)/1000000f),value->{double rate=Double.parseDouble(value);if(!Double.isFinite(rate)||rate<.5||rate>150)throw new IllegalArgumentException("Use 0.5–150 Mb/s");prefs.edit().putInt("export-quality",4).putInt("export-bitrate",(int)(rate*1000000)).apply();refresh.run();})));
+  content.addView(a.note("Audio uses the engine's fixed AAC configuration. Custom audio bitrate/sample rate are not available in this stage."));content.addView(summary);refresh.run();
+  AlertDialog dialog=new AlertDialog.Builder(a).setTitle("Export video").setView(scroll).setPositiveButton("Choose destination",null).setNegativeButton("Back",null).create();dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{String name=filename.getText().toString().trim();if(name.isEmpty()||name.contains("/")||name.contains("\\")){filename.setError("Enter a valid filename");return;}if(!name.toLowerCase(java.util.Locale.ROOT).endsWith(".mp4"))name+=".mp4";a.startActivityForResult(new Intent(Intent.ACTION_CREATE_DOCUMENT).setType("video/mp4").addCategory(Intent.CATEGORY_OPENABLE).putExtra(Intent.EXTRA_TITLE,name),EditorActivity.EXPORT);dialog.dismiss();}));dialog.show();
+ }
+ interface Choice{void pick(int i);}
+ static void choice(EditorActivity a,LinearLayout parent,String title,String[] names,int index,Choice action){TextView button=a.button(title+": "+names[Math.max(0,Math.min(index,names.length-1))],v->{});button.setOnClickListener(v->new AlertDialog.Builder(a).setTitle(title).setItems(names,(d,i)->{action.pick(i);button.setText(title+": "+names[i]);}).show());parent.addView(button);}
+}
