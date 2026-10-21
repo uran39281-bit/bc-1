@@ -19,7 +19,19 @@ Based on main 821c363. Not a qualified release until CI and device evidence belo
 - Audio encoder bitrate/sample-rate controls are still fixed, not exposed as fake adjustable options.
 - Export progress now shows stage, percentage, elapsed time, output bytes and approximate ETA after sufficient progress, plus cancel/play/share. Provider-specific Open Location remains unavailable.
 - Arbitrary canvas/background/save-location choices and new perspective editing are not implemented.
-- No retained signing key has been recovered in this run; CI test APK installs separately.
+- Retained Preview signing backup recovered privately; certificate matches the existing app. Normal upgrade signing is available; no signing material is published.
 
 ## Validation
 Pending CI. Added transform-release/undo/save regression, diagnostics privacy check, saved-effect preservation and bitrate tests. Added 0/90/180/270° metadata fixtures with live preview + export marker-pixel comparisons against Android decoding, and four independent export decode checks. Existing engine/export suites must pass before publishing a test APK.
+
+### Initial candidate evidence (not qualified)
+
+- Initial candidate source: `5b309d4d1c2a23333b8efe7da86ef4d5f1f58417`.
+- GitHub Actions run: https://github.com/uran39281-bit/bc-1/actions/runs/39539371367
+- Build, lint and **139 JVM tests** passed (0 failures / 0 ignored).
+- Test APK manifest independently read: `com.blackice.bc1.icelite`, `1.4.0-dev-icelite`, versionCode **27**.
+- APK signature verified with Android apksig. It uses the CI test certificate, not the retained Preview certificate; not an upgrade for `com.blackice.bc1.preview` and may not upgrade older CI test installs. Preserve/backup existing projects before changing installations.
+- APK SHA-256: `4290618c673229058e11c353d38bbe6a8e5ac744fa3f5afa3d995195484482d1`.
+- Immutable test artifact commit: `fde3041952267e9bf5d039a6bd4e97e2b1cdbbc3`.
+
+Initial Android run: 43/46 passed. Rotation gesture/undo/reopen and all four source orientation preview/export checks passed. Two old UI tests expected removed controls; updated to the new interface. Paused scrub texture pixels passed but the immediate screen capture failed: screen presentation now has its own bounded pixel wait and failure screenshot. Independent host export checks were gated by the test failures and did not run. Requalification required.

@@ -200,7 +200,7 @@ public final class EditorActivity extends Activity {
      * when Play is pressed.
      */
     void renderLive(){
-        if(live==null||liveView==null||!active||loading)return;
+        if(live==null||liveView==null||!active||loading||exporting())return;
         if((project.clips.isEmpty()&&project.overlays.isEmpty())){liveView.setVisibility(View.GONE);return;}
         try{
             EditProject snapshot=comparing&&compareSnapshot!=null?ProjectStore.decode(compareSnapshot):ProjectStore.snapshot(project);
@@ -722,7 +722,8 @@ public final class EditorActivity extends Activity {
             if(c!=null&&c.image)items.add("Duration");
             items.add("Rename");if(c!=null&&c.track<EditProject.AUDIO_FIRST||o!=null&&o.imageUri!=null)items.add("Replace media…");
             java.util.Collections.addAll(items,"Copy attributes…","Paste attributes…","Copy keyframes at playhead","Paste keyframes at playhead","Save as element","Duplicate Above","Duplicate After");
-            if(c!=null&&!c.image)items.add("Playback Speed: "+ToolPanels.trimZero(c.speed)+"×");
+            if(c!=null&&!c.image){items.add("Playback Speed: "+ToolPanels.trimZero(c.speed)+"×");items.add("Slip");}
+            if(c!=null||o!=null)items.add("Animation");
             if(c!=null)items.add("Move to layer / start time…");
             if(c!=null||o!=null)items.add("Close gaps on this track");
             items.add(selectionLocked()?"Unlock layer":"Lock layer");items.add(selectionHidden()?"Show layer":(c!=null&&c.track>=EditProject.AUDIO_FIRST?"Mute layer":"Hide layer"));
@@ -738,7 +739,7 @@ public final class EditorActivity extends Activity {
         if(name.startsWith("Playback Speed:")){panels.runTool("Speed");return;}
         EditProject.Clip c=clip();EditProject.Overlay o=overlay();
         switch(name){
-            case "Edit Text":case "Font":case "Size":case "Color":case "Alignment":case "Duration":panels.runTool(name);break;
+            case "Slip":case "Animation":case "Edit Text":case "Font":case "Size":case "Color":case "Alignment":case "Duration":panels.runTool(name);break;
             case "Rename":renameSelection();break;
             case "Replace media…":if(layerEditable())pick(REPLACE,c!=null?(c.image?"image/*":"video/*"):"image/*");break;
             case "Copy attributes…":copyAttributes();break;
