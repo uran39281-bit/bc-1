@@ -76,6 +76,7 @@ final class TransformPanel {
         LinearLayout quick=a.row();
         quick.addView(a.button("−90°",v->commit("Rotation",()->write(Motion.ROTATION,current().rotation-90))),new LinearLayout.LayoutParams(0,a.dp(48),1));
         quick.addView(a.button("+90°",v->commit("Rotation",()->write(Motion.ROTATION,current().rotation+90))),new LinearLayout.LayoutParams(0,a.dp(48),1));
+        quick.addView(a.button("Reset Rotation",v->commit("Rotation reset",()->{motion().curves.get(Motion.ROTATION).clear();a.setStatic(Motion.ROTATION,0);})),new LinearLayout.LayoutParams(0,a.dp(48),1));
         into.addView(quick);
     }
     private void scale(LinearLayout into,TransformMath.Transform t){
@@ -166,9 +167,9 @@ final class TransformPanel {
             paint.setColor(EditorActivity.CYAN);paint.setStrokeWidth(a.dp(2));c.drawLine(w/2,0,w/2,h,paint);}
         @Override public boolean onTouchEvent(MotionEvent e){
             switch(e.getActionMasked()){
-                case MotionEvent.ACTION_DOWN:if(!a.layerEditable())return false;dragging=true;start=value;downX=e.getX();getParent().requestDisallowInterceptTouchEvent(true);a.pausePlayback();return true;
+                case MotionEvent.ACTION_DOWN:if(!a.layerEditable())return false;dragging=true;start=value;downX=e.getX();if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(true);a.pausePlayback();return true;
                 case MotionEvent.ACTION_MOVE:if(!dragging)return false;value=start-(e.getX()-downX)/a.dp(12)*step;live.value(value);invalidate();return true;
-                case MotionEvent.ACTION_UP:if(dragging&&Math.abs(e.getX()-downX)>a.dp(2))done.value(value);dragging=false;getParent().requestDisallowInterceptTouchEvent(false);return true;
+                case MotionEvent.ACTION_UP:if(dragging&&Math.abs(e.getX()-downX)>a.dp(2))done.value(value);dragging=false;if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(false);return true;
                 case MotionEvent.ACTION_CANCEL:value=start;dragging=false;invalidate();return true;
             }
             return false;
@@ -184,9 +185,9 @@ final class TransformPanel {
             if(dragging){paint.setColor(EditorActivity.CYAN);c.drawCircle(getWidth()/2f+(nowX-downX),getHeight()/2f+(nowY-downY),a.dp(8),paint);}}
         @Override public boolean onTouchEvent(MotionEvent e){
             switch(e.getActionMasked()){
-                case MotionEvent.ACTION_DOWN:if(!a.layerEditable())return false;TransformMath.Transform t=current();baseX=t.x;baseY=t.y;downX=nowX=e.getX();downY=nowY=e.getY();dragging=true;getParent().requestDisallowInterceptTouchEvent(true);a.pausePlayback();invalidate();return true;
+                case MotionEvent.ACTION_DOWN:if(!a.layerEditable())return false;TransformMath.Transform t=current();baseX=t.x;baseY=t.y;downX=nowX=e.getX();downY=nowY=e.getY();dragging=true;if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(true);a.pausePlayback();invalidate();return true;
                 case MotionEvent.ACTION_MOVE:nowX=e.getX();nowY=e.getY();a.previewMove(target()[0],target()[1]);invalidate();return true;
-                case MotionEvent.ACTION_UP:dragging=false;float[] p=target();a.previewMove(Float.NaN,Float.NaN);if(Math.hypot(nowX-downX,nowY-downY)>a.dp(2))commit("Position",()->{write(Motion.X,p[0]);write(Motion.Y,p[1]);});getParent().requestDisallowInterceptTouchEvent(false);invalidate();return true;
+                case MotionEvent.ACTION_UP:dragging=false;float[] p=target();a.previewMove(Float.NaN,Float.NaN);if(Math.hypot(nowX-downX,nowY-downY)>a.dp(2))commit("Position",()->{write(Motion.X,p[0]);write(Motion.Y,p[1]);});if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(false);invalidate();return true;
                 case MotionEvent.ACTION_CANCEL:dragging=false;a.previewMove(Float.NaN,Float.NaN);invalidate();return true;
             }
             return false;
@@ -205,9 +206,9 @@ final class TransformPanel {
             paint.setTextAlign(Paint.Align.CENTER);paint.setTextSize(a.dp(16));paint.setColor(EditorActivity.TEXT);c.drawText(String.format(Locale.US,"%.1f°",angle),cx,cy+a.dp(6),paint);}
         @Override public boolean onTouchEvent(MotionEvent e){
             switch(e.getActionMasked()){
-                case MotionEvent.ACTION_DOWN:if(!a.layerEditable())return false;dragging=true;base=angle;downAngle=pointer(e);getParent().requestDisallowInterceptTouchEvent(true);a.pausePlayback();return true;
+                case MotionEvent.ACTION_DOWN:if(!a.layerEditable())return false;dragging=true;base=angle;downAngle=pointer(e);if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(true);a.pausePlayback();return true;
                 case MotionEvent.ACTION_MOVE:if(!dragging)return false;float delta=(pointer(e)-downAngle+540)%360-180;downAngle=pointer(e);base+=delta;angle=angleSnap>0?TransformMath.snapAngle(base,angleSnap):base;invalidate();return true;
-                case MotionEvent.ACTION_UP:if(dragging){float value=angle;commit("Rotation",()->write(Motion.ROTATION,value));}dragging=false;getParent().requestDisallowInterceptTouchEvent(false);return true;
+                case MotionEvent.ACTION_UP:if(dragging){float value=angle;commit("Rotation",()->write(Motion.ROTATION,value));}dragging=false;if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(false);return true;
                 case MotionEvent.ACTION_CANCEL:dragging=false;return true;
             }
             return false;

@@ -64,17 +64,19 @@ public final class ExportService extends Service {
         if(Build.VERSION.SDK_INT>=35)startForeground(41,initial,ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROCESSING);
         else if(Build.VERSION.SDK_INT>=29)startForeground(41,initial,ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
         else startForeground(41,initial);
-        getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("running",true).putString("status","Preparing export…").apply();
+        getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("running",true).putBoolean("success",false).putInt("percent",-1).putLong("outputBytes",0).putString("status","Preparing export…").putLong("startedAt",System.currentTimeMillis()).apply();
         try {
             destination=Uri.parse(intent.getStringExtra("destination"));
             String path=intent.getStringExtra("project");
             EditProject project=ProjectStore.decode(new String(java.nio.file.Files.readAllBytes(new File(path).toPath()),StandardCharsets.UTF_8));
             new File(path).delete();
+            ActiveFeatures.prepareRender(project);
             output=new File(getCacheDir(),"bc1-export-"+System.currentTimeMillis()+".mp4");
             // Resolution and frame rate the device can actually encode (may step down from the request).
             int shortEdge=intent.getIntExtra(ExportPlanner.PREF_RESOLUTION,getSharedPreferences(PREFS,MODE_PRIVATE).getInt(ExportPlanner.PREF_RESOLUTION,OutputSpec.EXPORT_SHORT_EDGE));
             VideoCodec.Choice codecChoice=VideoCodec.Choice.parse(getSharedPreferences(PREFS,MODE_PRIVATE).getString(VideoCodec.Choice.PREF_KEY,null));
-            plan=EncoderCaps.plan(shortEdge,project.frameRate,project.portrait,codecChoice);
+            plan=ExportOptions.plan(project,getSharedPreferences(PREFS,MODE_PRIVATE));
+            if(intent.hasExtra(ExportPlanner.PREF_RESOLUTION))plan=EncoderCaps.plan(shortEdge,project.frameRate,project.portrait,codecChoice);
             // Pre-flight: the MP4 is written privately, then copied, so both copies must fit.
             long needed=plan.estimatedBytes(project.durationMs())*2+64L*1024*1024,free=new android.os.StatFs(getCacheDir().getPath()).getAvailableBytes();
             if(free<needed)throw new IOException(String.format(java.util.Locale.US,"Not enough storage: this export needs about %.1f GB free, %.1f GB available.",needed/1e9,free/1e9));
@@ -153,13 +155,14 @@ public final class ExportService extends Service {
         if(finished)return;finished=true;main.removeCallbacks(poll);releaseWakeLock();
         if(!success && destination!=null)try {android.provider.DocumentsContract.deleteDocument(getContentResolver(),destination);}catch(Exception ignored){}
         if(destination!=null)try{getContentResolver().releasePersistableUriPermission(destination,Intent.FLAG_GRANT_WRITE_URI_PERMISSION);}catch(SecurityException|IllegalArgumentException ignored){}
+        long finalBytes=output!=null?output.length():0;
         if(output!=null)output.delete();
-        getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("running",false).putBoolean("success",success)
+        getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("running",false).putBoolean("success",success).putInt("percent",success?100:0).putLong("outputBytes",finalBytes)
                 .putString("uri",success?destination.toString():"").putString("status",message).putLong("finishedAt",System.currentTimeMillis()).apply();
         stopForeground(STOP_FOREGROUND_REMOVE);stopSelf();
     }
     private void update(String message,int percent) {
-        getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("status",message).putLong("heartbeat",System.currentTimeMillis()).apply();
+        getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("status",message).putInt("percent",percent).putLong("outputBytes",output!=null?output.length():0).putLong("heartbeat",System.currentTimeMillis()).apply();
         if(Build.VERSION.SDK_INT<33 || checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)==android.content.pm.PackageManager.PERMISSION_GRANTED)
             getSystemService(NotificationManager.class).notify(41,notification(message,percent));
     }

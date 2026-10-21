@@ -121,3 +121,9 @@ assert int(video['nb_read_frames'])==30,video
 assert .9<float(report['format']['duration'])<1.2,report['format']
 print('Independent vector-only export check passed: H.264, 180p, 30 frames, one second')
 PYVERIFY
+
+# Source orientation exports must decode independently too (pixel positions checked on Android).
+for rotation in 0 90 180 270; do
+  ffmpeg -v error -xerror -i "BC-1/app/build/reports/androidTests/qa/orientation-${rotation}.mp4" -f null -
+  echo "Independent orientation export check passed: ${rotation} degrees"
+done

@@ -108,8 +108,15 @@ public class PreviewScrubTest {
         },30000,"visible "+(blue?"blue":"red")+" video frame at "+expected);
         // Also sample the actual screen: a correct off-screen texture alone must not pass.
         inst.waitForIdleSync();int[] point=new int[2];scenario.onActivity(a->{a.liveView.getLocationOnScreen(point);point[0]+=a.liveView.getWidth()/3;point[1]+=a.liveView.getHeight()/3;});
-        android.graphics.Bitmap screen=inst.getUiAutomation().takeScreenshot();assertNotNull(screen);int pixel=screen.getPixel(point[0],point[1]);screen.recycle();
-        assertTrue("Rendered video must be visible on screen",blue?android.graphics.Color.blue(pixel)>150&&android.graphics.Color.red(pixel)<100:android.graphics.Color.red(pixel)>150&&android.graphics.Color.blue(pixel)<100);
+        // Texture readback can precede SurfaceFlinger's next displayed frame. Wait for the actual
+        // screen too, retaining the pixel assertion (not merely a successful offscreen render).
+        long deadline=SystemClock.elapsedRealtime()+5000;int pixel=0;boolean displayed=false;
+        do{android.graphics.Bitmap screen=inst.getUiAutomation().takeScreenshot();assertNotNull(screen);pixel=screen.getPixel(point[0],point[1]);
+            displayed=blue?android.graphics.Color.blue(pixel)>150&&android.graphics.Color.red(pixel)<100:android.graphics.Color.red(pixel)>150&&android.graphics.Color.blue(pixel)<100;
+            if(!displayed&&SystemClock.elapsedRealtime()>=deadline){java.io.File qa=new java.io.File(inst.getTargetContext().getFilesDir(),"qa");qa.mkdirs();try(java.io.OutputStream out=new java.io.FileOutputStream(new java.io.File(qa,"scrub-screen-failure.png"))){screen.compress(android.graphics.Bitmap.CompressFormat.PNG,100,out);}}
+            screen.recycle();if(!displayed)Thread.sleep(50);
+        }while(!displayed&&SystemClock.elapsedRealtime()<deadline);
+        assertTrue("Rendered video must be visible on screen at "+expected+"; pixel="+Integer.toHexString(pixel),displayed);
     }
 
 }

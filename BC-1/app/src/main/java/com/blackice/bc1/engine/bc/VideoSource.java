@@ -83,6 +83,9 @@ final class VideoSource implements FrameSource {
         extractor.seekTo(inMs * 1000, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
         rotation = format.containsKey("rotation-degrees") ? ((format.getInteger("rotation-degrees") % 360) + 360) % 360 : 0;
         int w = format.getInteger(MediaFormat.KEY_WIDTH), h = format.getInteger(MediaFormat.KEY_HEIGHT);
+        if (w <= 0 || h <= 0) { extractor.release(); throw new IllegalArgumentException("Invalid video dimensions"); }
+        // The compositor owns source orientation; prevent MediaCodec rotating the surface too.
+        format.setInteger(MediaFormat.KEY_ROTATION, 0);
         displayAspect = rotation == 90 || rotation == 270 ? h / (double) w : w / (double) h;
         endUs = outMs * 1000;
 
