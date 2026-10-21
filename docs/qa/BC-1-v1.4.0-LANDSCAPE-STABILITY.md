@@ -1,6 +1,6 @@
 # v1.4.0-dev — landscape stability checkpoint
 
-Based on main 821c363. Not a qualified release until CI and device evidence below are complete.
+Development upgrade, based on main 821c363. Automated qualification passed; physical Samsung verification and the explicit limitations below remain outstanding.
 
 ## Changes
 - Fix transform gesture release after the inspector rebuild detaches its view (rotation dial, position pad, value ruler).
@@ -22,7 +22,7 @@ Based on main 821c363. Not a qualified release until CI and device evidence belo
 - Retained Preview signing backup recovered privately; certificate matches the existing app. Normal upgrade signing is available; no signing material is published.
 
 ## Validation
-Pending CI. Added transform-release/undo/save regression, diagnostics privacy check, saved-effect preservation and bitrate tests. Added 0/90/180/270° metadata fixtures with live preview + export marker-pixel comparisons against Android decoding, and four independent export decode checks. Existing engine/export suites must pass before publishing a test APK.
+Added transform-release/undo/save regression, diagnostics privacy check, saved-effect preservation and bitrate tests. Added 0/90/180/270° metadata fixtures with live preview + export marker-pixel comparisons against Android decoding, and four independent export decode checks. The existing engine/export suites passed in the final qualification run.
 
 ### Initial candidate evidence (not qualified)
 
@@ -39,3 +39,34 @@ Initial Android run: 43/46 passed. Rotation gesture/undo/reopen and all four sou
 Second run (`39541348259`, `2764c282`): 44/46 Android tests passed. Paused scrubbing now passed both texture and real-screen pixel checks. Remaining failures: obsolete Effects selection prompt and ambiguous audio test target (clip name versus category). Effects now consistently explains unavailability; category accessibility labels distinguish buttons from clip names. Requalification pending.
 
 Third run (`39543274500`, `36d61599`): 45/46 Android tests passed, including gesture history/save-reopen and paused scrubbing. Remaining real regression: the newly permanent timeline toolbar crowded the preview in a 780×420 wide window. Short wide windows now cap timeline height to a scrollable ruler/track and reduce status padding; the side rail scrolls. All touch controls keep their dimensions. Requalification pending.
+
+## Final qualification — 2026-10-21
+
+- Source: `d3ee8b4498de6a6fabcfc37f6ffe02a3fcb84ac5`.
+- [GitHub Actions run 39544615852](https://github.com/uran39281-bit/bc-1/actions/runs/39544615852): build and lint passed; **139 JVM tests, 46 Android tests, 14 independent export checks passed**.
+- Coverage includes rotation gesture release, undo/redo and serialization; 0/90/180/270 source metadata in preview/export; real-screen paused scrubbing; phone and DeX gesture history/save-reopen; compact 780×420 wide layout; layered playback; H.264/AAC, 1080p, 60 fps, HEVC, staged export and vector-only export.
+- Earlier failures and corrections are recorded above, not hidden by the final passing run.
+- APK: `com.blackice.bc1.preview`, version `1.4.0-dev`, versionCode **27**. Signed with the retained Preview certificate. Install over the existing Preview app without uninstalling it; the separate ICE Lite test app has a different package.
+- Certificate SHA-256: `3c578586198b9ebadd9496d38e25851ec0e90d918684dc4994e03d1d7f29a29d`.
+- APK SHA-256: `3d21cb73672152c5d391c0298ee53382291b6ce6277891cf330fe1eb95ab399c`.
+- Signed APK's non-signature ZIP payload matches CI artifact **12320882151** byte-for-byte. Signature verified with Android apksig. No signing material regenerated or published.
+- Private fatal-crash forwarding and previous native/ANR exit collection are implemented but actual process-kill/restart/native-ANR behavior has not been tested on a physical device. The automated diagnostics check verifies stored report content/privacy.
+- Immediate media-browser dragging is implemented via movement slop and existing drop handling; a dedicated physical touchscreen/DeX mouse acceptance pass is still required.
+
+## Screenshots
+
+Actual emulator captures, not mockups. The short-wide preview remains fitted and the tool rail/timeline scroll. Screenshots illustrate UI states; they are not a frame-latency measurement.
+
+![Media Settings](../../v1.4.0-dev/v140-wide-media-settings.png)
+![Export](../../v1.4.0-dev/v140-wide-export.png)
+![Short landscape window](../../v1.4.0-dev/v10-compact-wide.png)
+
+## Build
+
+Use JDK 17, Gradle 8.11.1 and Android SDK 36. From `BC-1/` run:
+
+```sh
+gradle --no-daemon -Pbc1SideBySide testDebugUnitTest lintDebug assembleDebug
+```
+
+Run `.github/scripts/bc1-device-checks.sh` with an Android emulator/device and ffmpeg installed for instrumentation and independent export checks. Ordinary local debug signing will not update the retained-key Preview installation. Use the published APK; never commit signing material.

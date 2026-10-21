@@ -1,6 +1,6 @@
 # BC-1 — Black Ice editor
 
-**v1.3.3 source update:** centered playhead with timeline swiping, live paused scrubbing, hold-to-move clips and centered zoom/fit. Build/unit/lint, 44 Android tests and 10 export checks passed. Normal upgrade APK awaits retained signing-key access. [Separate test APK, screenshot and QA](docs/qa/BC-1-v1.3.3-CENTERED-PLAYHEAD.md). The signed release below remains v1.3.1.
+**New development upgrade: v1.4.0-dev** — rotation crash/orientation fixes, private crash logs, simplified landscape Media Settings, immediate media dragging and export quality/progress controls. **139 JVM tests, 46 Android tests and 14 independent export checks passed.** [Download the signed Preview upgrade](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.4.0-dev/BC-1-v1.4.0-dev.apk). [QA, screenshots, build instructions and remaining limitations](docs/qa/BC-1-v1.4.0-LANDSCAPE-STABILITY.md). Install over the existing Preview without uninstalling; older releases remain below.
 
 Home of the BC-1 editor (Black Ice Custom Engine): app source in [`BC-1/`](BC-1), released APKs in the version folders below.
 
@@ -12,17 +12,17 @@ Home of the BC-1 editor (Black Ice Custom Engine): app source in [`BC-1/`](BC-1)
 - Previous development: v1.0.5 (formerly labelled v2.0.0; selection-based workspace, layered timeline, transforms and keyframe animation) — published below with the recovered retained preview signing key. See [docs/qa/BC-1-v1.0.5-QA.md](docs/qa/BC-1-v1.0.5-QA.md).
 - Moved from [Black-Ice-Emulator](https://github.com/uran39281-bit/Black-Ice-Emulator/tree/claude/app-update-4vo05i) at commit `14b8308`; earlier history and version branches remain there.
 
-## Latest test build: v1.3.3 — Centered playhead
+## Previous separate test build: v1.3.3 — Centered playhead
 
 [Download BC-1 v1.3.3 test APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.3.3-test/BC-1-v1.3.3-test.apk)
 
 Swipe the timeline beneath the centered green playhead to preview frames while paused. Hold then drag to move a clip. Build/unit/lint, 44 Android tests and 10 independent export checks passed.
 
-**Separate test app:** package `com.blackice.bc1.icelite`, version `1.3.3-icelite`, versionCode 26. Keep your existing Preview app and projects. This CI-signed build is not an upgrade for `com.blackice.bc1.preview`; normal upgrade signing remains blocked by retained-key access. Physical Samsung verification remains pending.
+**Separate test app:** package `com.blackice.bc1.icelite`, version `1.3.3-icelite`, versionCode 26. Keep your existing Preview app and projects. This CI-signed build is not an upgrade for `com.blackice.bc1.preview`; retained-key access was blocked when this older test build was published and has now been restored for v1.4.0-dev. Physical Samsung verification remains pending.
 
 [QA and screenshot](docs/qa/BC-1-v1.3.3-CENTERED-PLAYHEAD.md) · [Checksum](v1.3.3-test/SHA256SUMS.txt)
 
-## Latest Preview upgrade: v1.3.1 — Main workspace and Footage tools
+## Previous Preview upgrade: v1.3.1 — Main workspace and Footage tools
 
 [Download BC-1 v1.3.1 APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.3.1/BC-1-v1.3.1.apk)
 

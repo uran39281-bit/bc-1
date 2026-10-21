@@ -1,3 +1,7 @@
+# v1.4.0-dev landscape stability — automated qualification passed
+
+Source d3ee8b4498de6a6fabcfc37f6ffe02a3fcb84ac5, run39544615852: build/lint, 139 JVM tests, 46 Android tests and 14 independent export checks passed. PR #6 merged. Retained Preview signing backup recovered privately and certificate verified; normal upgrade package com.blackice.bc1.preview/code27. No signing material published or regenerated. Preserve all prior release folders. See qa/BC-1-v1.4.0-LANDSCAPE-STABILITY.md for changes, failed-candidate history, screenshots, qualification and explicit gaps. Physical Samsung and real camera fixtures still need validation; custom audio encoder controls/arbitrary canvas/background/storage/Open Location are not implemented. Do not call this development build production-stable.
+
 # v1.3.3 centered playhead — qualified source
 
 Source a4f8d98ee31b7bd79e25cfdf6208cddd5c2d2a61, run39510438799: build/unit/lint passed, 44 Android tests /10 independent export checks passed. Playhead stays centered; timeline swipes seek, touch hold-drag moves layers, trim grips remain direct. Zoom/fit and rebuilds retain current time at center. Actual screenshot reviewed. See qa/BC-1-v1.3.3-CENTERED-PLAYHEAD.md for test APK and signing limitation. Normal upgrade remains blocked; retain original key and all prior releases.
