@@ -64,7 +64,7 @@ public final class ExportService extends Service {
         if(Build.VERSION.SDK_INT>=35)startForeground(41,initial,ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROCESSING);
         else if(Build.VERSION.SDK_INT>=29)startForeground(41,initial,ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
         else startForeground(41,initial);
-        getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("running",true).putString("status","Preparing export…").putLong("startedAt",System.currentTimeMillis()).apply();
+        getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("running",true).putBoolean("success",false).putInt("percent",-1).putLong("outputBytes",0).putString("status","Preparing export…").putLong("startedAt",System.currentTimeMillis()).apply();
         try {
             destination=Uri.parse(intent.getStringExtra("destination"));
             String path=intent.getStringExtra("project");
@@ -155,8 +155,9 @@ public final class ExportService extends Service {
         if(finished)return;finished=true;main.removeCallbacks(poll);releaseWakeLock();
         if(!success && destination!=null)try {android.provider.DocumentsContract.deleteDocument(getContentResolver(),destination);}catch(Exception ignored){}
         if(destination!=null)try{getContentResolver().releasePersistableUriPermission(destination,Intent.FLAG_GRANT_WRITE_URI_PERMISSION);}catch(SecurityException|IllegalArgumentException ignored){}
+        long finalBytes=output!=null?output.length():0;
         if(output!=null)output.delete();
-        getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("running",false).putBoolean("success",success)
+        getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("running",false).putBoolean("success",success).putInt("percent",success?100:0).putLong("outputBytes",finalBytes)
                 .putString("uri",success?destination.toString():"").putString("status",message).putLong("finishedAt",System.currentTimeMillis()).apply();
         stopForeground(STOP_FOREGROUND_REMOVE);stopSelf();
     }
