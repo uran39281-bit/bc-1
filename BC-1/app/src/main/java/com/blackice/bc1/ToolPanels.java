@@ -37,7 +37,7 @@ final class ToolPanels {
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
         if(a.multiCount()>1){multiTools();return;}
         if(c==null&&o==null){browseHome();return;}
-        if(a.wideLayout){landscapeMediaSettings(into);return;}
+        if(a.wideLayout||footage()){landscapeMediaSettings(into);return;}
         if(footage()){footagePanel(into);return;}
         String kind=kind(c,o);
         into.addView(a.note(kind+"  •  "+(c!=null?c.name:o.label())+(locked()?"  •  Layer locked":"")));
@@ -74,11 +74,12 @@ final class ToolPanels {
     private void landscapeMediaSettings(LinearLayout into){
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();boolean visual=c==null||c.track<EditProject.AUDIO_FIRST;if(c!=null&&!c.image)checkAudio(c);
         LinearLayout title=a.row();title.addView(a.label("Media Settings",18,EditorActivity.TEXT,true),new LinearLayout.LayoutParams(0,a.dp(48),1));title.addView(a.headerIcon("More","Selected media actions",v->a.moreMenu()));into.addView(title);
-        into.addView(a.note(c!=null?c.name:o.label()));
-        String[] names={"Move & Transform","Blending & Opacity","Effects — Coming Later","Audio"};
-        for(int i=0;i<names.length;i++){final int which=i;TextView b=a.button(names[i],v->{if(which==3)open("Audio",this::audioPanel);else category(names[which]);});b.setGravity(Gravity.CENTER_VERTICAL|Gravity.LEFT);b.setTooltipText(names[i]);b.setContentDescription("Media Settings: "+names[i]);EditorActivity.dim(b,!locked()&&!a.uiLocked&&(i==3?c!=null&&!c.image&&(c.audioOnly||Boolean.TRUE.equals(audioSources.get(c.uri))):i!=2&&visual));into.addView(b,new LinearLayout.LayoutParams(-1,a.dp(60)));}
-
+        TextView file=a.label(c!=null?c.name:o.label(),12,EditorActivity.MUTED,false);file.setSingleLine(true);file.setEllipsize(android.text.TextUtils.TruncateAt.END);file.setContentDescription("Selected media: "+(c!=null?c.name:o.label()));file.setTooltipText(file.getContentDescription());into.addView(file);
+        String[] names={"Move & Transform","Blending & Opacity","Effects — Coming Later","Audio"};String[] icons={"Transform","Opacity","Effects","Audio"};LinearLayout row=null;
+        for(int i=0;i<4;i++){final int which=i;if(i%2==0){row=a.row();into.addView(row);}boolean enabled=!locked()&&!a.uiLocked&&(i==3?c!=null&&!c.image&&(c.audioOnly||Boolean.TRUE.equals(audioSources.get(c.uri))):i!=2&&visual);
+            MediaTile tile=new MediaTile(a,names[i],icons[i],enabled,()->{if(which==3)open("Audio",this::audioPanel);else category(names[which]);});LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,-2,1);lp.setMargins(a.dp(3),a.dp(6),a.dp(3),0);row.addView(tile,lp);}
     }
+
     private void audioPanel(){
         EditProject.Clip c=a.clip();if(c==null||c.image){a.inspector.addView(a.note("This media has no audio."));return;}
         a.inspector.addView(a.button(c.unmutedVolume>=0?"Unmute":"Mute",v->{if(a.layerEditable())a.edit("Audio mute updated",()->ClipAudio.toggleMute(c));}));
@@ -139,6 +140,8 @@ final class ToolPanels {
         if(tool.startsWith("Duration:"))tool="Duration";else if(tool.startsWith("Speed:"))tool="Speed";
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
         switch(tool){
+            case "Trim Start":playheadEdit(0);return;
+            case "Trim End":playheadEdit(2);return;
             case "Split":if(a.layerEditable())a.splitSelected();return;
             case "Duplicate":a.duplicateSelected();return;
             case "Transform":category("Move & Transform");return;

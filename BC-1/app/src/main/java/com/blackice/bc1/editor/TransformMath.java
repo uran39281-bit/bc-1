@@ -18,13 +18,19 @@ public final class TransformMath {
         Transform t=new Transform();Motion m=c.motion;
         t.x=m.value(Motion.X,sourceTime,c.x);t.y=m.value(Motion.Y,sourceTime,c.y);t.scale=m.value(Motion.SCALE,sourceTime,c.scale);t.rotation=m.value(Motion.ROTATION,sourceTime,c.rotation);
         t.skewX=m.value(Motion.SKEW_X,sourceTime,c.skewX);t.skewY=m.value(Motion.SKEW_Y,sourceTime,c.skewY);t.anchorX=m.value(Motion.ANCHOR_X,sourceTime,c.anchorX);t.anchorY=m.value(Motion.ANCHOR_Y,sourceTime,c.anchorY);
-        t.aspect=c.aspect;t.flipH=c.flipH;t.flipV=c.flipV;return t;
+        dimensions(t,m,sourceTime,c.aspect,c.widthScale,c.heightScale);t.flipH=c.flipH;t.flipV=c.flipV;return t;
     }
     public static Transform of(EditProject.Overlay o,long localTime) {
         Transform t=new Transform();Motion m=o.motion;
         t.x=m.value(Motion.X,localTime,o.x);t.y=m.value(Motion.Y,localTime,o.y);t.scale=m.value(Motion.SCALE,localTime,o.scale);t.rotation=m.value(Motion.ROTATION,localTime,o.rotation);
         t.skewX=m.value(Motion.SKEW_X,localTime,o.skewX);t.skewY=m.value(Motion.SKEW_Y,localTime,o.skewY);t.anchorX=m.value(Motion.ANCHOR_X,localTime,o.anchorX);t.anchorY=m.value(Motion.ANCHOR_Y,localTime,o.anchorY);
-        t.aspect=o.aspect;t.flipH=o.flipH;t.flipV=o.flipV;return t;
+        dimensions(t,m,localTime,o.aspect,o.widthScale,o.heightScale);t.flipH=o.flipH;t.flipV=o.flipV;return t;
+    }
+    /** New independent channels override only their dimension. Absent channels retain legacy animation exactly. */
+    private static void dimensions(Transform t,Motion m,long time,float aspect,float width,float height){
+        float w=m.value(Motion.WIDTH,time,width<0?t.scale:width);
+        float h=m.value(Motion.HEIGHT,time,height<0?t.scale*aspect:height);
+        t.scale=w;t.aspect=h/w;
     }
     /** 2×2 matrix M as {m00, m01, m10, m11}. */
     public static double[] matrix(Transform t) {

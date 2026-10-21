@@ -136,9 +136,9 @@ final class PreviewEditor extends View {
         if(g==KEY){long t=dragKeyTime;a.edit("Motion path keyframe moved",()->{Motion m=a.selectedMotion();m.put(Motion.X,keyWithValue(m,Motion.X,t,result.x));m.put(Motion.Y,keyWithValue(m,Motion.Y,t,result.y));});invalidate();return;}
         a.edit("Transform updated",()->{
             if(result.x!=base.x||result.y!=base.y){a.transformPanel.write(Motion.X,result.x);a.transformPanel.write(Motion.Y,result.y);}
-            if(result.scale!=base.scale)a.transformPanel.write(Motion.SCALE,result.scale);
+            if(result.scale!=base.scale||result.aspect!=base.aspect)a.transformPanel.writeDimensions(result.scale,result.scale*result.aspect,a.transformPanel.linked);
             if(result.rotation!=base.rotation)a.transformPanel.write(Motion.ROTATION,result.rotation);
-            if(result.aspect!=base.aspect)a.setAspect(result.aspect);
+            
             // Group members follow the primary layer's move.
             moveGroupMembers(result.x-base.x,result.y-base.y);
         });

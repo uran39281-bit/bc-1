@@ -653,6 +653,7 @@ public final class EditorActivity extends Activity {
     void beginLiveAdjust(){if(!layerEditable())return;try{liveBefore=ProjectStore.encode(project);}catch(Exception e){liveBefore=null;return;}if(player!=null||previewPending)releasePreview();main.removeCallbacks(warmPreview);previewProxy.cancel();}
     /** During a drag: apply the value and redraw at once, without validation or undo. */
     void liveAdjust(Runnable apply){if(liveBefore==null)return;try{apply.run();if(previewControls!=null)previewControls.invalidate();renderLive();}catch(RuntimeException ignored){}}
+    void cancelLiveAdjust(){String before=liveBefore;liveBefore=null;if(before==null)return;try{project=ProjectStore.decode(before);showLive();if(previewControls!=null)previewControls.invalidate();}catch(Exception e){throw new IllegalStateException("Cannot restore transform gesture",e);}}
     /** Drag end: validate and record a single undo entry from the drag start. */
     void endLiveAdjust(String message,Runnable apply){
         String before=liveBefore;liveBefore=null;if(before==null)return;
@@ -705,8 +706,8 @@ public final class EditorActivity extends Activity {
         TextView b=button(title,v->action.run());b.setTextSize(11);LinearLayout.LayoutParams cell=new LinearLayout.LayoutParams(0,dp(wideLayout?44:54),1);cell.rightMargin=dp(4);gridRow.addView(b,cell);gridCount++;}
     void flushGrid(){if(gridRow!=null){int columns=wideLayout?3:2;while(gridCount%columns!=0){gridRow.addView(new View(this),new LinearLayout.LayoutParams(0,dp(wideLayout?44:54),1));gridCount++;}}gridRow=null;gridCount=0;}
     void setStatic(int property,float value){EditProject.Clip c=clip();EditProject.Overlay o=overlay();
-        if(c!=null)switch(property){case Motion.X:c.x=value;break;case Motion.Y:c.y=value;break;case Motion.SCALE:c.scale=value;break;case Motion.ROTATION:c.rotation=value;break;case Motion.OPACITY:c.opacity=value;break;case Motion.INTENSITY:c.intensity=value;break;case Motion.SKEW_X:c.skewX=value;break;case Motion.SKEW_Y:c.skewY=value;break;case Motion.ANCHOR_X:c.anchorX=value;break;case Motion.ANCHOR_Y:c.anchorY=value;break;}
-        else if(o!=null)switch(property){case Motion.X:o.x=value;break;case Motion.Y:o.y=value;break;case Motion.SCALE:o.scale=value;break;case Motion.ROTATION:o.rotation=value;break;case Motion.OPACITY:o.opacity=value;break;case Motion.SKEW_X:o.skewX=value;break;case Motion.SKEW_Y:o.skewY=value;break;case Motion.ANCHOR_X:o.anchorX=value;break;case Motion.ANCHOR_Y:o.anchorY=value;break;}
+        if(c!=null)switch(property){case Motion.WIDTH:c.widthScale=value;break;case Motion.HEIGHT:c.heightScale=value;break;case Motion.X:c.x=value;break;case Motion.Y:c.y=value;break;case Motion.SCALE:c.scale=value;break;case Motion.ROTATION:c.rotation=value;break;case Motion.OPACITY:c.opacity=value;break;case Motion.INTENSITY:c.intensity=value;break;case Motion.SKEW_X:c.skewX=value;break;case Motion.SKEW_Y:c.skewY=value;break;case Motion.ANCHOR_X:c.anchorX=value;break;case Motion.ANCHOR_Y:c.anchorY=value;break;}
+        else if(o!=null)switch(property){case Motion.WIDTH:o.widthScale=value;break;case Motion.HEIGHT:o.heightScale=value;break;case Motion.X:o.x=value;break;case Motion.Y:o.y=value;break;case Motion.SCALE:o.scale=value;break;case Motion.ROTATION:o.rotation=value;break;case Motion.OPACITY:o.opacity=value;break;case Motion.SKEW_X:o.skewX=value;break;case Motion.SKEW_Y:o.skewY=value;break;case Motion.ANCHOR_X:o.anchorX=value;break;case Motion.ANCHOR_Y:o.anchorY=value;break;}
     }
     void renameSelection(){EditProject.Clip c=clip();EditProject.Overlay o=overlay();if((c==null&&o==null)||!layerEditable())return;
         numberDialog("Layer name",c!=null?c.name:o.label(),name->{if(name.isBlank()||name.length()>60)throw new IllegalArgumentException("Use a name of 1 to 60 characters.");edit("Layer renamed",()->{if(c!=null)c.name=name;else o.name=name;});});}
@@ -723,6 +724,7 @@ public final class EditorActivity extends Activity {
         else{
             if(o!=null){if(o.imageUri==null&&o.shape==0)java.util.Collections.addAll(items,"Edit Text","Font","Size","Color","Alignment");else if(o.shape>0)items.add("Color");items.add("Duration");}
             if(c!=null&&c.image)items.add("Duration");
+            java.util.Collections.addAll(items,"Split","Trim Start","Trim End","Duplicate");if(c!=null&&c.track<EditProject.AUDIO_FIRST)items.add("Chroma Key");
             items.add("Rename");if(c!=null&&c.track<EditProject.AUDIO_FIRST||o!=null&&o.imageUri!=null)items.add("Replace media…");
             java.util.Collections.addAll(items,"Copy attributes…","Paste attributes…","Copy keyframes at playhead","Paste keyframes at playhead","Save as element","Duplicate Above","Duplicate After");
             if(c!=null&&!c.image){items.add("Playback Speed: "+ToolPanels.trimZero(c.speed)+"×");items.add("Slip");}
@@ -742,7 +744,7 @@ public final class EditorActivity extends Activity {
         if(name.startsWith("Playback Speed:")){panels.runTool("Speed");return;}
         EditProject.Clip c=clip();EditProject.Overlay o=overlay();
         switch(name){
-            case "Slip":case "Animation":case "Edit Text":case "Font":case "Size":case "Color":case "Alignment":case "Duration":panels.runTool(name);break;
+            case "Split":case "Trim Start":case "Trim End":case "Chroma Key":case "Slip":case "Animation":case "Edit Text":case "Font":case "Size":case "Color":case "Alignment":case "Duration":panels.runTool(name);break;
             case "Rename":renameSelection();break;
             case "Replace media…":if(layerEditable())pick(REPLACE,c!=null?(c.image?"image/*":"video/*"):"image/*");break;
             case "Copy attributes…":copyAttributes();break;
