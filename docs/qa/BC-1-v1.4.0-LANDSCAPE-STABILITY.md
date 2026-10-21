@@ -35,3 +35,5 @@ Pending CI. Added transform-release/undo/save regression, diagnostics privacy ch
 - Immutable test artifact commit: `fde3041952267e9bf5d039a6bd4e97e2b1cdbbc3`.
 
 Initial Android run: 43/46 passed. Rotation gesture/undo/reopen and all four source orientation preview/export checks passed. Two old UI tests expected removed controls; updated to the new interface. Paused scrub texture pixels passed but the immediate screen capture failed: screen presentation now has its own bounded pixel wait and failure screenshot. Independent host export checks were gated by the test failures and did not run. Requalification required.
+
+Second run (`39541348259`, `2764c282`): 44/46 Android tests passed. Paused scrubbing now passed both texture and real-screen pixel checks. Remaining failures: obsolete Effects selection prompt and ambiguous audio test target (clip name versus category). Effects now consistently explains unavailability; category accessibility labels distinguish buttons from clip names. Requalification pending.

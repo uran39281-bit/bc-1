@@ -76,7 +76,7 @@ final class ToolPanels {
         LinearLayout title=a.row();title.addView(a.label("Media Settings",18,EditorActivity.TEXT,true),new LinearLayout.LayoutParams(0,a.dp(48),1));title.addView(a.headerIcon("More","Selected media actions",v->a.moreMenu()));into.addView(title);
         into.addView(a.note(c!=null?c.name:o.label()));
         String[] names={"Move & Transform","Blending & Opacity","Effects — Coming Later","Audio"};
-        for(int i=0;i<names.length;i++){final int which=i;TextView b=a.button(names[i],v->{if(which==3)open("Audio",this::audioPanel);else category(names[which]);});b.setGravity(Gravity.CENTER_VERTICAL|Gravity.LEFT);b.setTooltipText(names[i]);EditorActivity.dim(b,!locked()&&!a.uiLocked&&(i==3?c!=null&&!c.image&&(c.audioOnly||Boolean.TRUE.equals(audioSources.get(c.uri))):i!=2&&visual));into.addView(b,new LinearLayout.LayoutParams(-1,a.dp(60)));}
+        for(int i=0;i<names.length;i++){final int which=i;TextView b=a.button(names[i],v->{if(which==3)open("Audio",this::audioPanel);else category(names[which]);});b.setGravity(Gravity.CENTER_VERTICAL|Gravity.LEFT);b.setTooltipText(names[i]);b.setContentDescription("Media Settings: "+names[i]);EditorActivity.dim(b,!locked()&&!a.uiLocked&&(i==3?c!=null&&!c.image&&(c.audioOnly||Boolean.TRUE.equals(audioSources.get(c.uri))):i!=2&&visual));into.addView(b,new LinearLayout.LayoutParams(-1,a.dp(60)));}
 
     }
     private void audioPanel(){
@@ -332,11 +332,7 @@ final class ToolPanels {
         valueRow("Shadow",o.shadow,0,1,0,100,"%",v->o.shadow=v,null,0,1);
     }
     private void effectsPanel(){a.inspector.addView(a.note("Effects — Coming Later. Existing effect values are retained in saved projects but bypassed during preview and export."));}
-    private void effectsHome(){
-        EditProject.Clip c=a.clip();
-        if(c==null||c.track>=EditProject.AUDIO_FIRST){a.inspector.addView(a.note("Select a video or picture to apply visual effects."));return;}
-        a.inspector.addView(a.note("Selected: "+c.name));effectsPanel();
-    }
+    private void effectsHome(){effectsPanel();}
     private void textPanel(){
         EditProject.Overlay o=a.overlay();if(o==null)return;
         EditText text=new EditText(a);text.setText(o.text);text.setTextColor(EditorActivity.TEXT);text.setMinLines(2);text.setContentDescription("Layer text");a.inspector.addView(text);
