@@ -12,7 +12,17 @@ Home of the BC-1 editor (Black Ice Custom Engine): app source in [`BC-1/`](BC-1)
 - Previous development: v1.0.5 (formerly labelled v2.0.0; selection-based workspace, layered timeline, transforms and keyframe animation) — published below with the recovered retained preview signing key. See [docs/qa/BC-1-v1.0.5-QA.md](docs/qa/BC-1-v1.0.5-QA.md).
 - Moved from [Black-Ice-Emulator](https://github.com/uran39281-bit/Black-Ice-Emulator/tree/claude/app-update-4vo05i) at commit `14b8308`; earlier history and version branches remain there.
 
-## Latest: v1.3.1 — Main workspace and Footage tools
+## Latest test build: v1.3.3 — Centered playhead
+
+[Download BC-1 v1.3.3 test APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.3.3-test/BC-1-v1.3.3-test.apk)
+
+Swipe the timeline beneath the centered green playhead to preview frames while paused. Hold then drag to move a clip. Build/unit/lint, 44 Android tests and 10 independent export checks passed.
+
+**Separate test app:** package `com.blackice.bc1.icelite`, version `1.3.3-icelite`, versionCode 26. Keep your existing Preview app and projects. This CI-signed build is not an upgrade for `com.blackice.bc1.preview`; normal upgrade signing remains blocked by retained-key access. Physical Samsung verification remains pending.
+
+[QA and screenshot](docs/qa/BC-1-v1.3.3-CENTERED-PLAYHEAD.md) · [Checksum](v1.3.3-test/SHA256SUMS.txt)
+
+## Latest Preview upgrade: v1.3.1 — Main workspace and Footage tools
 
 [Download BC-1 v1.3.1 APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.3.1/BC-1-v1.3.1.apk)
 
