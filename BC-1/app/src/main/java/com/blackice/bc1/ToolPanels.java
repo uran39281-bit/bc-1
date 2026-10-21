@@ -72,11 +72,11 @@ final class ToolPanels {
         if(c!=null&&c.track==0)into.addView(a.note("Main sequence: edge dragging uses ripple trim. Trim Start/End at playhead preserve other clip positions."));
     }
     private void landscapeMediaSettings(LinearLayout into){
-        EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();boolean visual=c==null||c.track<EditProject.AUDIO_FIRST;
+        EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();boolean visual=c==null||c.track<EditProject.AUDIO_FIRST;if(c!=null&&!c.image)checkAudio(c);
         LinearLayout title=a.row();title.addView(a.label("Media Settings",18,EditorActivity.TEXT,true),new LinearLayout.LayoutParams(0,a.dp(48),1));title.addView(a.headerIcon("More","Selected media actions",v->a.moreMenu()));into.addView(title);
         into.addView(a.note(c!=null?c.name:o.label()));
         String[] names={"Move & Transform","Blending & Opacity","Effects — Coming Later","Audio"};
-        for(int i=0;i<names.length;i++){final int which=i;TextView b=a.button(names[i],v->{if(which==3)open("Audio",this::audioPanel);else category(names[which]);});b.setGravity(Gravity.CENTER_VERTICAL|Gravity.LEFT);b.setTooltipText(names[i]);EditorActivity.dim(b,!locked()&&!a.uiLocked&&(i==3?c!=null&&!c.image:i!=2&&visual));into.addView(b,new LinearLayout.LayoutParams(-1,a.dp(60)));}
+        for(int i=0;i<names.length;i++){final int which=i;TextView b=a.button(names[i],v->{if(which==3)open("Audio",this::audioPanel);else category(names[which]);});b.setGravity(Gravity.CENTER_VERTICAL|Gravity.LEFT);b.setTooltipText(names[i]);EditorActivity.dim(b,!locked()&&!a.uiLocked&&(i==3?c!=null&&!c.image&&(c.audioOnly||Boolean.TRUE.equals(audioSources.get(c.uri))):i!=2&&visual));into.addView(b,new LinearLayout.LayoutParams(-1,a.dp(60)));}
 
     }
     private void audioPanel(){

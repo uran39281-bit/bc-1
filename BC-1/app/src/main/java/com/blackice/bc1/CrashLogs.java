@@ -21,7 +21,7 @@ public final class CrashLogs extends Application {
             if(previous!=null)previous.uncaughtException(thread,error);else{android.os.Process.killProcess(android.os.Process.myPid());System.exit(10);}}});
         new Thread(()->collectExits(),"bc1-exit-diagnostics").start();
     }
-    public static void operation(String value){operation=value==null?"Unknown":value.replaceAll("[^A-Za-z0-9 .:→−+/-]","?");}
+    public static void operation(String value){String first=value==null?"":value.split(" ",2)[0];operation=Arrays.asList("Rotation","Position","Scale","Width","Height","Anchor","Transforms","Opacity","Blend","Audio","Clip","Layer","Trimmed","Duration","Speed","Project","Frame","Imported","Export").contains(first)?first:"Editing";}
     public static void record(String stage,Throwable error){CrashLogs a=app;if(a==null)return;
         StringBuilder b=new StringBuilder(stage).append('\n');Set<Throwable> seen=Collections.newSetFromMap(new IdentityHashMap<>());
         for(int n=0;error!=null&&n<6&&seen.add(error);n++,error=error.getCause()){

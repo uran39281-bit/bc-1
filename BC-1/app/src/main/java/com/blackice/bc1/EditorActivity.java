@@ -526,16 +526,22 @@ public final class EditorActivity extends Activity {
         else settingsPanel();
     }
     /** Project settings open on demand from the top bar instead of occupying a permanent tab. */
+    void projectSettingsDialog(){
+        String[] entries={"Project name: "+project.name,"Canvas: "+(project.portrait?"1080 × 1920 / 9:16":"1920 × 1080 / 16:9"),"Frame rate: "+project.frameRate+" fps","Background: Black","Project storage"};
+        new AlertDialog.Builder(this).setTitle("Project Settings").setItems(entries,(d,i)->{
+            if(i==0)numberDialog("Project name",project.name,name->edit("Project renamed",()->{if(name.isBlank()||name.length()>80)throw new IllegalArgumentException("Use 1–80 characters");project.name=name;}));
+            else if(i==1)new AlertDialog.Builder(this).setTitle("Canvas aspect ratio").setSingleChoiceItems(new String[]{"1920 × 1080 • 16:9","1080 × 1920 • 9:16"},project.portrait?1:0,(dialog,index)->{dialog.dismiss();edit("Project canvas updated",()->project.portrait=index==1);}).setNegativeButton("Back",null).show();
+            else if(i==2){int[] rates=com.blackice.bc1.core.ExportPlanner.FRAME_RATES;String[] labels=new String[rates.length];for(int j=0;j<rates.length;j++)labels[j]=rates[j]+" fps";new AlertDialog.Builder(this).setTitle("Project frame rate").setItems(labels,(dialog,index)->edit("Frame rate updated",()->project.frameRate=rates[index])).show();}
+            else if(i==3)tell("The current engine uses a black project background. Add a full-frame shape for a different background.");
+            else new AlertDialog.Builder(this).setTitle("Project storage").setMessage("Projects and imported media are saved privately in this app. Use Settings → Export project + media bundle to choose a backup destination.").setPositiveButton("OK",null).show();
+        }).setNegativeButton("Back",null).show();
+    }
     void settingsPanel(){
         inspector.addView(button("‹  Back to editing",v->{tab=selected>=0||selectedOverlay>=0?1:0;renderInspector();}));
-        inspector.addView(label("Project Settings",16,TEXT,true));
-        addAction("Project name: "+project.name,()->projectsMenu());
-            select("Project canvas",new String[]{"Landscape 16:9","Portrait 9:16"},project.portrait?1:0,index->{remember();project.portrait=index==1;changed("Project aspect updated");});
+        addAction("Project Settings",this::projectSettingsDialog);
+
             select("Preview resolution (short edge)",new String[]{"360p • Performance","540p • Balanced","1080p • Quality"},project.previewHeight==360?0:project.previewHeight==540?1:2,index->{remember();project.previewHeight=new int[]{360,540,1080}[index];changed("Preview quality updated");});
             addAction("Workspace layout: "+new String[]{"Auto • phone / tablet / DeX","Phone portrait","Wide tablet / DeX"}[mode.ordinal()],()->chooseMode());
-            {int[] rates=com.blackice.bc1.core.ExportPlanner.FRAME_RATES;String[] rateLabels=new String[rates.length];int rateIndex=2;
-            for(int i=0;i<rates.length;i++){rateLabels[i]=rates[i]+" fps";if(rates[i]==project.frameRate)rateIndex=i;}
-            select("Frame rate",rateLabels,rateIndex,index->edit("Frame rate updated",()->project.frameRate=rates[index]));}
             {android.content.SharedPreferences exportPrefs=getSharedPreferences(ExportService.PREFS,MODE_PRIVATE);
             com.blackice.bc1.core.ExportEngine engine=com.blackice.bc1.core.ExportEngine.resolve(exportPrefs.getString(com.blackice.bc1.core.ExportEngine.PREF_KEY,null),getPackageName());
             select("Export resolution",com.blackice.bc1.core.ExportPlanner.RESOLUTION_LABELS,com.blackice.bc1.core.ExportPlanner.resolutionIndex(exportPrefs.getInt(com.blackice.bc1.core.ExportPlanner.PREF_RESOLUTION,1080)),index->{if(exporting()){tell("Wait for the current export to finish.");renderInspector();return;}exportPrefs.edit().putInt(com.blackice.bc1.core.ExportPlanner.PREF_RESOLUTION,com.blackice.bc1.core.ExportPlanner.SHORT_EDGES[index]).apply();tell("Export resolution: "+com.blackice.bc1.core.ExportPlanner.RESOLUTION_LABELS[index]);renderInspector();});
@@ -1053,7 +1059,7 @@ public final class EditorActivity extends Activity {
         if(project.clips.size()>0&&clip()!=null&&clip().track>=EditProject.AUDIO_FIRST)loadWaveform(clip(),true);
     }
     void exportMenu() {
-        if(exporting()){new AlertDialog.Builder(this).setTitle("Cancel current export?").setMessage(getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getString("status","Export running")).setPositiveButton("Cancel export",(d,w)->startService(new Intent(this,ExportService.class).setAction(ExportService.ACTION_CANCEL))).setNegativeButton("Keep exporting",null).show();return;}
+        if(exporting()){ExportWorkspace.progress(this);return;}
         if(loading||importing)return;if((project.clips.isEmpty()&&project.overlays.isEmpty())){tell("Import at least one video or image before exporting.");return;}
         ExportWorkspace.show(this);
     }
@@ -1070,7 +1076,7 @@ public final class EditorActivity extends Activity {
         if(exporting()){tell("An export is already running.");return;}saveNow();releasePreview();main.removeCallbacks(warmPreview);previewProxy.cancel();if(live!=null)live.releaseDecoders();exportLaunching=true;
         EditProject snapshot=ProjectStore.snapshot(project);io.execute(()->{try{
             File file=new File(getCacheDir(),"export-project-"+System.currentTimeMillis()+".json");try(FileOutputStream out=new FileOutputStream(file)){out.write(ProjectStore.encode(snapshot).getBytes(java.nio.charset.StandardCharsets.UTF_8));}
-            main.post(()->{exportLaunching=false;try{startForegroundService(new Intent(this,ExportService.class).putExtra("project",file.getAbsolutePath()).putExtra("destination",destination.toString()));message="Export started";}catch(Exception e){file.delete();tell("Cannot start export: "+e.getMessage());}});
+            main.post(()->{exportLaunching=false;try{startForegroundService(new Intent(this,ExportService.class).putExtra("project",file.getAbsolutePath()).putExtra("destination",destination.toString()));message="Export started";ExportWorkspace.progress(this);}catch(Exception e){file.delete();tell("Cannot start export: "+e.getMessage());}});
         }catch(Exception e){main.post(()->{exportLaunching=false;tell("Cannot prepare export: "+e.getMessage());});}});
     }
     void saveAndProjects(){
