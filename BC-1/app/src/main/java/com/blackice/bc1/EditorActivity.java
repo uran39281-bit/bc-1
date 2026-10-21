@@ -413,7 +413,7 @@ public final class EditorActivity extends Activity {
         jumpEnd=transportIcon("SkipEnd","Jump to end",v->jump(true));center.addView(jumpEnd);
         controls.addView(center,new LinearLayout.LayoutParams(-2,dp(56)));
         LinearLayout end=row();end.setGravity(Gravity.CENTER_VERTICAL|Gravity.END);
-        if(!topTabs()){end.addView(transportIcon("Undo","Undo",v->undo(false)));end.addView(transportIcon("Redo","Redo",v->undo(true)));}
+        if(!wideLayout){end.addView(transportIcon("Undo","Undo",v->undo(false)));end.addView(transportIcon("Redo","Redo",v->undo(true)));}
         end.addView(transportIcon("Fullscreen","Fullscreen preview",v->{fullscreenPreview=!fullscreenPreview;buildWorkspace();}));
         controls.addView(end,new LinearLayout.LayoutParams(0,dp(48),1));
         LinearLayout transport=column();

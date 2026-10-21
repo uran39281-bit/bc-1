@@ -23,8 +23,7 @@ final class AddDrawer {
     void render(LinearLayout into){
         a.binGrid=null;
         if(a.mobile!=null){mobile(into);return;}
-        // Wide windows switch categories from the top bar, so the panel does not repeat them.
-        if(a.topTabs()){content(into);return;}
+        // Categories live here now that the landscape header contains only project actions.
         LinearLayout tabs=a.row();
         for(int i=0;i<CATEGORIES.length;i++){final int index=i;String icon=i==0?"Media":i==1?"Audio":i==2?"Text":i==3?"Shapes":"Saved";
             TextView b=a.iconButton(CATEGORIES[i],v->{category=index;items=null;album="All albums";a.renderInspector();});b.setTextColor(i==category?EditorActivity.CYAN:EditorActivity.TEXT);b.setBackground(a.navBackground(i==category));b.setSelected(i==category);
