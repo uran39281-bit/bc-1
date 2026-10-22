@@ -15,7 +15,7 @@ final class PreviewEditor extends View {
     private TransformMath.Transform base,live;
     private int gesture;private float downX,downY,span,angle;private long downTime;private boolean moved,multi;
     private float guideX=Float.NaN,guideY=Float.NaN;private int dragKey=-1;private long dragKeyTime;
-    private float navZoomStart,navPanX,navPanY;
+    private float navZoomStart,navPanX,navPanY,lastRotationPointer;
     static final int NONE=0,MOVE=1,CORNER=2,ROTATE=3,EDGE_X=4,EDGE_Y=5,PAN=6,KEY=7;
 
     PreviewEditor(EditorActivity activity){
@@ -79,7 +79,7 @@ final class PreviewEditor extends View {
             if(editable){a.pausePlayback();base=a.transformPanel.current();live=base.copy();gesture=hitHandle(e.getX(),e.getY());
                 if(gesture==NONE&&TransformMath.contains(corners(base),e.getX(),e.getY()))gesture=MOVE;}
             if(gesture==NONE){navZoomStart=a.previewZoom;navPanX=a.previewPanX;navPanY=a.previewPanY;gesture=PAN;}
-            if(gesture!=PAN&&gesture!=KEY)a.beginLiveAdjust();span=0;return true;
+            if(gesture!=PAN&&gesture!=KEY){a.beginLiveAdjust();float[] anchor=anchorPoint(base);lastRotationPointer=(float)Math.toDegrees(Math.atan2(downY-anchor[1],downX-anchor[0]));}span=0;return true;
         }
         if(gesture==NONE)return false;
         if(action==MotionEvent.ACTION_POINTER_DOWN&&e.getPointerCount()==2){multi=true;span=dist(e);angle=ang(e);if(gesture!=PAN&&gesture!=KEY){base=live.copy();gesture=MOVE;}else navZoomStart=a.previewZoom;return true;}
@@ -105,7 +105,7 @@ final class PreviewEditor extends View {
             if(a.monitor!=null)a.monitor.requestLayout();return;
         }
         if(gesture==KEY){live.x=TransformMath.clamp(base.x+2*(e.getX()-downX)/Math.max(1,sw()),-limit,limit);live.y=TransformMath.clamp(base.y-2*(e.getY()-downY)/Math.max(1,sh()),-limit,limit);return;}
-        if(e.getPointerCount()==2&&span>0){live.scale=TransformMath.clamp(base.scale*dist(e)/span,minScale,maxScale);float delta=(ang(e)-angle+540)%360-180;live.rotation=TransformMath.clamp(snapRotation(base.rotation-delta),-3600,3600);return;}
+        if(e.getPointerCount()==2&&span>0){live.scale=TransformMath.clamp(base.scale*dist(e)/span,minScale,maxScale);float delta=(ang(e)-angle+540)%360-180;live.rotation=snapRotation(live.rotation-delta);angle=ang(e);return;}
         if(multi)return;
         switch(gesture){
             case MOVE:{live.x=TransformMath.clamp(base.x+2*(e.getX()-downX)/Math.max(1,sw()),-limit,limit);live.y=TransformMath.clamp(base.y-2*(e.getY()-downY)/Math.max(1,sh()),-limit,limit);snapToGuides();break;}
@@ -116,7 +116,7 @@ final class PreviewEditor extends View {
                 break;}
             case EDGE_X:{float fx=Math.abs(e.getX()-anchor[0])/Math.max(1,Math.abs(downX-anchor[0]));live.scale=TransformMath.clamp(base.scale*fx,minScale,maxScale);live.aspect=TransformMath.clamp(base.aspect/Math.max(.05f,fx),.05f,20);break;}
             case EDGE_Y:{float fy=Math.abs(e.getY()-anchor[1])/Math.max(1,Math.abs(downY-anchor[1]));live.aspect=TransformMath.clamp(base.aspect*fy,.05f,20);break;}
-            case ROTATE:{float a0=(float)Math.toDegrees(Math.atan2(downY-anchor[1],downX-anchor[0])),a1=(float)Math.toDegrees(Math.atan2(e.getY()-anchor[1],e.getX()-anchor[0]));live.rotation=TransformMath.clamp(snapRotation(base.rotation-((a1-a0+540)%360-180)),-3600,3600);break;}
+            case ROTATE:{float a1=(float)Math.toDegrees(Math.atan2(e.getY()-anchor[1],e.getX()-anchor[0]));if(Math.hypot(e.getX()-anchor[0],e.getY()-anchor[1])>a.dp(16))live.rotation=snapRotation(live.rotation-TransformEdits.angleDelta(lastRotationPointer,a1));lastRotationPointer=a1;break;}
         }
     }
     private float snapRotation(float r){return a.transformPanel.angleSnap>0?TransformMath.snapAngle(r,a.transformPanel.angleSnap):r;}

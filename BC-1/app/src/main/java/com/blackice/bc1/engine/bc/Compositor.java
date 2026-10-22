@@ -348,7 +348,7 @@ final class Compositor {
         program.set("uInput", 0);
         program.set("uTexel", 1f / width, 1f / height);
         program.set("uAspect", (float) width / height);
-        program.set("uTransform", d.transform.x, d.transform.y, d.transform.scale, (float) Math.toRadians(d.transform.rotation));
+        program.set("uTransform", d.transform.x, d.transform.y, d.transform.scale, (float) Math.toRadians(d.transform.rotation%360));
         program.set("uShape", d.transform.flipH ? -1 : 1, d.transform.aspect * (d.transform.flipV ? -1 : 1),
                 (float) Math.tan(Math.toRadians(d.transform.skewX)), (float) Math.tan(Math.toRadians(d.transform.skewY)));
         program.set("uAnchor", d.transform.anchorX, d.transform.anchorY);

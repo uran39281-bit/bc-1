@@ -28,7 +28,7 @@ public final class TransformMath {
     }
     /** 2×2 matrix M as {m00, m01, m10, m11}. */
     public static double[] matrix(Transform t) {
-        double r=Math.toRadians(t.rotation),cs=Math.cos(r),sn=Math.sin(r);
+        double r=Math.toRadians(t.rotation%360),cs=Math.cos(r),sn=Math.sin(r);
         double sx=t.scale*(t.flipH?-1:1),sy=t.scale*t.aspect*(t.flipV?-1:1);
         double kx=Math.tan(Math.toRadians(t.skewX)),ky=Math.tan(Math.toRadians(t.skewY));
         // S·K

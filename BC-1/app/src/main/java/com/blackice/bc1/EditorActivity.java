@@ -154,7 +154,7 @@ public final class EditorActivity extends Activity {
         try {mode=LayoutPolicy.Preference.valueOf(getSharedPreferences(PREFS,MODE_PRIVATE).getString("mode","AUTO"));}catch(Exception ignored){}
         snapping=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("snapping",true);
         workspaceFocus=getSharedPreferences(PREFS,MODE_PRIVATE).getInt("workspace-focus",0);
-        if(state!=null){mediaSort=state.getInt("media-sort",0);mediaList=state.getBoolean("media-list",false);favoritesOnly=state.getBoolean("media-favorites",false);customTimelineHeight=state.getInt("timeline-height",0);selected=state.getInt("selected",-1);selectedOverlay=state.getInt("selected-overlay",-1);pixelsPerSecond=state.getFloat("timeline-zoom",48);tab=state.getInt("tab",0);mediaQuery=state.getString("media-query","");try{mediaKind=MediaFilter.Kind.valueOf(state.getString("media-kind","ALL"));}catch(IllegalArgumentException ignored){}}
+        if(state!=null){transformPanel.linked=state.getBoolean("transform-linked",true);transformPanel.tab=state.getInt("transform-tab",0);mediaSort=state.getInt("media-sort",0);mediaList=state.getBoolean("media-list",false);favoritesOnly=state.getBoolean("media-favorites",false);customTimelineHeight=state.getInt("timeline-height",0);selected=state.getInt("selected",-1);selectedOverlay=state.getInt("selected-overlay",-1);pixelsPerSecond=state.getFloat("timeline-zoom",48);tab=state.getInt("tab",0);mediaQuery=state.getString("media-query","");try{mediaKind=MediaFilter.Kind.valueOf(state.getString("media-kind","ALL"));}catch(IllegalArgumentException ignored){}}
         if(state==null)tab=1;
         buildWorkspace();
         String id=getSharedPreferences(PREFS,MODE_PRIVATE).getString("last-project",null);
@@ -169,10 +169,10 @@ public final class EditorActivity extends Activity {
         });
     }
     @Override protected void onStart(){super.onStart();active=true;main.post(pulse);if(!loading)showLive();}
-    @Override protected void onStop(){active=false;main.removeCallbacks(pulse);main.removeCallbacks(warmPreview);saveNow();releasePreview();if(previewProxy!=null)previewProxy.cancel();if(live!=null)live.releaseDecoders();super.onStop();}
+    @Override protected void onStop(){cancelLiveAdjust();active=false;main.removeCallbacks(pulse);main.removeCallbacks(warmPreview);saveNow();releasePreview();if(previewProxy!=null)previewProxy.cancel();if(live!=null)live.releaseDecoders();super.onStop();}
     @Override protected void onDestroy(){main.removeCallbacks(autosave);if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
-    @Override protected void onSaveInstanceState(Bundle state){state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());saveNow();super.onSaveInstanceState(state);}
-    @Override public void onConfigurationChanged(Configuration config){super.onConfigurationChanged(config);buildWorkspace();}
+    @Override protected void onSaveInstanceState(Bundle state){cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());saveNow();super.onSaveInstanceState(state);}
+    @Override public void onConfigurationChanged(Configuration config){super.onConfigurationChanged(config);cancelLiveAdjust();buildWorkspace();}
     boolean exporting(){return getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getBoolean("running",false)||exportLaunching;}
     boolean editable(){if(uiLocked){tell("UI locked • unlock editing in Settings");return false;}if(loading||importing){tell("Wait for the current import to finish.");return false;}if(exporting()){tell("Wait for export to finish, or cancel it to continue editing.");return false;}return true;}
     void releasePreview(){
@@ -268,7 +268,7 @@ public final class EditorActivity extends Activity {
         project.validate();dirty=true;editRevision++;message=text;refreshProject();showLive();main.removeCallbacks(autosave);main.postDelayed(autosave,300);
     }
     void saveNow() {
-        main.removeCallbacks(autosave);if(loading)return;
+        main.removeCallbacks(autosave);if(loading||liveBefore!=null)return;
         if(player!=null)project.playheadMs=Math.min(project.durationMs(),Math.max(0,player.getCurrentPosition()));
         EditProject snapshot=ProjectStore.snapshot(project);long savingRevision=editRevision;
         io.execute(()->{try{store.save(snapshot);main.post(()->{if(isDestroyed()||!project.id.equals(snapshot.id))return;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("last-project",snapshot.id).apply();if(savingRevision==editRevision){dirty=false;renderHeader();}});}
@@ -654,7 +654,7 @@ public final class EditorActivity extends Activity {
     void beginLiveAdjust(){if(!layerEditable())return;try{liveBefore=ProjectStore.encode(project);}catch(Exception e){liveBefore=null;return;}if(player!=null||previewPending)releasePreview();main.removeCallbacks(warmPreview);previewProxy.cancel();}
     /** During a drag: apply the value and redraw at once, without validation or undo. */
     void liveAdjust(Runnable apply){if(liveBefore==null)return;try{apply.run();if(previewControls!=null)previewControls.invalidate();renderLive();}catch(RuntimeException ignored){}}
-    void cancelLiveAdjust(){String before=liveBefore;liveBefore=null;if(before==null)return;try{project=ProjectStore.decode(before);}catch(Exception e){throw new IllegalStateException(e);}renderInspector();renderLive();if(previewControls!=null)previewControls.invalidate();}
+    void cancelLiveAdjust(){transformPanel.clearGesture();String before=liveBefore;liveBefore=null;if(before==null)return;try{project=ProjectStore.decode(before);}catch(Exception e){throw new IllegalStateException(e);}renderInspector();renderLive();if(previewControls!=null)previewControls.invalidate();}
     /** Drag end: validate and record a single undo entry from the drag start. */
     void endLiveAdjust(String message,Runnable apply){
         String before=liveBefore;liveBefore=null;if(before==null)return;
@@ -872,7 +872,7 @@ public final class EditorActivity extends Activity {
     int[] exportSize(){return project.portrait?new int[]{1080,1920}:new int[]{1920,1080};}
     double frameAspect(){int[] s=exportSize();return s[0]/(double)s[1];}
     float aspectOf(){return transformPanel.current().aspect;}
-    void setAspect(float aspect){EditProject.Clip c=clip();EditProject.Overlay o=overlay();if(c!=null)c.aspect=aspect;else if(o!=null)o.aspect=aspect;}
+    void setAspect(float aspect){EditProject.Clip c=clip();EditProject.Overlay o=overlay();if(c!=null&&c.heightScale>=0||o!=null&&o.heightScale>=0)transformPanel.write(Motion.HEIGHT,transformPanel.current().scale*aspect);if(c!=null)c.aspect=aspect;else if(o!=null)o.aspect=aspect;}
     void setFlip(boolean horizontal){EditProject.Clip c=clip();EditProject.Overlay o=overlay();if(c!=null){if(horizontal)c.flipH=!c.flipH;else c.flipV=!c.flipV;}else if(o!=null){if(horizontal)o.flipH=!o.flipH;else o.flipV=!o.flipV;}}
     /** Local content half-size in frame units (before the layer's own transform). */
     double[] layerHalf(){return layerHalf(clip(),overlay());}
