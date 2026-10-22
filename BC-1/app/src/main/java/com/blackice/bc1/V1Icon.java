@@ -49,6 +49,7 @@ final class V1Icon extends Drawable {
             case "Text":case "Edit Text":line(4,5,20,5);line(12,5,12,20);line(9,20,15,20);break;
             case "Shapes":path.addRect(3,10,13,20,Path.Direction.CW);path.addCircle(16,8,5,Path.Direction.CW);break;
             case "Audio":path.moveTo(9,18);path.lineTo(9,5);path.lineTo(20,3);path.lineTo(20,16);path.addCircle(6.5f,18,2.5f,Path.Direction.CW);path.addCircle(17.5f,16,2.5f,Path.Direction.CW);break;
+            case "Link":path.addRoundRect(2,8,14,16,4,4,Path.Direction.CW);path.addRoundRect(10,8,22,16,4,4,Path.Direction.CW);break;
             case "Saved":path.moveTo(6,3);path.lineTo(18,3);path.lineTo(18,21);path.lineTo(12,16);path.lineTo(6,21);path.close();break;
             case "Transform":case "Move & Transform":line(12,2,12,22);line(2,12,22,12);line(12,2,9,5);line(12,2,15,5);line(22,12,19,9);line(22,12,19,15);line(12,22,9,19);line(12,22,15,19);line(2,12,5,9);line(2,12,5,15);break;
             case "Color":case "Color & Fill":path.addCircle(12,12,9,Path.Direction.CW);path.addCircle(9,9,1.5f,Path.Direction.CW);path.addCircle(15,9,1.5f,Path.Direction.CW);path.addCircle(9,15,1.5f,Path.Direction.CW);break;

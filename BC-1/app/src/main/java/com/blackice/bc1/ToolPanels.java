@@ -78,7 +78,7 @@ final class ToolPanels {
     }
     private void mediaTiles(LinearLayout into,boolean editable,boolean visual){
         String[] names={"Move & Transform","Blending & Opacity","Effects — Coming Later","Audio"};
-        String[] icons={"Transform","Opacity","Effects","Audio"};
+        String[] icons={"Transform","Blending & Opacity","Effects","Volume"};
         for(int row=0;row<2;row++){LinearLayout line=a.row();into.addView(line);for(int col=0;col<2;col++){int index=row*2+col;MediaTile tile=new MediaTile(a,names[index],icons[index]);tile.setOnClickListener(v->{if(index==3)open("Audio",this::audioPanel);else category(names[index]);});tile.setContentDescription("Media Settings: "+names[index]);tile.setTooltipText(names[index]);EditorActivity.dim(tile,editable&&index!=2&&(index==3||visual));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,-2,1);lp.setMargins(a.dp(3),a.dp(5),a.dp(3),a.dp(5));line.addView(tile,lp);}}
     }
 

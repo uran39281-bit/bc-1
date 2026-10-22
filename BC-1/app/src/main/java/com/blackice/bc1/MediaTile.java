@@ -9,7 +9,7 @@ final class MediaTile extends TextView {
     private final EditorActivity a;
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
     MediaTile(EditorActivity a,String label,String glyph){
-        super(a);this.a=a;setText(label);setTextColor(0xffd3eeff);setTextSize(12);setGravity(Gravity.CENTER);setPadding(a.dp(10),a.dp(12),a.dp(10),a.dp(12));setMinHeight(a.dp(120));setMaxLines(3);setClickable(true);setFocusable(true);setBackground(a.buttonBackground(false));
+        super(a);this.a=a;setText(label);setTextColor(0xffd3eeff);setTextSize(12);setGravity(Gravity.CENTER);setPadding(a.dp(10),a.dp(12),a.dp(10),a.dp(12));setMinHeight(a.dp(120));setLines(3);setClickable(true);setFocusable(true);setBackground(a.buttonBackground(false));
         V1Icon icon=new V1Icon(glyph,0xff64d7ff);icon.setBounds(0,0,a.dp(34),a.dp(34));setCompoundDrawables(null,icon,null,null);setCompoundDrawablePadding(a.dp(12));
     }
     @Override protected void onMeasure(int w,int h){super.onMeasure(w,h);int side=Math.max(a.dp(120),getMeasuredWidth());setMeasuredDimension(getMeasuredWidth(),side);}

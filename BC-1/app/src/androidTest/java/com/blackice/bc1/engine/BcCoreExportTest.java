@@ -92,6 +92,26 @@ public class BcCoreExportTest {
         } finally { e.release(); }
     }
 
+    @Test public void savedCumulativeRotationExportsTwoTurnsInBothDirections() throws Exception {
+        File image=new File(context.getFilesDir(), "turns-quadrants.png");
+        Bitmap b=Bitmap.createBitmap(200,200,Bitmap.Config.ARGB_8888);
+        android.graphics.Canvas canvas=new android.graphics.Canvas(b);android.graphics.Paint paint=new android.graphics.Paint();
+        int[] colors={Color.RED,Color.GREEN,Color.BLUE,Color.YELLOW};
+        for(int i=0;i<4;i++){paint.setColor(colors[i]);int x=(i%2)*100,y=(i/2)*100;canvas.drawRect(x,y,x+100,y+100,paint);}
+        try(FileOutputStream out=new FileOutputStream(image)){b.compress(Bitmap.CompressFormat.PNG,100,out);}b.recycle();
+        for(int direction:new int[]{-1,1}){
+            EditProject p=new EditProject();EditProject.Clip c=new MediaImporter(context).importClip(Uri.fromFile(image),false);c.outMs=2200;p.clips.add(c);
+            com.blackice.bc1.editor.Motion.Key start=new com.blackice.bc1.editor.Motion.Key(0,0);com.blackice.bc1.editor.Keyframes.ease(start,0);c.motion.put(com.blackice.bc1.editor.Motion.ROTATION,start);c.motion.put(com.blackice.bc1.editor.Motion.ROTATION,new com.blackice.bc1.editor.Motion.Key(2000,direction*720));
+            p=com.blackice.bc1.editor.ProjectStore.decode(com.blackice.bc1.editor.ProjectStore.encode(p));
+            File out=export(p,360,new AtomicInteger());
+            try(MediaMetadataRetriever r=new MediaMetadataRetriever()){
+                r.setDataSource(out.getPath());int[] expected=direction<0?new int[]{Color.GREEN,Color.RED,Color.BLUE,Color.YELLOW}:new int[]{Color.GREEN,Color.YELLOW,Color.BLUE,Color.RED};
+                for(int i=0;i<8;i++){Bitmap frame=r.getFrameAtTime(i*250000L,MediaMetadataRetriever.OPTION_CLOSEST);assertNotNull(frame);int pixel=frame.getPixel(frame.getWidth()/2+frame.getHeight()/8,frame.getHeight()/2-frame.getHeight()/8);frame.recycle();int want=expected[i%4];assertTrue("turn "+direction+" quarter "+i+" color "+Integer.toHexString(pixel),Math.abs(Color.red(pixel)-Color.red(want))<60&&Math.abs(Color.green(pixel)-Color.green(want))<60&&Math.abs(Color.blue(pixel)-Color.blue(want))<60);}
+            }
+            File qa=new File(context.getFilesDir(),"qa");qa.mkdirs();java.nio.file.Files.copy(out.toPath(),new File(qa,direction<0?"turns-clockwise.mp4":"turns-counterclockwise.mp4").toPath(),java.nio.file.StandardCopyOption.REPLACE_EXISTING);out.delete();
+        }
+    }
+
     @Test public void acceptanceExportIsFrameAccurateWithSoundAndTransition() throws Exception {
         EditProject p = acceptance();
         AtomicInteger progress = new AtomicInteger(-1);
