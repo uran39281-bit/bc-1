@@ -108,7 +108,20 @@ public final class Keyframes {
         switch(name){
             case "Fade In":key(check,Motion.OPACITY,start,0,2);key(check,Motion.OPACITY,start+intro,current[Motion.OPACITY],2);break;
             case "Fade Out":key(check,Motion.OPACITY,end-intro,current[Motion.OPACITY],1);key(check,Motion.OPACITY,end,0,1);break;
-            case "Pop In":key(check,Motion.SCALE,start,Math.max(.05f,current[Motion.SCALE]*.2f),2);key(check,Motion.SCALE,start+intro*2/3,Math.min(4,current[Motion.SCALE]*1.1f),3);key(check,Motion.SCALE,start+intro,current[Motion.SCALE],3);break;
+            case "Pop In": {
+                float width=current[Motion.SCALE];
+                // Older callers supply only the original motion channels.
+                float height=current.length>Motion.HEIGHT?current[Motion.HEIGHT]:width;
+                float small=Math.max(.2f,Math.max(.05f/width,.0025f/height));
+                float peak=Math.min(1.1f,Math.min(4f/width,80f/height));
+                for(int property:new int[]{Motion.SCALE,Motion.HEIGHT}){
+                    float target=property==Motion.SCALE?width:height;
+                    key(check,property,start,target*small,2);
+                    key(check,property,start+intro*2/3,target*peak,3);
+                    key(check,property,start+intro,target,3);
+                }
+                break;
+            }
             case "Slide In Left":case "Slide In Right":key(check,Motion.X,start,name.endsWith("Left")?-2:2,2);key(check,Motion.X,start+intro,current[Motion.X],2);break;
             case "Spin":key(check,Motion.ROTATION,start,current[Motion.ROTATION],3);key(check,Motion.ROTATION,end,current[Motion.ROTATION]+360,3);break;
             default:throw new IllegalArgumentException("Unknown animation preset.");
