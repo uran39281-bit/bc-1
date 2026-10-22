@@ -287,9 +287,10 @@ public final class EditorActivity extends Activity {
         for(EditProject.Clip clip:project.clips)if(clip.track>=EditProject.AUDIO_FIRST)loadWaveform(clip,true);
         if(monitor!=null)monitor.requestLayout();if(emptyPreview!=null)emptyPreview.setVisibility((project.clips.isEmpty()&&project.overlays.isEmpty())?View.VISIBLE:View.GONE);renderInspector();renderMediaBrowser();syncPosition();
     }
-    void syncPosition(){updatePlayheadTools();if(mobile!=null)mobile.sync();if(previewControls!=null)previewControls.invalidate();if(time!=null)time.setText(clock(project.playheadMs)+"  /  "+clock(project.durationMs()));if(timeline!=null)timeline.syncScroll();if(previewScrubber!=null&&!scrubbing)previewScrubber.setProgress((int)(1000*project.playheadMs/Math.max(1,project.durationMs())));}
+    void syncPosition(){if(transformPanel!=null)transformPanel.refresh();updatePlayheadTools();if(mobile!=null)mobile.sync();if(previewControls!=null)previewControls.invalidate();if(time!=null)time.setText(clock(project.playheadMs)+"  /  "+clock(project.durationMs()));if(timeline!=null)timeline.syncScroll();if(previewScrubber!=null&&!scrubbing)previewScrubber.setProgress((int)(1000*project.playheadMs/Math.max(1,project.durationMs())));}
     long seekTarget(){return Math.min(project.playheadMs,Math.max(0,project.durationMs()-1));}
     void seek(long ms){
+        if(liveBefore!=null)return;
         project.playheadMs=Math.max(0,Math.min(ms,project.durationMs()));
         // Paused scrubbing goes through the live preview; seeking during playback still uses the player.
         if(player!=null&&!player.getPlayWhenReady()&&live!=null){releasePreview();project.playheadMs=Math.max(0,Math.min(ms,project.durationMs()));}
@@ -446,7 +447,7 @@ public final class EditorActivity extends Activity {
     void splitSelected(){if(clip()!=null)edit("Clip split",()->project.split(selected,project.playheadMs));}
     /** Failed/no-op commands do not consume undo or discard redo. */
     void edit(String message,Runnable operation){
-        if(!editable())return;CrashLogs.operation(message);String before;try{before=ProjectStore.encode(project);}catch(Exception e){tell(e.getMessage());return;}
+        if(!editable())return;pausePlayback();CrashLogs.operation(message);String before;try{before=ProjectStore.encode(project);}catch(Exception e){tell(e.getMessage());return;}
         int selection=selected;
         try{operation.run();project.validate();if(!before.equals(ProjectStore.encode(project))){pushUndo(before);changed(message);}}
         catch(Exception e){CrashLogs.record("Edit rejected",e);try{project=ProjectStore.decode(before);selected=selection;refreshProject();}catch(Exception impossible){throw new IllegalStateException(impossible);}tell(e.getMessage());}
@@ -653,6 +654,7 @@ public final class EditorActivity extends Activity {
     void beginLiveAdjust(){if(!layerEditable())return;try{liveBefore=ProjectStore.encode(project);}catch(Exception e){liveBefore=null;return;}if(player!=null||previewPending)releasePreview();main.removeCallbacks(warmPreview);previewProxy.cancel();}
     /** During a drag: apply the value and redraw at once, without validation or undo. */
     void liveAdjust(Runnable apply){if(liveBefore==null)return;try{apply.run();if(previewControls!=null)previewControls.invalidate();renderLive();}catch(RuntimeException ignored){}}
+    void cancelLiveAdjust(){String before=liveBefore;liveBefore=null;if(before==null)return;try{project=ProjectStore.decode(before);}catch(Exception e){throw new IllegalStateException(e);}renderInspector();renderLive();if(previewControls!=null)previewControls.invalidate();}
     /** Drag end: validate and record a single undo entry from the drag start. */
     void endLiveAdjust(String message,Runnable apply){
         String before=liveBefore;liveBefore=null;if(before==null)return;
@@ -705,8 +707,8 @@ public final class EditorActivity extends Activity {
         TextView b=button(title,v->action.run());b.setTextSize(11);LinearLayout.LayoutParams cell=new LinearLayout.LayoutParams(0,dp(wideLayout?44:54),1);cell.rightMargin=dp(4);gridRow.addView(b,cell);gridCount++;}
     void flushGrid(){if(gridRow!=null){int columns=wideLayout?3:2;while(gridCount%columns!=0){gridRow.addView(new View(this),new LinearLayout.LayoutParams(0,dp(wideLayout?44:54),1));gridCount++;}}gridRow=null;gridCount=0;}
     void setStatic(int property,float value){EditProject.Clip c=clip();EditProject.Overlay o=overlay();
-        if(c!=null)switch(property){case Motion.X:c.x=value;break;case Motion.Y:c.y=value;break;case Motion.SCALE:c.scale=value;break;case Motion.ROTATION:c.rotation=value;break;case Motion.OPACITY:c.opacity=value;break;case Motion.INTENSITY:c.intensity=value;break;case Motion.SKEW_X:c.skewX=value;break;case Motion.SKEW_Y:c.skewY=value;break;case Motion.ANCHOR_X:c.anchorX=value;break;case Motion.ANCHOR_Y:c.anchorY=value;break;}
-        else if(o!=null)switch(property){case Motion.X:o.x=value;break;case Motion.Y:o.y=value;break;case Motion.SCALE:o.scale=value;break;case Motion.ROTATION:o.rotation=value;break;case Motion.OPACITY:o.opacity=value;break;case Motion.SKEW_X:o.skewX=value;break;case Motion.SKEW_Y:o.skewY=value;break;case Motion.ANCHOR_X:o.anchorX=value;break;case Motion.ANCHOR_Y:o.anchorY=value;break;}
+        if(c!=null)switch(property){case Motion.X:c.x=value;break;case Motion.Y:c.y=value;break;case Motion.HEIGHT:c.heightScale=value;break;case Motion.SCALE:c.scale=value;break;case Motion.ROTATION:c.rotation=value;break;case Motion.OPACITY:c.opacity=value;break;case Motion.INTENSITY:c.intensity=value;break;case Motion.SKEW_X:c.skewX=value;break;case Motion.SKEW_Y:c.skewY=value;break;case Motion.ANCHOR_X:c.anchorX=value;break;case Motion.ANCHOR_Y:c.anchorY=value;break;}
+        else if(o!=null)switch(property){case Motion.X:o.x=value;break;case Motion.Y:o.y=value;break;case Motion.HEIGHT:o.heightScale=value;break;case Motion.SCALE:o.scale=value;break;case Motion.ROTATION:o.rotation=value;break;case Motion.OPACITY:o.opacity=value;break;case Motion.SKEW_X:o.skewX=value;break;case Motion.SKEW_Y:o.skewY=value;break;case Motion.ANCHOR_X:o.anchorX=value;break;case Motion.ANCHOR_Y:o.anchorY=value;break;}
     }
     void renameSelection(){EditProject.Clip c=clip();EditProject.Overlay o=overlay();if((c==null&&o==null)||!layerEditable())return;
         numberDialog("Layer name",c!=null?c.name:o.label(),name->{if(name.isBlank()||name.length()>60)throw new IllegalArgumentException("Use a name of 1 to 60 characters.");edit("Layer renamed",()->{if(c!=null)c.name=name;else o.name=name;});});}
