@@ -61,7 +61,7 @@ public class HomeBrowserTest {
         context.getSharedPreferences(EditorActivity.PREFS,0).edit().putString("mode","AUTO").commit();
         shell("wm size 1080x1920");shell("wm density 420");
         try(ActivityScenario<HomeActivity> scenario=ActivityScenario.launch(HomeActivity.class)){
-            await(scenario,"Recent projects");Thread.sleep(900);shell("settings put global sysui_demo_allowed 1");shell("am broadcast -a com.android.systemui.demo -e command enter");shell("am broadcast -a com.android.systemui.demo -e command notifications --ez visible false");capture("home-portrait");
+            await(scenario,"Recent projects");Thread.sleep(900);scenario.onActivity(a->{TextView label=text(a.getWindow().getDecorView(),"Import project");assertNotNull(label);assertTrue("Import label fits its card",label.getPaint().measureText(label.getText().toString())<=label.getWidth()-label.getPaddingLeft()-label.getPaddingRight()+1);});shell("settings put global sysui_demo_allowed 1");shell("am broadcast -a com.android.systemui.demo -e command enter");shell("am broadcast -a com.android.systemui.demo -e command notifications --ez visible false");capture("home-portrait");
             scenario.onActivity(a->{View search=described(a.getWindow().getDecorView(),"Search projects");assertNotNull(search);search.performClick();});
             scenario.onActivity(a->{EditText search=findEdit(a.getWindow().getDecorView());assertNotNull(search);search.setText("no such project xyz");});
             scenario.onActivity(a->assertNotNull(text(a.getWindow().getDecorView(),"No projects match")));

@@ -109,7 +109,7 @@ public final class HomeActivity extends Activity {
         Drawable glyph=new V1Icon(name.equals("Projects")?"Folder":name,selected?CYAN:MUTED);glyph.setBounds(0,0,dp(26),dp(26));if(sidebar)t.setCompoundDrawables(glyph,null,null,null);else t.setCompoundDrawables(null,glyph,null,null);t.setCompoundDrawablePadding(dp(5));t.setBackground(interactive(selected?0xff0d2a48:0x00000000));t.setSelected(selected);return t;}
     private View createCard(boolean importing){LinearLayout card=column();card.setGravity(Gravity.CENTER);card.setPadding(dp(8),dp(12),dp(8),dp(12));card.setBackground(new WaveDrawable(!importing));
         ImageView icon=new ImageView(this);icon.setImageDrawable(new V1Icon(importing?"ImportProject":"NewProject",TEXT));card.addView(icon,new LinearLayout.LayoutParams(dp(wide?68:54),dp(wide?68:54)));
-        TextView label=text(importing?"Import project":"New project",wide?23:18,TEXT,true);label.setGravity(Gravity.CENTER);label.setSingleLine(true);label.setAutoSizeTextTypeUniformWithConfiguration(12,wide?23:18,1,android.util.TypedValue.COMPLEX_UNIT_SP);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.topMargin=dp(10);card.addView(label,lp);
+        TextView label=text(importing?"Import project":"New project",wide?23:18,TEXT,true);label.setGravity(Gravity.CENTER);label.setSingleLine(true);label.setHorizontallyScrolling(false);label.setAutoSizeTextTypeUniformWithConfiguration(12,wide?23:18,1,android.util.TypedValue.COMPLEX_UNIT_SP);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.topMargin=dp(10);card.addView(label,lp);
         clickable(card,importing?"Import project":"New project",v->{if(busy)return;if(importing)pickImport();else newProject();});return card;}
     private void refresh(){if(busy)return;captureScroll();final int token=++generation;loading=true;failure=null;renderList();io.execute(()->{
         try{java.util.List<ProjectStore.BrowserEntry> loaded=store.browser();main.post(()->{if(isDestroyed()||token!=generation)return;entries=loaded;loading=false;renderList();});}
@@ -138,7 +138,7 @@ public final class HomeActivity extends Activity {
         TextView badge=text(p==null?"!":clock(p.durationMs()),12,TEXT,true);badge.setPadding(dp(5),dp(2),dp(5),dp(2));badge.setBackground(round(0xdd020810,6));FrameLayout.LayoutParams badgeLp=new FrameLayout.LayoutParams(-2,-2,Gravity.BOTTOM|Gravity.END);badgeLp.setMargins(0,0,dp(5),dp(5));thumb.addView(badge,badgeLp);
         int available=getResources().getConfiguration().screenWidthDp-(wide?(getResources().getConfiguration().screenWidthDp<900?164:200):0)-32;
         int cols=wide?Math.max(1,Math.min(3,(available+12)/252)):1;
-        card.addView(thumb,new LinearLayout.LayoutParams(grid?-1:dp(126),dp(grid?Math.min(180,(available/cols-16)*9/16):88)));
+        card.addView(thumb,new LinearLayout.LayoutParams(grid?-1:dp(126),dp(grid?Math.min(160,(available/cols-16)*9/16):88)));
         LinearLayout details=column();details.setPadding(dp(grid?4:12),dp(grid?8:0),0,0);card.addView(details,new LinearLayout.LayoutParams(grid?-1:0,-2,grid?0:1));
         LinearLayout title=row();title.setGravity(Gravity.CENTER_VERTICAL);TextView name=text(entry.name,18,TEXT,true);name.setMaxLines(2);name.setEllipsize(TextUtils.TruncateAt.END);title.addView(name,new LinearLayout.LayoutParams(0,-2,1));
         title.addView(icon("More","Actions for "+entry.name,v->projectActions(entry,v)),new LinearLayout.LayoutParams(dp(48),dp(48)));details.addView(title);
