@@ -13,6 +13,10 @@ final class V1Icon extends Drawable {
     @Override public void draw(Canvas canvas){
         canvas.save();canvas.translate(getBounds().left,getBounds().top);canvas.scale(getBounds().width()/24f,getBounds().height()/24f);path.reset();boolean fill=false;
         switch(name){
+            case "Home":path.moveTo(2,11);path.lineTo(12,2);path.lineTo(22,11);path.moveTo(5,9);path.lineTo(5,22);path.lineTo(10,22);path.lineTo(10,15);path.lineTo(14,15);path.lineTo(14,22);path.lineTo(19,22);path.lineTo(19,9);break;
+            case "Folder":case "ImportProject":path.moveTo(2,20);path.lineTo(2,4);path.lineTo(9,4);path.lineTo(12,7);path.lineTo(22,7);path.lineTo(22,20);path.close();if(name.equals("ImportProject")){line(12,10,12,17);line(8,14,12,18);line(12,18,16,14);}break;
+            case "NewProject":path.addRoundRect(2,2,22,22,5,5,Path.Direction.CW);line(12,6,12,18);line(6,12,18,12);break;
+            case "Help":path.addCircle(12,12,10,Path.Direction.CW);path.moveTo(9,8);path.cubicTo(9,4,17,5,15,10);path.lineTo(12,13);line(12,13,12,14);line(12,18,12,18.2f);break;
             case "Cube":path.moveTo(12,2);path.lineTo(22,7);path.lineTo(22,17);path.lineTo(12,23);path.lineTo(2,17);path.lineTo(2,7);path.close();line(2,7,12,13);line(22,7,12,13);line(12,13,12,23);line(12,2,12,13);break;
             case "Media":path.addRect(3,5,21,20,Path.Direction.CW);line(3,5,9,5);line(9,5,11,2);line(11,2,17,2);line(17,2,19,5);line(5,16,10,11);line(10,11,14,15);line(14,15,17,12);line(17,12,20,16);break;
             case "Edit":case "Split":path.addCircle(6,17,3,Path.Direction.CW);path.addCircle(18,17,3,Path.Direction.CW);line(8,15,20,3);line(16,15,4,3);break;
