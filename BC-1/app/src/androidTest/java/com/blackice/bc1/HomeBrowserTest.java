@@ -103,7 +103,7 @@ public class HomeBrowserTest {
         capture("create-dialog-diagnostic");return null;
     }
     private android.view.accessibility.AccessibilityNodeInfo accessible(android.view.accessibility.AccessibilityNodeInfo node,String value){
-        if(node==null)return null;if(value.contentEquals(node.getText()==null?"":node.getText()))return node;
+        if(node==null)return null;if(node.getText()!=null&&value.equalsIgnoreCase(node.getText().toString()))return node;
         for(int i=0;i<node.getChildCount();i++){android.view.accessibility.AccessibilityNodeInfo found=accessible(node.getChild(i),value);if(found!=null)return found;}return null;
     }
     private void await(ActivityScenario<HomeActivity> scenario,String value)throws Exception{for(int i=0;i<40;i++){boolean[] ok={false};scenario.onActivity(a->ok[0]=text(a.getWindow().getDecorView(),value)!=null);if(ok[0])return;Thread.sleep(100);}fail("Menu did not load");}
