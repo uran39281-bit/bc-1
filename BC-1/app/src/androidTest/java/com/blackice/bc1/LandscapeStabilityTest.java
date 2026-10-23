@@ -13,8 +13,8 @@ public class LandscapeStabilityTest {
   h.inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("last-project",p.id).putString("mode","WIDE").putBoolean("ui-locked",false).commit();
   try(ActivityScenario<EditorActivity> scene=ActivityScenario.launch(EditorActivity.class)){h.waitLoaded(scene);scene.onActivity(a->{a.selectOverlay(0);a.transformPanel.tab=1;a.panels.category("Move & Transform");View dial=find(a.inspector,TransformPanel.Dial.class);assertNotNull(dial);dial.layout(0,0,300,300);
     long t=android.os.SystemClock.uptimeMillis();send(dial,t,t,MotionEvent.ACTION_DOWN,280,150);send(dial,t,t+40,MotionEvent.ACTION_MOVE,150,280);send(dial,t,t+80,MotionEvent.ACTION_UP,150,280);
-    assertEquals(90,a.overlay().rotation,.01);a.undo(false);assertEquals(0,a.overlay().rotation,.01);a.undo(true);assertEquals(90,a.overlay().rotation,.01);
-    try{assertEquals(90,ProjectStore.decode(ProjectStore.encode(a.project)).overlays.get(0).rotation,.01);}catch(Exception e){throw new AssertionError(e);}
+    assertEquals(-90,a.overlay().rotation,.01);a.undo(false);assertEquals(0,a.overlay().rotation,.01);a.undo(true);assertEquals(-90,a.overlay().rotation,.01);
+    try{assertEquals(-90,ProjectStore.decode(ProjectStore.encode(a.project)).overlays.get(0).rotation,.01);}catch(Exception e){throw new AssertionError(e);}
     a.panels.reset();a.renderInspector();assertNotNull(WorkspaceV2Test.text(a.inspector,"Media Settings"));assertNull(WorkspaceV2Test.text(a.inspector,"More footage tools"));assertNull(WorkspaceV2Test.text(a.inspector,"Project"));
     CrashLogs.operation("Rotation regression");CrashLogs.record("Regression diagnostic",new IllegalStateException("private content://secret/path"));String report=CrashLogs.report(a);assertTrue(report.contains("IllegalStateException"));assertFalse(report.contains("content://secret/path"));
   });h.capture("v140-wide-media-settings");scene.onActivity(a->a.exportMenu());h.capture("v140-wide-export");}

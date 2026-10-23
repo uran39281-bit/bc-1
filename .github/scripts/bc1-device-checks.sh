@@ -127,3 +127,9 @@ for rotation in 0 90 180 270; do
   ffmpeg -v error -xerror -i "BC-1/app/build/reports/androidTests/qa/orientation-${rotation}.mp4" -f null -
   echo "Independent orientation export check passed: ${rotation} degrees"
 done
+
+# Independently decode both cumulative rotation directions after Android pixel checks.
+for direction in 1 -1; do
+  ffmpeg -v error -xerror -i "BC-1/app/build/reports/androidTests/qa/transform-turns-${direction}.mp4" -f null -
+  echo "Independent cumulative rotation export check passed: ${direction}"
+done

@@ -36,10 +36,10 @@ final class TransformPanel {
         if(pair&&animated){Keyframes.enable(motion(),Motion.WIDTH,time(),current().scale);Keyframes.enable(motion(),Motion.HEIGHT,time(),current().scale*current().aspect);}
         write(Motion.WIDTH,width);write(Motion.HEIGHT,height);
     }
-    private float value(int p){TransformMath.Transform t=current();return p==Motion.X?t.x:p==Motion.Y?t.y:p==Motion.ROTATION?t.rotation:p==Motion.WIDTH?t.scale:t.scale*t.aspect;}
+    private float value(int p){TransformMath.Transform t=current();return p==Motion.X?t.x:p==Motion.Y?t.y:p==Motion.ROTATION?-t.rotation:p==Motion.WIDTH?t.scale:t.scale*t.aspect;}
     private void apply(int p,float v,float width,float height){
         if(p==Motion.WIDTH||p==Motion.HEIGHT){float[] size=TransformEdits.dimensions(width,height,p==Motion.WIDTH,v,linked);if(linked)writeDimensions(size[0],size[1],true);else write(p,p==Motion.WIDTH?size[0]:size[1]);}
-        else write(p,v);
+        else write(p,p==Motion.ROTATION?-v:v);
     }
     void commit(String label,Runnable change){if(!a.layerEditable())return;a.pausePlayback();a.edit(label+" updated",change);a.renderInspector();}
     void resetAll(){commit("Position reset",()->{write(Motion.X,0);write(Motion.Y,0);});}
@@ -51,7 +51,7 @@ final class TransformPanel {
         if(tab==0)into.addView(a.button("Reset all",v->resetAll()),new LinearLayout.LayoutParams(-1,a.dp(48)));
         navigation(into);
         if(tab==0){int[] size=a.exportSize();card(into,"X",Motion.X,0,"px",size[0]/2f);card(into,"Y",Motion.Y,0,"px",size[1]/2f);}
-        else if(tab==1){Dial dial=new Dial(current().rotation);into.addView(dial,new LinearLayout.LayoutParams(-1,a.dp(220)));card(into,"Rotation",Motion.ROTATION,0,"°",1);into.addView(a.note("Presets • relative increments"));LinearLayout row=a.row();for(int amount:new int[]{45,90,180,360}){LinearLayout col=new LinearLayout(a);col.setOrientation(LinearLayout.VERTICAL);col.addView(a.compactButton("+","Add "+amount+" degrees",v->commit("Rotation",()->write(Motion.ROTATION,current().rotation+amount))),new LinearLayout.LayoutParams(-1,a.dp(48)));TextView n=a.label(amount+"°",14,EditorActivity.TEXT,true);n.setGravity(Gravity.CENTER);col.addView(n);col.addView(a.compactButton("−","Subtract "+amount+" degrees",v->commit("Rotation",()->write(Motion.ROTATION,current().rotation-amount))),new LinearLayout.LayoutParams(-1,a.dp(48)));row.addView(col,new LinearLayout.LayoutParams(0,-2,1));}into.addView(row);}
+        else if(tab==1){Dial dial=new Dial(current().rotation);into.addView(dial,new LinearLayout.LayoutParams(-1,a.dp(220)));card(into,"Rotation",Motion.ROTATION,0,"°",1);into.addView(a.note("Presets • relative increments"));LinearLayout row=a.row();for(int amount:new int[]{45,90,180,360}){LinearLayout col=new LinearLayout(a);col.setOrientation(LinearLayout.VERTICAL);col.addView(a.compactButton("+","Add "+amount+" degrees",v->commit("Rotation",()->apply(Motion.ROTATION,value(Motion.ROTATION)+amount,1,1))),new LinearLayout.LayoutParams(-1,a.dp(48)));TextView n=a.label(amount+"°",14,EditorActivity.TEXT,true);n.setGravity(Gravity.CENTER);col.addView(n);col.addView(a.compactButton("−","Subtract "+amount+" degrees",v->commit("Rotation",()->apply(Motion.ROTATION,value(Motion.ROTATION)-amount,1,1))),new LinearLayout.LayoutParams(-1,a.dp(48)));row.addView(col,new LinearLayout.LayoutParams(0,-2,1));}into.addView(row);}
         else{card(into,"Width",Motion.WIDTH,1,"%",100);TextView lock=a.button("Lock W and H",v->{linked=!linked;a.renderInspector();});lock.setSelected(linked);lock.setContentDescription("Lock W and H: "+(linked?"on":"off"));lock.setBackground(a.buttonBackground(linked));lock.setTextColor(linked?EditorActivity.CYAN:EditorActivity.TEXT);into.addView(lock,new LinearLayout.LayoutParams(-1,a.dp(48)));card(into,"Height",Motion.HEIGHT,1,"%",100);}
     }
     private int[] properties(){return tab==0?new int[]{Motion.X,Motion.Y}:tab==1?new int[]{Motion.ROTATION}:scaleProperties();}
@@ -61,7 +61,7 @@ final class TransformPanel {
     private TextView diamond(String title,int p){
         Motion m=motion();int state=Keyframes.state(m,p,time(),a.panels.tolerance());
         if(state==Keyframes.STATIC&&(p==Motion.WIDTH||p==Motion.HEIGHT)){EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();float override=c!=null?(p==Motion.WIDTH?c.widthScale:c.heightScale):(p==Motion.WIDTH?o.widthScale:o.heightScale);if(override<0)state=Keyframes.state(m,Motion.SCALE,time(),a.panels.tolerance());}
-        TextView b=a.compactButton(state==Keyframes.ON_KEY?"◆":"◇",title+" keyframe: "+(state==Keyframes.ON_KEY?"at playhead":state==Keyframes.ANIMATED?"animated elsewhere":"static"),v->commit(title+" keyframe",()->{float shown=value(p);materialize(p);Keyframes.toggle(motion(),p,time(),shown,a.panels.tolerance());if(motion().curves.get(p).isEmpty())a.setStatic(p,shown);}));b.setTextColor(state==Keyframes.STATIC?EditorActivity.MUTED:EditorActivity.CYAN);diamonds.put(p,b);return b;
+        TextView b=a.compactButton(state==Keyframes.ON_KEY?"◆":"◇",title+" keyframe: "+(state==Keyframes.ON_KEY?"at playhead":state==Keyframes.ANIMATED?"animated elsewhere":"static"),v->commit(title+" keyframe",()->{float shown=value(p)*(p==Motion.ROTATION?-1:1);materialize(p);Keyframes.toggle(motion(),p,time(),shown,a.panels.tolerance());if(motion().curves.get(p).isEmpty())a.setStatic(p,shown);}));b.setTextColor(state==Keyframes.STATIC?EditorActivity.MUTED:EditorActivity.CYAN);diamonds.put(p,b);return b;
     }
     private void card(LinearLayout into,String title,int p,float reset,String unit,float display){
         LinearLayout box=new LinearLayout(a);box.setOrientation(LinearLayout.VERTICAL);box.setBackground(a.panelBackground());box.setPadding(a.dp(4),a.dp(8),a.dp(4),a.dp(8));LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(-1,-2);bp.topMargin=a.dp(8);into.addView(box,bp);

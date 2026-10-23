@@ -100,7 +100,7 @@ final class PreviewEditor extends View {
         return NONE;
     }
     private void update(MotionEvent e){
-        float[] anchor=anchorPoint(base);boolean overlay=a.overlay()!=null;float limit=overlay?1:2,minScale=overlay?.1f:.05f,maxScale=overlay?2:4;
+        float[] anchor=anchorPoint(base);boolean overlay=a.overlay()!=null;float limit=2,minScale=overlay?.1f:.05f,maxScale=overlay?2:4;
         if(gesture==PAN){
             if(e.getPointerCount()==2&&span>0)a.previewZoom=TransformMath.clamp(navZoomStart*dist(e)/span,.2f,4);
             else if(a.previewZoom!=1||a.previewPanX!=0||a.previewPanY!=0){a.previewPanX=navPanX+(e.getX()-downX)/Math.max(1,sw());a.previewPanY=navPanY+(e.getY()-downY)/Math.max(1,sh());}
@@ -142,10 +142,10 @@ final class PreviewEditor extends View {
         invalidate();performClick();
     }
     private void applyLive(TransformMath.Transform result){
-        if(result.x!=base.x)a.transformPanel.write(Motion.X,result.x);
-        if(result.y!=base.y)a.transformPanel.write(Motion.Y,result.y);
-        if(result.scale!=base.scale||result.aspect!=base.aspect)a.transformPanel.writeDimensions(result.scale,result.scale*result.aspect,a.transformPanel.linked);
-        if(result.rotation!=base.rotation)a.transformPanel.write(Motion.ROTATION,result.rotation);
+        if(result.x!=a.transformPanel.current().x)a.transformPanel.write(Motion.X,result.x);
+        if(result.y!=a.transformPanel.current().y)a.transformPanel.write(Motion.Y,result.y);
+        if(result.scale!=a.transformPanel.current().scale||result.aspect!=a.transformPanel.current().aspect)a.transformPanel.writeDimensions(result.scale,result.scale*result.aspect,a.transformPanel.linked);
+        if(result.rotation!=a.transformPanel.current().rotation)a.transformPanel.write(Motion.ROTATION,result.rotation);
     }
     private Motion.Key keyWithValue(Motion m,int property,long t,float value){Motion.Key existing=Keyframes.keyAt(m,property,t,0);Motion.Key k=existing!=null?existing.copy():new Motion.Key(t,value);k.value=value;return k;}
     private void moveGroupMembers(float dx,float dy){

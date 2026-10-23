@@ -6,7 +6,7 @@ import java.util.UUID;
 
 /** Portable edit decision list. Times are integer milliseconds; media is never modified. */
 public final class EditProject {
-    /** Schema 5: eight visual tracks (0 main, 1–7 layers) and audio on tracks 8–11 (was 4–7). */
+    /** Schema 6 adds independent dimensions; schema 5 introduced eight visual and four audio tracks. */
     private static boolean validDimension(float v,int p){return v==-1||Motion.allowed(p,v);}
     public static final int SCHEMA = 6;
     /** Visual tracks: 0 is the main sequence, 1..VISUAL_TRACKS-1 are independent video/image layers. */
@@ -198,8 +198,8 @@ public final class EditProject {
         for(int i=0;i<ps.size();i++)for(int n=i+1;n<ps.size();n++){Placement a=ps.get(i),b=ps.get(n);if(a.clip.track>0&&a.clip.track==b.clip.track&&a.startMs<b.endMs&&b.startMs<a.endMs)throw new IllegalArgumentException("Clips on the same layer cannot overlap. Use another layer or move the start time.");}
         for(Overlay o:overlays){o.motion.validate();if(!validDimension(o.widthScale,Motion.WIDTH)||!validDimension(o.heightScale,Motion.HEIGHT))throw new IllegalArgumentException("Invalid scale");if(o.shape<0||o.shape>=SHAPES.length||o.blend<0||o.blend>=BLENDS.length||!(o.aspect>=.05f&&o.aspect<=20)||!(Math.abs(o.skewX)<=80)||!(Math.abs(o.skewY)<=80)||!(Math.abs(o.rotation)<=3600)||!Motion.allowed(0,o.anchorX)||!Motion.allowed(1,o.anchorY)||!(o.borderWidth>=0&&o.borderWidth<=1)||!(o.shadow>=0&&o.shadow<=1)||(o.name!=null&&o.name.length()>60)||(o.group!=null&&o.group.length()>40))throw new IllegalArgumentException("Invalid overlay style.");}
         for(Overlay o:overlays) if(o.startMs<0 || o.endMs<=o.startMs || !unit(o.opacity)
-                || !Float.isFinite(o.scale) || o.scale<.1f || o.scale>2 || !Float.isFinite(o.x) || Math.abs(o.x)>1
-                || !Float.isFinite(o.y) || Math.abs(o.y)>1 || o.text==null || o.text.length()>200 || o.alignment<0||o.alignment>2 || !("sans-serif-medium".equals(o.font)||"serif".equals(o.font)||"monospace".equals(o.font)))
+                || !Float.isFinite(o.scale) || o.scale<.1f || o.scale>2 || !Float.isFinite(o.x) || Math.abs(o.x)>2
+                || !Float.isFinite(o.y) || Math.abs(o.y)>2 || o.text==null || o.text.length()>200 || o.alignment<0||o.alignment>2 || !("sans-serif-medium".equals(o.font)||"serif".equals(o.font)||"monospace".equals(o.font)))
             throw new IllegalArgumentException("Invalid overlay.");
         if(music!=null && (music.uri==null || music.inMs<0 || music.outMs>music.sourceDurationMs
                 || music.outMs-music.inMs<MIN_CLIP_MS || music.startMs<0 || !unit(music.volume)))
