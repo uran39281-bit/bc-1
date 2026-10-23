@@ -55,7 +55,7 @@ public final class HomeActivity extends Activity {
         out.putString("anchor",anchorId);out.putInt("offset",anchorOffset);super.onSaveInstanceState(out);}
     @Override public void onConfigurationChanged(Configuration c){super.onConfigurationChanged(c);captureScroll();build();}
     private void captureScroll(){
-        if(scroll==null||list==null)return;scrollY=scroll.getScrollY();anchorId=null;
+        if(loading||scroll==null||list==null)return;scrollY=scroll.getScrollY();anchorId=null;
         for(int i=0;i<list.getChildCount();i++){View row=list.getChildAt(i);int top=list.getTop()+row.getTop();
             if(top+row.getHeight()>scrollY){Object tag=row.getTag();if(tag instanceof String){anchorId=(String)tag;anchorOffset=top-scrollY;}break;}}
     }
@@ -77,7 +77,7 @@ public final class HomeActivity extends Activity {
         LinearLayout header=row();header.setGravity(Gravity.CENTER_VERTICAL);header.setPadding(dp(16),dp(8),dp(12),dp(8));
         header.addView(wide?text(destination,28,TEXT,true):branding(false),new LinearLayout.LayoutParams(0,dp(64),1));
         header.addView(icon("Help","Help",v->help()),new LinearLayout.LayoutParams(dp(48),dp(48)));
-        header.addView(icon("Search","Search projects",v->{searchVisible=!searchVisible;captureScroll();build();if(searchVisible){search.requestFocus();((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(search,InputMethodManager.SHOW_IMPLICIT);}}),new LinearLayout.LayoutParams(dp(48),dp(48)));
+        header.addView(icon("Search","Search projects",v->{searchVisible=!searchVisible;if(!searchVisible)((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(v.getWindowToken(),0);captureScroll();build();if(searchVisible){search.requestFocus();((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(search,InputMethodManager.SHOW_IMPLICIT);}}),new LinearLayout.LayoutParams(dp(48),dp(48)));
         page.addView(header);
         if(searchVisible){LinearLayout searchRow=row();searchRow.setPadding(dp(16),0,dp(16),dp(8));search=new EditText(this);search.setSingleLine();search.setTextColor(TEXT);search.setTextSize(16);search.setHintTextColor(MUTED);search.setHint("Search projects by name");search.setContentDescription("Search projects by name");search.setText(query);
             searchRow.addView(search,new LinearLayout.LayoutParams(0,dp(48),1));
@@ -90,10 +90,10 @@ public final class HomeActivity extends Activity {
                 LinearLayout actions=row();int cardHeight=wide?Math.min(190,Math.max(128,height/3)):142;
                 LinearLayout.LayoutParams newLp=new LinearLayout.LayoutParams(0,dp(cardHeight),2);newLp.rightMargin=dp(10);
                 actions.addView(createCard(false),newLp);actions.addView(createCard(true),new LinearLayout.LayoutParams(0,dp(cardHeight),1));content.addView(actions);}
-            LinearLayout heading=row();heading.setGravity(Gravity.CENTER_VERTICAL);LinearLayout.LayoutParams hLp=new LinearLayout.LayoutParams(-1,dp(56));hLp.topMargin=dp(12);content.addView(heading,hLp);
+            LinearLayout heading=row();heading.setGravity(Gravity.CENTER_VERTICAL);LinearLayout.LayoutParams hLp=new LinearLayout.LayoutParams(-1,dp(48));hLp.topMargin=dp(8);content.addView(heading,hLp);
             heading.addView(text(destination.equals("Home")?"Recent projects":"All projects",wide?25:22,TEXT,true),new LinearLayout.LayoutParams(0,-1,1));
             if(destination.equals("Home"))heading.addView(action("View all  ›",v->navigate("Projects")),new LinearLayout.LayoutParams(-2,dp(48)));
-            TextView sort=action(byName?"Project name  ▾":"Last edited  ▾",v->{PopupMenu menu=new PopupMenu(this,v);menu.getMenu().add("Last edited");menu.getMenu().add("Project name");menu.setOnMenuItemClickListener(item->{byName=item.getTitle().equals("Project name");scrollY=0;anchorId=null;build();return true;});menu.show();});sort.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);sort.setTextColor(MUTED);content.addView(sort,new LinearLayout.LayoutParams(-1,dp(48)));
+            TextView sort=action(byName?"Project name  ▾":"Last edited  ▾",v->{PopupMenu menu=new PopupMenu(this,v);menu.getMenu().add("Last edited");menu.getMenu().add("Project name");menu.setOnMenuItemClickListener(item->{byName=item.getTitle().equals("Project name");scrollY=0;anchorId=null;build();return true;});menu.show();});sort.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);sort.setTextColor(MUTED);content.addView(sort,new LinearLayout.LayoutParams(-2,dp(36)));
             list=column();content.addView(list);renderList();}
         if(!wide){LinearLayout bottom=row();bottom.setPadding(dp(8),dp(4),dp(8),dp(4));bottom.setBackgroundColor(0xff071522);
             for(String item:new String[]{"Home","Projects","Settings"})bottom.addView(nav(item,false),new LinearLayout.LayoutParams(0,dp(64),1));page.addView(bottom);}
@@ -109,7 +109,7 @@ public final class HomeActivity extends Activity {
         Drawable glyph=new V1Icon(name.equals("Projects")?"Folder":name,selected?CYAN:MUTED);glyph.setBounds(0,0,dp(26),dp(26));if(sidebar)t.setCompoundDrawables(glyph,null,null,null);else t.setCompoundDrawables(null,glyph,null,null);t.setCompoundDrawablePadding(dp(5));t.setBackground(interactive(selected?0xff0d2a48:0x00000000));t.setSelected(selected);return t;}
     private View createCard(boolean importing){LinearLayout card=column();card.setGravity(Gravity.CENTER);card.setPadding(dp(8),dp(12),dp(8),dp(12));card.setBackground(new WaveDrawable(!importing));
         ImageView icon=new ImageView(this);icon.setImageDrawable(new V1Icon(importing?"ImportProject":"NewProject",TEXT));card.addView(icon,new LinearLayout.LayoutParams(dp(wide?68:54),dp(wide?68:54)));
-        TextView label=text(importing?"Import project":"New project",wide?23:18,TEXT,true);label.setGravity(Gravity.CENTER);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.topMargin=dp(10);card.addView(label,lp);
+        TextView label=text(importing?"Import project":"New project",wide?23:18,TEXT,true);label.setGravity(Gravity.CENTER);label.setSingleLine(true);label.setAutoSizeTextTypeUniformWithConfiguration(12,wide?23:18,1,android.util.TypedValue.COMPLEX_UNIT_SP);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.topMargin=dp(10);card.addView(label,lp);
         clickable(card,importing?"Import project":"New project",v->{if(busy)return;if(importing)pickImport();else newProject();});return card;}
     private void refresh(){if(busy)return;captureScroll();final int token=++generation;loading=true;failure=null;renderList();io.execute(()->{
         try{java.util.List<ProjectStore.BrowserEntry> loaded=store.browser();main.post(()->{if(isDestroyed()||token!=generation)return;entries=loaded;loading=false;renderList();});}
@@ -197,7 +197,7 @@ public final class HomeActivity extends Activity {
     private TextView action(String label,View.OnClickListener listener){TextView t=text(label,15,CYAN,false);t.setGravity(Gravity.CENTER);t.setPadding(dp(8),0,dp(8),0);t.setBackground(interactive(0x00000000));clickable(t,label,listener);return t;}
     private View icon(String glyph,String label,View.OnClickListener listener){ImageView v=new ImageView(this);v.setImageDrawable(new V1Icon(glyph,MUTED));v.setPadding(dp(12),dp(12),dp(12),dp(12));v.setBackground(interactive(0x00000000));clickable(v,label,listener);return v;}
     private void clickable(View v,String label,View.OnClickListener listener){v.setContentDescription(label);v.setFocusable(true);v.setOnClickListener(listener);v.setForeground(new RippleDrawable(ColorStateList.valueOf(0x4040bfff),null,round(0xffffffff,14)));}
-    private GradientDrawable round(int color,int radius){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(dp(radius));d.setStroke(dp(1),BORDER);return d;}
+    private GradientDrawable round(int color,int radius){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(dp(radius));if(Color.alpha(color)>0)d.setStroke(dp(1),BORDER);return d;}
     private Drawable interactive(int color){android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();states.addState(new int[]{android.R.attr.state_focused},round(0xff164169,14));states.addState(new int[]{android.R.attr.state_pressed},round(0xff164169,14));states.addState(new int[]{},round(color,14));return states;}
     private int dp(float n){return Math.round(n*getResources().getDisplayMetrics().density);}
     private static String clock(long ms){long s=ms/1000;return String.format(Locale.ROOT,"%02d:%02d",s/60,s%60);}

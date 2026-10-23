@@ -61,17 +61,41 @@ public class HomeBrowserTest {
         context.getSharedPreferences(EditorActivity.PREFS,0).edit().putString("mode","AUTO").commit();
         shell("wm size 1080x1920");shell("wm density 420");
         try(ActivityScenario<HomeActivity> scenario=ActivityScenario.launch(HomeActivity.class)){
-            await(scenario,"Recent projects");Thread.sleep(900);capture("home-portrait");
+            await(scenario,"Recent projects");Thread.sleep(900);shell("settings put global sysui_demo_allowed 1");shell("am broadcast -a com.android.systemui.demo -e command enter");shell("am broadcast -a com.android.systemui.demo -e command notifications --ez visible false");capture("home-portrait");
             scenario.onActivity(a->{View search=described(a.getWindow().getDecorView(),"Search projects");assertNotNull(search);search.performClick();});
             scenario.onActivity(a->{EditText search=findEdit(a.getWindow().getDecorView());assertNotNull(search);search.setText("no such project xyz");});
             scenario.onActivity(a->assertNotNull(text(a.getWindow().getDecorView(),"No projects match")));
             scenario.recreate();scenario.onActivity(a->{EditText search=findEdit(a.getWindow().getDecorView());assertEquals("no such project xyz",search.getText().toString());search.setText("Coastal");});
-            shell("wm size 1920x1080");shell("wm density 160");Thread.sleep(1200);
+            shell("wm size 1920x1080");shell("wm density 240");Thread.sleep(1200);
             scenario.onActivity(a->{assertNotNull(text(a.getWindow().getDecorView(),"Coastal film"));assertNull(text(a.getWindow().getDecorView(),"Portrait story"));EditText search=findEdit(a.getWindow().getDecorView());search.setText("");});
             scenario.onActivity(a->described(a.getWindow().getDecorView(),"Search projects").performClick());Thread.sleep(500);capture("home-landscape");
             scenario.onActivity(a->described(a.getWindow().getDecorView(),"View all  ›").performClick());
             scenario.onActivity(a->assertNotNull(text(a.getWindow().getDecorView(),"All projects")));
-        }finally{shell("wm size reset");shell("wm density reset");}
+        }finally{shell("am broadcast -a com.android.systemui.demo -e command exit");shell("wm size reset");shell("wm density reset");}
+    }
+    @Test public void creationOpensEditorAndBackSavesBeforeReturningHome()throws Exception{
+        context.getSharedPreferences(EditorActivity.PREFS,0).edit().putString("mode","AUTO").commit();
+        Instrumentation.ActivityMonitor monitor=inst.addMonitor(EditorActivity.class.getName(),null,false);
+        try(ActivityScenario<HomeActivity> scenario=ActivityScenario.launch(HomeActivity.class)){
+            await(scenario,"Recent projects");
+            scenario.onActivity(a->described(a.getWindow().getDecorView(),"New project").performClick());
+            inst.getUiAutomation().waitForIdle(200,4000);
+            android.view.accessibility.AccessibilityNodeInfo input=accessible(inst.getUiAutomation().getRootInActiveWindow(),"Untitled project");assertNotNull(input);
+            android.os.Bundle args=new android.os.Bundle();args.putCharSequence(android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,"Created through menu");
+            assertTrue(input.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT,args));
+            android.view.accessibility.AccessibilityNodeInfo create=accessible(inst.getUiAutomation().getRootInActiveWindow(),"Create");assertNotNull(create);assertTrue(create.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK));
+            Activity launched=inst.waitForMonitorWithTimeout(monitor,10000);assertTrue(launched instanceof EditorActivity);EditorActivity editor=(EditorActivity)launched;
+            boolean[] loaded={false};for(int i=0;i<100;i++){inst.runOnMainSync(()->loaded[0]=!editor.loading);if(loaded[0])break;Thread.sleep(100);}assertTrue("Editor loaded created project",loaded[0]);
+            String[] id={null};inst.runOnMainSync(()->{assertEquals("Created through menu",editor.project.name);assertEquals(30,editor.project.frameRate);assertFalse(editor.project.portrait);assertEquals(540,editor.project.previewHeight);id[0]=editor.project.id;editor.project.name="Saved before home";editor.saveAndProjects();});ids.add(id[0]);
+            for(int i=0;i<100;i++){if(store.load(id[0]).name.equals("Saved before home"))break;Thread.sleep(100);}
+            assertEquals("Saved before home",store.load(id[0]).name);
+            for(int i=0;i<100;i++){boolean[] done={false};inst.runOnMainSync(()->done[0]=editor.isFinishing()||editor.isDestroyed());if(done[0])break;Thread.sleep(100);}
+            await(scenario,"Saved before home");
+        }finally{inst.removeMonitor(monitor);}
+    }
+    private android.view.accessibility.AccessibilityNodeInfo accessible(android.view.accessibility.AccessibilityNodeInfo node,String value){
+        if(node==null)return null;if(value.contentEquals(node.getText()==null?"":node.getText()))return node;
+        for(int i=0;i<node.getChildCount();i++){android.view.accessibility.AccessibilityNodeInfo found=accessible(node.getChild(i),value);if(found!=null)return found;}return null;
     }
     private void await(ActivityScenario<HomeActivity> scenario,String value)throws Exception{for(int i=0;i<40;i++){boolean[] ok={false};scenario.onActivity(a->ok[0]=text(a.getWindow().getDecorView(),value)!=null);if(ok[0])return;Thread.sleep(100);}fail("Menu did not load");}
     private void capture(String name)throws Exception{Bitmap b=inst.getUiAutomation().takeScreenshot();File dir=new File(context.getFilesDir(),"qa");dir.mkdirs();try(OutputStream out=new FileOutputStream(new File(dir,name+".png"))){b.compress(Bitmap.CompressFormat.PNG,100,out);}b.recycle();}
