@@ -1,6 +1,6 @@
 # BC-1 — Black Ice editor
 
-**New development upgrade: v1.4.0-dev** — rotation crash/orientation fixes, private crash logs, simplified landscape Media Settings, immediate media dragging and export quality/progress controls. **139 JVM tests, 46 Android tests and 14 independent export checks passed.** [Download the signed Preview upgrade](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.4.0-dev/BC-1-v1.4.0-dev.apk). [QA, screenshots, build instructions and remaining limitations](docs/qa/BC-1-v1.4.0-LANDSCAPE-STABILITY.md). Install over the existing Preview without uninstalling; older releases remain below.
+**New development upgrade: v1.4.1-dev** — four matching blue Media Settings tiles, live Position/Rotation/Scale controls, multi-turn rotation, independent or linked dimensions, scoped keyframes and undo. **150 JVM tests, 48 Android tests and 16 independent export checks passed.** [Download the signed Preview upgrade](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.4.1-dev/BC-1-v1.4.1-dev.apk). [QA, screenshots and limitations](docs/qa/BC-1-v1.4.1-MEDIA-TRANSFORM.md). Install over the existing Preview without uninstalling. Updated projects use schema 6; a backup is preserved before migration.
 
 [**All versions and APK downloads ↓**](#all-versions--downloads)
 
@@ -94,7 +94,8 @@ Every versioned APK currently published in this repository, newest first. Source
 
 | Version | Download | Verification |
 | --- | --- | --- |
-| v1.4.0-dev — Landscape stability (latest Preview upgrade) | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.4.0-dev/BC-1-v1.4.0-dev.apk) | 139 unit + 46 Android tests; 14 export checks; retained-key signed; [QA](docs/qa/BC-1-v1.4.0-LANDSCAPE-STABILITY.md) |
+| v1.4.1-dev — Media Settings and transforms (latest Preview upgrade) | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.4.1-dev/BC-1-v1.4.1-dev.apk) | 150 unit + 48 Android tests; 16 export checks; retained-key signed; [QA](docs/qa/BC-1-v1.4.1-MEDIA-TRANSFORM.md) |
+| v1.4.0-dev — Landscape stability | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.4.0-dev/BC-1-v1.4.0-dev.apk) | 139 unit + 46 Android tests; 14 export checks; retained-key signed; [QA](docs/qa/BC-1-v1.4.0-LANDSCAPE-STABILITY.md) |
 | v1.3.3 — Centered playhead (separate test app) | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.3.3-test/BC-1-v1.3.3-test.apk) | 44 Android tests; 10 export checks; **not a Preview upgrade**; [QA](docs/qa/BC-1-v1.3.3-CENTERED-PLAYHEAD.md) |
 | v1.3.1 — Main workspace & Footage tools | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.3.1/BC-1-v1.3.1.apk) | 137 unit + 43 Android tests; 10 export checks; [QA](v1.3.1/QA.md) |
 | v1.3.0 — Mobile V1 workspace | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.3.0/BC-1-v1.3.0.apk) | 133 unit + 42 Android tests; 10 export checks; [QA](v1.3.0/QA.md) |
@@ -111,8 +112,8 @@ Every versioned APK currently published in this repository, newest first. Source
 | v0.5 Motion & Layers | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v0.5/BC-1-v0.5-Preview.apk) | 29 unit + 16 Android tests passed |
 | v0.4 Timeline & Export | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v0.4/BC-1-v0.4-Preview.apk) | Previous preview preserved |
 
-**Latest Preview upgrade:** `com.blackice.bc1.preview`, v1.4.0-dev, versionCode 27, retained Preview signing certificate. Install over your existing Preview to retain projects; do not uninstall it first. The v1.3.3 test APK uses the separate `com.blackice.bc1.icelite` package.
+**Latest Preview upgrade:** `com.blackice.bc1.preview`, v1.4.1-dev, versionCode 28, retained Preview signing certificate. Install over your existing Preview to retain projects; do not uninstall it first. The v1.3.3 test APK uses the separate `com.blackice.bc1.icelite` package.
 
-[Latest QA and limitations](docs/qa/BC-1-v1.4.0-LANDSCAPE-STABILITY.md) · [Latest SHA256 checksum](v1.4.0-dev/SHA256SUMS.txt)
+[Latest QA and limitations](docs/qa/BC-1-v1.4.1-MEDIA-TRANSFORM.md) · [Latest SHA256 checksum](v1.4.1-dev/SHA256SUMS.txt)
 
 Checks use an Android API35 emulator. Physical Snapdragon 8 Gen 3 and Samsung DeX performance remains unmeasured. RTX integration is a future backend. Versioned APKs are retained and never replaced with different builds.

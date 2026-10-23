@@ -1,3 +1,7 @@
+# Published v1.4.1-dev — Media Settings and transforms
+
+PR #7 merged; qualified source `2ab6fa383fc975992cffe8d726a0f22d6a205253`, run39718133591 passed 150 JVM /48 Android /16 export checks. Normal Preview upgrade code28 signed with the original certificate. See qa/BC-1-v1.4.1-MEDIA-TRANSFORM.md and ../v1.4.1-dev/. Preserve schema6 heightScale/11-channel compatibility. The separate `ui/media-transform` branch was an overlapping experiment and is NOT the released implementation; do not merge its conflicting 12-channel schema. Physical Samsung testing remains pending.
+
 # v1.4.0-dev landscape stability — automated qualification passed
 
 Source d3ee8b4498de6a6fabcfc37f6ffe02a3fcb84ac5, run39544615852: build/lint, 139 JVM tests, 46 Android tests and 14 independent export checks passed. PR #6 merged. Retained Preview signing backup recovered privately and certificate verified; normal upgrade package com.blackice.bc1.preview/code27. No signing material published or regenerated. Preserve all prior release folders. See qa/BC-1-v1.4.0-LANDSCAPE-STABILITY.md for changes, failed-candidate history, screenshots, qualification and explicit gaps. Physical Samsung and real camera fixtures still need validation; custom audio encoder controls/arbitrary canvas/background/storage/Open Location are not implemented. Do not call this development build production-stable.
