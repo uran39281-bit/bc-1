@@ -154,7 +154,7 @@ public final class EditorActivity extends Activity {
         try {mode=LayoutPolicy.Preference.valueOf(getSharedPreferences(PREFS,MODE_PRIVATE).getString("mode","AUTO"));}catch(Exception ignored){}
         snapping=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("snapping",true);
         workspaceFocus=getSharedPreferences(PREFS,MODE_PRIVATE).getInt("workspace-focus",0);
-        if(state!=null){mediaSort=state.getInt("media-sort",0);mediaList=state.getBoolean("media-list",false);favoritesOnly=state.getBoolean("media-favorites",false);customTimelineHeight=state.getInt("timeline-height",0);selected=state.getInt("selected",-1);selectedOverlay=state.getInt("selected-overlay",-1);pixelsPerSecond=state.getFloat("timeline-zoom",48);tab=state.getInt("tab",0);mediaQuery=state.getString("media-query","");try{mediaKind=MediaFilter.Kind.valueOf(state.getString("media-kind","ALL"));}catch(IllegalArgumentException ignored){}}
+        if(state!=null){transformPanel.linked=state.getBoolean("transform-linked",true);transformPanel.tab=state.getInt("transform-tab",0);mediaSort=state.getInt("media-sort",0);mediaList=state.getBoolean("media-list",false);favoritesOnly=state.getBoolean("media-favorites",false);customTimelineHeight=state.getInt("timeline-height",0);selected=state.getInt("selected",-1);selectedOverlay=state.getInt("selected-overlay",-1);pixelsPerSecond=state.getFloat("timeline-zoom",48);tab=state.getInt("tab",0);mediaQuery=state.getString("media-query","");try{mediaKind=MediaFilter.Kind.valueOf(state.getString("media-kind","ALL"));}catch(IllegalArgumentException ignored){}}
         if(state==null)tab=1;
         buildWorkspace();
         String id=getSharedPreferences(PREFS,MODE_PRIVATE).getString("last-project",null);
@@ -169,10 +169,10 @@ public final class EditorActivity extends Activity {
         });
     }
     @Override protected void onStart(){super.onStart();active=true;main.post(pulse);if(!loading)showLive();}
-    @Override protected void onStop(){active=false;main.removeCallbacks(pulse);main.removeCallbacks(warmPreview);saveNow();releasePreview();if(previewProxy!=null)previewProxy.cancel();if(live!=null)live.releaseDecoders();super.onStop();}
+    @Override protected void onStop(){cancelLiveAdjust();active=false;main.removeCallbacks(pulse);main.removeCallbacks(warmPreview);saveNow();releasePreview();if(previewProxy!=null)previewProxy.cancel();if(live!=null)live.releaseDecoders();super.onStop();}
     @Override protected void onDestroy(){main.removeCallbacks(autosave);if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
-    @Override protected void onSaveInstanceState(Bundle state){state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());saveNow();super.onSaveInstanceState(state);}
-    @Override public void onConfigurationChanged(Configuration config){super.onConfigurationChanged(config);buildWorkspace();}
+    @Override protected void onSaveInstanceState(Bundle state){cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());saveNow();super.onSaveInstanceState(state);}
+    @Override public void onConfigurationChanged(Configuration config){super.onConfigurationChanged(config);cancelLiveAdjust();buildWorkspace();}
     boolean exporting(){return getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getBoolean("running",false)||exportLaunching;}
     boolean editable(){if(uiLocked){tell("UI locked • unlock editing in Settings");return false;}if(loading||importing){tell("Wait for the current import to finish.");return false;}if(exporting()){tell("Wait for export to finish, or cancel it to continue editing.");return false;}return true;}
     void releasePreview(){
@@ -268,7 +268,7 @@ public final class EditorActivity extends Activity {
         project.validate();dirty=true;editRevision++;message=text;refreshProject();showLive();main.removeCallbacks(autosave);main.postDelayed(autosave,300);
     }
     void saveNow() {
-        main.removeCallbacks(autosave);if(loading)return;
+        main.removeCallbacks(autosave);if(loading||liveBefore!=null)return;
         if(player!=null)project.playheadMs=Math.min(project.durationMs(),Math.max(0,player.getCurrentPosition()));
         EditProject snapshot=ProjectStore.snapshot(project);long savingRevision=editRevision;
         io.execute(()->{try{store.save(snapshot);main.post(()->{if(isDestroyed()||!project.id.equals(snapshot.id))return;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("last-project",snapshot.id).apply();if(savingRevision==editRevision){dirty=false;renderHeader();}});}
@@ -287,9 +287,10 @@ public final class EditorActivity extends Activity {
         for(EditProject.Clip clip:project.clips)if(clip.track>=EditProject.AUDIO_FIRST)loadWaveform(clip,true);
         if(monitor!=null)monitor.requestLayout();if(emptyPreview!=null)emptyPreview.setVisibility((project.clips.isEmpty()&&project.overlays.isEmpty())?View.VISIBLE:View.GONE);renderInspector();renderMediaBrowser();syncPosition();
     }
-    void syncPosition(){updatePlayheadTools();if(mobile!=null)mobile.sync();if(previewControls!=null)previewControls.invalidate();if(time!=null)time.setText(clock(project.playheadMs)+"  /  "+clock(project.durationMs()));if(timeline!=null)timeline.syncScroll();if(previewScrubber!=null&&!scrubbing)previewScrubber.setProgress((int)(1000*project.playheadMs/Math.max(1,project.durationMs())));}
+    void syncPosition(){if(transformPanel!=null)transformPanel.refresh();updatePlayheadTools();if(mobile!=null)mobile.sync();if(previewControls!=null)previewControls.invalidate();if(time!=null)time.setText(clock(project.playheadMs)+"  /  "+clock(project.durationMs()));if(timeline!=null)timeline.syncScroll();if(previewScrubber!=null&&!scrubbing)previewScrubber.setProgress((int)(1000*project.playheadMs/Math.max(1,project.durationMs())));}
     long seekTarget(){return Math.min(project.playheadMs,Math.max(0,project.durationMs()-1));}
     void seek(long ms){
+        if(liveBefore!=null)return;
         project.playheadMs=Math.max(0,Math.min(ms,project.durationMs()));
         // Paused scrubbing goes through the live preview; seeking during playback still uses the player.
         if(player!=null&&!player.getPlayWhenReady()&&live!=null){releasePreview();project.playheadMs=Math.max(0,Math.min(ms,project.durationMs()));}
@@ -446,7 +447,7 @@ public final class EditorActivity extends Activity {
     void splitSelected(){if(clip()!=null)edit("Clip split",()->project.split(selected,project.playheadMs));}
     /** Failed/no-op commands do not consume undo or discard redo. */
     void edit(String message,Runnable operation){
-        if(!editable())return;CrashLogs.operation(message);String before;try{before=ProjectStore.encode(project);}catch(Exception e){tell(e.getMessage());return;}
+        if(!editable())return;pausePlayback();CrashLogs.operation(message);String before;try{before=ProjectStore.encode(project);}catch(Exception e){tell(e.getMessage());return;}
         int selection=selected;
         try{operation.run();project.validate();if(!before.equals(ProjectStore.encode(project))){pushUndo(before);changed(message);}}
         catch(Exception e){CrashLogs.record("Edit rejected",e);try{project=ProjectStore.decode(before);selected=selection;refreshProject();}catch(Exception impossible){throw new IllegalStateException(impossible);}tell(e.getMessage());}
@@ -653,6 +654,7 @@ public final class EditorActivity extends Activity {
     void beginLiveAdjust(){if(!layerEditable())return;try{liveBefore=ProjectStore.encode(project);}catch(Exception e){liveBefore=null;return;}if(player!=null||previewPending)releasePreview();main.removeCallbacks(warmPreview);previewProxy.cancel();}
     /** During a drag: apply the value and redraw at once, without validation or undo. */
     void liveAdjust(Runnable apply){if(liveBefore==null)return;try{apply.run();if(previewControls!=null)previewControls.invalidate();renderLive();}catch(RuntimeException ignored){}}
+    void cancelLiveAdjust(){transformPanel.clearGesture();String before=liveBefore;liveBefore=null;if(before==null)return;try{project=ProjectStore.decode(before);}catch(Exception e){throw new IllegalStateException(e);}renderInspector();renderLive();if(previewControls!=null)previewControls.invalidate();}
     /** Drag end: validate and record a single undo entry from the drag start. */
     void endLiveAdjust(String message,Runnable apply){
         String before=liveBefore;liveBefore=null;if(before==null)return;
@@ -705,8 +707,8 @@ public final class EditorActivity extends Activity {
         TextView b=button(title,v->action.run());b.setTextSize(11);LinearLayout.LayoutParams cell=new LinearLayout.LayoutParams(0,dp(wideLayout?44:54),1);cell.rightMargin=dp(4);gridRow.addView(b,cell);gridCount++;}
     void flushGrid(){if(gridRow!=null){int columns=wideLayout?3:2;while(gridCount%columns!=0){gridRow.addView(new View(this),new LinearLayout.LayoutParams(0,dp(wideLayout?44:54),1));gridCount++;}}gridRow=null;gridCount=0;}
     void setStatic(int property,float value){EditProject.Clip c=clip();EditProject.Overlay o=overlay();
-        if(c!=null)switch(property){case Motion.X:c.x=value;break;case Motion.Y:c.y=value;break;case Motion.SCALE:c.scale=value;break;case Motion.ROTATION:c.rotation=value;break;case Motion.OPACITY:c.opacity=value;break;case Motion.INTENSITY:c.intensity=value;break;case Motion.SKEW_X:c.skewX=value;break;case Motion.SKEW_Y:c.skewY=value;break;case Motion.ANCHOR_X:c.anchorX=value;break;case Motion.ANCHOR_Y:c.anchorY=value;break;}
-        else if(o!=null)switch(property){case Motion.X:o.x=value;break;case Motion.Y:o.y=value;break;case Motion.SCALE:o.scale=value;break;case Motion.ROTATION:o.rotation=value;break;case Motion.OPACITY:o.opacity=value;break;case Motion.SKEW_X:o.skewX=value;break;case Motion.SKEW_Y:o.skewY=value;break;case Motion.ANCHOR_X:o.anchorX=value;break;case Motion.ANCHOR_Y:o.anchorY=value;break;}
+        if(c!=null)switch(property){case Motion.X:c.x=value;break;case Motion.Y:c.y=value;break;case Motion.HEIGHT:c.heightScale=value;break;case Motion.SCALE:c.scale=value;break;case Motion.ROTATION:c.rotation=value;break;case Motion.OPACITY:c.opacity=value;break;case Motion.INTENSITY:c.intensity=value;break;case Motion.SKEW_X:c.skewX=value;break;case Motion.SKEW_Y:c.skewY=value;break;case Motion.ANCHOR_X:c.anchorX=value;break;case Motion.ANCHOR_Y:c.anchorY=value;break;}
+        else if(o!=null)switch(property){case Motion.X:o.x=value;break;case Motion.Y:o.y=value;break;case Motion.HEIGHT:o.heightScale=value;break;case Motion.SCALE:o.scale=value;break;case Motion.ROTATION:o.rotation=value;break;case Motion.OPACITY:o.opacity=value;break;case Motion.SKEW_X:o.skewX=value;break;case Motion.SKEW_Y:o.skewY=value;break;case Motion.ANCHOR_X:o.anchorX=value;break;case Motion.ANCHOR_Y:o.anchorY=value;break;}
     }
     void renameSelection(){EditProject.Clip c=clip();EditProject.Overlay o=overlay();if((c==null&&o==null)||!layerEditable())return;
         numberDialog("Layer name",c!=null?c.name:o.label(),name->{if(name.isBlank()||name.length()>60)throw new IllegalArgumentException("Use a name of 1 to 60 characters.");edit("Layer renamed",()->{if(c!=null)c.name=name;else o.name=name;});});}
@@ -870,7 +872,7 @@ public final class EditorActivity extends Activity {
     int[] exportSize(){return project.portrait?new int[]{1080,1920}:new int[]{1920,1080};}
     double frameAspect(){int[] s=exportSize();return s[0]/(double)s[1];}
     float aspectOf(){return transformPanel.current().aspect;}
-    void setAspect(float aspect){EditProject.Clip c=clip();EditProject.Overlay o=overlay();if(c!=null)c.aspect=aspect;else if(o!=null)o.aspect=aspect;}
+    void setAspect(float aspect){EditProject.Clip c=clip();EditProject.Overlay o=overlay();if(c!=null&&c.heightScale>=0||o!=null&&o.heightScale>=0)transformPanel.write(Motion.HEIGHT,transformPanel.current().scale*aspect);if(c!=null)c.aspect=aspect;else if(o!=null)o.aspect=aspect;}
     void setFlip(boolean horizontal){EditProject.Clip c=clip();EditProject.Overlay o=overlay();if(c!=null){if(horizontal)c.flipH=!c.flipH;else c.flipV=!c.flipV;}else if(o!=null){if(horizontal)o.flipH=!o.flipH;else o.flipV=!o.flipV;}}
     /** Local content half-size in frame units (before the layer's own transform). */
     double[] layerHalf(){return layerHalf(clip(),overlay());}

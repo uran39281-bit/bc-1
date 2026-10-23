@@ -55,9 +55,9 @@ final class ToolPanels {
     private TextView tile(String icon,String label,String description,Runnable action,boolean enabled){TextView b=a.iconButton(label,v->action.run());b.setTextSize(11);b.setCompoundDrawables(null,a.icon(icon,enabled?EditorActivity.TEXT:EditorActivity.MUTED),null,null);b.setContentDescription(description);b.setTooltipText(description);EditorActivity.dim(b,enabled);return b;}
     private void footagePanel(LinearLayout into){
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();boolean still=c==null||c.image,editable=!locked()&&!a.uiLocked;if(c!=null)checkAudio(c);
-        LinearLayout title=a.row();title.setGravity(Gravity.CENTER_VERTICAL);TextView heading=a.label("Footage",18,EditorActivity.TEXT,true);title.addView(heading,new LinearLayout.LayoutParams(0,a.dp(48),1));
+        LinearLayout title=a.row();title.setGravity(Gravity.CENTER_VERTICAL);TextView heading=a.label("Media Settings",18,EditorActivity.TEXT,true);title.addView(heading,new LinearLayout.LayoutParams(0,a.dp(48),1));
         title.addView(a.headerIcon("Duplicate","Duplicate",v->a.duplicateSelected()),new LinearLayout.LayoutParams(a.dp(48),a.dp(48)));title.addView(a.headerIcon("Delete","Delete",v->a.deleteSelection()),new LinearLayout.LayoutParams(a.dp(48),a.dp(48)));title.addView(a.headerIcon("More","More actions",v->a.moreMenu()),new LinearLayout.LayoutParams(a.dp(48),a.dp(48)));into.addView(title);
-        TextView source=a.label((c!=null?c.name:o.label())+(locked()?" • Locked":""),11,EditorActivity.MUTED,false);source.setSingleLine(true);source.setEllipsize(android.text.TextUtils.TruncateAt.END);source.setContentDescription("Selected footage "+(c!=null?c.name:o.label()));into.addView(source);
+        TextView source=a.label((c!=null?c.name:o.label())+(locked()?" • Locked":""),11,EditorActivity.MUTED,false);source.setTooltipText(c!=null?c.name:o.label());source.setSingleLine(true);source.setEllipsize(android.text.TextUtils.TruncateAt.END);source.setContentDescription("Selected footage "+(c!=null?c.name:o.label()));into.addView(source);
         boolean inside=editable&&(c!=null?LayerOps.canSplitOrTrim(a.project,a.selected):a.project.playheadMs-o.startMs>=EditProject.MIN_CLIP_MS&&o.endMs-a.project.playheadMs>=EditProject.MIN_CLIP_MS),audio=editable&&c!=null&&!c.image&&Boolean.TRUE.equals(audioSources.get(c.uri));
         String[] labels={still?"Duration":"Speed","Trim Start","Split","Trim End",c!=null&&c.unmutedVolume>=0?"Unmute":"Mute"};String[] icons={still?"Time":"Speed","TrimStart","Edit","TrimEnd","Mute"};
         int columns=a.getResources().getConfiguration().fontScale>1.25f?3:5;LinearLayout row=null;
@@ -65,8 +65,7 @@ final class ToolPanels {
             TextView b=tile(icons[i],labels[i],desc,()->{if(index==0)runTool(still?"Duration":"Speed");else if(index==4){if(audio&&a.layerEditable())a.edit(c.unmutedVolume>=0?"Clip unmuted":"Clip muted",()->ClipAudio.toggleMute(c));}else playheadEdit(index-1);},enabled);
             LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,a.dp(68),1);lp.setMargins(a.dp(2),a.dp(6),a.dp(2),a.dp(6));row.addView(b,lp);}
         View divider=new View(a);divider.setBackgroundColor(BlackIceTheme.BORDER);into.addView(divider,new LinearLayout.LayoutParams(-1,a.dp(1)));
-        String[] names={"Blending & Opacity","Move & Transform","Edit Shape","Effects"};String[] glyphs={"Opacity","Transform","Shapes","Effects"};
-        for(int i=0;i<4;i++){final String name=names[i];if(i%2==0){row=a.row();into.addView(row);}TextView b=a.button(name,v->category(name));b.setTextSize(12);b.setCompoundDrawables(a.icon(glyphs[i],EditorActivity.TEXT),null,null,null);b.setContentDescription(i==2?"Available for shape layers":name);b.setTooltipText(b.getContentDescription());if(i==3&&c==null){b.setContentDescription("Effects unavailable for legacy image overlays; use a visual media track");b.setTooltipText(b.getContentDescription());}EditorActivity.dim(b,editable&&i!=2&&(i!=3||c!=null));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,a.dp(a.getResources().getConfiguration().fontScale>1.25f?80:60),1);lp.setMargins(a.dp(3),a.dp(4),a.dp(3),a.dp(4));row.addView(b,lp);}
+        mediaTiles(into,editable,c!=null||o.imageUri!=null);
         // Secondary supported operations remain reachable without returning the removed category tiles.
         TextView extra=a.button("More footage tools",v->open("More footage tools",()->{for(String tool:tools(a.clip(),a.overlay()))a.gridAction(tool,()->runTool(tool));a.flushGrid();a.inspector.addView(a.button("Compare before / after",compareView->a.compare(!a.comparing)));}));extra.setContentDescription("Slip, chroma key, audio extraction and animation tools");into.addView(extra,new LinearLayout.LayoutParams(-1,a.dp(48)));
         if(c!=null&&c.track==0)into.addView(a.note("Main sequence: edge dragging uses ripple trim. Trim Start/End at playhead preserve other clip positions."));
@@ -74,11 +73,15 @@ final class ToolPanels {
     private void landscapeMediaSettings(LinearLayout into){
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();boolean visual=c==null||c.track<EditProject.AUDIO_FIRST;if(c!=null&&!c.image)checkAudio(c);
         LinearLayout title=a.row();title.addView(a.label("Media Settings",18,EditorActivity.TEXT,true),new LinearLayout.LayoutParams(0,a.dp(48),1));title.addView(a.headerIcon("More","Selected media actions",v->a.moreMenu()));into.addView(title);
-        into.addView(a.note(c!=null?c.name:o.label()));
-        String[] names={"Move & Transform","Blending & Opacity","Effects — Coming Later","Audio"};
-        for(int i=0;i<names.length;i++){final int which=i;TextView b=a.button(names[i],v->{if(which==3)open("Audio",this::audioPanel);else category(names[which]);});b.setGravity(Gravity.CENTER_VERTICAL|Gravity.LEFT);b.setTooltipText(names[i]);b.setContentDescription("Media Settings: "+names[i]);EditorActivity.dim(b,!locked()&&!a.uiLocked&&(i==3?c!=null&&!c.image&&(c.audioOnly||Boolean.TRUE.equals(audioSources.get(c.uri))):i!=2&&visual));into.addView(b,new LinearLayout.LayoutParams(-1,a.dp(60)));}
-
+        TextView filename=a.note(c!=null?c.name:o.label());filename.setSingleLine(true);filename.setEllipsize(android.text.TextUtils.TruncateAt.END);filename.setTooltipText(c!=null?c.name:o.label());filename.setContentDescription("Selected media "+(c!=null?c.name:o.label()));into.addView(filename);
+        mediaTiles(into,!locked()&&!a.uiLocked,visual);
     }
+    private void mediaTiles(LinearLayout into,boolean editable,boolean visual){
+        String[] names={"Move & Transform","Blending & Opacity","Effects — Coming Later","Audio"};
+        String[] icons={"Transform","Blending & Opacity","Effects","Volume"};
+        for(int row=0;row<2;row++){LinearLayout line=a.row();into.addView(line);for(int col=0;col<2;col++){int index=row*2+col;MediaTile tile=new MediaTile(a,names[index],icons[index]);tile.setOnClickListener(v->{if(index==3)open("Audio",this::audioPanel);else category(names[index]);});tile.setContentDescription("Media Settings: "+names[index]);tile.setTooltipText(names[index]);EditorActivity.dim(tile,editable&&index!=2&&(index==3||visual));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,-2,1);lp.setMargins(a.dp(3),a.dp(5),a.dp(3),a.dp(5));line.addView(tile,lp);}}
+    }
+
     private void audioPanel(){
         EditProject.Clip c=a.clip();if(c==null||c.image){a.inspector.addView(a.note("This media has no audio."));return;}
         a.inspector.addView(a.button(c.unmutedVolume>=0?"Unmute":"Mute",v->{if(a.layerEditable())a.edit("Audio mute updated",()->ClipAudio.toggleMute(c));}));
@@ -413,8 +416,8 @@ final class ToolPanels {
         a.inspector.addView(a.button("Save this animation as a preset",v->a.savePreset(PresetStore.ANIMATION,Attributes.ANIMATION)));
     }
     float[] currentValues(){EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
-        if(c!=null)return new float[]{c.x,c.y,c.scale,c.rotation,c.opacity,c.intensity,c.skewX,c.skewY,c.anchorX,c.anchorY};
-        return new float[]{o.x,o.y,o.scale,o.rotation,o.opacity,0,o.skewX,o.skewY,o.anchorX,o.anchorY};}
+        if(c!=null)return new float[]{c.x,c.y,c.scale,c.rotation,c.opacity,c.intensity,c.skewX,c.skewY,c.anchorX,c.anchorY,c.heightScale<0?c.scale*c.aspect:c.heightScale};
+        return new float[]{o.x,o.y,o.scale,o.rotation,o.opacity,0,o.skewX,o.skewY,o.anchorX,o.anchorY,o.heightScale<0?o.scale*o.aspect:o.heightScale};}
     private void curvePanel(){
         Motion m=a.selectedMotion();if(m==null)return;long t=motionTime(),tol=tolerance();Motion.Key first=null;for(int p=0;p<Motion.COUNT&&first==null;p++)first=Keyframes.keyAt(m,p,t,tol);
         if(first==null){a.inspector.addView(a.note("Move the playhead onto a keyframe to edit its curve."));return;}

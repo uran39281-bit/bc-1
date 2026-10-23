@@ -1,217 +1,102 @@
 package com.blackice.bc1;
 
+import android.app.AlertDialog;
 import android.graphics.*;
 import android.view.*;
 import android.widget.*;
 import com.blackice.bc1.editor.*;
-import java.util.Locale;
+import java.util.*;
 
-/** Move & Transform: Position, Rotation, Scale, Skew, Anchor and Align tabs, a movement touchpad,
- * a rotation dial and sliding value rulers with fine / coarse modes. Edits go through keyframes when
- * the property is animated, otherwise they change the static value. One drag is one undo entry. */
+/** Shared phone/DeX transform controls, using the same model and live renderer as export. */
 final class TransformPanel {
     private final EditorActivity a;
     int tab;
-    boolean fine,linked=true,lockX,lockY;
-    float angleSnap=15;
+    boolean linked=true;
+    float angleSnap=0;
+    static final String[] TABS={"Position","Rotation","Scale"};
+    private final Map<Integer,TextView> values=new HashMap<>(),diamonds=new HashMap<>();
+    private TextView previousKey,nextKey;
+    private final Map<Integer,ValueRuler> rulers=new HashMap<>();
+    private Dial dial;
+    private TransformMath.Transform editBase;
     TransformPanel(EditorActivity activity){a=activity;}
-    static final String[] TABS={"Position","Rotation","Scale","Skew","Anchor","Align"};
-
-    /** Current transform at the playhead and a writer that respects animation. */
-    TransformMath.Transform current(){
-        EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();long t=a.panels.motionTime();
-        return c!=null?TransformMath.of(c,t):TransformMath.of(o,t);
-    }
-    private Motion motion(){EditProject.Clip c=a.clip();return c!=null?c.motion:a.overlay().motion;}
-    /** Writes one property: key at playhead when animated, otherwise the static field. */
+    TransformMath.Transform current(){EditProject.Clip c=a.clip();return c!=null?TransformMath.of(c,a.panels.motionTime()):TransformMath.of(a.overlay(),a.panels.motionTime());}
+    private Motion motion(){return a.selectedMotion();}
     void write(int property,float value){
-        if(!Motion.allowed(property,value))throw new IllegalArgumentException(Motion.PROPERTIES[property]+" is out of range.");
-        EditProject.Overlay o=a.overlay();
-        if(o!=null&&property==Motion.SCALE)value=Math.max(.1f,Math.min(2,value));
-        if(o!=null&&(property==Motion.X||property==Motion.Y))value=Math.max(-1,Math.min(1,value));
+        if(!Motion.allowed(property,value))throw new IllegalArgumentException(Motion.PROPERTIES[property]+" is outside the supported range.");
+        if(a.overlay()!=null&&property==Motion.SCALE&&(value<.1f||value>2))throw new IllegalArgumentException("Legacy overlay Width supports 10–200%.");
         if(Keyframes.set(motion(),property,a.panels.motionTime(),value,a.panels.tolerance()))a.setStatic(property,value);
     }
-
+    private void separate(){if(a.clip()!=null)TransformEdits.separateHeight(a.clip());else TransformEdits.separateHeight(a.overlay());}
+    void writeDimensions(float w,float h,boolean paired){
+        TransformEdits.scalePair(w,h,Motion.SCALE,w,false);
+        if(a.overlay()!=null&&(w<.1f||w>2))throw new IllegalArgumentException("Legacy overlay Width supports 10–200%.");
+        separate();Motion m=motion();long time=a.panels.motionTime();
+        if(paired&&(!m.curves.get(Motion.SCALE).isEmpty()||!m.curves.get(Motion.HEIGHT).isEmpty())){
+            TransformMath.Transform t=current();Keyframes.enable(m,Motion.SCALE,time,t.scale);Keyframes.enable(m,Motion.HEIGHT,time,t.scale*t.aspect);
+        }
+        write(Motion.SCALE,w);write(Motion.HEIGHT,h);
+    }
+    private float value(int p){TransformMath.Transform t=current();return p==Motion.X?t.x:p==Motion.Y?t.y:p==Motion.ROTATION?t.rotation:p==Motion.SCALE?t.scale:t.scale*t.aspect;}
+    private float display(int p){return p==Motion.X?a.exportSize()[0]/2f:p==Motion.Y?a.exportSize()[1]/2f:p==Motion.ROTATION?-1:100/neutralScale();}
+    private float neutralScale(){return a.overlay()==null?1:new EditProject.Overlay().scale;}
+    private String unit(int p){return p<2?" px":p==Motion.ROTATION?"°":"%";}
+    private String title(int p){return p==Motion.SCALE?"Width":Motion.PROPERTIES[p];}
+    private void apply(int p,float v){
+        if(p==Motion.SCALE||p==Motion.HEIGHT){TransformMath.Transform t=editBase==null?current():editBase;float[] pair=TransformEdits.scalePair(t.scale,t.scale*t.aspect,p,v,linked);
+            if(linked)writeDimensions(pair[0],pair[1],true);
+            else{separate();write(p,v);}
+        }else write(p,v);
+    }
+    void commit(String label,Runnable change){if(!a.layerEditable())return;a.pausePlayback();a.edit(label,change);a.renderInspector();}
     void build(LinearLayout into){
-        if(a.clip()==null&&a.overlay()==null){into.addView(a.note("Select a visual layer to transform it."));return;}
-        if(a.clip()!=null&&a.clip().track>=EditProject.AUDIO_FIRST){into.addView(a.note("Audio has no picture to transform."));return;}
-        HorizontalScrollView scroll=new HorizontalScrollView(a);scroll.setHorizontalScrollBarEnabled(false);LinearLayout tabs=a.row();
-        for(int i=0;i<TABS.length;i++){final int index=i;TextView b=a.button(TABS[i],v->{tab=index;a.renderInspector();});b.setTextSize(11);b.setSelected(i==tab);b.setTextColor(i==tab?EditorActivity.CYAN:EditorActivity.TEXT);b.setBackground(a.navBackground(i==tab));tabs.addView(b,new LinearLayout.LayoutParams(-2,a.dp(48)));}
-        scroll.addView(tabs);into.addView(scroll);
-        LinearLayout mode=a.row();
-        TextView precision=a.button(fine?"Fine adjustment":"Coarse adjustment",v->{fine=!fine;a.renderInspector();});precision.setContentDescription("Ruler precision: "+(fine?"fine":"coarse")+". Tap to switch.");
-        mode.addView(precision,new LinearLayout.LayoutParams(0,a.dp(48),1));
-        mode.addView(a.button("Reset All Transforms",v->resetAll()),new LinearLayout.LayoutParams(0,a.dp(48),1));
-        into.addView(mode);
-        a.panels.keyNavigation();
-        TransformMath.Transform t=current();
-        switch(tab){
-            case 0:position(into,t);break;
-            case 1:rotation(into,t);break;
-            case 2:scale(into,t);break;
-            case 3:ruler(into,"Skew X",Motion.SKEW_X,t.skewX,0,"°",1,true);ruler(into,"Skew Y",Motion.SKEW_Y,t.skewY,0,"°",1,true);break;
-            case 4:anchor(into,t);break;
-            default:align(into);break;
-        }
+        values.clear();diamonds.clear();rulers.clear();dial=null;
+        if(a.clip()==null&&a.overlay()==null)return;
+        if(a.clip()!=null&&a.clip().audioOnly){into.addView(a.note("Audio has no picture to transform."));return;}
+        tab=Math.max(0,Math.min(2,tab));LinearLayout tabs=a.row();
+        for(int i=0;i<3;i++){final int n=i;LinearLayout col=new LinearLayout(a);col.setOrientation(LinearLayout.VERTICAL);TextView b=a.button(TABS[i],v->{tab=n;a.renderInspector();});b.setSelected(i==tab);b.setTextColor(i==tab?EditorActivity.CYAN:EditorActivity.TEXT);b.setContentDescription(TABS[i]+(i==tab?", selected":""));col.addView(b,new LinearLayout.LayoutParams(-1,a.dp(48)));View line=new View(a);line.setBackgroundColor(i==tab?EditorActivity.CYAN:Color.TRANSPARENT);col.addView(line,new LinearLayout.LayoutParams(-1,a.dp(3)));tabs.addView(col,new LinearLayout.LayoutParams(0,-2,1));}into.addView(tabs);
+        if(tab==0)into.addView(a.button("Reset all",v->resetAll()),new LinearLayout.LayoutParams(-1,a.dp(48)));
+        navigation(into);
+        if(tab==0){control(into,Motion.X,true);control(into,Motion.Y,true);}
+        else if(tab==1){dial=new Dial();into.addView(dial,new LinearLayout.LayoutParams(-1,a.dp(230)));control(into,Motion.ROTATION,false);into.addView(a.label("Presets",15,EditorActivity.TEXT,true));LinearLayout presets=a.row();for(int amount:new int[]{45,90,180,360}){LinearLayout column=new LinearLayout(a);column.setOrientation(LinearLayout.VERTICAL);column.addView(a.compactButton("+","Add "+amount+" degrees",v->increment(amount)),new LinearLayout.LayoutParams(-1,a.dp(48)));TextView label=a.label(amount+"°",14,EditorActivity.TEXT,true);label.setGravity(Gravity.CENTER);column.addView(label,new LinearLayout.LayoutParams(-1,a.dp(36)));column.addView(a.compactButton("−","Subtract "+amount+" degrees",v->increment(-amount)),new LinearLayout.LayoutParams(-1,a.dp(48)));presets.addView(column,new LinearLayout.LayoutParams(0,-2,1));}into.addView(presets);}
+        else{control(into,Motion.SCALE,true);TextView lock=a.button("↔  Lock W and H",v->{TransformMath.Transform t=current();if(!linked&&!(t.scale>0&&t.aspect>0)){a.tell("Both dimensions must be above zero before linking.");return;}linked=!linked;a.renderInspector();});lock.setCompoundDrawables(a.icon("Link",EditorActivity.CYAN),null,null,null);lock.setSelected(linked);lock.setBackground(a.buttonBackground(linked));lock.setTextColor(linked?EditorActivity.CYAN:EditorActivity.TEXT);lock.setContentDescription("Lock W and H: "+(linked?"on":"off"));into.addView(lock,new LinearLayout.LayoutParams(-1,a.dp(52)));control(into,Motion.HEIGHT,true);}
+        refresh();
     }
-    private void position(LinearLayout into,TransformMath.Transform t){
-        int[] size=a.exportSize();
-        ruler(into,"X",Motion.X,t.x,0,"px",size[0]/2f,true);ruler(into,"Y",Motion.Y,t.y,0,"px",size[1]/2f,true);
-        LinearLayout axes=a.row();
-        axes.addView(toggle("Horizontal only",lockY,v->{lockY=!lockY;if(lockY)lockX=false;a.renderInspector();}),new LinearLayout.LayoutParams(0,a.dp(48),1));
-        axes.addView(toggle("Vertical only",lockX,v->{lockX=!lockX;if(lockX)lockY=false;a.renderInspector();}),new LinearLayout.LayoutParams(0,a.dp(48),1));
-        into.addView(axes);
-        Touchpad pad=new Touchpad();into.addView(pad,new LinearLayout.LayoutParams(-1,a.dp(150)));
-        LinearLayout nudge=a.row();String[] arrows={"←","→","↑","↓"};int[][] d={{-1,0},{1,0},{0,1},{0,-1}};
-        for(int i=0;i<4;i++){final int[] dir=d[i];TextView b=a.compactButton(arrows[i],"Nudge one project pixel "+new String[]{"left","right","up","down"}[i]+(fine?"":"; coarse mode moves ten"),v->a.nudge(dir[0]*(fine?1:10),dir[1]*(fine?1:10)));nudge.addView(b,new LinearLayout.LayoutParams(0,a.dp(48),1));}
-        into.addView(nudge);
-        into.addView(a.note("Drag the touchpad to move the layer without covering the preview. Keyboard: arrows nudge 1 px, Shift + arrows 10 px."));
+    void resetAll(){commit("Position reset",()->{write(Motion.X,0);write(Motion.Y,a.overlay()==null?0:new EditProject.Overlay().y);});}
+    void increment(float degrees){commit("Rotation increment",()->write(Motion.ROTATION,value(Motion.ROTATION)-degrees));}
+    private int[] properties(){return tab==0?new int[]{Motion.X,Motion.Y}:tab==1?new int[]{Motion.ROTATION}:new int[]{Motion.SCALE,Motion.HEIGHT};}
+    private long adjacent(boolean next){long now=a.panels.motionTime(),best=-1,tol=a.panels.tolerance();for(int p:properties())for(Motion.Key k:motion().curves.get(p)){if(Math.abs(k.timeMs-now)<=tol)continue;if(next?k.timeMs>now:k.timeMs<now){if(best<0||(next?k.timeMs<best:k.timeMs>best))best=k.timeMs;}}return best;}
+    private void navigation(LinearLayout into){LinearLayout row=a.row();for(boolean next:new boolean[]{false,true}){TextView b=a.button(next?"Next Key  ›":"‹  Previous Key",v->{a.pausePlayback();long t=adjacent(next);if(t<0)return;EditProject.Clip c=a.clip();long time=c!=null?a.project.placements().get(a.selected).startMs+Math.round((t-c.inMs)/(double)c.speed):a.overlay().startMs+t;a.seek(time);a.renderInspector();});if(next)nextKey=b;else previousKey=b;EditorActivity.dim(b,adjacent(next)>=0);row.addView(b,new LinearLayout.LayoutParams(0,a.dp(48),1));}into.addView(row);}
+    private void control(LinearLayout into,int p,boolean ruler){
+        LinearLayout card=new LinearLayout(a);card.setOrientation(LinearLayout.VERTICAL);card.setPadding(a.dp(4),a.dp(6),a.dp(4),a.dp(6));card.setBackground(a.buttonBackground(false));LinearLayout row=a.row();row.setGravity(Gravity.CENTER_VERTICAL);
+        TextView diamond=a.compactButton("◇",title(p)+" keyframe",v->toggleKey(p));diamonds.put(p,diamond);row.addView(diamond,new LinearLayout.LayoutParams(a.dp(48),a.dp(48)));
+        TextView label=a.label(title(p),12,EditorActivity.TEXT,true);row.addView(label,new LinearLayout.LayoutParams(0,a.dp(48),.75f));
+        TextView number=a.compactButton("",title(p)+" exact value",v->numeric(p));number.setTextSize(14);values.put(p,number);row.addView(number,new LinearLayout.LayoutParams(0,a.dp(48),1.4f));
+        row.addView(a.compactButton("Reset","Reset "+title(p),v->commit(title(p)+" reset",()->apply(p,p==Motion.SCALE||p==Motion.HEIGHT?neutralScale():p==Motion.Y&&a.overlay()!=null?new EditProject.Overlay().y:0))),new LinearLayout.LayoutParams(a.dp(52),a.dp(48)));card.addView(row);
+        if(ruler){ValueRuler r=new ValueRuler(p);rulers.put(p,r);card.addView(r,new LinearLayout.LayoutParams(-1,a.dp(56)));}
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.topMargin=a.dp(10);into.addView(card,lp);
     }
-    private void rotation(LinearLayout into,TransformMath.Transform t){
-        Dial dial=new Dial(t.rotation);into.addView(dial,new LinearLayout.LayoutParams(-1,a.dp(170)));
-        ruler(into,"Rotation",Motion.ROTATION,t.rotation,0,"°",1,true);
-        LinearLayout snaps=a.row();
-        for(float s:new float[]{0,15,45,90}){TextView b=toggle(s==0?"Free":"Snap "+(int)s+"°",angleSnap==s,v->{angleSnap=s;a.renderInspector();});b.setTextSize(11);snaps.addView(b,new LinearLayout.LayoutParams(0,a.dp(48),1));}
-        into.addView(snaps);
-        LinearLayout quick=a.row();
-        quick.addView(a.button("−90°",v->commit("Rotation",()->write(Motion.ROTATION,current().rotation-90))),new LinearLayout.LayoutParams(0,a.dp(48),1));
-        quick.addView(a.button("+90°",v->commit("Rotation",()->write(Motion.ROTATION,current().rotation+90))),new LinearLayout.LayoutParams(0,a.dp(48),1));
-        quick.addView(a.button("Reset Rotation",v->commit("Rotation reset",()->{motion().curves.get(Motion.ROTATION).clear();a.setStatic(Motion.ROTATION,0);})),new LinearLayout.LayoutParams(0,a.dp(48),1));
-        into.addView(quick);
-    }
-    private void scale(LinearLayout into,TransformMath.Transform t){
-        TextView link=toggle(linked?"Width and height linked":"Width and height independent",linked,v->{linked=!linked;a.renderInspector();});
-        link.setContentDescription(linked?"Proportions linked: tap to adjust width and height independently":"Proportions unlinked: tap to link width and height");into.addView(link);
-        ruler(into,"Width",Motion.SCALE,t.scale,1,"%",100,true);
-        // Height = width × aspect. Aspect is a static proportion (not animated).
-        float height=t.scale*t.aspect;
-        valueEntry(into,"Height",height*100,"%",value->commit("Height",()->{float h=value/100f;if(linked){write(Motion.SCALE,h/a.aspectOf());}else a.setAspect(Math.max(.05f,Math.min(20,h/Math.max(.05f,current().scale))));}));
-        if(!linked)into.addView(a.note("Unlinked: Width changes keep the current height proportion; Height changes stretch only vertically."));
-        LinearLayout fits=a.row();
-        fits.addView(a.button("Fit",v->a.fitLayer(0)),new LinearLayout.LayoutParams(0,a.dp(48),1));
-        fits.addView(a.button("Fill",v->a.fitLayer(1)),new LinearLayout.LayoutParams(0,a.dp(48),1));
-        fits.addView(a.button("Original Size",v->a.fitLayer(2)),new LinearLayout.LayoutParams(0,a.dp(48),1));
-        into.addView(fits);
-        LinearLayout flips=a.row();
-        flips.addView(toggle("Flip Horizontal",t.flipH,v->commit("Flip",()->a.setFlip(true))),new LinearLayout.LayoutParams(0,a.dp(48),1));
-        flips.addView(toggle("Flip Vertical",t.flipV,v->commit("Flip",()->a.setFlip(false))),new LinearLayout.LayoutParams(0,a.dp(48),1));
-        into.addView(flips);
-        into.addView(a.note("Fit and Fill keep the aspect ratio; Fill covers the frame and may crop."));
-    }
-    private void anchor(LinearLayout into,TransformMath.Transform t){
-        into.addView(a.note("Rotation and scaling happen around the anchor. Moving it keeps the layer where it is."));
-        float[][] points={{-1,1},{0,1},{1,1},{-1,0},{0,0},{1,0},{-1,-1},{0,-1},{1,-1}};String[] names={"Top left","Top","Top right","Left","Center","Right","Bottom left","Bottom","Bottom right"};
-        double[] half=a.layerHalf();float sx=(float)(half[0]/(a.frameAspect()/2)),sy=(float)(half[1]/.5);
-        for(int row=0;row<3;row++){LinearLayout r=a.row();for(int col=0;col<3;col++){int i=row*3+col;float[] p=points[i];
-            // Anchor presets are the layer's own corners/edges, expressed in its unscaled, unrotated frame.
-            float ax=p[0]*sx,ay=p[1]*sy;boolean on=Math.abs(t.anchorX-ax)<.01f&&Math.abs(t.anchorY-ay)<.01f;
-            TextView b=toggle(names[i],on,v->commit("Anchor",()->a.moveAnchor(ax,ay)));b.setTextSize(10);r.addView(b,new LinearLayout.LayoutParams(0,a.dp(48),1));}into.addView(r);}
-        ruler(into,"Anchor X",Motion.ANCHOR_X,t.anchorX,0,"",1,false);ruler(into,"Anchor Y",Motion.ANCHOR_Y,t.anchorY,0,"",1,false);
-    }
-    private void align(LinearLayout into){
-        String[][] rows={{"Left edge","Center horizontally","Right edge"},{"Top edge","Center vertically","Bottom edge"}};int[][] h={{-1,0,1},{0,0,0}},v={{0,0,0},{1,0,-1}};
-        for(int r=0;r<2;r++){LinearLayout line=a.row();for(int c=0;c<3;c++){final int hh=h[r][c],vv=v[r][c];final boolean x=r==0,y=r==1;TextView b=a.button(rows[r][c],view->commit("Alignment",()->a.alignLayer(hh,vv,x,y)));b.setTextSize(10);line.addView(b,new LinearLayout.LayoutParams(0,a.dp(52),1));}into.addView(line);}
-        into.addView(a.button("Center on Canvas",view->commit("Centered on canvas",()->a.alignLayer(0,0,true,true))));
-        into.addView(a.button("Locate Selected Layer",view->a.locateSelected()));
-        into.addView(a.note("Locate pans the preview to the layer without moving it. Center on Canvas repositions it."));
-    }
-    void resetAll(){
-        commit("Transforms reset",()->{EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();Motion m=motion();
-            for(int p:new int[]{Motion.X,Motion.Y,Motion.SCALE,Motion.ROTATION,Motion.SKEW_X,Motion.SKEW_Y,Motion.ANCHOR_X,Motion.ANCHOR_Y})m.curves.get(p).clear();
-            if(c!=null){c.x=0;c.y=0;c.scale=1;c.rotation=0;c.aspect=1;c.skewX=0;c.skewY=0;c.anchorX=0;c.anchorY=0;c.flipH=false;c.flipV=false;}
-            else{EditProject.Overlay d=new EditProject.Overlay();o.x=d.x;o.y=d.y;o.scale=d.scale;o.rotation=0;o.aspect=1;o.skewX=0;o.skewY=0;o.anchorX=0;o.anchorY=0;o.flipH=false;o.flipV=false;}});
-    }
-    void commit(String what,Runnable change){if(!a.layerEditable()){a.renderInspector();return;}a.edit(what+" updated",change);}
-    private TextView toggle(String title,boolean on,View.OnClickListener l){TextView b=a.button(title,l);b.setSelected(on);b.setTextColor(on?EditorActivity.CYAN:EditorActivity.TEXT);b.setBackground(a.buttonBackground(on));b.setTextSize(11);return b;}
-    interface FloatAction{void apply(float v);}
-    private void valueEntry(LinearLayout into,String title,float shown,String unit,FloatAction action){
-        LinearLayout row=a.row();row.setGravity(Gravity.CENTER_VERTICAL);row.addView(new View(a),new LinearLayout.LayoutParams(a.dp(48),a.dp(48)));
-        row.addView(a.label(title,12,EditorActivity.TEXT,true),new LinearLayout.LayoutParams(0,-2,1));
-        EditText field=numeric(title,shown,unit);row.addView(field,new LinearLayout.LayoutParams(a.dp(96),a.dp(48)));row.addView(a.label(unit,11,EditorActivity.MUTED,false));
-        row.addView(a.button("Set",v->{try{action.apply(Float.parseFloat(field.getText().toString().trim()));}catch(NumberFormatException e){a.tell("Enter a number.");}}),new LinearLayout.LayoutParams(-2,a.dp(48)));
-        into.addView(row);
-    }
-    private EditText numeric(String title,float shown,String unit){
-        EditText field=new EditText(a);field.setText(String.format(Locale.US,"%.2f",shown));field.setTextColor(EditorActivity.TEXT);field.setSingleLine(true);field.setSelectAllOnFocus(true);field.setGravity(Gravity.END);
-        field.setInputType(android.text.InputType.TYPE_CLASS_NUMBER|android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL|android.text.InputType.TYPE_NUMBER_FLAG_SIGNED);field.setContentDescription(title+" exact value"+(unit.isEmpty()?"":" in "+unit));return field;
-    }
-    /** Diamond, label, exact entry, Reset and a sliding ruler for one animatable property. */
-    private void ruler(LinearLayout into,String title,int property,float value,float reset,String unit,float display,boolean keyframes){
-        LinearLayout row=a.row();row.setGravity(Gravity.CENTER_VERTICAL);
-        if(keyframes)row.addView(a.panels.diamond(title,motion(),property,value),new LinearLayout.LayoutParams(a.dp(48),a.dp(48)));else row.addView(new View(a),new LinearLayout.LayoutParams(a.dp(48),a.dp(48)));
-        row.addView(a.label(title,12,EditorActivity.TEXT,true),new LinearLayout.LayoutParams(0,-2,1));
-        EditText field=numeric(title,value*display,unit);row.addView(field,new LinearLayout.LayoutParams(a.dp(96),a.dp(48)));
-        if(!unit.isEmpty())row.addView(a.label(unit,11,EditorActivity.MUTED,false));
-        row.addView(a.button("Set",v->{try{float typed=Float.parseFloat(field.getText().toString().trim())/display;commit(title,()->apply(property,typed));}catch(NumberFormatException e){a.tell("Enter a number.");}}),new LinearLayout.LayoutParams(-2,a.dp(48)));
-        row.addView(a.compactButton("↺","Reset "+title,v->commit(title,()->apply(property,reset))),new LinearLayout.LayoutParams(a.dp(44),a.dp(48)));
-        into.addView(row);
-        // Coarse: one ruler tick (12dp) ≈ 1% of the range unit; fine is ten times smaller.
-        float step=(property==Motion.ROTATION||property>=Motion.SKEW_X&&property<=Motion.SKEW_Y?1f:property==Motion.SCALE?.01f:.01f)*(fine?.1f:1);
-        ValueRuler r=new ValueRuler(title,value,step,v->field.setText(String.format(Locale.US,"%.2f",v*display)),v->commit(title,()->apply(property,v)));
-        into.addView(r,new LinearLayout.LayoutParams(-1,a.dp(44)));
-    }
-    private void apply(int property,float value){
-        if(property==Motion.ROTATION&&angleSnap>0)value=TransformMath.snapAngle(value,angleSnap);
-        if(property==Motion.ANCHOR_X||property==Motion.ANCHOR_Y){TransformMath.Transform t=current();a.moveAnchor(property==Motion.ANCHOR_X?value:t.anchorX,property==Motion.ANCHOR_Y?value:t.anchorY);return;}
-        if(property==Motion.SCALE&&!linked){float height=current().scale*current().aspect;write(Motion.SCALE,value);a.setAspect(Math.max(.05f,Math.min(20,height/Math.max(.05f,value))));return;}
-        write(property,value);
-    }
-
-    /** Drag horizontally to change a value; the tick marks slide under a fixed center line. */
+    void refresh(){if(a.clip()==null&&a.overlay()==null)return;for(int p:values.keySet()){values.get(p).setText(String.format(Locale.US,"%.2f%s",value(p)*display(p),unit(p)));int effective=p==Motion.HEIGHT&&(a.clip()!=null?a.clip().heightScale:a.overlay().heightScale)<0?Motion.SCALE:p;int state=Keyframes.state(motion(),effective,a.panels.motionTime(),a.panels.tolerance());TextView d=diamonds.get(p);d.setText(state==Keyframes.ON_KEY?"◆":state==Keyframes.ANIMATED?"◇·":"◇");d.setTextColor(state==Keyframes.STATIC?EditorActivity.MUTED:EditorActivity.CYAN);d.setContentDescription(title(p)+" keyframe: "+(state==Keyframes.ON_KEY?"at this frame; remove":state==Keyframes.ANIMATED?"animated elsewhere; add here":"static; add here"));}for(ValueRuler r:rulers.values())r.invalidate();if(dial!=null)dial.invalidate();if(previousKey!=null)EditorActivity.dim(previousKey,adjacent(false)>=0);if(nextKey!=null)EditorActivity.dim(nextKey,adjacent(true)>=0);}
+    private void toggleKey(int p){commit(title(p)+" keyframe",()->{if(p==Motion.SCALE||p==Motion.HEIGHT)separate();Motion m=motion();long t=a.panels.motionTime(),tol=a.panels.tolerance();float v=value(p);Motion.Key key=Keyframes.keyAt(m,p,t,tol);if(key!=null){m.curves.get(p).remove(key);if(m.curves.get(p).isEmpty())a.setStatic(p,v);}else m.put(p,new Motion.Key(t,v));});}
+    private void numeric(int p){a.pausePlayback();EditText input=new EditText(a);input.setSingleLine();input.setSelectAllOnFocus(true);input.setText(String.format(Locale.US,"%.2f",value(p)*display(p)));input.setInputType(2|android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL|android.text.InputType.TYPE_NUMBER_FLAG_SIGNED);input.setContentDescription(title(p)+" exact value");AlertDialog dialog=new AlertDialog.Builder(a).setTitle(title(p)+" ("+unit(p).trim()+")").setView(input).setNegativeButton("Cancel",null).setPositiveButton("Apply",null).create();dialog.setOnShowListener(v->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(button->{try{float n=Float.parseFloat(input.getText().toString().trim())/display(p);if(!Float.isFinite(n)||!Motion.allowed(p,n))throw new IllegalArgumentException("Enter a finite value within the supported range.");if(p==Motion.SCALE||p==Motion.HEIGHT){TransformMath.Transform t=current();TransformEdits.scalePair(t.scale,t.scale*t.aspect,p,n,linked);}commit(title(p)+" updated",()->apply(p,n));dialog.dismiss();}catch(IllegalArgumentException e){input.setError(e.getMessage());}}));dialog.show();input.requestFocus();}
+    void clearGesture(){editBase=null;}
+    private void begin(){a.pausePlayback();editBase=current();a.beginLiveAdjust();}
+    private void live(int p,float n){a.liveAdjust(()->apply(p,n));refresh();}
+    private void end(boolean cancel){editBase=null;if(cancel)a.cancelLiveAdjust();else a.endLiveAdjust("Transform updated",()->{});refresh();}
     final class ValueRuler extends View {
-        interface Listener{void value(float v);}
-        final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);final float step;final Listener live,done;float value,start,downX;boolean dragging;
-        ValueRuler(String title,float value,float step,Listener live,Listener done){super(a);this.value=value;this.step=step;this.live=live;this.done=done;setContentDescription(title+" ruler: drag left or right");setFocusable(true);}
-        @Override protected void onDraw(Canvas c){float w=getWidth(),h=getHeight(),spacing=a.dp(12);c.drawColor(EditorActivity.PANEL);paint.setColor(EditorActivity.MUTED);paint.setStrokeWidth(a.dp(1));
-            float offset=(value/step)%10*spacing;for(float x=w/2-offset-spacing*40;x<w;x+=spacing){int index=Math.round((x-(w/2-offset))/spacing);float len=index%10==0?h*.55f:index%5==0?h*.4f:h*.25f;c.drawLine(x,h-len,x,h,paint);}
-            paint.setColor(EditorActivity.CYAN);paint.setStrokeWidth(a.dp(2));c.drawLine(w/2,0,w/2,h,paint);}
-        @Override public boolean onTouchEvent(MotionEvent e){
-            switch(e.getActionMasked()){
-                case MotionEvent.ACTION_DOWN:if(!a.layerEditable())return false;dragging=true;start=value;downX=e.getX();if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(true);a.pausePlayback();return true;
-                case MotionEvent.ACTION_MOVE:if(!dragging)return false;value=start-(e.getX()-downX)/a.dp(12)*step;live.value(value);invalidate();return true;
-                case MotionEvent.ACTION_UP:if(dragging&&Math.abs(e.getX()-downX)>a.dp(2))done.value(value);dragging=false;if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(false);return true;
-                case MotionEvent.ACTION_CANCEL:value=start;dragging=false;invalidate();return true;
-            }
-            return false;
-        }
+        final int property;final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);float start,down;boolean dragging;
+        ValueRuler(int p){super(a);property=p;setFocusable(true);setContentDescription(title(p)+" ruler: right increases, left decreases");}
+        @Override protected void onDraw(Canvas c){float w=getWidth(),h=getHeight(),spacing=a.dp(12),offset=(value(property)*display(property))%10*spacing;paint.setStrokeWidth(a.dp(1));paint.setColor(EditorActivity.MUTED);for(int i=-50;i<50;i++){float x=w/2+i*spacing-offset;c.drawLine(x,h-(i%5==0?h*.7f:h*.35f),x,h,paint);}paint.setColor(EditorActivity.CYAN);paint.setStrokeWidth(a.dp(2));c.drawLine(w/2,0,w/2,h,paint);}
+        @Override public boolean onTouchEvent(MotionEvent e){switch(e.getActionMasked()){case MotionEvent.ACTION_DOWN:if(!a.layerEditable())return false;begin();start=value(property);down=e.getX();dragging=true;getParent().requestDisallowInterceptTouchEvent(true);return true;case MotionEvent.ACTION_MOVE:if(dragging)live(property,start+(e.getX()-down)/a.dp(12)/display(property));return true;case MotionEvent.ACTION_UP:case MotionEvent.ACTION_CANCEL:if(dragging){dragging=false;getParent().requestDisallowInterceptTouchEvent(false);end(e.getActionMasked()==MotionEvent.ACTION_CANCEL);performClick();}return true;}return false;}
+        @Override public boolean performClick(){super.performClick();return true;}
     }
-    /** Relative movement pad: the layer follows the finger without the finger covering the preview. */
-    final class Touchpad extends View {
-        final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);float downX,downY,baseX,baseY,nowX,nowY;boolean dragging;
-        Touchpad(){super(a);setContentDescription("Movement touchpad: drag to reposition the selected layer");setFocusable(true);}
-        @Override protected void onDraw(Canvas c){paint.setColor(0xFF0A1824);c.drawRoundRect(0,0,getWidth(),getHeight(),a.dp(10),a.dp(10),paint);paint.setColor(0xFF294357);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(a.dp(1));c.drawRoundRect(1,1,getWidth()-1,getHeight()-1,a.dp(10),a.dp(10),paint);
-            c.drawLine(getWidth()/2f,a.dp(10),getWidth()/2f,getHeight()-a.dp(10),paint);c.drawLine(a.dp(10),getHeight()/2f,getWidth()-a.dp(10),getHeight()/2f,paint);paint.setStyle(Paint.Style.FILL);
-            paint.setColor(EditorActivity.MUTED);paint.setTextSize(a.dp(11));paint.setTextAlign(Paint.Align.CENTER);c.drawText(lockY?"Horizontal only":lockX?"Vertical only":fine?"Fine movement":"Drag to move",getWidth()/2f,getHeight()-a.dp(12),paint);
-            if(dragging){paint.setColor(EditorActivity.CYAN);c.drawCircle(getWidth()/2f+(nowX-downX),getHeight()/2f+(nowY-downY),a.dp(8),paint);}}
-        @Override public boolean onTouchEvent(MotionEvent e){
-            switch(e.getActionMasked()){
-                case MotionEvent.ACTION_DOWN:if(!a.layerEditable())return false;TransformMath.Transform t=current();baseX=t.x;baseY=t.y;downX=nowX=e.getX();downY=nowY=e.getY();dragging=true;if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(true);a.pausePlayback();invalidate();return true;
-                case MotionEvent.ACTION_MOVE:nowX=e.getX();nowY=e.getY();a.previewMove(target()[0],target()[1]);invalidate();return true;
-                case MotionEvent.ACTION_UP:dragging=false;float[] p=target();a.previewMove(Float.NaN,Float.NaN);if(Math.hypot(nowX-downX,nowY-downY)>a.dp(2))commit("Position",()->{write(Motion.X,p[0]);write(Motion.Y,p[1]);});if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(false);invalidate();return true;
-                case MotionEvent.ACTION_CANCEL:dragging=false;a.previewMove(Float.NaN,Float.NaN);invalidate();return true;
-            }
-            return false;
-        }
-        /** Pad width spans the frame width in coarse mode and a tenth of it in fine mode. */
-        float[] target(){float gain=(fine?.2f:2f)/Math.max(1,getWidth());float x=lockX?baseX:baseX+(nowX-downX)*gain,y=lockY?baseY:baseY-(nowY-downY)*gain;boolean overlay=a.overlay()!=null;float lim=overlay?1:2;return new float[]{TransformMath.clamp(x,-lim,lim),TransformMath.clamp(y,-lim,lim)};}
-    }
-    /** Circular rotation control; snapping applies while dragging. */
     final class Dial extends View {
-        final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);float angle,base,downAngle;boolean dragging;
-        Dial(float angle){super(a);this.angle=angle;setContentDescription("Rotation dial: drag around the circle");setFocusable(true);}
-        private float pointer(MotionEvent e){return (float)Math.toDegrees(Math.atan2(getHeight()/2f-e.getY(),e.getX()-getWidth()/2f));}
-        @Override protected void onDraw(Canvas c){float r=Math.min(getWidth(),getHeight())/2f-a.dp(12),cx=getWidth()/2f,cy=getHeight()/2f;paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(a.dp(2));paint.setColor(0xFF294357);c.drawCircle(cx,cy,r,paint);
-            for(int d=0;d<360;d+=15){double rad=Math.toRadians(d);float len=d%90==0?a.dp(10):d%45==0?a.dp(7):a.dp(4);c.drawLine(cx+(float)Math.cos(rad)*r,cy-(float)Math.sin(rad)*r,cx+(float)Math.cos(rad)*(r-len),cy-(float)Math.sin(rad)*(r-len),paint);}
-            double rad=Math.toRadians(angle+90);paint.setColor(EditorActivity.CYAN);c.drawLine(cx,cy,cx+(float)Math.cos(rad)*r,cy-(float)Math.sin(rad)*r,paint);paint.setStyle(Paint.Style.FILL);c.drawCircle(cx+(float)Math.cos(rad)*r,cy-(float)Math.sin(rad)*r,a.dp(8),paint);
-            paint.setTextAlign(Paint.Align.CENTER);paint.setTextSize(a.dp(16));paint.setColor(EditorActivity.TEXT);c.drawText(String.format(Locale.US,"%.1f°",angle),cx,cy+a.dp(6),paint);}
-        @Override public boolean onTouchEvent(MotionEvent e){
-            switch(e.getActionMasked()){
-                case MotionEvent.ACTION_DOWN:if(!a.layerEditable())return false;dragging=true;base=angle;downAngle=pointer(e);if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(true);a.pausePlayback();return true;
-                case MotionEvent.ACTION_MOVE:if(!dragging)return false;float delta=(pointer(e)-downAngle+540)%360-180;downAngle=pointer(e);base+=delta;angle=angleSnap>0?TransformMath.snapAngle(base,angleSnap):base;invalidate();return true;
-                case MotionEvent.ACTION_UP:if(dragging){float value=angle;commit("Rotation",()->write(Motion.ROTATION,value));}dragging=false;if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(false);return true;
-                case MotionEvent.ACTION_CANCEL:dragging=false;return true;
-            }
-            return false;
-        }
+        final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);float last,accumulated;boolean dragging,valid;
+        Dial(){super(a);setFocusable(true);setContentDescription("Rotation dial: clockwise increases; continuous full turns");}
+        private float pointer(MotionEvent e){return (float)Math.toDegrees(Math.atan2(e.getY()-getHeight()/2f,e.getX()-getWidth()/2f));}
+        private boolean outside(MotionEvent e){return Math.hypot(e.getX()-getWidth()/2f,e.getY()-getHeight()/2f)>a.dp(28);}
+        @Override protected void onDraw(Canvas c){float cx=getWidth()/2f,cy=getHeight()/2f,r=Math.min(cx,cy)-a.dp(14);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(a.dp(2));paint.setColor(0xff356382);c.drawCircle(cx,cy,r,paint);for(int i=0;i<60;i++){double rad=i*Math.PI/30;float len=a.dp(i%5==0?10:4);c.drawLine(cx+(float)Math.sin(rad)*r,cy-(float)Math.cos(rad)*r,cx+(float)Math.sin(rad)*(r-len),cy-(float)Math.cos(rad)*(r-len),paint);}double rad=Math.toRadians(-value(Motion.ROTATION)%360);float x=cx+(float)Math.sin(rad)*r,y=cy-(float)Math.cos(rad)*r;paint.setColor(EditorActivity.CYAN);c.drawLine(cx+(x-cx)*.45f,cy+(y-cy)*.45f,x,y,paint);paint.setStyle(Paint.Style.FILL);c.drawCircle(x,y,a.dp(8),paint);paint.setTextAlign(Paint.Align.CENTER);paint.setTextSize(a.dp(17));paint.setColor(EditorActivity.TEXT);c.drawText(String.format(Locale.US,"%.2f°",-value(Motion.ROTATION)),cx,cy+a.dp(6),paint);}
+        @Override public boolean onTouchEvent(MotionEvent e){switch(e.getActionMasked()){case MotionEvent.ACTION_DOWN:if(!a.layerEditable())return false;begin();accumulated=-value(Motion.ROTATION);last=pointer(e);valid=outside(e);dragging=true;getParent().requestDisallowInterceptTouchEvent(true);return true;case MotionEvent.ACTION_MOVE:if(!dragging)return false;boolean out=outside(e);float p=pointer(e);if(out&&valid){accumulated+=TransformEdits.angleDelta(last,p);live(Motion.ROTATION,-accumulated);}last=p;valid=out;return true;case MotionEvent.ACTION_UP:case MotionEvent.ACTION_CANCEL:if(dragging){dragging=false;getParent().requestDisallowInterceptTouchEvent(false);end(e.getActionMasked()==MotionEvent.ACTION_CANCEL);performClick();}return true;}return false;}
+        @Override public boolean performClick(){super.performClick();return true;}
     }
 }

@@ -15,7 +15,7 @@ final class PreviewEditor extends View {
     private TransformMath.Transform base,live;
     private int gesture;private float downX,downY,span,angle;private long downTime;private boolean moved,multi;
     private float guideX=Float.NaN,guideY=Float.NaN;private int dragKey=-1;private long dragKeyTime;
-    private float navZoomStart,navPanX,navPanY;
+    private float navZoomStart,navPanX,navPanY,lastRotationPointer;
     static final int NONE=0,MOVE=1,CORNER=2,ROTATE=3,EDGE_X=4,EDGE_Y=5,PAN=6,KEY=7;
 
     PreviewEditor(EditorActivity activity){
@@ -79,13 +79,13 @@ final class PreviewEditor extends View {
             if(editable){a.pausePlayback();base=a.transformPanel.current();live=base.copy();gesture=hitHandle(e.getX(),e.getY());
                 if(gesture==NONE&&TransformMath.contains(corners(base),e.getX(),e.getY()))gesture=MOVE;}
             if(gesture==NONE){navZoomStart=a.previewZoom;navPanX=a.previewPanX;navPanY=a.previewPanY;gesture=PAN;}
-            span=0;return true;
+            if(gesture!=PAN&&gesture!=KEY){a.beginLiveAdjust();float[] anchor=anchorPoint(base);lastRotationPointer=(float)Math.toDegrees(Math.atan2(downY-anchor[1],downX-anchor[0]));}span=0;return true;
         }
         if(gesture==NONE)return false;
         if(action==MotionEvent.ACTION_POINTER_DOWN&&e.getPointerCount()==2){multi=true;span=dist(e);angle=ang(e);if(gesture!=PAN&&gesture!=KEY){base=live.copy();gesture=MOVE;}else navZoomStart=a.previewZoom;return true;}
-        if(action==MotionEvent.ACTION_MOVE){moved|=Math.hypot(e.getX()-downX,e.getY()-downY)>a.dp(4)||e.getPointerCount()>1;if(!moved)return true;update(e);invalidate();return true;}
+        if(action==MotionEvent.ACTION_MOVE){moved|=Math.hypot(e.getX()-downX,e.getY()-downY)>a.dp(4)||e.getPointerCount()>1;if(!moved)return true;update(e);if(gesture!=PAN&&gesture!=KEY){a.liveAdjust(()->applyLive(live));a.transformPanel.refresh();}invalidate();return true;}
         if(action==MotionEvent.ACTION_UP){finish(e);return true;}
-        if(action==MotionEvent.ACTION_CANCEL){gesture=NONE;live=null;guideX=guideY=Float.NaN;getParent().requestDisallowInterceptTouchEvent(false);invalidate();}
+        if(action==MotionEvent.ACTION_CANCEL){if(gesture!=PAN&&gesture!=KEY)a.cancelLiveAdjust();gesture=NONE;live=null;guideX=guideY=Float.NaN;getParent().requestDisallowInterceptTouchEvent(false);invalidate();}
         return true;
     }
     private float dist(MotionEvent e){return (float)Math.hypot(e.getX(1)-e.getX(0),e.getY(1)-e.getY(0));}
@@ -98,14 +98,14 @@ final class PreviewEditor extends View {
         return NONE;
     }
     private void update(MotionEvent e){
-        float[] anchor=anchorPoint(base);boolean overlay=a.overlay()!=null;float limit=overlay?1:2,minScale=overlay?.1f:.05f,maxScale=overlay?2:4;
+        float[] anchor=anchorPoint(base);boolean overlay=a.overlay()!=null;float limit=100000,minScale=overlay?.1f:.05f,maxScale=overlay?2:4;
         if(gesture==PAN){
             if(e.getPointerCount()==2&&span>0)a.previewZoom=TransformMath.clamp(navZoomStart*dist(e)/span,.2f,4);
             else if(a.previewZoom!=1||a.previewPanX!=0||a.previewPanY!=0){a.previewPanX=navPanX+(e.getX()-downX)/Math.max(1,sw());a.previewPanY=navPanY+(e.getY()-downY)/Math.max(1,sh());}
             if(a.monitor!=null)a.monitor.requestLayout();return;
         }
         if(gesture==KEY){live.x=TransformMath.clamp(base.x+2*(e.getX()-downX)/Math.max(1,sw()),-limit,limit);live.y=TransformMath.clamp(base.y-2*(e.getY()-downY)/Math.max(1,sh()),-limit,limit);return;}
-        if(e.getPointerCount()==2&&span>0){live.scale=TransformMath.clamp(base.scale*dist(e)/span,minScale,maxScale);float delta=(ang(e)-angle+540)%360-180;live.rotation=TransformMath.clamp(snapRotation(base.rotation-delta),-3600,3600);return;}
+        if(e.getPointerCount()==2&&span>0){live.scale=TransformMath.clamp(base.scale*dist(e)/span,minScale,maxScale);float delta=(ang(e)-angle+540)%360-180;live.rotation=snapRotation(live.rotation-delta);angle=ang(e);return;}
         if(multi)return;
         switch(gesture){
             case MOVE:{live.x=TransformMath.clamp(base.x+2*(e.getX()-downX)/Math.max(1,sw()),-limit,limit);live.y=TransformMath.clamp(base.y-2*(e.getY()-downY)/Math.max(1,sh()),-limit,limit);snapToGuides();break;}
@@ -116,7 +116,7 @@ final class PreviewEditor extends View {
                 break;}
             case EDGE_X:{float fx=Math.abs(e.getX()-anchor[0])/Math.max(1,Math.abs(downX-anchor[0]));live.scale=TransformMath.clamp(base.scale*fx,minScale,maxScale);live.aspect=TransformMath.clamp(base.aspect/Math.max(.05f,fx),.05f,20);break;}
             case EDGE_Y:{float fy=Math.abs(e.getY()-anchor[1])/Math.max(1,Math.abs(downY-anchor[1]));live.aspect=TransformMath.clamp(base.aspect*fy,.05f,20);break;}
-            case ROTATE:{float a0=(float)Math.toDegrees(Math.atan2(downY-anchor[1],downX-anchor[0])),a1=(float)Math.toDegrees(Math.atan2(e.getY()-anchor[1],e.getX()-anchor[0]));live.rotation=TransformMath.clamp(snapRotation(base.rotation-((a1-a0+540)%360-180)),-3600,3600);break;}
+            case ROTATE:{float a1=(float)Math.toDegrees(Math.atan2(e.getY()-anchor[1],e.getX()-anchor[0]));if(Math.hypot(e.getX()-anchor[0],e.getY()-anchor[1])>a.dp(16))live.rotation=snapRotation(live.rotation-TransformEdits.angleDelta(lastRotationPointer,a1));lastRotationPointer=a1;break;}
         }
     }
     private float snapRotation(float r){return a.transformPanel.angleSnap>0?TransformMath.snapAngle(r,a.transformPanel.angleSnap):r;}
@@ -130,25 +130,24 @@ final class PreviewEditor extends View {
     private void finish(MotionEvent e){
         int g=gesture;gesture=NONE;getParent().requestDisallowInterceptTouchEvent(false);guideX=guideY=Float.NaN;
         boolean longPress=e.getEventTime()-downTime>=ViewConfiguration.getLongPressTimeout();
-        if(!moved){if(longPress)pickList(e.getX(),e.getY());else tapSelect(e.getX(),e.getY());live=null;invalidate();performClick();return;}
+        if(!moved){if(g!=PAN&&g!=KEY)a.cancelLiveAdjust();if(longPress)pickList(e.getX(),e.getY());else tapSelect(e.getX(),e.getY());live=null;invalidate();performClick();return;}
         if(g==PAN||live==null){live=null;invalidate();return;}
         TransformMath.Transform result=live;live=null;
         if(g==KEY){long t=dragKeyTime;a.edit("Motion path keyframe moved",()->{Motion m=a.selectedMotion();m.put(Motion.X,keyWithValue(m,Motion.X,t,result.x));m.put(Motion.Y,keyWithValue(m,Motion.Y,t,result.y));});invalidate();return;}
-        a.edit("Transform updated",()->{
-            if(result.x!=base.x||result.y!=base.y){a.transformPanel.write(Motion.X,result.x);a.transformPanel.write(Motion.Y,result.y);}
-            if(result.scale!=base.scale)a.transformPanel.write(Motion.SCALE,result.scale);
-            if(result.rotation!=base.rotation)a.transformPanel.write(Motion.ROTATION,result.rotation);
-            if(result.aspect!=base.aspect)a.setAspect(result.aspect);
-            // Group members follow the primary layer's move.
-            moveGroupMembers(result.x-base.x,result.y-base.y);
-        });
+        a.endLiveAdjust("Transform updated",()->{applyLive(result);moveGroupMembers(result.x-base.x,result.y-base.y);});
         invalidate();performClick();
+    }
+    private void applyLive(TransformMath.Transform result){
+        if(result.x!=base.x)a.transformPanel.write(Motion.X,result.x);
+        if(result.y!=base.y)a.transformPanel.write(Motion.Y,result.y);
+        if(result.scale!=base.scale||result.aspect!=base.aspect)a.transformPanel.writeDimensions(result.scale,result.scale*result.aspect,a.transformPanel.linked);
+        if(result.rotation!=base.rotation)a.transformPanel.write(Motion.ROTATION,result.rotation);
     }
     private Motion.Key keyWithValue(Motion m,int property,long t,float value){Motion.Key existing=Keyframes.keyAt(m,property,t,0);Motion.Key k=existing!=null?existing.copy():new Motion.Key(t,value);k.value=value;return k;}
     private void moveGroupMembers(float dx,float dy){
         if(dx==0&&dy==0)return;Set<Integer> clips=new HashSet<>(a.selectedClips()),overlays=new HashSet<>(a.selectedOverlays());LayerOps.expandGroups(a.project,clips,overlays);
-        for(int i:clips)if(i!=a.selected){EditProject.Clip c=a.project.clips.get(i);if(c.track<EditProject.AUDIO_FIRST&&c.motion.curves.get(Motion.X).isEmpty()&&c.motion.curves.get(Motion.Y).isEmpty()){c.x=TransformMath.clamp(c.x+dx,-2,2);c.y=TransformMath.clamp(c.y+dy,-2,2);}}
-        for(int i:overlays)if(!(a.selected<0&&i==a.selectedOverlay)){EditProject.Overlay o=a.project.overlays.get(i);if(o.motion.curves.get(Motion.X).isEmpty()&&o.motion.curves.get(Motion.Y).isEmpty()){o.x=TransformMath.clamp(o.x+dx,-1,1);o.y=TransformMath.clamp(o.y+dy,-1,1);}}
+        for(int i:clips)if(i!=a.selected){EditProject.Clip c=a.project.clips.get(i);if(c.track<EditProject.AUDIO_FIRST&&c.motion.curves.get(Motion.X).isEmpty()&&c.motion.curves.get(Motion.Y).isEmpty()){c.x=TransformMath.clamp(c.x+dx,-100000,100000);c.y=TransformMath.clamp(c.y+dy,-100000,100000);}}
+        for(int i:overlays)if(!(a.selected<0&&i==a.selectedOverlay)){EditProject.Overlay o=a.project.overlays.get(i);if(o.motion.curves.get(Motion.X).isEmpty()&&o.motion.curves.get(Motion.Y).isEmpty()){o.x=TransformMath.clamp(o.x+dx,-100000,100000);o.y=TransformMath.clamp(o.y+dy,-100000,100000);}}
     }
     /** Visual layers active at the playhead whose transformed bounds contain the point, topmost first. */
     List<int[]> layersAt(float x,float y){
