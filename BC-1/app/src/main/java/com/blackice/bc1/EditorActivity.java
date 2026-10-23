@@ -897,7 +897,7 @@ public final class EditorActivity extends Activity {
             float scale;
             if(c!=null){double content=c.width/(double)c.height;scale=mode==0?1:mode==1?TransformMath.fillScale(A,content):TransformMath.originalScale(export[0],export[1],c.width,c.height);}
             else{double[] half=layerHalf();double fit=Math.min(A/2/half[0],.5/half[1]),fill=Math.max(A/2/half[0],.5/half[1]);scale=(float)(transformPanel.current().scale*(mode==0?fit:mode==1?fill:1/transformPanel.current().scale));}
-            transformPanel.write(Motion.SCALE,TransformMath.clamp(scale,.05f,4));setAspect(1);
+            float fitted=TransformMath.clamp(scale,.05f,4);transformPanel.writeDimensions(fitted,fitted,true);
             if(mode<2){transformPanel.write(Motion.X,0);transformPanel.write(Motion.Y,0);}
         });
     }

@@ -73,7 +73,7 @@ final class ToolPanels {
     }
     private void landscapeMediaSettings(LinearLayout into){
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();boolean visual=c==null||c.track<EditProject.AUDIO_FIRST;if(c!=null&&!c.image)checkAudio(c);
-        LinearLayout title=a.row();title.addView(a.label("Media Settings",18,EditorActivity.TEXT,true),new LinearLayout.LayoutParams(0,a.dp(48),1));title.addView(a.headerIcon("More","Selected media actions",v->a.moreMenu()));into.addView(title);
+        LinearLayout title=a.row();title.addView(a.label("Media Settings",18,EditorActivity.TEXT,true),new LinearLayout.LayoutParams(0,a.dp(48),1));title.addView(a.headerIcon("Duplicate","Duplicate",v->a.duplicateSelected()));title.addView(a.headerIcon("Delete","Delete",v->a.deleteSelection()));title.addView(a.headerIcon("More","More actions",v->a.moreMenu()));into.addView(title);
         TextView file=a.label(c!=null?c.name:o.label(),12,EditorActivity.MUTED,false);file.setSingleLine(true);file.setEllipsize(android.text.TextUtils.TruncateAt.END);file.setContentDescription("Selected media: "+(c!=null?c.name:o.label()));file.setTooltipText(file.getContentDescription());into.addView(file);
         String[] names={"Move & Transform","Blending & Opacity","Effects — Coming Later","Audio"};String[] icons={"Transform","Opacity","Effects","Audio"};LinearLayout row=null;
         for(int i=0;i<4;i++){final int which=i;if(i%2==0){row=a.row();into.addView(row);}boolean enabled=!locked()&&!a.uiLocked&&(i==3?c!=null&&!c.image&&(c.audioOnly||Boolean.TRUE.equals(audioSources.get(c.uri))):i!=2&&visual);

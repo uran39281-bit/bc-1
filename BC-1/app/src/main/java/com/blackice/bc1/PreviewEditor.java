@@ -68,6 +68,7 @@ final class PreviewEditor extends View {
     private TreeSet<Long> keyTimes(){Motion m=a.selectedMotion();TreeSet<Long> times=new TreeSet<>();for(Motion.Key k:m.curves.get(Motion.X))times.add(k.timeMs);for(Motion.Key k:m.curves.get(Motion.Y))times.add(k.timeMs);return times;}
     private float[] positionAt(long time){EditProject.Clip c=a.clip();TransformMath.Transform t=c!=null?TransformMath.of(c,time):TransformMath.of(a.overlay(),time);return anchorPoint(t);}
 
+    private boolean liveGesture;
     // ---- Touch -------------------------------------------------------------------------------------
     @Override public boolean onTouchEvent(MotionEvent e){
         int action=e.getActionMasked();
@@ -83,9 +84,10 @@ final class PreviewEditor extends View {
         }
         if(gesture==NONE)return false;
         if(action==MotionEvent.ACTION_POINTER_DOWN&&e.getPointerCount()==2){multi=true;span=dist(e);angle=ang(e);if(gesture!=PAN&&gesture!=KEY){base=live.copy();gesture=MOVE;}else navZoomStart=a.previewZoom;return true;}
-        if(action==MotionEvent.ACTION_MOVE){moved|=Math.hypot(e.getX()-downX,e.getY()-downY)>a.dp(4)||e.getPointerCount()>1;if(!moved)return true;update(e);invalidate();return true;}
+        if(action==MotionEvent.ACTION_MOVE){moved|=Math.hypot(e.getX()-downX,e.getY()-downY)>a.dp(4)||e.getPointerCount()>1;if(!moved)return true;if(gesture!=PAN&&gesture!=KEY&&!liveGesture){a.beginLiveAdjust();liveGesture=true;}update(e);
+            if(liveGesture&&live!=null){a.liveAdjust(()->applyLive(live));a.transformPanel.refreshReadouts();}invalidate();return true;}
         if(action==MotionEvent.ACTION_UP){finish(e);return true;}
-        if(action==MotionEvent.ACTION_CANCEL){gesture=NONE;live=null;guideX=guideY=Float.NaN;getParent().requestDisallowInterceptTouchEvent(false);invalidate();}
+        if(action==MotionEvent.ACTION_CANCEL){gesture=NONE;live=null;guideX=guideY=Float.NaN;if(liveGesture){liveGesture=false;a.cancelLiveAdjust();a.renderInspector();}if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(false);invalidate();}
         return true;
     }
     private float dist(MotionEvent e){return (float)Math.hypot(e.getX(1)-e.getX(0),e.getY(1)-e.getY(0));}
@@ -128,21 +130,22 @@ final class PreviewEditor extends View {
         outer2:for(float y:ys)for(float ty:targetsY)if(Math.abs(y-ty)<tol){live.y-=2*(ty-y)/Math.max(1,sh());guideY=ty;break outer2;}
     }
     private void finish(MotionEvent e){
-        int g=gesture;gesture=NONE;getParent().requestDisallowInterceptTouchEvent(false);guideX=guideY=Float.NaN;
+        int g=gesture;gesture=NONE;if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(false);guideX=guideY=Float.NaN;
         boolean longPress=e.getEventTime()-downTime>=ViewConfiguration.getLongPressTimeout();
         if(!moved){if(longPress)pickList(e.getX(),e.getY());else tapSelect(e.getX(),e.getY());live=null;invalidate();performClick();return;}
         if(g==PAN||live==null){live=null;invalidate();return;}
         TransformMath.Transform result=live;live=null;
         if(g==KEY){long t=dragKeyTime;a.edit("Motion path keyframe moved",()->{Motion m=a.selectedMotion();m.put(Motion.X,keyWithValue(m,Motion.X,t,result.x));m.put(Motion.Y,keyWithValue(m,Motion.Y,t,result.y));});invalidate();return;}
-        a.edit("Transform updated",()->{
-            if(result.x!=base.x||result.y!=base.y){a.transformPanel.write(Motion.X,result.x);a.transformPanel.write(Motion.Y,result.y);}
-            if(result.scale!=base.scale||result.aspect!=base.aspect)a.transformPanel.writeDimensions(result.scale,result.scale*result.aspect,a.transformPanel.linked);
-            if(result.rotation!=base.rotation)a.transformPanel.write(Motion.ROTATION,result.rotation);
-            
-            // Group members follow the primary layer's move.
-            moveGroupMembers(result.x-base.x,result.y-base.y);
-        });
+        Runnable complete=()->{applyLive(result);moveGroupMembers(result.x-base.x,result.y-base.y);};
+        if(liveGesture){liveGesture=false;a.endLiveAdjust("Transform updated",complete);}else a.edit("Transform updated",complete);
+        a.renderInspector();
         invalidate();performClick();
+    }
+    private void applyLive(TransformMath.Transform result){
+        if(result.x!=base.x)a.transformPanel.write(Motion.X,result.x);
+        if(result.y!=base.y)a.transformPanel.write(Motion.Y,result.y);
+        if(result.scale!=base.scale||result.aspect!=base.aspect)a.transformPanel.writeDimensions(result.scale,result.scale*result.aspect,a.transformPanel.linked);
+        if(result.rotation!=base.rotation)a.transformPanel.write(Motion.ROTATION,result.rotation);
     }
     private Motion.Key keyWithValue(Motion m,int property,long t,float value){Motion.Key existing=Keyframes.keyAt(m,property,t,0);Motion.Key k=existing!=null?existing.copy():new Motion.Key(t,value);k.value=value;return k;}
     private void moveGroupMembers(float dx,float dy){
