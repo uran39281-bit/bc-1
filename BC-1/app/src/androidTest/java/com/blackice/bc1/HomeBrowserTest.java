@@ -78,12 +78,13 @@ public class HomeBrowserTest {
         Instrumentation.ActivityMonitor monitor=inst.addMonitor(EditorActivity.class.getName(),null,false);
         try(ActivityScenario<HomeActivity> scenario=ActivityScenario.launch(HomeActivity.class)){
             await(scenario,"Recent projects");
+            android.accessibilityservice.AccessibilityServiceInfo service=inst.getUiAutomation().getServiceInfo();service.flags|=android.accessibilityservice.AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS|android.accessibilityservice.AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;inst.getUiAutomation().setServiceInfo(service);
             scenario.onActivity(a->described(a.getWindow().getDecorView(),"New project").performClick());
             inst.getUiAutomation().waitForIdle(200,4000);
-            android.view.accessibility.AccessibilityNodeInfo input=accessible(inst.getUiAutomation().getRootInActiveWindow(),"Untitled project");assertNotNull(input);
+            android.view.accessibility.AccessibilityNodeInfo input=waitAccessible("Untitled project");assertNotNull("New-project text field is accessible",input);
             android.os.Bundle args=new android.os.Bundle();args.putCharSequence(android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,"Created through menu");
             assertTrue(input.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT,args));
-            android.view.accessibility.AccessibilityNodeInfo create=accessible(inst.getUiAutomation().getRootInActiveWindow(),"Create");assertNotNull(create);assertTrue(create.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK));
+            android.view.accessibility.AccessibilityNodeInfo create=waitAccessible("Create");assertNotNull(create);assertTrue(create.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK));
             Activity launched=inst.waitForMonitorWithTimeout(monitor,10000);assertTrue(launched instanceof EditorActivity);EditorActivity editor=(EditorActivity)launched;
             boolean[] loaded={false};for(int i=0;i<100;i++){inst.runOnMainSync(()->loaded[0]=!editor.loading);if(loaded[0])break;Thread.sleep(100);}assertTrue("Editor loaded created project",loaded[0]);
             String[] id={null};inst.runOnMainSync(()->{assertEquals("Created through menu",editor.project.name);assertEquals(30,editor.project.frameRate);assertFalse(editor.project.portrait);assertEquals(540,editor.project.previewHeight);id[0]=editor.project.id;editor.project.name="Saved before home";editor.saveAndProjects();});ids.add(id[0]);
@@ -92,6 +93,14 @@ public class HomeBrowserTest {
             for(int i=0;i<100;i++){boolean[] done={false};inst.runOnMainSync(()->done[0]=editor.isFinishing()||editor.isDestroyed());if(done[0])break;Thread.sleep(100);}
             await(scenario,"Saved before home");
         }finally{inst.removeMonitor(monitor);}
+    }
+    private android.view.accessibility.AccessibilityNodeInfo waitAccessible(String value)throws Exception{
+        for(int i=0;i<50;i++){
+            android.view.accessibility.AccessibilityNodeInfo found=accessible(inst.getUiAutomation().getRootInActiveWindow(),value);if(found!=null)return found;
+            for(android.view.accessibility.AccessibilityWindowInfo window:inst.getUiAutomation().getWindows()){found=accessible(window.getRoot(),value);if(found!=null)return found;}
+            Thread.sleep(100);
+        }
+        capture("create-dialog-diagnostic");return null;
     }
     private android.view.accessibility.AccessibilityNodeInfo accessible(android.view.accessibility.AccessibilityNodeInfo node,String value){
         if(node==null)return null;if(value.contentEquals(node.getText()==null?"":node.getText()))return node;
