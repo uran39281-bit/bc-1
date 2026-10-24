@@ -1193,7 +1193,7 @@ public final class EditorActivity extends Activity {
         mediaGrid=column();mediaGrid.setContentDescription("Project media grid");mediaBrowser.addView(mediaGrid);
         search.addTextChangedListener(new android.text.TextWatcher(){
             public void beforeTextChanged(CharSequence s,int start,int count,int after){}
-            public void onTextChanged(CharSequence s,int start,int before,int count){mediaQuery=s.toString();main.removeCallbacks(mediaRefresh);mediaGrid.postOnAnimation(mediaRefresh);}
+            public void onTextChanged(CharSequence s,int start,int before,int count){mediaQuery=s.toString();mediaGrid.removeCallbacks(mediaRefresh);mediaGrid.postOnAnimation(mediaRefresh);}
             public void afterTextChanged(android.text.Editable value){}
         });
         renderMediaGrid();
