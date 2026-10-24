@@ -9,31 +9,40 @@ import java.util.*;
 
 /** Versioned JSON, atomic writes and one file per project; v0.3 sessions stay untouched. */
 public final class ProjectStore {
+    // AtomicFile has no locking of its own. openRead() may discard another instance's active
+    // .new file, so every project transaction shares this process-wide, reentrant lock.
+    private static final Object FILE_LOCK = new Object();
     private final File directory, cacheDirectory;
     public ProjectStore(Context context) { cacheDirectory=context.getCacheDir(); directory=new File(context.getFilesDir(),"projects-v1"); directory.mkdirs(); }
-    public synchronized void save(EditProject p) throws IOException, JSONException {
-        String json=encode(p);File old=new File(directory,p.id+".json"),backup=new File(directory,p.id+".v1-backup");
-        if(old.isFile()){byte[] bytes=new AtomicFile(old).readFully();try{int schema=new JSONObject(new String(bytes,StandardCharsets.UTF_8)).optInt("schema");backup=new File(directory,p.id+".v"+schema+"-backup");if(schema<EditProject.SCHEMA&&!backup.exists())java.nio.file.Files.write(backup.toPath(),bytes);}catch(JSONException ignored){}}
-        AtomicFile file=new AtomicFile(new File(directory,p.id+".json"));
-        FileOutputStream stream=null;
-        try { stream=file.startWrite(); stream.write(json.getBytes(StandardCharsets.UTF_8)); file.finishWrite(stream); }
-        catch(IOException e) { if(stream!=null) file.failWrite(stream); throw e; }
+    public void save(EditProject p) throws IOException, JSONException {
+        synchronized (FILE_LOCK) {
+            String json=encode(p);File old=new File(directory,p.id+".json"),backup=new File(directory,p.id+".v1-backup");
+            if(old.isFile()){byte[] bytes=new AtomicFile(old).readFully();try{int schema=new JSONObject(new String(bytes,StandardCharsets.UTF_8)).optInt("schema");backup=new File(directory,p.id+".v"+schema+"-backup");if(schema<EditProject.SCHEMA&&!backup.exists())java.nio.file.Files.write(backup.toPath(),bytes);}catch(JSONException ignored){}}
+            AtomicFile file=new AtomicFile(new File(directory,p.id+".json"));
+            FileOutputStream stream=null;
+            try { stream=file.startWrite(); stream.write(json.getBytes(StandardCharsets.UTF_8)); file.finishWrite(stream); }
+            catch(IOException e) { if(stream!=null) file.failWrite(stream); throw e; }
+        }
     }
-    public synchronized EditProject load(String id) throws IOException,JSONException {
-        if(id==null || !id.matches("[a-zA-Z0-9-]{1,80}")) throw new IOException("Invalid project ID");
-        return decode(new String(new AtomicFile(new File(directory,id+".json")).readFully(),StandardCharsets.UTF_8));
+    public EditProject load(String id) throws IOException,JSONException {
+        synchronized (FILE_LOCK) {
+            if(id==null || !id.matches("[a-zA-Z0-9-]{1,80}")) throw new IOException("Invalid project ID");
+            return decode(new String(new AtomicFile(new File(directory,id+".json")).readFully(),StandardCharsets.UTF_8));
+        }
     }
     public static final class Entry {
         public final String id,name;
         Entry(String id,String name) { this.id=id; this.name=name; }
     }
-    public synchronized List<Entry> recent() {
-        List<Entry> result=new ArrayList<>(); File[] files=directory.listFiles((d,n)->n.endsWith(".json"));
-        if(files==null) return result;
-        Arrays.sort(files,(a,b)->Long.compare(b.lastModified(),a.lastModified()));
-        for(File f:files) try { EditProject p=load(f.getName().replace(".json","")); result.add(new Entry(p.id,p.name)); }
-        catch(Exception ignored) { /* A damaged file is retained for recovery, never overwritten. */ }
-        return result;
+    public List<Entry> recent() {
+        synchronized (FILE_LOCK) {
+            List<Entry> result=new ArrayList<>(); File[] files=directory.listFiles((d,n)->n.endsWith(".json"));
+            if(files==null) return result;
+            Arrays.sort(files,(a,b)->Long.compare(b.lastModified(),a.lastModified()));
+            for(File f:files) try { EditProject p=load(f.getName().replace(".json","")); result.add(new Entry(p.id,p.name)); }
+            catch(Exception ignored) { /* A damaged file is retained for recovery, never overwritten. */ }
+            return result;
+        }
     }
     /** Browser rows retain damaged files as visible, recoverable entries. Call off the UI thread. */
     public static final class BrowserEntry {
@@ -44,43 +53,53 @@ public final class ProjectStore {
             this.id=id; this.name=name; this.edited=edited; this.project=project; this.error=error;
         }
     }
-    public synchronized List<BrowserEntry> browser() throws IOException {
-        File[] files=directory.listFiles((d,n)->n.endsWith(".json"));
-        if(files==null) throw new IOException("Project storage is unavailable. Try again.");
-        List<BrowserEntry> result=new ArrayList<>();
-        for(File f:files) {
-            String id=f.getName().substring(0,f.getName().length()-5);
-            try { EditProject p=load(id); result.add(new BrowserEntry(id,p.name,f.lastModified(),p,null)); }
-            catch(Exception e) { result.add(new BrowserEntry(id,"Unavailable project",f.lastModified(),null,"Project file is damaged or unsupported. Original retained.")); }
+    public List<BrowserEntry> browser() throws IOException {
+        synchronized (FILE_LOCK) {
+            File[] files=directory.listFiles((d,n)->n.endsWith(".json"));
+            if(files==null) throw new IOException("Project storage is unavailable. Try again.");
+            List<BrowserEntry> result=new ArrayList<>();
+            for(File f:files) {
+                String id=f.getName().substring(0,f.getName().length()-5);
+                try { EditProject p=load(id); result.add(new BrowserEntry(id,p.name,f.lastModified(),p,null)); }
+                catch(Exception e) { result.add(new BrowserEntry(id,"Unavailable project",f.lastModified(),null,"Project file is damaged or unsupported. Original retained.")); }
+            }
+            result.sort((a,b)->Long.compare(b.edited,a.edited)); return result;
         }
-        result.sort((a,b)->Long.compare(b.edited,a.edited)); return result;
     }
-    public synchronized void rename(String id,String name) throws Exception {
-        if(name==null || name.isBlank() || name.length()>120) throw new IOException("Use a name from 1 to 120 characters.");
-        EditProject p=load(id);p.name=name.trim();save(p);
+    public void rename(String id,String name) throws Exception {
+        synchronized (FILE_LOCK) {
+            if(name==null || name.isBlank() || name.length()>120) throw new IOException("Use a name from 1 to 120 characters.");
+            EditProject p=load(id);p.name=name.trim();save(p);
+        }
     }
-    public synchronized EditProject duplicate(String id) throws Exception {
-        EditProject p=load(id);p.id=UUID.randomUUID().toString();
-        p.name=p.name.substring(0,Math.min(113,p.name.length()))+" (copy)";save(p);return p;
+    public EditProject duplicate(String id) throws Exception {
+        synchronized (FILE_LOCK) {
+            EditProject p=load(id);p.id=UUID.randomUUID().toString();
+            p.name=p.name.substring(0,Math.min(113,p.name.length()))+" (copy)";save(p);return p;
+        }
     }
     /** Delete only project-owned records. Shared media copies and original sources remain intact. */
-    public synchronized void delete(String id) throws IOException {
-        if(id==null || !id.matches("[a-zA-Z0-9-]{1,80}")) throw new IOException("Invalid project ID");
-        File record=new File(directory,id+".json");
-        if(!record.isFile()) throw new IOException("Project no longer exists.");
-        // Proxy keys include project identity; duplicates have different keys even when media is shared.
-        String previewKey=null;
-        try { EditProject p=load(id);p.playheadMs=0;
-            byte[] hash=java.security.MessageDigest.getInstance("SHA-256").digest(encode(p).getBytes(StandardCharsets.UTF_8));
-            StringBuilder key=new StringBuilder();for(byte b:hash)key.append(String.format(Locale.ROOT,"%02x",b&255));previewKey=key.toString();
-        } catch(Exception ignored) { /* A damaged project can still be deleted. */ }
-        if(!record.delete()) throw new IOException("Could not delete project.");
-        if(previewKey!=null)for(String suffix:new String[]{".mp4",".part.mp4"}){
-            File proxy=new File(new File(cacheDirectory,"bc1-preview-v11"),previewKey+suffix);
-            if(proxy.exists()&&!proxy.delete())throw new IOException("Project deleted, but its temporary preview could not be removed.");
+    public void delete(String id) throws IOException {
+        synchronized (FILE_LOCK) {
+            if(id==null || !id.matches("[a-zA-Z0-9-]{1,80}")) throw new IOException("Invalid project ID");
+            File record=new File(directory,id+".json");
+            if(!record.isFile()) throw new IOException("Project no longer exists.");
+            // Proxy keys include project identity; duplicates have different keys even when media is shared.
+            String previewKey=null;
+            try { EditProject p=load(id);p.playheadMs=0;
+                byte[] hash=java.security.MessageDigest.getInstance("SHA-256").digest(encode(p).getBytes(StandardCharsets.UTF_8));
+                StringBuilder key=new StringBuilder();for(byte b:hash)key.append(String.format(Locale.ROOT,"%02x",b&255));previewKey=key.toString();
+            } catch(Exception ignored) { /* A damaged project can still be deleted. */ }
+            if(!record.delete()) throw new IOException("Could not delete project.");
+            if(previewKey!=null){
+                final String key=previewKey;
+                File[] previews=new File(cacheDirectory,"bc1-preview-v11").listFiles((d,n)->
+                    n.equals(key+".mp4")||n.equals(key+".part.mp4")||(n.startsWith(key+".")&&n.endsWith(".part.mp4")));
+                if(previews!=null)for(File proxy:previews)if(!proxy.delete())throw new IOException("Project deleted, but its temporary preview could not be removed.");
+            }
+            File[] companions=directory.listFiles((d,n)->n.equals(id+".json.bak") || n.equals(id+".json.new") || n.matches(java.util.regex.Pattern.quote(id)+"\\.v[0-9]+-backup"));
+            if(companions!=null)for(File f:companions)if(!f.delete())throw new IOException("Project deleted, but a recovery file could not be removed.");
         }
-        File[] companions=directory.listFiles((d,n)->n.equals(id+".json.bak") || n.equals(id+".json.new") || n.matches(java.util.regex.Pattern.quote(id)+"\\.v[0-9]+-backup"));
-        if(companions!=null)for(File f:companions)if(!f.delete())throw new IOException("Project deleted, but a recovery file could not be removed.");
     }
     public static String encode(EditProject p) throws JSONException {
         // Anything on the timeline is also listed in the media bin.
