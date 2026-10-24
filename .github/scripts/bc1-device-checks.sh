@@ -9,8 +9,14 @@ mkdir -p BC-1/app/build/reports/androidTests
 adb install -r BC-1/app/build/outputs/apk/debug/app-debug.apk
 adb install -r BC-1/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 adb logcat -c
+# Persist diagnostics while tests run: a dead emulator must not erase the original failure.
+adb logcat -v threadtime > BC-1/app/build/reports/androidTests/logcat.txt 2>&1 &
+bc1_logcat_pid=$!
+trap 'kill "$bc1_logcat_pid" 2>/dev/null || true; wait "$bc1_logcat_pid" 2>/dev/null || true' EXIT
 adb shell am instrument -w -r com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee BC-1/app/build/reports/androidTests/instrumentation.txt
-adb logcat -d > BC-1/app/build/reports/androidTests/logcat.txt
+kill "$bc1_logcat_pid" 2>/dev/null || true
+wait "$bc1_logcat_pid" 2>/dev/null || true
+trap - EXIT
 # Artifacts are not always retrievable, so surface export failures directly in the job log.
 rg -n -A40 'BC1Export\b|MuxerException|Muxer error' BC-1/app/build/reports/androidTests/logcat.txt | rg -v 'WindowManager|SplashScreen|TopTaskTracker|OptProp' | head -150 || true
 # Preview player lifecycle and errors (PreviewScrubTest and friends), also kept as a separate report.

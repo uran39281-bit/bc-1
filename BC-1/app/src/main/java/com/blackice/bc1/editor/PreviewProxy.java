@@ -81,6 +81,7 @@ public final class PreviewProxy implements AutoCloseable {
                             partial=null;trimCache(completed);out.onReady(completed);
                         }
                         @Override public void onError(Composition composition,ExportResult result,ExportException error){
+                            android.util.Log.e("BC1Preview", "Playback proxy failed (request="+request+", generation="+generation+")", error);
                             fail(request,out,error.getMessage());
                         }
                     }).build();

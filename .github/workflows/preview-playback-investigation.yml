@@ -17,7 +17,7 @@ jobs:
           - label: before-menu
             revision: e2fbba86f15383134cc25192cf895780a289071f
           - label: current
-            revision: main
+            revision: fix/preview-playback-muxer
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -37,30 +37,33 @@ jobs:
         run: |
           SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)
           "$SDKMANAGER" --install "platforms;android-36" "build-tools;35.0.0"
-          if ! command -v ffmpeg >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y ffmpeg; fi
+          if ! command -v ffmpeg >/dev/null; then sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 update -qq && sudo apt-get install -y ffmpeg; fi
           bash .github/scripts/bc1-media-fixtures.sh
-      - name: Add identical exception logging and repeated regression to both revisions
+      - name: Add exception logging to both revisions and prepare the same test prefix
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('BC-1/app/src/main/java/com/blackice/bc1/editor/PreviewProxy.java')
           s=p.read_text().replace('fail(request,out,error.getMessage());','android.util.Log.e("BC1Preview", "Proxy muxer failure request="+request+" generation="+generation+" partial="+partial, error);fail(request,out,error.getMessage());')
           p.write_text(s)
-          Path('BC-1/app/src/androidTest/java/com/blackice/bc1/PreviewPlaybackRegressionTest.java').write_text('''package com.blackice.bc1;
-          import androidx.test.ext.junit.runners.AndroidJUnit4;
-          import org.junit.Test;
-          import org.junit.runner.RunWith;
-          @RunWith(AndroidJUnit4.class)
-          public class PreviewPlaybackRegressionTest {
-            @Test public void repeatedScrubToPlayback() throws Exception {
-              for(int attempt=0;attempt<3;attempt++) {
-                android.util.Log.i("BC1Preview", "Focused playback attempt "+attempt);
-                new PreviewScrubTest().scrollingUnderCenteredPlayheadShowsPixelsWithoutPressingPlay();
-              }
-            }
-          }
-          ''')
           PY
+          cat > /tmp/preview-checks.sh <<'SHELL'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          mkdir -p preview-diagnostics
+          adb install -r BC-1/app/build/outputs/apk/debug/app-debug.apk
+          adb install -r BC-1/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+          adb logcat -c
+          adb logcat -v threadtime > preview-diagnostics/logcat.txt 2>&1 &
+          bc1_logcat_pid=$!
+          trap 'kill "$bc1_logcat_pid" 2>/dev/null || true; wait "$bc1_logcat_pid" 2>/dev/null || true' EXIT
+          classes="com.blackice.bc1.EditorWorkspaceTest,com.blackice.bc1.ExportDiagnosticsUiTest,com.blackice.bc1.FootageWorkspaceTest"
+          if [ -f BC-1/app/src/androidTest/java/com/blackice/bc1/HomeBrowserTest.java ]; then classes="$classes,com.blackice.bc1.HomeBrowserTest"; fi
+          classes="$classes,com.blackice.bc1.LandscapeStabilityTest,com.blackice.bc1.LayerRenderingTest,com.blackice.bc1.MobileSheetTest,com.blackice.bc1.PhoneMediaSpaceTest,com.blackice.bc1.PreviewProxyTest,com.blackice.bc1.PreviewScrubTest"
+          adb shell am instrument -w -r -e class "$classes" com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee preview-diagnostics/instrumentation.txt
+          if grep -E 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' preview-diagnostics/instrumentation.txt; then exit 1; fi
+          grep -E '^OK \([0-9]+ tests?\)' preview-diagnostics/instrumentation.txt
+          SHELL
       - name: Build focused regression
         working-directory: BC-1
         run: gradle --no-daemon -Pbc1SideBySide testDebugUnitTest assembleDebug assembleDebugAndroidTest
@@ -76,16 +79,7 @@ jobs:
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: |
-            mkdir -p preview-diagnostics
-            adb install -r BC-1/app/build/outputs/apk/debug/app-debug.apk
-            adb install -r BC-1/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-            adb logcat -c
-            adb logcat -v threadtime > preview-diagnostics/logcat.txt &
-            adb shell am instrument -w -r -e class com.blackice.bc1.PreviewPlaybackRegressionTest com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee preview-diagnostics/instrumentation.txt
-            adb logcat -d > preview-diagnostics/logcat-final.txt || true
-            if grep -E 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' preview-diagnostics/instrumentation.txt; then exit 1; fi
-            grep -E '^OK \([0-9]+ tests?\)' preview-diagnostics/instrumentation.txt
+          script: bash /tmp/preview-checks.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
