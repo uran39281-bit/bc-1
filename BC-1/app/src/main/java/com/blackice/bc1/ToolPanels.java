@@ -85,13 +85,13 @@ final class ToolPanels {
     private void audioPanel(){
         EditProject.Clip c=a.clip();if(c==null||c.image){a.inspector.addView(a.note("This media has no audio."));return;}
         a.inspector.addView(a.button(c.unmutedVolume>=0?"Unmute":"Mute",v->{if(a.layerEditable())a.edit("Audio mute updated",()->ClipAudio.toggleMute(c));}));
-        percent("Volume",c.volume,1,v->{c.volume=v;c.unmutedVolume=-1;},null,0);
+        percent("Volume",c.volume,1,v->{c.volume=v;c.unmutedVolume=-1;},c.motion,Motion.VOLUME);
         if(c.fadeInMs>0||c.fadeOutMs>0)a.inspector.addView(a.note("Saved legacy fades remain active."));
         for(String name:new String[]{"Noise Reduction","Loudness Normalization","Audio Visualization","Equalizer (EQ)"}){
             TextView planned=a.button(name+" — Coming Later",null);planned.setEnabled(false);planned.setAlpha(.6f);a.inspector.addView(planned);
         }
         if(c.track<EditProject.AUDIO_FIRST)a.inspector.addView(a.button("Extract Audio",v->runTool("Extract Audio")));
-        a.inspector.addView(a.button("Reset Audio Settings",v->{if(a.layerEditable())a.edit("Audio reset",()->{c.volume=1;c.unmutedVolume=-1;c.fadeInMs=0;c.fadeOutMs=0;});}));
+        a.inspector.addView(a.button("Reset Audio Settings",v->{if(a.layerEditable())a.edit("Audio reset",()->{c.volume=1;c.unmutedVolume=-1;c.fadeInMs=0;c.fadeOutMs=0;c.motion.curves.get(Motion.VOLUME).clear();});}));
     }
     private boolean locked(){EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();return c!=null?LayerOps.locked(a.project,a.selected):LayerOps.locked(o);}
     static String kind(EditProject.Clip c,EditProject.Overlay o){
@@ -107,7 +107,7 @@ final class ToolPanels {
     /** Pictures, videos, audio, text, shapes and image layers each get only their compatible tools. */
     static List<String> tools(EditProject.Clip c,EditProject.Overlay o){
         List<String> t=new ArrayList<>();
-        if(c!=null&&c.track>=EditProject.AUDIO_FIRST){Collections.addAll(t,"Split","Trim","Slip","Volume","Fade In","Fade Out","Duplicate");return t;}
+        if(c!=null&&c.track>=EditProject.AUDIO_FIRST){Collections.addAll(t,"Split","Trim","Slip","Volume","Duplicate");return t;}
         if(c!=null&&c.image){Collections.addAll(t,"Duration: "+EditorActivity.seconds(c.durationMs())+" s","Transform","Opacity","Effects","Chroma Key","Animation","Duplicate");return t;}
         if(c!=null){Collections.addAll(t,"Split","Trim","Slip","Speed: "+trimZero(c.speed)+"×","Extract Audio","Transform","Opacity","Effects","Chroma Key","Volume","Animation","Duplicate");return t;}
         if(o.imageUri==null&&o.shape==0){Collections.addAll(t,"Edit Text","Font","Size","Color","Alignment","Transform","Opacity","Duration: "+EditorActivity.seconds(o.endMs-o.startMs)+" s","Animation");return t;}
@@ -150,7 +150,7 @@ final class ToolPanels {
             case "Transform":category("Move & Transform");return;
             case "Effects":category("Effects");return;
             case "Opacity":open("Opacity",()->opacityPanel());return;
-            case "Volume":open("Volume",()->percent("Volume",c.volume,.7f,v->{c.volume=v;c.unmutedVolume=-1;},null,0));return;
+            case "Volume":open("Volume",()->percent("Volume",c.volume,.7f,v->{c.volume=v;c.unmutedVolume=-1;},c.motion,Motion.VOLUME));return;
             case "Duration":open("Duration",this::durationPanel);return;
             case "Trim":open("Trim",this::trimPanel);return;
             case "Slip":open("Slip",this::slipPanel);return;
@@ -445,15 +445,8 @@ final class ToolPanels {
         a.inspector.addView(a.button("Apply curve",v->{if(a.layerEditable())a.edit("Custom easing applied",()->Keyframes.easeAll(m,t,tol,new float[]{working.x1,working.y1,working.x2,working.y2}));}));
     }
     // ---- Markers ------------------------------------------------------------------------------------
-    private void markersPanel(){
-        a.inspector.addView(a.note("Markers are snap targets for trims, moves, splits (move the playhead to a marker first) and keyframes. Shortcuts: M toggles a marker; , and . jump between markers."));
-        LinearLayout nav=a.row();nav.addView(a.button("‹ Previous marker",v->a.jumpMarker(false)),new LinearLayout.LayoutParams(0,a.dp(48),1));nav.addView(a.button("Next marker ›",v->a.jumpMarker(true)),new LinearLayout.LayoutParams(0,a.dp(48),1));a.inspector.addView(nav);
-        a.inspector.addView(a.button("Add / remove marker at playhead",v->a.toggleMarker()));
-        a.inspector.addView(a.button("Detect beats from audio…",v->a.detectBeats()));
-        for(int i=0;i<a.project.markers.size();i++){final long time=a.project.markers.get(i);final int index=i;
-            timeField("Marker "+(i+1),time,value->a.edit("Marker moved",()->{a.project.markers.remove(index);if(a.project.markers.contains(value))return;a.project.markers.add(Math.max(0,value));Collections.sort(a.project.markers);}));}
-        if(!a.project.markers.isEmpty())a.inspector.addView(a.button("Clear all markers",v->{if(a.editable())a.edit("Markers cleared",()->a.project.markers.clear());}));
-    }
+    private void markersPanel(){a.inspector.addView(a.note("Up to five project landmarks. Older beat cues remain saved separately."));a.inspector.addView(a.button("Manage timeline markers",v->LandmarkControls.show(a)));}
+
     private void multiTools(){
         a.inspector.addView(a.note(a.multiCount()+" layers selected. They move and transform together."));
         String[] names={"Align starts","Align ends","Match duration","Close gaps","Group","Ungroup","Duplicate","Delete"};

@@ -17,6 +17,7 @@ public final class AudioPlan {
         public final float speed, volume;
         public final long fadeInMs, fadeOutMs;
         public final boolean music;
+        private EditProject.Clip clip;
 
         Segment(String uri, long start, long duration, long in, float speed, float volume, long fadeIn, long fadeOut, boolean music) {
             this.uri = uri; timelineStartMs = start; durationMs = duration; sourceInMs = in;
@@ -27,6 +28,7 @@ public final class AudioPlan {
 
         /** Gain at a time measured from the segment start (fades are linear, like the Media3 GainProcessor). */
         public float gainAt(double localMs) {
+            if(clip!=null)return com.blackice.bc1.editor.ClipAudio.gain(clip,localMs,false);
             double envelope = 1;
             if (fadeInMs > 0) envelope = Math.min(envelope, localMs / fadeInMs);
             if (fadeOutMs > 0) envelope = Math.min(envelope, (durationMs - localMs) / fadeOutMs);
@@ -49,10 +51,10 @@ public final class AudioPlan {
             if (c.image) continue;
             boolean renders = LayerOps.renders(project, c, preview);
             float volume = c.volume;
-            if (c.track >= 4 && !renders) volume = 0;
-            if (c.track < 4 && solo && !renders) volume = 0;
-            if (volume <= 0) continue;
-            list.add(new Segment(c.uri, p.startMs, c.durationMs(), c.inMs, c.speed, volume, c.fadeInMs, c.fadeOutMs, false));
+            if (EditProject.audioTrack(c.track) && !renders) continue;
+            if (!EditProject.audioTrack(c.track) && solo && !renders) continue;
+            if (c.unmutedVolume>=0 || volume<=0&&c.motion.curves.get(com.blackice.bc1.editor.Motion.VOLUME).isEmpty()) continue;
+            Segment segment=new Segment(c.uri,p.startMs,c.durationMs(),c.inMs,c.speed,volume,c.fadeInMs,c.fadeOutMs,false);segment.clip=c.copy();list.add(segment);
         }
         EditProject.Music m = project.music;
         if (m != null && m.startMs < duration && m.volume > 0) {

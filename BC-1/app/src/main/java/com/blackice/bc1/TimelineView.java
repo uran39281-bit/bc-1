@@ -131,6 +131,10 @@ final class TimelineView extends View {
             paint.setColor(0xFF2E465A);for(int q=1;q<4;q++){float mx=x(ms+Math.round(interval*q/4));canvas.drawLine(mx,a.dp(24),mx,a.dp(RULER_DP),paint);}}
         float perFrame=timelineScale()/p.frameRate;
         if(perFrame>=a.dp(5)){paint.setColor(0xFF345465);long f0=(long)Math.max(0,Math.floor(time(left)*p.frameRate/1000.0)),f1=(long)Math.ceil(time(right)*p.frameRate/1000.0);for(long f=f0;f<=f1&&f-f0<2000;f++){float xx=x(Math.round(f*1000.0/p.frameRate));canvas.drawLine(xx,a.dp(RULER_DP)-a.dp(4),xx,a.dp(RULER_DP),paint);}}
+        for(EditProject.Landmark marker:p.landmarks){float xx=x(marker.timeMs);if(xx<left-a.dp(12)||xx>right+a.dp(12))continue;
+            paint.setColor(EditProject.MARKER_COLORS[marker.slot]);canvas.drawRect(xx-a.dp(9),a.dp(2),xx+a.dp(9),a.dp(20),paint);
+            paint.setAlpha(100);canvas.drawLine(xx,a.dp(20),xx,height,paint);paint.setAlpha(255);paint.setColor(0xFF07111B);paint.setTextSize(a.dp(11));paint.setTextAlign(Paint.Align.CENTER);canvas.drawText(""+(marker.slot+1),xx,a.dp(15),paint);paint.setTextAlign(Paint.Align.LEFT);
+        }
         paint.setColor(0xFFFFC145);for(long m:p.markers){float xx=x(m);if(xx<left-a.dp(8)||xx>right+a.dp(8))continue;Path tri=new Path();tri.moveTo(xx-a.dp(5),a.dp(18));tri.lineTo(xx+a.dp(5),a.dp(18));tri.lineTo(xx,a.dp(26));tri.close();canvas.drawPath(tri,paint);paint.setStrokeWidth(a.dp(1));canvas.drawLine(xx,a.dp(26),xx,height,paint);}
     }
     private boolean multiSelected(int clip){return a.multiClips.contains(clip);}
@@ -312,7 +316,10 @@ final class TimelineView extends View {
         stopAutoScroll();boolean longPress=e.getEventTime()-downTime>=ViewConfiguration.getLongPressTimeout();
         if(operation==OP_SCRUB){
             if(moved)scrub(e);
-            else if(downY<a.dp(RULER_DP))a.seek(Math.max(0,time(downX)));
+            else if(downY<a.dp(RULER_DP)){
+                EditProject.Landmark hit=null;for(EditProject.Landmark m:a.project.landmarks)if(Math.abs(x(m.timeMs)-downX)<=a.dp(12)){hit=m;break;}
+                if(hit!=null){a.pausePlayback();a.seek(hit.timeMs);if(longPress)LandmarkControls.edit(a,hit);}else a.seek(Math.max(0,time(downX)));
+            }
             else if(downY>=a.dp(RULER_DP)){if(hitClip>=0)a.selectClip(hitClip,false);else if(hitOverlay>=0)a.selectOverlay(hitOverlay);}
             reset();performClick();return true;
         }

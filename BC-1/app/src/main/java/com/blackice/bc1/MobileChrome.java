@@ -27,7 +27,7 @@ final class MobileChrome {
         clock=a.label("",11,EditorActivity.TEXT,false);clock.setPadding(dp(10),0,0,0);clock.setGravity(Gravity.CENTER_VERTICAL);clock.setShadowLayer(dp(2),0,0,0xFF000000);a.monitor.addView(clock,new FrameLayout.LayoutParams(-2,dp(48),Gravity.BOTTOM|Gravity.START));
         a.monitor.addView(control("Fullscreen","Fullscreen preview",v->{a.fullscreenPreview=true;a.buildWorkspace();}),new FrameLayout.LayoutParams(dp(48),dp(48),Gravity.BOTTOM|Gravity.END));
         a.phoneTransport=transport();previewColumn.addView(a.phoneTransport,new LinearLayout.LayoutParams(-1,dp(56)));
-        a.phoneTimelineTools=new View(a);a.phoneTimelineTools.setVisibility(View.GONE);a.timelineTools=null;
+        a.phoneTimelineTools=a.button("⚑ Markers • "+a.project.landmarks.size()+"/5",v->LandmarkControls.show(a));previewColumn.addView(a.phoneTimelineTools,new LinearLayout.LayoutParams(-1,dp(48)));a.timelineTools=null;
         a.phoneTimelineArea=a.buildTimeline();content.addView(a.phoneTimelineArea,new LinearLayout.LayoutParams(-1,0,1));
         add=a.button("+",v->openAdd(3));add.setTextSize(32);add.setContentDescription("Add content");GradientDrawable circle=BlackIceTheme.primary(a.getResources().getDisplayMetrics().density);circle.setCornerRadius(dp(12));add.setTextColor(BlackIceTheme.ON_ACCENT);add.setBackground(circle);add.setElevation(dp(2));
         FrameLayout.LayoutParams ap=new FrameLayout.LayoutParams(dp(56),dp(56),Gravity.BOTTOM|Gravity.END);ap.setMargins(0,0,dp(16),dp(82));stage.addView(add,ap);

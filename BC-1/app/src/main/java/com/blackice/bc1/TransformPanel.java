@@ -86,7 +86,10 @@ final class TransformPanel {
     final class ValueRuler extends View {
         final int property;final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);float start,down;boolean dragging;
         ValueRuler(int p){super(a);property=p;setFocusable(true);setContentDescription(title(p)+" ruler: drag the tick strip beneath the fixed indicator");}
-        @Override protected void onDraw(Canvas c){float w=getWidth(),h=getHeight(),spacing=a.dp(12),offset=(value(property)*display(property))%10*spacing;paint.setStrokeWidth(a.dp(1));paint.setColor(EditorActivity.MUTED);for(int i=-50;i<50;i++){float x=w/2+i*spacing-offset;c.drawLine(x,h-(i%5==0?h*.7f:h*.35f),x,h,paint);}paint.setColor(EditorActivity.CYAN);paint.setStrokeWidth(a.dp(2));c.drawLine(w/2,0,w/2,h,paint);}
+        @Override protected void onDraw(Canvas c){float w=getWidth(),h=getHeight(),spacing=a.dp(12),shown=value(property)*display(property);int center=(int)Math.floor(shown),radius=(int)(w/(2*spacing))+2;paint.setStrokeWidth(a.dp(1));paint.setTextSize(a.dp(10));paint.setTextAlign(Paint.Align.CENTER);
+            for(int tick=center-radius;tick<=center+radius;tick++){float x=w/2+(tick-shown)*spacing;paint.setColor(EditorActivity.MUTED);boolean major=tick%5==0;c.drawLine(x,h-(major?h*.45f:h*.25f),x,h,paint);if(major)c.drawText(Integer.toString(tick),x,a.dp(12),paint);}
+            paint.setColor(EditorActivity.CYAN);paint.setStrokeWidth(a.dp(2));c.drawLine(w/2,0,w/2,h,paint);
+        }
         @Override public boolean onTouchEvent(MotionEvent e){switch(e.getActionMasked()){case MotionEvent.ACTION_DOWN:if(!a.layerEditable())return false;begin();start=value(property);down=e.getX();dragging=true;getParent().requestDisallowInterceptTouchEvent(true);return true;case MotionEvent.ACTION_MOVE:if(dragging)live(property,start-(e.getX()-down)/a.dp(12)/display(property));return true;case MotionEvent.ACTION_UP:case MotionEvent.ACTION_CANCEL:if(dragging){dragging=false;getParent().requestDisallowInterceptTouchEvent(false);end(e.getActionMasked()==MotionEvent.ACTION_CANCEL);performClick();}return true;}return false;}
         @Override public boolean performClick(){super.performClick();return true;}
     }

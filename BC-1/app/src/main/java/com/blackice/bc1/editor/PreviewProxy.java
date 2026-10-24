@@ -48,7 +48,7 @@ public final class PreviewProxy implements AutoCloseable {
         directory=new File(context.getCacheDir(),"bc1-preview-v11");
     }
     public static boolean required(EditProject project) {
-        return !project.overlays.isEmpty() || project.clips.size()>1 || (!project.clips.isEmpty()&&project.clips.get(0).image) || com.blackice.bc1.core.RenderPlan.usesBlend(project);
+        return project.clips.stream().anyMatch(c->!c.motion.curves.get(Motion.VOLUME).isEmpty()) || !project.overlays.isEmpty() || project.clips.size()>1 || (!project.clips.isEmpty()&&project.clips.get(0).image) || com.blackice.bc1.core.RenderPlan.usesBlend(project);
     }
     /** The render in flight, by project key; a second request for the same project joins it instead of restarting. */
     private String runningKey;

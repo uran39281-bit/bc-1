@@ -28,6 +28,7 @@ public final class EditorActivity extends Activity {
     public static final String PREFS="bc1-editor";
     static final int IMPORT=701,MUSIC=702,OVERLAY=703,EXPORT=704,REPLACE=705,MEDIA_ACCESS=113;
     static final String[] NAV={"Add","Edit","Effects","Layers"};
+    final ProjectClock workClock=new ProjectClock(this);
     final ToolPanels panels=new ToolPanels(this);
     final TransformPanel transformPanel=new TransformPanel(this);
     AddDrawer addDrawer;
@@ -110,6 +111,7 @@ public final class EditorActivity extends Activity {
     static final int AUDIO_LAYER=110,BACKUP=111,RESTORE=112;
     final java.util.Map<String,float[]> waveforms=new java.util.HashMap<>();
     int inspectorWidth=300;
+    TextView markerCount;
     TextView status,time,play,projectLabel,exportButton,emptyPreview,monitorInfo;
     MobileChrome mobile;
     View phonePreview,phoneTransport,phoneTimelineTools,phoneTimelineArea; ScrollView phoneDrawer;
@@ -174,6 +176,8 @@ public final class EditorActivity extends Activity {
             });
         });
     }
+    @Override protected void onResume(){super.onResume();workClock.resume();}
+    @Override protected void onPause(){workClock.pause();super.onPause();}
     @Override protected void onStart(){super.onStart();active=true;main.post(pulse);if(!loading)showLive();}
     @Override protected void onStop(){cancelLiveAdjust();active=false;main.removeCallbacks(pulse);main.removeCallbacks(warmPreview);saveNow();releasePreview();if(previewProxy!=null)previewProxy.cancel();if(live!=null)live.releaseDecoders();super.onStop();}
     @Override protected void onDestroy(){main.removeCallbacks(autosave);if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
@@ -294,9 +298,10 @@ public final class EditorActivity extends Activity {
         for(EditProject.Clip clip:project.clips)if(clip.track>=EditProject.AUDIO_FIRST)loadWaveform(clip,true);
         if(monitor!=null)monitor.requestLayout();if(emptyPreview!=null)emptyPreview.setVisibility((project.clips.isEmpty()&&project.overlays.isEmpty())?View.VISIBLE:View.GONE);renderInspector();renderMediaBrowser();syncPosition();
     }
-    void syncPosition(){if(transformPanel!=null)transformPanel.refresh();updatePlayheadTools();if(mobile!=null)mobile.sync();if(previewControls!=null)previewControls.invalidate();if(time!=null)time.setText(clock(project.playheadMs)+"  /  "+clock(project.durationMs()));if(timeline!=null)timeline.syncScroll();if(previewScrubber!=null&&!scrubbing)previewScrubber.setProgress((int)(1000*project.playheadMs/Math.max(1,project.durationMs())));}
+    void syncPosition(){if(markerCount!=null)markerCount.setText(project.landmarks.size()+"/5");if(transformPanel!=null)transformPanel.refresh();updatePlayheadTools();if(mobile!=null)mobile.sync();if(previewControls!=null)previewControls.invalidate();if(time!=null)time.setText(clock(project.playheadMs)+"  /  "+clock(project.durationMs()));if(timeline!=null)timeline.syncScroll();if(previewScrubber!=null&&!scrubbing)previewScrubber.setProgress((int)(1000*project.playheadMs/Math.max(1,project.durationMs())));}
     long seekTarget(){return Math.min(project.playheadMs,Math.max(0,project.durationMs()-1));}
     void seek(long ms){
+        CrashLogs.operation("Scrubbing");
         if(liveBefore!=null)return;
         project.playheadMs=Math.max(0,Math.min(ms,project.durationMs()));
         // Paused scrubbing goes through the live preview; seeking during playback still uses the player.
@@ -309,7 +314,7 @@ public final class EditorActivity extends Activity {
         }
         syncPosition();
     }
-    void togglePlay(){if(previewPending){previewAutoplay=!previewAutoplay;tell(previewAutoplay?"Playback will start when the preview is ready.":"Preview will stay paused when ready.");return;}if(player==null){if((project.clips.isEmpty()&&project.overlays.isEmpty()))tell("Import a video or image first.");else preparePreview(true);return;}if(player.getPlayWhenReady())player.pause();else{if(seekQueued){main.removeCallbacks(flushSeek);seekQueued=false;player.seekTo(seekTarget());}if(player.getPlaybackState()==Player.STATE_ENDED||project.playheadMs>=project.durationMs())player.seekTo(0);player.play();}}
+    void togglePlay(){CrashLogs.project(project);CrashLogs.operation("Playback");if(previewPending){previewAutoplay=!previewAutoplay;tell(previewAutoplay?"Playback will start when the preview is ready.":"Preview will stay paused when ready.");return;}if(player==null){if((project.clips.isEmpty()&&project.overlays.isEmpty()))tell("Import a video or image first.");else preparePreview(true);return;}if(player.getPlayWhenReady())player.pause();else{if(seekQueued){main.removeCallbacks(flushSeek);seekQueued=false;player.seekTo(seekTarget());}if(player.getPlaybackState()==Player.STATE_ENDED||project.playheadMs>=project.durationMs())player.seekTo(0);player.play();}}
 
     void buildWorkspace() {
         // Layout switches keep selection, playhead and zoom (fields) and the layer list's vertical scroll.
@@ -378,6 +383,8 @@ public final class EditorActivity extends Activity {
         if(wideLayout)monitor.addView(compare,new FrameLayout.LayoutParams(-2,dp(40),Gravity.BOTTOM|Gravity.END));
         TextView info=monitorInfo=label(project.name+"  ·  "+(project.portrait?"9:16":"16:9")+"  ·  "+project.frameRate+" fps",11,0xFFC9D6E3,false);info.setPadding(dp(10),dp(6),dp(8),0);info.setShadowLayer(dp(3),0,0,0xCC000000);info.setSingleLine(true);info.setEllipsize(android.text.TextUtils.TruncateAt.END);if(wideLayout)monitor.addView(info,new FrameLayout.LayoutParams(-2,dp(28),Gravity.TOP|Gravity.START));
         TextView viewOptions=button("Fit ▾",v->previewOptions());viewOptions.setTextSize(11);viewOptions.setContentDescription("Preview scaling, volume and fullscreen");FrameLayout.LayoutParams viewLp=new FrameLayout.LayoutParams(dp(68),dp(34),Gravity.TOP|Gravity.END);viewLp.setMargins(0,dp(8),dp(8),0);if(wideLayout||fullscreenPreview)monitor.addView(viewOptions,viewLp);
+        TextView work=button("◷ 00:00:00",v->workClock.menu());work.setTextSize(10);work.setPadding(dp(6),0,dp(6),0);workClock.label=work;
+        FrameLayout.LayoutParams workLp=new FrameLayout.LayoutParams(dp(116),dp(48),Gravity.TOP|Gravity.START);workLp.topMargin=dp(22);monitor.addView(work,workLp);
         return monitor;
     }
     void previewOptions(){new AlertDialog.Builder(this).setTitle("Preview view only").setItems(new String[]{"Fit canvas","Fill viewport (cropped)","100% preview pixels","Preview volume","Fullscreen preview"},(d,i)->{
@@ -405,6 +412,7 @@ public final class EditorActivity extends Activity {
         timelineTools.addView(compactButton("+","Zoom in timeline",v->zoomTimeline(1.5f,Float.NaN)));
         TextView snap=headerIcon("Magnet","Snapping: "+(snapping?"on":"off"),v->{snapping=!snapping;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("snapping",snapping).apply();renderTimelineTools();});snap.setSelected(snapping);snap.setCompoundDrawables(icon("Magnet",snapping?CYAN:MUTED),null,null,null);timelineTools.addView(snap);
         timelineTools.addView(headerIcon("Fit","Fit timeline",v->fitTimeline()));
+        TextView markers=headerIcon("Flag","Timeline markers (maximum five)",v->LandmarkControls.show(this));markerCount=markers;markers.setText(project.landmarks.size()+"/5");timelineTools.addView(markers);
     }
     void syncZoomSlider(){if(zoomSlider!=null)zoomSlider.setProgress((int)Math.round(1000*Math.log(pixelsPerSecond/8)/Math.log(300)));}
     static void dim(View v,boolean enabled){v.setEnabled(enabled);v.setAlpha(enabled?1f:.38f);}
@@ -488,7 +496,7 @@ public final class EditorActivity extends Activity {
         if(start==Long.MAX_VALUE){tell("Select a layer to zoom to it.");return;}
         fitTimelineRange(start,end);
     }
-    void toggleMarkerAt(long time){if(!editable())return;long tolerance=Math.max(1,Math.round(dp(6)*1000/timeline.timelineScale()));edit("Marker toggled",()->LayerOps.toggleMarker(project,Math.max(0,time),tolerance));}
+    void toggleMarkerAt(long time){LandmarkControls.add(this,time);}
     /** Row-handle reordering: moves one row to the target position, one swap at a time, in one undo step. */
     void reorderRows(int from,int to){
         java.util.List<int[]> rows=layerRows();if(from<0||to<0||from>=rows.size()||to>=rows.size())return;int[] row=rows.get(from),target=rows.get(to);
@@ -566,6 +574,8 @@ public final class EditorActivity extends Activity {
             addAction("Export project + media bundle",()->{if(!editable())return;Intent i=new Intent(Intent.ACTION_CREATE_DOCUMENT).setType("application/zip").addCategory(Intent.CATEGORY_OPENABLE).putExtra(Intent.EXTRA_TITLE,"Black-Ice-project.bc1zip");startActivityForResult(i,BACKUP);});
             addAction("Restore project bundle",()->pick(RESTORE,"*/*"));
             addAction("Projects / New / Rename",()->projectsMenu());
+            addAction("Keyboard Shortcuts",()->Shortcuts.show(this));
+            addAction("Project work clock",()->workClock.menu());
             addAction("Diagnostics → Crash Logs",()->CrashLogs.show(this));
             addAction("Export diagnostics",()->exportDiagnostics());
             addAction("Device video capabilities",()->deviceVideoReport());
@@ -714,7 +724,7 @@ public final class EditorActivity extends Activity {
         TextView b=button(title,v->action.run());b.setTextSize(11);LinearLayout.LayoutParams cell=new LinearLayout.LayoutParams(0,dp(wideLayout?44:54),1);cell.rightMargin=dp(4);gridRow.addView(b,cell);gridCount++;}
     void flushGrid(){if(gridRow!=null){int columns=wideLayout?3:2;while(gridCount%columns!=0){gridRow.addView(new View(this),new LinearLayout.LayoutParams(0,dp(wideLayout?44:54),1));gridCount++;}}gridRow=null;gridCount=0;}
     void setStatic(int property,float value){EditProject.Clip c=clip();EditProject.Overlay o=overlay();
-        if(c!=null)switch(property){case Motion.X:c.x=value;break;case Motion.Y:c.y=value;break;case Motion.HEIGHT:c.heightScale=value;break;case Motion.SCALE:c.scale=value;break;case Motion.ROTATION:c.rotation=value;break;case Motion.OPACITY:c.opacity=value;break;case Motion.INTENSITY:c.intensity=value;break;case Motion.SKEW_X:c.skewX=value;break;case Motion.SKEW_Y:c.skewY=value;break;case Motion.ANCHOR_X:c.anchorX=value;break;case Motion.ANCHOR_Y:c.anchorY=value;break;}
+        if(c!=null)switch(property){case Motion.X:c.x=value;break;case Motion.Y:c.y=value;break;case Motion.HEIGHT:c.heightScale=value;break;case Motion.SCALE:c.scale=value;break;case Motion.ROTATION:c.rotation=value;break;case Motion.OPACITY:c.opacity=value;break;case Motion.INTENSITY:c.intensity=value;break;case Motion.VOLUME:c.volume=value;c.unmutedVolume=-1;break;case Motion.SKEW_X:c.skewX=value;break;case Motion.SKEW_Y:c.skewY=value;break;case Motion.ANCHOR_X:c.anchorX=value;break;case Motion.ANCHOR_Y:c.anchorY=value;break;}
         else if(o!=null)switch(property){case Motion.X:o.x=value;break;case Motion.Y:o.y=value;break;case Motion.HEIGHT:o.heightScale=value;break;case Motion.SCALE:o.scale=value;break;case Motion.ROTATION:o.rotation=value;break;case Motion.OPACITY:o.opacity=value;break;case Motion.SKEW_X:o.skewX=value;break;case Motion.SKEW_Y:o.skewY=value;break;case Motion.ANCHOR_X:o.anchorX=value;break;case Motion.ANCHOR_Y:o.anchorY=value;break;}
     }
     void renameSelection(){EditProject.Clip c=clip();EditProject.Overlay o=overlay();if((c==null&&o==null)||!layerEditable())return;
@@ -839,8 +849,8 @@ public final class EditorActivity extends Activity {
         edit(shape>0?EditProject.SHAPES[shape]+" added":"Text added",()->{EditProject.Overlay o=new EditProject.Overlay();o.shape=shape;if(shape==0)o.text=text;else{o.text=EditProject.SHAPES[shape];o.y=0;o.color=0xFF40BFFF;}o.scale=Math.max(.1f,Math.min(2,scale*.7f));
             o.startMs=at;o.endMs=at+Math.max(EditProject.MIN_CLIP_MS,Math.min(3000,Math.max(project.durationMs()-at,3000)));project.overlays.add(o);selected=-1;selectedOverlay=project.overlays.size()-1;tab=1;});
     }
-    void toggleMarker(){if(!editable())return;long tolerance=Math.max(1,Math.round(dp(6)*1000/(timeline==null?dp(48):timeline.timelineScale())));long t=project.playheadMs;edit("Marker toggled",()->LayerOps.toggleMarker(project,t,tolerance));}
-    void jumpMarker(boolean next){long now=project.playheadMs,best=-1;for(long m:project.markers){if(next&&m>now&&(best<0||m<best))best=m;if(!next&&m<now&&(best<0||m>best))best=m;}if(best<0){tell(next?"No later marker":"No earlier marker");return;}seek(best);}
+    void toggleMarker(){LandmarkControls.add(this,project.playheadMs);}
+    void jumpMarker(boolean next){long now=project.playheadMs,best=-1;for(EditProject.Landmark marker:project.landmarks){long m=marker.timeMs;if(next&&m>now&&(best<0||m<best))best=m;if(!next&&m<now&&(best<0||m>best))best=m;}if(best<0){tell(next?"No later marker":"No earlier marker");return;}seek(best);}
     /** Approximate beat markers from the selected audio clip (or the music track), added in one undo step. */
     void detectBeats(){
         EditProject.Clip c=clip();boolean useClip=c!=null&&!c.image;if(!useClip&&project.music==null){tell("Select a video or audio clip, or add music, to detect beats.");return;}if(!editable())return;
@@ -1115,24 +1125,10 @@ public final class EditorActivity extends Activity {
         if(key==KeyEvent.KEYCODE_BACK&&panels.showing()){panels.back();return true;}
         if(key==KeyEvent.KEYCODE_BACK&&(clip()!=null||overlay()!=null)){deselect();return true;}
         if(getCurrentFocus() instanceof EditText)return super.onKeyDown(key,event);
-        if(event.isCtrlPressed()&&key==KeyEvent.KEYCODE_S){saveNow();return true;}
-        if(event.isCtrlPressed()&&(key==KeyEvent.KEYCODE_Z||key==KeyEvent.KEYCODE_Y)){undo(key==KeyEvent.KEYCODE_Y||event.isShiftPressed());return true;}
-        if(key==KeyEvent.KEYCODE_SPACE&&event.getRepeatCount()==0){togglePlay();return true;}
-        if(key==KeyEvent.KEYCODE_D&&event.isCtrlPressed()){duplicateSelected();return true;}
+        if(Shortcuts.dispatch(this,event))return true;
         if(event.isCtrlPressed()&&key==KeyEvent.KEYCODE_C){copyAttributes();return true;}
         if(event.isCtrlPressed()&&key==KeyEvent.KEYCODE_V){pasteAttributes();return true;}
-        if(key==KeyEvent.KEYCODE_S&&!event.isCtrlPressed()){splitSelected();return true;}
-        if(key==KeyEvent.KEYCODE_ESCAPE){deselect();return true;}
-        if(key==KeyEvent.KEYCODE_MOVE_HOME||key==KeyEvent.KEYCODE_MOVE_END){jump(key==KeyEvent.KEYCODE_MOVE_END);return true;}
         if(event.isCtrlPressed()&&(key==KeyEvent.KEYCODE_EQUALS||key==KeyEvent.KEYCODE_MINUS)){zoomTimeline(key==KeyEvent.KEYCODE_EQUALS?1.5f:1/1.5f,Float.NaN);return true;}
-        boolean arrow=key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT||key==KeyEvent.KEYCODE_DPAD_UP||key==KeyEvent.KEYCODE_DPAD_DOWN;
-        // Transform mode: arrows nudge the selected layer by one project pixel, Shift by ten.
-        if(arrow&&"Move & Transform".equals(panels.title())&&panels.showing()){int step=event.isShiftPressed()?10:1;nudge(key==KeyEvent.KEYCODE_DPAD_LEFT?-step:key==KeyEvent.KEYCODE_DPAD_RIGHT?step:0,key==KeyEvent.KEYCODE_DPAD_UP?step:key==KeyEvent.KEYCODE_DPAD_DOWN?-step:0);return true;}
-        if(key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT){long frame=Math.round(1000.0/project.frameRate);seek(project.playheadMs+(key==KeyEvent.KEYCODE_DPAD_LEFT?-1:1)*(event.isShiftPressed()?1000:frame));return true;}
-        if(key==KeyEvent.KEYCODE_FORWARD_DEL||key==KeyEvent.KEYCODE_DEL){deleteSelection();return true;}
-        if(key==KeyEvent.KEYCODE_M&&!event.isCtrlPressed()){toggleMarker();return true;}
-        if(key==KeyEvent.KEYCODE_COMMA||key==KeyEvent.KEYCODE_PERIOD){jumpMarker(key==KeyEvent.KEYCODE_PERIOD);return true;}
-        if(key==KeyEvent.KEYCODE_LEFT_BRACKET||key==KeyEvent.KEYCODE_RIGHT_BRACKET){jumpKeyframe(key==KeyEvent.KEYCODE_RIGHT_BRACKET);return true;}
         return super.onKeyDown(key,event);
     }
     /** Duplicate after when free, otherwise onto an unlocked layer without moving other clips. */
@@ -1177,15 +1173,15 @@ public final class EditorActivity extends Activity {
 
         TextView importButton=button("Import Media",v->pick(IMPORT,"*/*"));importButton.setContentDescription("+ Import media");importButton.setCompoundDrawables(icon("Add",TEXT),null,null,null);importButton.setCompoundDrawablePadding(dp(8));importButton.setTextSize(13);
         LinearLayout.LayoutParams importLp=new LinearLayout.LayoutParams(-1,dp(48));importLp.topMargin=dp(10);importLp.bottomMargin=dp(8);mediaBrowser.addView(importButton,importLp);
-        LinearLayout filters=row();filters.setBaselineAligned(false);
-        String[] names={"All","Video","Audio","Image"};
+        GridLayout filters=new GridLayout(this);filters.setColumnCount(3);
+        String[] names={"All","Video","Audio","Image","Shapes"};
         for(MediaFilter.Kind kind:MediaFilter.Kind.values()){
             TextView filter=button(names[kind.ordinal()],v->{mediaKind=kind;renderMediaGrid();});
-            filter.setTextSize(11);filter.setPadding(dp(3),0,dp(3),0);
+            filter.setTextSize(11);filter.setPadding(dp(4),0,dp(4),0);filter.setCompoundDrawables(icon(new String[]{"Grid","Video","Audio","Image","Shapes"}[kind.ordinal()],TEXT),null,null,null);filter.setCompoundDrawablePadding(dp(4));
             filter.setContentDescription("Filter media: "+names[kind.ordinal()]);
-            mediaFilterButtons.add(filter);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(38),1);lp.rightMargin=dp(3);filters.addView(filter,lp);
+            mediaFilterButtons.add(filter);GridLayout.LayoutParams lp=new GridLayout.LayoutParams();lp.width=0;lp.height=dp(48);lp.columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);lp.setMargins(dp(2),dp(2),dp(2),dp(2));filters.addView(filter,lp);
         }
-        TextView favorites=button("Favorites",v->{favoritesOnly=!favoritesOnly;renderMediaGrid();});favorites.setTextSize(11);favorites.setPadding(dp(3),0,dp(3),0);favorites.setTag("favorites");filters.addView(favorites,new LinearLayout.LayoutParams(0,dp(38),1.3f));
+        TextView favorites=button("Favorites",v->{favoritesOnly=!favoritesOnly;renderMediaGrid();});favorites.setTextSize(11);favorites.setPadding(dp(3),0,dp(3),0);favorites.setTag("favorites");favorites.setCompoundDrawables(icon("Star",TEXT),null,null,null);GridLayout.LayoutParams favoriteLp=new GridLayout.LayoutParams();favoriteLp.width=0;favoriteLp.height=dp(48);favoriteLp.columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);filters.addView(favorites,favoriteLp);
         mediaBrowser.addView(filters);
         LinearLayout searchRow=row();searchRow.setGravity(Gravity.CENTER_VERTICAL);
         EditText search=new EditText(this);search.setSingleLine(true);search.setTextSize(12);
@@ -1199,11 +1195,12 @@ public final class EditorActivity extends Activity {
         mediaGrid=column();mediaGrid.setContentDescription("Project media grid");mediaBrowser.addView(mediaGrid);
         search.addTextChangedListener(new android.text.TextWatcher(){
             public void beforeTextChanged(CharSequence s,int start,int count,int after){}
-            public void onTextChanged(CharSequence s,int start,int before,int count){mediaQuery=s.toString();renderMediaGrid();}
+            public void onTextChanged(CharSequence s,int start,int before,int count){mediaQuery=s.toString();main.removeCallbacks(mediaRefresh);mediaGrid.postOnAnimation(mediaRefresh);}
             public void afterTextChanged(android.text.Editable value){}
         });
         renderMediaGrid();
     }
+    final Runnable mediaRefresh=()->renderMediaGrid();
     int mediaGridColumns=3;
     void renderMediaGrid(){
         if(mediaGrid==null)return;
@@ -1216,8 +1213,14 @@ public final class EditorActivity extends Activity {
         ArrayList<EditProject.Clip> matches=new ArrayList<>();
         for(EditProject.Clip asset:project.library)if((!favoritesOnly||favoriteMedia.contains(asset.uri))&&MediaFilter.matches(asset,mediaKind,mediaQuery))matches.add(asset);
         if(mediaSort==1)matches.sort((a,b)->a.name.compareToIgnoreCase(b.name));else if(mediaSort==2)matches.sort((a,b)->Long.compare(a.durationMs(),b.durationMs()));
-        mediaCount.setText(matches.size()+" / "+project.library.size()+" items");
-        if(matches.isEmpty()){
+        int shapes=0;
+        if(mediaKind==MediaFilter.Kind.SHAPES||mediaKind==MediaFilter.Kind.ALL){
+            ArrayList<Integer> shapeIds=new ArrayList<>();for(int shape=1;shape<=4;shape++)if(EditProject.SHAPES[shape].toLowerCase(Locale.ROOT).contains(mediaQuery.trim().toLowerCase(Locale.ROOT))&&(!favoritesOnly||favoriteMedia.contains("shape:"+shape)))shapeIds.add(shape);
+            if(mediaSort==1)shapeIds.sort((x,y)->EditProject.SHAPES[x].compareToIgnoreCase(EditProject.SHAPES[y]));
+            shapes=shapeIds.size();for(int shape:shapeIds){TextView tile=button(EditProject.SHAPES[shape]+" • Shape",v->addOverlay(shape,"",1));tile.setCompoundDrawables(icon("Shapes",TEXT),null,null,null);tile.setContentDescription("Insert shape: "+EditProject.SHAPES[shape]);tile.setOnLongClickListener(v->{String key="shape:"+shape;if(!favoriteMedia.remove(key))favoriteMedia.add(key);getSharedPreferences(PREFS,0).edit().putStringSet("favorite-media",new HashSet<>(favoriteMedia)).apply();renderMediaGrid();return true;});tile.setTooltipText("Tap to insert; hold to toggle favorite");mediaGrid.addView(tile,new LinearLayout.LayoutParams(-1,dp(56)));}
+        }
+        mediaCount.setText((matches.size()+shapes)+" / "+(project.library.size()+4)+" items");
+        if(matches.isEmpty()&&shapes==0){
             mediaGrid.addView(note(project.library.isEmpty()?"Import media to build your project.":"No matching media"));
             return;
         }
