@@ -154,7 +154,7 @@ public final class CompositionFactory {
         EditProject.Clip snapshot=clip.copy();
         return new GainProcessor(new GainProcessor.GainProvider(){
             public float getGainFactorAtSamplePosition(long sample,int rate){return ClipAudio.gain(snapshot,sample*1000.0/rate,muted);}
-            public long isUnityUntil(long sample,int rate){return getGainFactorAtSamplePosition(sample,rate)==1?sample+1:C.TIME_UNSET;}
+            public long isUnityUntil(long sample,int rate){if(!muted&&snapshot.unmutedVolume<0&&snapshot.volume==1&&snapshot.fadeInMs==0&&snapshot.fadeOutMs==0&&snapshot.motion.curves.get(Motion.VOLUME).isEmpty())return C.TIME_END_OF_SOURCE;return getGainFactorAtSamplePosition(sample,rate)==1?sample+1:C.TIME_UNSET;}
         });
     }
     private static GainProcessor gain(float volume){return gain(volume,0,0,0);}

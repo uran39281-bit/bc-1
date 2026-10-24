@@ -59,7 +59,7 @@ final class TimelineView extends View {
     int viewport(){int w=a.timelineScroll==null?0:a.timelineScroll.getWidth();return w>0?w:getResources().getDisplayMetrics().widthPixels;}
     /** Time zero starts centered, with enough leading space to scrub back to the beginning. */
     float pad(){return viewport()/2f;}
-    float timelineScale(){return Math.min(a.dp(a.pixelsPerSecond),16_000_000f/Math.max(1f,a.project.durationMs()/1000f));}
+    float timelineScale(){return Math.min(a.dp(a.pixelsPerSecond),16_000_000f/Math.max(1f,a.timelineEnd()/1000f));}
     float x(long ms){return pad()+ms/1000f*timelineScale();}
     long time(float x){return Math.round((x-pad())/timelineScale()*1000);}
     int headerWidth(){return a.dp(56);}
@@ -74,7 +74,7 @@ final class TimelineView extends View {
     float rowTopOfOverlay(int overlay){for(Row r:rows())if(r.kind==1&&r.index==overlay)return r.top;return -1;}
     /** Room after the last clip so layers can be dragged, and media dropped, past the current end. */
     private float tail(){return Math.max(viewport()*.75f,a.dp(320));}
-    @Override protected void onMeasure(int w,int h){setMeasuredDimension(Math.max(viewport()+1,Math.round(pad()+a.project.durationMs()/1000f*timelineScale()+tail())),Math.round(contentHeight()));}
+    @Override protected void onMeasure(int w,int h){setMeasuredDimension(Math.max(viewport()+1,Math.round(pad()+a.timelineEnd()/1000f*timelineScale()+tail())),Math.round(contentHeight()));}
     /** Every seek and playback tick leaves the playhead at the viewport center. */
     void syncScroll(){
         if(a.timelineScroll==null)return;

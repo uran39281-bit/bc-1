@@ -62,7 +62,7 @@ public final class PreviewProxy implements AutoCloseable {
     public boolean preparing(){return runningKey!=null;}
     public void prepare(EditProject project,Listener listener) {
         try {
-            EditProject snapshot=ProjectStore.snapshot(project);snapshot.playheadMs=0;
+            EditProject snapshot=ProjectStore.snapshot(project);snapshot.playheadMs=0;snapshot.landmarks.clear();
             byte[] digest=MessageDigest.getInstance("SHA-256").digest(ProjectStore.encode(snapshot).getBytes(StandardCharsets.UTF_8));
             StringBuilder key=new StringBuilder();for(byte b:digest)key.append(String.format(java.util.Locale.ROOT,"%02x",b&255));
             if(key.toString().equals(runningKey)&&(transformer!=null||coreStop!=null)){current=listener;return;}

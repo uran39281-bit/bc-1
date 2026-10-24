@@ -1,0 +1,62 @@
+name: Workspace performance comparison
+on:
+  workflow_dispatch:
+  push:
+    branches: ['feature/workspace-stability']
+    paths: ['.github/workflows/workspace-performance.yml']
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Build baseline and current with identical probe
+        run: |
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;35.0.0'
+          git fetch --depth=1 origin 0d55b0da87a50f7d05ddeddc7825975f0d7c6f0e
+          git worktree add --detach /tmp/bc1-baseline FETCH_HEAD
+          cp BC-1/app/src/androidTest/java/com/blackice/bc1/WorkspacePerformanceProbeTest.java /tmp/bc1-baseline/BC-1/app/src/androidTest/java/com/blackice/bc1/
+          (cd /tmp/bc1-baseline/BC-1 && gradle --no-daemon -Pbc1SideBySide assembleDebug assembleDebugAndroidTest)
+          (cd BC-1 && gradle --no-daemon -Pbc1SideBySide assembleDebug assembleDebugAndroidTest)
+          cat > /tmp/compare-workspace.sh <<'SH'
+          set -euo pipefail
+          mkdir -p performance-results
+          for phase in baseline current; do
+            root="$PWD"
+            if [ "$phase" = baseline ]; then root=/tmp/bc1-baseline; fi
+            adb install -r "$root/BC-1/app/build/outputs/apk/debug/app-debug.apk"
+            adb install -r "$root/BC-1/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk"
+            adb logcat -c
+            adb shell am instrument -w -r -e phase "$phase" -e class com.blackice.bc1.WorkspacePerformanceProbeTest com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee "performance-results/$phase.txt"
+            adb logcat -d -s BC1Performance:I >> "performance-results/$phase.txt"
+            grep -E '^OK \(' "performance-results/$phase.txt"
+          done
+          SH
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: bash /tmp/compare-workspace.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workspace-performance-results
+          path: performance-results/

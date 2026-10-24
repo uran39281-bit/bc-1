@@ -298,14 +298,15 @@ public final class EditorActivity extends Activity {
         for(EditProject.Clip clip:project.clips)if(clip.track>=EditProject.AUDIO_FIRST)loadWaveform(clip,true);
         if(monitor!=null)monitor.requestLayout();if(emptyPreview!=null)emptyPreview.setVisibility((project.clips.isEmpty()&&project.overlays.isEmpty())?View.VISIBLE:View.GONE);renderInspector();renderMediaBrowser();syncPosition();
     }
-    void syncPosition(){if(markerCount!=null)markerCount.setText(project.landmarks.size()+"/5");if(transformPanel!=null)transformPanel.refresh();updatePlayheadTools();if(mobile!=null)mobile.sync();if(previewControls!=null)previewControls.invalidate();if(time!=null)time.setText(clock(project.playheadMs)+"  /  "+clock(project.durationMs()));if(timeline!=null)timeline.syncScroll();if(previewScrubber!=null&&!scrubbing)previewScrubber.setProgress((int)(1000*project.playheadMs/Math.max(1,project.durationMs())));}
+    void syncPosition(){String count=project.landmarks.size()+"/5";if(markerCount!=null&&!count.contentEquals(markerCount.getText()))markerCount.setText(count);if(phoneTimelineTools instanceof TextView){String label="⚑ Markers • "+count;if(!label.contentEquals(((TextView)phoneTimelineTools).getText()))((TextView)phoneTimelineTools).setText(label);}if(transformPanel!=null)transformPanel.refresh();updatePlayheadTools();if(mobile!=null)mobile.sync();if(previewControls!=null)previewControls.invalidate();if(time!=null)time.setText(clock(project.playheadMs)+"  /  "+clock(project.durationMs()));if(timeline!=null)timeline.syncScroll();if(previewScrubber!=null&&!scrubbing)previewScrubber.setProgress((int)(1000*project.playheadMs/Math.max(1,project.durationMs())));}
+    long timelineEnd(){long end=project.durationMs();for(EditProject.Landmark m:project.landmarks)end=Math.max(end,m.timeMs);return end;}
     long seekTarget(){return Math.min(project.playheadMs,Math.max(0,project.durationMs()-1));}
     void seek(long ms){
         CrashLogs.operation("Scrubbing");
         if(liveBefore!=null)return;
-        project.playheadMs=Math.max(0,Math.min(ms,project.durationMs()));
+        project.playheadMs=Math.max(0,Math.min(ms,timelineEnd()));
         // Paused scrubbing goes through the live preview; seeking during playback still uses the player.
-        if(player!=null&&!player.getPlayWhenReady()&&live!=null){releasePreview();project.playheadMs=Math.max(0,Math.min(ms,project.durationMs()));}
+        if(player!=null&&!player.getPlayWhenReady()&&live!=null){releasePreview();project.playheadMs=Math.max(0,Math.min(ms,timelineEnd()));}
         if(player==null){renderLive();syncPosition();return;}
         if(player!=null){
             player.pause();main.removeCallbacks(flushSeek);
@@ -1213,18 +1214,31 @@ public final class EditorActivity extends Activity {
         ArrayList<EditProject.Clip> matches=new ArrayList<>();
         for(EditProject.Clip asset:project.library)if((!favoritesOnly||favoriteMedia.contains(asset.uri))&&MediaFilter.matches(asset,mediaKind,mediaQuery))matches.add(asset);
         if(mediaSort==1)matches.sort((a,b)->a.name.compareToIgnoreCase(b.name));else if(mediaSort==2)matches.sort((a,b)->Long.compare(a.durationMs(),b.durationMs()));
-        int shapes=0;
+        ArrayList<Integer> shapeIds=new ArrayList<>();
         if(mediaKind==MediaFilter.Kind.SHAPES||mediaKind==MediaFilter.Kind.ALL){
-            ArrayList<Integer> shapeIds=new ArrayList<>();for(int shape=1;shape<=4;shape++)if(EditProject.SHAPES[shape].toLowerCase(Locale.ROOT).contains(mediaQuery.trim().toLowerCase(Locale.ROOT))&&(!favoritesOnly||favoriteMedia.contains("shape:"+shape)))shapeIds.add(shape);
+            for(int shape=1;shape<=4;shape++)if(EditProject.SHAPES[shape].toLowerCase(Locale.ROOT).contains(mediaQuery.trim().toLowerCase(Locale.ROOT))&&(!favoritesOnly||favoriteMedia.contains("shape:"+shape)))shapeIds.add(shape);
             if(mediaSort==1)shapeIds.sort((x,y)->EditProject.SHAPES[x].compareToIgnoreCase(EditProject.SHAPES[y]));
-            shapes=shapeIds.size();for(int shape:shapeIds){TextView tile=button(EditProject.SHAPES[shape]+" • Shape",v->addOverlay(shape,"",1));tile.setCompoundDrawables(icon("Shapes",TEXT),null,null,null);tile.setContentDescription("Insert shape: "+EditProject.SHAPES[shape]);tile.setOnLongClickListener(v->{String key="shape:"+shape;if(!favoriteMedia.remove(key))favoriteMedia.add(key);getSharedPreferences(PREFS,0).edit().putStringSet("favorite-media",new HashSet<>(favoriteMedia)).apply();renderMediaGrid();return true;});tile.setTooltipText("Tap to insert; hold to toggle favorite");mediaGrid.addView(tile,new LinearLayout.LayoutParams(-1,dp(56)));}
         }
-        mediaCount.setText((matches.size()+shapes)+" / "+(project.library.size()+4)+" items");
-        if(matches.isEmpty()&&shapes==0){
-            mediaGrid.addView(note(project.library.isEmpty()?"Import media to build your project.":"No matching media"));
-            return;
-        }
+        mediaCount.setText((matches.size()+shapeIds.size())+" / "+(project.library.size()+4)+" items");
+        if(matches.isEmpty()&&shapeIds.isEmpty()){mediaGrid.addView(note("No matching media"));return;}
         mediaRows(mediaGrid,matches,mediaColumns,mediaList);
+        for(int start=0;start<shapeIds.size();start+=mediaColumns){
+            LinearLayout row=row();row.setBaselineAligned(false);
+            for(int col=0;col<mediaColumns;col++){
+                LinearLayout.LayoutParams cell=new LinearLayout.LayoutParams(0,dp(mediaList?64:mediaColumns>=3?104:124),1);if(col>0)cell.leftMargin=dp(8);
+                row.addView(start+col<shapeIds.size()?shapeCard(shapeIds.get(start+col)):new View(this),cell);
+            }
+            LinearLayout.LayoutParams line=new LinearLayout.LayoutParams(-1,-2);line.bottomMargin=dp(10);mediaGrid.addView(row,line);
+        }
+    }
+    View shapeCard(int shape){
+        LinearLayout card=mediaList?row():column();card.setBackground(buttonBackground(false));card.setPadding(dp(8),dp(6),dp(8),dp(6));card.setFocusable(true);card.setClickable(true);
+        View preview=new View(this){final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);@Override protected void onDraw(Canvas canvas){super.onDraw(canvas);float cx=getWidth()/2f,cy=getHeight()/2f,r=Math.max(1,Math.min(getWidth(),getHeight())*.3f);paint.setColor(CYAN);paint.setStyle(Paint.Style.FILL);
+            if(shape==1)canvas.drawRect(cx-r,cy-r*.7f,cx+r,cy+r*.7f,paint);else if(shape==2)canvas.drawOval(cx-r,cy-r*.7f,cx+r,cy+r*.7f,paint);else if(shape==3){android.graphics.Path path=new android.graphics.Path();path.moveTo(cx,cy-r);path.lineTo(cx+r,cy+r);path.lineTo(cx-r,cy+r);path.close();canvas.drawPath(path,paint);}else{paint.setStrokeWidth(dp(3));canvas.drawLine(cx-r,cy,cx+r,cy,paint);}
+        }};
+        card.addView(preview,mediaList?new LinearLayout.LayoutParams(dp(64),-1):new LinearLayout.LayoutParams(-1,0,1));
+        TextView name=label((favoriteMedia.contains("shape:"+shape)?"★ ":"")+EditProject.SHAPES[shape],11,TEXT,false);name.setSingleLine(true);name.setEllipsize(android.text.TextUtils.TruncateAt.END);name.setGravity(Gravity.CENTER_VERTICAL);card.addView(name,mediaList?new LinearLayout.LayoutParams(0,-1,1):new LinearLayout.LayoutParams(-1,dp(24)));
+        card.setContentDescription("Insert shape: "+EditProject.SHAPES[shape]);card.setTooltipText("Tap to insert; hold to toggle favorite");card.setOnClickListener(v->addOverlay(shape,"",1));card.setOnLongClickListener(v->{String key="shape:"+shape;if(!favoriteMedia.remove(key))favoriteMedia.add(key);getSharedPreferences(PREFS,0).edit().putStringSet("favorite-media",new HashSet<>(favoriteMedia)).apply();renderMediaGrid();return true;});return card;
     }
     /** Media cards in rows; shared by the desktop browser and the Add panel. */
     void mediaRows(LinearLayout into,java.util.List<EditProject.Clip> items,int columns,boolean list){

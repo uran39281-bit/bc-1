@@ -31,9 +31,9 @@ final class Shortcuts {
         }return true;
     }
     static void show(Activity a){
-        LinearLayout body=new LinearLayout(a);body.setOrientation(1);int pad=(int)(16*a.getResources().getDisplayMetrics().density);body.setPadding(pad,pad,pad,pad);
+        LinearLayout body=new LinearLayout(a);body.setOrientation(LinearLayout.VERTICAL);int pad=(int)(16*a.getResources().getDisplayMetrics().density);body.setPadding(pad,pad,pad,pad);
         EditText search=new EditText(a);search.setSingleLine(true);search.setHint("Search keyboard shortcuts");body.addView(search);
-        ScrollView scroll=new ScrollView(a);LinearLayout rows=new LinearLayout(a);rows.setOrientation(1);scroll.addView(rows);body.addView(scroll,new LinearLayout.LayoutParams(-1,(int)(320*a.getResources().getDisplayMetrics().density)));
+        ScrollView scroll=new ScrollView(a);LinearLayout rows=new LinearLayout(a);rows.setOrientation(LinearLayout.VERTICAL);scroll.addView(rows);body.addView(scroll,new LinearLayout.LayoutParams(-1,(int)(320*a.getResources().getDisplayMetrics().density)));
         final AlertDialog[] guideRef=new AlertDialog[1];
         Runnable render=()->{rows.removeAllViews();String q=search.getText().toString().trim().toLowerCase(Locale.ROOT);for(Command c:Command.values()){String text=c.title+" • "+label(binding(a,c));if(!text.toLowerCase(Locale.ROOT).contains(q))continue;Button b=new Button(a);b.setText(text);rows.addView(b);b.setOnClickListener(v->{if(guideRef[0]!=null)guideRef[0].dismiss();edit(a,c,()->show(a));});}};
         search.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence s,int st,int n,int af){}public void onTextChanged(CharSequence s,int st,int before,int count){render.run();}public void afterTextChanged(Editable e){}});render.run();
