@@ -101,7 +101,7 @@ public final class PreviewProxy implements AutoCloseable {
                                 if(partial!=null)partial.delete();
                                 android.util.Log.w("BC1Preview","Recovering stalled playback proxy with ICE Lite");
                                 out.onProgress(-1);
-                                try{prepareWithIceLite(snapshot,completed,request,out);}
+                                try{prepareWithIceLite(snapshot,completed,request,out,true);}
                                 catch(RuntimeException recoveryError){android.util.Log.e("BC1Preview","Could not start playback recovery",recoveryError);fail(request,out,recoveryError.getMessage());}
                                 return;
                             }
@@ -129,9 +129,15 @@ public final class PreviewProxy implements AutoCloseable {
         return decoders>com.blackice.bc1.core.ExportEngine.MEDIA3_MAX_DECODERS;
     }
     private void prepareWithIceLite(EditProject snapshot,File completed,int request,Listener listener){
+        prepareWithIceLite(snapshot,completed,request,listener,false);
+    }
+    private void prepareWithIceLite(EditProject snapshot,File completed,int request,Listener listener,boolean recovering){
         final File target=partial;final java.util.concurrent.atomic.AtomicBoolean stop=new java.util.concurrent.atomic.AtomicBoolean();coreStop=stop;
         new Thread(()->{
             try{
+                // ICE Lite has no HDR tone mapping. A recovery must not silently change HDR colors.
+                if(recovering&&com.blackice.bc1.engine.bc.HdrCheck.anyHdr(context,snapshot))
+                    throw new IOException("This HDR preview stalled. Lower preview quality and retry; your project is preserved.");
                 new com.blackice.bc1.engine.bc.BcExporter(context,snapshot,
                         com.blackice.bc1.core.ExportPlanner.fixed(snapshot.previewHeight,snapshot.frameRate,com.blackice.bc1.core.VideoCodec.H264,snapshot.portrait),
                         stop,p->main.post(()->{if(request==generation)listener.onProgress(p);})).previewSemantics(true).export(target);
@@ -142,7 +148,7 @@ public final class PreviewProxy implements AutoCloseable {
                     partial=null;trimCache(completed);listener.onReady(completed);
                 });
             }catch(java.util.concurrent.CancellationException cancelled){target.delete();
-            }catch(Throwable error){main.post(()->fail(request,listener,String.valueOf(error.getMessage())));}
+            }catch(Throwable error){android.util.Log.e("BC1Preview","ICE Lite playback render failed",error);main.post(()->fail(request,listener,String.valueOf(error.getMessage())));}
         },"bc1-ice-preview").start();
     }
     private void fail(int request,Listener listener,String message){
