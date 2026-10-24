@@ -72,7 +72,9 @@ public final class PreviewProxy implements AutoCloseable {
             trimCache(null);
             if(directory.getUsableSpace()<64L*1024*1024)throw new IOException("Free some storage to prepare the preview.");
             runningKey=key.toString();current=listener;timeoutRecoveries=0;final Listener out=relay;
-            partial=new File(directory,key+".part.mp4");partial.delete();
+            // A cancelled ICE Lite worker may still be unwinding when the next request starts.
+            // Never let its cleanup delete a newer render of the same composition.
+            partial=new File(directory,key+"."+java.util.UUID.randomUUID()+".part.mp4");
             if(needsIceLite(snapshot)){prepareWithIceLite(snapshot,completed,request,out);return;}
             transformer=new Transformer.Builder(context)
                     .setMaxDelayBetweenMuxerSamplesMs(muxerTimeoutMs)

@@ -91,9 +91,11 @@ public final class ProjectStore {
                 StringBuilder key=new StringBuilder();for(byte b:hash)key.append(String.format(Locale.ROOT,"%02x",b&255));previewKey=key.toString();
             } catch(Exception ignored) { /* A damaged project can still be deleted. */ }
             if(!record.delete()) throw new IOException("Could not delete project.");
-            if(previewKey!=null)for(String suffix:new String[]{".mp4",".part.mp4"}){
-                File proxy=new File(new File(cacheDirectory,"bc1-preview-v11"),previewKey+suffix);
-                if(proxy.exists()&&!proxy.delete())throw new IOException("Project deleted, but its temporary preview could not be removed.");
+            if(previewKey!=null){
+                final String key=previewKey;
+                File[] previews=new File(cacheDirectory,"bc1-preview-v11").listFiles((d,n)->
+                    n.equals(key+".mp4")||n.equals(key+".part.mp4")||(n.startsWith(key+".")&&n.endsWith(".part.mp4")));
+                if(previews!=null)for(File proxy:previews)if(!proxy.delete())throw new IOException("Project deleted, but its temporary preview could not be removed.");
             }
             File[] companions=directory.listFiles((d,n)->n.equals(id+".json.bak") || n.equals(id+".json.new") || n.matches(java.util.regex.Pattern.quote(id)+"\\.v[0-9]+-backup"));
             if(companions!=null)for(File f:companions)if(!f.delete())throw new IOException("Project deleted, but a recovery file could not be removed.");

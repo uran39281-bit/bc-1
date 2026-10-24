@@ -51,4 +51,32 @@ public class PreviewRecoveryTest {
             project.playheadMs=1500;assertEquals("Recovered output remains seek-independent and cacheable",recovered,prepare(proxy,project));
         }finally{inst.runOnMainSync(proxy::close);for(File source:sources)source.delete();}
     }
+    @Test public void cancelledRecoveryCannotAffectReplacementOfTheSameProject()throws Exception{
+        EditProject project=new EditProject();project.previewHeight=360;
+        File source=new File(context.getFilesDir(),"cancel-recovery-"+project.id+".png");
+        Bitmap image=Bitmap.createBitmap(160,90,Bitmap.Config.ARGB_8888);image.eraseColor(Color.BLUE);
+        try(OutputStream out=new FileOutputStream(source)){image.compress(Bitmap.CompressFormat.PNG,100,out);}image.recycle();
+        EditProject.Clip clip=new EditProject.Clip();clip.name="Cancellation fixture";clip.uri=Uri.fromFile(source).toString();clip.image=true;clip.sourceDurationMs=clip.outMs=6000;project.clips.add(clip);
+        PreviewProxy proxy=new PreviewProxy(context,1);java.util.concurrent.atomic.AtomicBoolean cancelled=new java.util.concurrent.atomic.AtomicBoolean();
+        java.util.concurrent.atomic.AtomicInteger late=new java.util.concurrent.atomic.AtomicInteger();
+        try{
+            inst.runOnMainSync(()->proxy.prepare(project,new PreviewProxy.Listener(){
+                public void onProgress(int p){if(cancelled.get())late.incrementAndGet();}
+                public void onReady(File f){if(cancelled.get())late.incrementAndGet();}
+                public void onError(String e){if(cancelled.get())late.incrementAndGet();}
+            }));
+            boolean[] recovering={false};long until=android.os.SystemClock.elapsedRealtime()+15000;
+            do{inst.runOnMainSync(()->recovering[0]=proxy.timeoutRecoveries==1&&proxy.preparing());if(!recovering[0])Thread.sleep(10);}while(!recovering[0]&&android.os.SystemClock.elapsedRealtime()<until);
+            assertTrue("Cancel a real in-flight recovery",recovering[0]);
+            inst.runOnMainSync(()->{cancelled.set(true);proxy.cancel();});
+            File replacement=prepare(proxy,project);assertTrue(replacement.length()>0);
+            try(MediaMetadataRetriever media=new MediaMetadataRetriever()){
+                media.setDataSource(replacement.getPath());assertTrue(Math.abs(Long.parseLong(media.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION))-6000)<150);
+                Bitmap frame=media.getFrameAtTime(1000000,MediaMetadataRetriever.OPTION_CLOSEST);assertNotNull(frame);
+                int pixel=frame.getPixel(frame.getWidth()/2,frame.getHeight()/2);frame.recycle();assertTrue(Color.blue(pixel)>180);
+            }
+            inst.runOnMainSync(()->assertEquals("Cancelled generation cannot notify the replacement listener",0,late.get()));
+        }finally{inst.runOnMainSync(proxy::close);source.delete();}
+    }
+
 }
