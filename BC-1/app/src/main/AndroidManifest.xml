@@ -20,13 +20,15 @@
         android:theme="@style/BlackIceTheme"
         android:resizeableActivity="true"
         android:usesCleartextTraffic="false">
-        <activity android:name=".EditorActivity" android:exported="true" android:launchMode="singleTop"
+        <activity android:name=".HomeActivity" android:exported="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|uiMode|keyboardHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <activity android:name=".EditorActivity" android:exported="false" android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|uiMode|keyboardHidden"/>
         <activity android:name=".WorkbenchActivity" android:exported="false" android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|uiMode|keyboardHidden"/>
         <service android:name=".editor.ExportService" android:exported="false" android:foregroundServiceType="dataSync|mediaProcessing"/>
     </application>
