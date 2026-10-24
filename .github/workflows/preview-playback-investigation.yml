@@ -10,6 +10,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   preview:
+    # The historical revision is a negative control; the repaired revision must pass.
+    continue-on-error: ${{ matrix.label == 'before-fix' }}
     strategy:
       fail-fast: false
       matrix:
@@ -44,6 +46,10 @@ jobs:
           git fetch --depth=1 origin "$GITHUB_SHA"
           git show "$GITHUB_SHA":BC-1/app/src/androidTest/java/com/blackice/bc1/ProjectStoreConcurrencyTest.java > BC-1/app/src/androidTest/java/com/blackice/bc1/ProjectStoreConcurrencyTest.java
           git show "$GITHUB_SHA":BC-1/app/src/androidTest/java/com/blackice/bc1/EditorRestoreTest.java > BC-1/app/src/androidTest/java/com/blackice/bc1/EditorRestoreTest.java
+          if [ "${{ matrix.label }}" = current ]; then
+            mkdir -p BC-1/app/src/androidTest/java/com/blackice/bc1/editor
+            git show "$GITHUB_SHA":BC-1/app/src/androidTest/java/com/blackice/bc1/editor/PreviewRecoveryTest.java > BC-1/app/src/androidTest/java/com/blackice/bc1/editor/PreviewRecoveryTest.java
+          fi
           python3 - <<'PY'
           from pathlib import Path
           p=Path('BC-1/app/src/main/java/com/blackice/bc1/editor/PreviewProxy.java')
@@ -62,6 +68,7 @@ jobs:
           trap 'kill "$bc1_logcat_pid" 2>/dev/null || true; wait "$bc1_logcat_pid" 2>/dev/null || true' EXIT
           classes="com.blackice.bc1.EditorRestoreTest,com.blackice.bc1.ProjectStoreConcurrencyTest,com.blackice.bc1.EditorWorkspaceTest,com.blackice.bc1.ExportDiagnosticsUiTest,com.blackice.bc1.FootageWorkspaceTest"
           if [ -f BC-1/app/src/androidTest/java/com/blackice/bc1/HomeBrowserTest.java ]; then classes="$classes,com.blackice.bc1.HomeBrowserTest"; fi
+          if [ -f BC-1/app/src/androidTest/java/com/blackice/bc1/editor/PreviewRecoveryTest.java ]; then classes="$classes,com.blackice.bc1.editor.PreviewRecoveryTest"; fi
           classes="$classes,com.blackice.bc1.LandscapeStabilityTest,com.blackice.bc1.LayerRenderingTest,com.blackice.bc1.MobileSheetTest,com.blackice.bc1.PhoneMediaSpaceTest,com.blackice.bc1.PreviewProxyTest,com.blackice.bc1.PreviewScrubTest"
           adb shell am instrument -w -r -e class "$classes" com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee preview-diagnostics/instrumentation.txt
           if grep -E 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' preview-diagnostics/instrumentation.txt; then exit 1; fi

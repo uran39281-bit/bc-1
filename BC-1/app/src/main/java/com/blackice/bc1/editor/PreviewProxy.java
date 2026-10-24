@@ -27,6 +27,9 @@ public final class PreviewProxy implements AutoCloseable {
     private final Context context;
     private final Handler main=new Handler(Looper.getMainLooper());
     private final File directory;
+    private final long muxerTimeoutMs;
+    // Main-thread diagnostics; a recovered request must never loop back into Media3.
+    int timeoutRecoveries;
     private Transformer transformer;
     private File partial;
     private int generation;
@@ -35,7 +38,12 @@ public final class PreviewProxy implements AutoCloseable {
     private java.util.concurrent.atomic.AtomicBoolean coreStop;
 
     public PreviewProxy(Context context) {
-        this.context=context.getApplicationContext();
+        this(context,Transformer.DEFAULT_MAX_DELAY_BETWEEN_MUXER_SAMPLES_MS);
+    }
+    /** Package-visible deadline lets device regressions exercise the real watchdog and recovery. */
+    PreviewProxy(Context context,long muxerTimeoutMs) {
+        if(muxerTimeoutMs<=0)throw new IllegalArgumentException("A positive muxer deadline is required");
+        this.context=context.getApplicationContext();this.muxerTimeoutMs=muxerTimeoutMs;
         directory=new File(context.getCacheDir(),"bc1-preview-v11");
     }
     public static boolean required(EditProject project) {
@@ -63,10 +71,11 @@ public final class PreviewProxy implements AutoCloseable {
             if(completed.isFile()&&completed.length()>0){completed.setLastModified(System.currentTimeMillis());listener.onReady(completed);return;}
             trimCache(null);
             if(directory.getUsableSpace()<64L*1024*1024)throw new IOException("Free some storage to prepare the preview.");
-            runningKey=key.toString();current=listener;final Listener out=relay;
+            runningKey=key.toString();current=listener;timeoutRecoveries=0;final Listener out=relay;
             partial=new File(directory,key+".part.mp4");partial.delete();
             if(needsIceLite(snapshot)){prepareWithIceLite(snapshot,completed,request,out);return;}
             transformer=new Transformer.Builder(context)
+                    .setMaxDelayBetweenMuxerSamplesMs(muxerTimeoutMs)
                     .setAssetLoaderFactory(CompositionFactory.assetLoader(context))
                     .setVideoMimeType(MimeTypes.VIDEO_H264).setAudioMimeType(MimeTypes.AUDIO_AAC)
                     .setPortraitEncodingEnabled(true)
@@ -75,13 +84,27 @@ public final class PreviewProxy implements AutoCloseable {
                             .setRequestedVideoEncoderSettings(new VideoEncoderSettings.Builder().setBitrate(2_000_000).build()).build())
                     .addListener(new Transformer.Listener(){
                         @Override public void onCompleted(Composition composition,ExportResult result){
-                            if(request!=generation)return;
+                            if(request!=generation||timeoutRecoveries>0)return;
                             main.removeCallbacks(poll);transformer=null;
                             if(partial==null||!partial.renameTo(completed)){fail(request,out,"Could not save the prepared preview.");return;}
                             partial=null;trimCache(completed);out.onReady(completed);
                         }
                         @Override public void onError(Composition composition,ExportResult result,ExportException error){
+                            if(request!=generation||timeoutRecoveries>0)return;
                             android.util.Log.e("BC1Preview", "Playback proxy failed (request="+request+", generation="+generation+")", error);
+                            if(error.errorCode==ExportException.ERROR_CODE_MUXING_TIMEOUT&&timeoutRecoveries==0){
+                                // Transformer has released its codecs before delivering onError. Its watchdog
+                                // can abort a stalled multi-input graph even though the sources are valid.
+                                // Recover this one request using the existing independent ICE Lite renderer.
+                                timeoutRecoveries++;transformer=null;
+                                if(poll!=null)main.removeCallbacks(poll);poll=null;
+                                if(partial!=null)partial.delete();
+                                android.util.Log.w("BC1Preview","Recovering stalled playback proxy with ICE Lite");
+                                out.onProgress(-1);
+                                try{prepareWithIceLite(snapshot,completed,request,out);}
+                                catch(RuntimeException recoveryError){android.util.Log.e("BC1Preview","Could not start playback recovery",recoveryError);fail(request,out,recoveryError.getMessage());}
+                                return;
+                            }
                             fail(request,out,error.getMessage());
                         }
                     }).build();
