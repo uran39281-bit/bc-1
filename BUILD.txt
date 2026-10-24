@@ -1,0 +1,1 @@
+Test build of feature/workspace-stability at 4c74c4a37c7ef866f91a54de13d36f49b32dccab (run 40069929049). Package com.blackice.bc1.icelite installs beside BC-1.
