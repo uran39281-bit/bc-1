@@ -13,6 +13,9 @@ final class V1Icon extends Drawable {
     @Override public void draw(Canvas canvas){
         canvas.save();canvas.translate(getBounds().left,getBounds().top);canvas.scale(getBounds().width()/24f,getBounds().height()/24f);path.reset();boolean fill=false;
         switch(name){
+            case "Video":path.addRoundRect(2,5,16,19,2,2,Path.Direction.CW);path.moveTo(16,9);path.lineTo(22,6);path.lineTo(22,18);path.lineTo(16,15);break;
+            case "Image":path.addRoundRect(2,3,22,21,2,2,Path.Direction.CW);path.addCircle(8,8,2,Path.Direction.CW);path.moveTo(3,18);path.lineTo(10,12);path.lineTo(14,16);path.lineTo(18,11);path.lineTo(22,16);break;
+            case "Star":case "Favorites":for(int i=0;i<10;i++){double angle=-Math.PI/2+i*Math.PI/5;float radius=i%2==0?10:4.5f;float x=12+radius*(float)Math.cos(angle),y=12+radius*(float)Math.sin(angle);if(i==0)path.moveTo(x,y);else path.lineTo(x,y);}path.close();break;
             case "Home":path.moveTo(2,11);path.lineTo(12,2);path.lineTo(22,11);path.moveTo(5,9);path.lineTo(5,22);path.lineTo(10,22);path.lineTo(10,15);path.lineTo(14,15);path.lineTo(14,22);path.lineTo(19,22);path.lineTo(19,9);break;
             case "Folder":case "ImportProject":path.moveTo(2,20);path.lineTo(2,4);path.lineTo(9,4);path.lineTo(12,7);path.lineTo(22,7);path.lineTo(22,20);path.close();if(name.equals("ImportProject")){line(12,10,12,17);line(8,14,12,18);line(12,18,16,14);}break;
             case "NewProject":path.addRoundRect(2,2,22,22,5,5,Path.Direction.CW);line(12,6,12,18);line(6,12,18,12);break;

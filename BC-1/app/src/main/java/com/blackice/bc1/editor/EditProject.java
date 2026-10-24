@@ -7,7 +7,7 @@ import java.util.UUID;
 /** Portable edit decision list. Times are integer milliseconds; media is never modified. */
 public final class EditProject {
     /** Schema 5: eight visual tracks (0 main, 1–7 layers) and audio on tracks 8–11 (was 4–7). */
-    public static final int SCHEMA = 6;
+    public static final int SCHEMA = 7;
     /** Visual tracks: 0 is the main sequence, 1..VISUAL_TRACKS-1 are independent video/image layers. */
     public static final int VISUAL_TRACKS = 8;
     public static final int AUDIO_FIRST = 8, AUDIO_LAST = 11, TRACK_COUNT = 12;
@@ -26,6 +26,16 @@ public final class EditProject {
     public final List<Clip> library = new ArrayList<>();
     public static final int LIBRARY_LIMIT = 100;
     public Music music;
+    public final List<Landmark> landmarks=new ArrayList<>();
+    public static final int[] MARKER_COLORS={0xFF40BFFF,0xFFFFCB66,0xFFDD9AFF,0xFF62E1B1,0xFFFF809B};
+    public static final class Landmark {
+        public String id=UUID.randomUUID().toString(),label="";public long timeMs;public int slot;
+    }
+    public Landmark addLandmark(long time){
+        if(landmarks.size()>=5)throw new IllegalArgumentException("Five markers maximum. Delete a marker to free a slot.");
+        Landmark marker=new Landmark();marker.timeMs=Math.max(0,time);boolean[] used=new boolean[5];for(Landmark m:landmarks)used[m.slot]=true;
+        while(used[marker.slot])marker.slot++;marker.label="Marker "+(marker.slot+1);landmarks.add(marker);return marker;
+    }
     /** Editor frame rate: timeline frame grid, nudging and export cadence (24–120 fps). */
     public int frameRate = 30;
     /** Row metadata for tracks 0–11 (see SCHEMA); older projects are remapped when decoded. */
@@ -178,6 +188,9 @@ public final class EditProject {
         if(previewHeight!=360 && previewHeight!=540 && previewHeight!=1080) throw new IllegalArgumentException("Invalid preview resolution.");
         if(frameRate!=24&&frameRate!=25&&frameRate!=30&&frameRate!=50&&frameRate!=60&&frameRate!=120) throw new IllegalArgumentException("Use 24, 25, 30, 50, 60 or 120 fps.");
         for(Track t:tracks) if(t==null||t.name==null||t.name.isEmpty()||t.name.length()>60) throw new IllegalArgumentException("Every layer needs a name of up to 60 characters.");
+        if(landmarks.size()>5)throw new IllegalArgumentException("Five markers maximum.");
+        java.util.HashSet<Integer> slots=new java.util.HashSet<>();
+        for(Landmark m:landmarks)if(m.timeMs<0||m.slot<0||m.slot>=5||!slots.add(m.slot)||m.label==null||m.label.length()>80)throw new IllegalArgumentException("Invalid landmark.");
         if(markers.size()>500) throw new IllegalArgumentException("Use at most 500 markers.");
         for(int i=0;i<markers.size();i++) if(markers.get(i)<0||(i>0&&markers.get(i)<=markers.get(i-1))) throw new IllegalArgumentException("Markers must be distinct times from zero.");
         if((loopInMs<0)!=(loopOutMs<0)||(loopInMs>=0&&loopOutMs-loopInMs<MIN_CLIP_MS)) throw new IllegalArgumentException("Loop range needs at least 0.10 seconds.");

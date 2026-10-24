@@ -27,7 +27,7 @@ final class MobileChrome {
         clock=a.label("",11,EditorActivity.TEXT,false);clock.setPadding(dp(10),0,0,0);clock.setGravity(Gravity.CENTER_VERTICAL);clock.setShadowLayer(dp(2),0,0,0xFF000000);a.monitor.addView(clock,new FrameLayout.LayoutParams(-2,dp(48),Gravity.BOTTOM|Gravity.START));
         a.monitor.addView(control("Fullscreen","Fullscreen preview",v->{a.fullscreenPreview=true;a.buildWorkspace();}),new FrameLayout.LayoutParams(dp(48),dp(48),Gravity.BOTTOM|Gravity.END));
         a.phoneTransport=transport();previewColumn.addView(a.phoneTransport,new LinearLayout.LayoutParams(-1,dp(56)));
-        a.phoneTimelineTools=new View(a);a.phoneTimelineTools.setVisibility(View.GONE);a.timelineTools=null;
+        a.phoneTimelineTools=a.button("⚑ Markers • "+a.project.landmarks.size()+"/5",v->LandmarkControls.show(a));previewColumn.addView(a.phoneTimelineTools,new LinearLayout.LayoutParams(-1,dp(48)));a.timelineTools=null;
         a.phoneTimelineArea=a.buildTimeline();content.addView(a.phoneTimelineArea,new LinearLayout.LayoutParams(-1,0,1));
         add=a.button("+",v->openAdd(3));add.setTextSize(32);add.setContentDescription("Add content");GradientDrawable circle=BlackIceTheme.primary(a.getResources().getDisplayMetrics().density);circle.setCornerRadius(dp(12));add.setTextColor(BlackIceTheme.ON_ACCENT);add.setBackground(circle);add.setElevation(dp(2));
         FrameLayout.LayoutParams ap=new FrameLayout.LayoutParams(dp(56),dp(56),Gravity.BOTTOM|Gravity.END);ap.setMargins(0,0,dp(16),dp(82));stage.addView(add,ap);
@@ -70,14 +70,14 @@ final class MobileChrome {
         int preview=Math.min(dp(a.workspaceFocus==2?320:a.workspaceFocus==1?130:250),Math.max(dp(100),(int)(h*(a.workspaceFocus==2?.50f:a.workspaceFocus==1?.23f:.40f))));int height=Math.min(Math.max(dp(210),(int)(h*sheetFraction)),Math.max(dp(160),h-dp(220)));
         if(footage&&!landscape){
             if(a.workspaceFocus==2)height=Math.max(dp(160),(int)(h*.32f));
-            height=Math.min(height,Math.max(dp(160),h-dp(290)));
-            preview=Math.min(preview,Math.max(dp(80),h-height-dp(190)));
+            height=Math.min(height,Math.max(dp(160),h-dp(338)));
+            preview=Math.min(preview,Math.max(dp(80),h-height-dp(238)));
             if(a.workspaceFocus==1)preview=Math.min(preview,dp(80));
         }
         int sheetWidth=landscape?Math.min(dp(320),stage.getWidth()/2):-1;
         content.setOrientation(landscape?LinearLayout.HORIZONTAL:LinearLayout.VERTICAL);
         content.setPadding(dp(8),0,landscape&&visible?sheetWidth:dp(8),landscape?(visible?0:dp(68)):footage?height:dp(68));
-        if(landscape){height=h;preview=Math.max(dp(60),h-(visible?0:dp(68))-dp(56));previewColumn.setLayoutParams(new LinearLayout.LayoutParams(0,-1,1));a.phoneTimelineArea.setLayoutParams(new LinearLayout.LayoutParams(0,-1,1));}
+        if(landscape){height=h;preview=Math.max(dp(60),h-(visible?0:dp(68))-dp(104));previewColumn.setLayoutParams(new LinearLayout.LayoutParams(0,-1,1));a.phoneTimelineArea.setLayoutParams(new LinearLayout.LayoutParams(0,-1,1));}
         else{previewColumn.setLayoutParams(new LinearLayout.LayoutParams(-1,-2));a.phoneTimelineArea.setLayoutParams(new LinearLayout.LayoutParams(-1,0,1));}
         FrameLayout.LayoutParams sheetLp=(FrameLayout.LayoutParams)sheet.getLayoutParams();sheetLp.width=sheetWidth;sheetLp.gravity=Gravity.BOTTOM|Gravity.END;
         nav.setVisibility(visible?View.GONE:View.VISIBLE);
@@ -86,5 +86,5 @@ final class MobileChrome {
         if(visible&&sheet.getVisibility()!=View.VISIBLE){sheet.setVisibility(View.VISIBLE);sheet.setTranslationY(a.reducedMotion?0:dp(32));if(!a.reducedMotion&&android.animation.ValueAnimator.areAnimatorsEnabled())sheet.animate().translationY(0).setDuration(240).start();else sheet.setTranslationY(0);}else if(!visible){sheet.animate().cancel();sheet.setTranslationY(0);sheet.setVisibility(View.GONE);}
         add.setVisibility(visible?View.GONE:View.VISIBLE);if((a.project.clips.isEmpty()&&a.project.overlays.isEmpty())){android.text.SpannableString hint=new android.text.SpannableString("Tap + to add media.");hint.setSpan(new android.text.style.ForegroundColorSpan(EditorActivity.CYAN),4,5,0);a.emptyPreview.setTextColor(EditorActivity.MUTED);a.emptyPreview.setText(hint);}sync();
     }
-    void sync(){if(snap!=null){snap.setSelected(a.snapping);snap.setContentDescription("Snapping: "+(a.snapping?"on":"off"));snap.setTooltipText("Snap to clip edges, markers and playhead");snap.setCompoundDrawables(a.icon("Fit",a.snapping?EditorActivity.CYAN:EditorActivity.MUTED),null,null,null);}if(a.play!=null)EditorActivity.dim(a.play,a.project.durationMs()>0);if(clock!=null)clock.setText(EditorActivity.clock(a.project.playheadMs)+" / "+EditorActivity.clock(a.project.durationMs()));if(badge!=null)badge.setText(a.project.previewHeight+"P ▾");if(undo!=null){EditorActivity.dim(undo,!a.undo.isEmpty());EditorActivity.dim(redo,!a.redo.isEmpty());EditorActivity.dim(duplicate,a.clip()!=null||a.overlay()!=null||a.multiCount()>1);}}
+    void sync(){if(snap!=null&&!Boolean.valueOf(a.snapping).equals(snap.getTag())){snap.setTag(a.snapping);snap.setSelected(a.snapping);snap.setContentDescription("Snapping: "+(a.snapping?"on":"off"));snap.setTooltipText("Snap to clip edges, markers and playhead");snap.setCompoundDrawables(a.icon("Fit",a.snapping?EditorActivity.CYAN:EditorActivity.MUTED),null,null,null);}if(a.play!=null)EditorActivity.dim(a.play,a.project.durationMs()>0);if(clock!=null)clock.setText(EditorActivity.clock(a.project.playheadMs)+" / "+EditorActivity.clock(a.project.durationMs()));if(badge!=null)badge.setText(a.project.previewHeight+"P ▾");if(undo!=null){EditorActivity.dim(undo,!a.undo.isEmpty());EditorActivity.dim(redo,!a.redo.isEmpty());EditorActivity.dim(duplicate,a.clip()!=null||a.overlay()!=null||a.multiCount()>1);}}
 }

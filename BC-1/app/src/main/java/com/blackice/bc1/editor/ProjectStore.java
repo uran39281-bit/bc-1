@@ -86,7 +86,7 @@ public final class ProjectStore {
             if(!record.isFile()) throw new IOException("Project no longer exists.");
             // Proxy keys include project identity; duplicates have different keys even when media is shared.
             String previewKey=null;
-            try { EditProject p=load(id);p.playheadMs=0;
+            try { EditProject p=load(id);p.playheadMs=0;p.landmarks.clear();
                 byte[] hash=java.security.MessageDigest.getInstance("SHA-256").digest(encode(p).getBytes(StandardCharsets.UTF_8));
                 StringBuilder key=new StringBuilder();for(byte b:hash)key.append(String.format(Locale.ROOT,"%02x",b&255));previewKey=key.toString();
             } catch(Exception ignored) { /* A damaged project can still be deleted. */ }
@@ -110,6 +110,7 @@ public final class ProjectStore {
         for(EditProject.Track t:p.tracks) tracks.put(new JSONObject().put("name",t.name).put("color",t.color).put("hidden",t.hidden).put("solo",t.solo)
                 .put("locked",t.locked).put("muted",t.muted).put("collapsed",t.collapsed));
         j.put("tracks",tracks); JSONArray markers=new JSONArray(); for(long m:p.markers) markers.put(m); j.put("markers",markers);
+        JSONArray landmarks=new JSONArray();for(EditProject.Landmark m:p.landmarks)landmarks.put(new JSONObject().put("id",m.id).put("label",m.label).put("time",m.timeMs).put("slot",m.slot));j.put("landmarks",landmarks);
         JSONArray clips=new JSONArray();
         for(EditProject.Clip c:p.clips) clips.put(new JSONObject().put("id",c.id).put("uri",c.uri).put("name",c.name)
                 .put("audioOnly",c.audioOnly).put("image",c.image).put("sourceDurationMs",c.sourceDurationMs).put("inMs",c.inMs).put("outMs",c.outMs)
@@ -150,6 +151,7 @@ public final class ProjectStore {
             track.name=v.optString("name",track.name); track.color=v.optInt("color",track.color); track.hidden=v.optBoolean("hidden"); track.solo=v.optBoolean("solo");
             track.locked=v.optBoolean("locked"); track.muted=v.optBoolean("muted"); track.collapsed=v.optBoolean("collapsed"); }
         JSONArray markers=j.optJSONArray("markers"); if(markers!=null) for(int i=0;i<markers.length();i++) p.markers.add(markers.getLong(i));
+        JSONArray landmarks=j.optJSONArray("landmarks");if(landmarks!=null)for(int i=0;i<landmarks.length();i++){JSONObject v=landmarks.getJSONObject(i);EditProject.Landmark m=new EditProject.Landmark();m.id=v.getString("id");m.label=v.getString("label");m.timeMs=v.getLong("time");m.slot=v.getInt("slot");p.landmarks.add(m);}
         JSONArray clips=j.getJSONArray("clips");
         for(int i=0;i<clips.length();i++) { JSONObject v=clips.getJSONObject(i); EditProject.Clip c=new EditProject.Clip();
             c.track=v.optInt("track",0);if(legacyTracks&&c.track>=4)c.track+=4;c.startMs=v.optLong("startMs",0);c.gapMs=v.optLong("gapMs",0);c.fadeInMs=v.optLong("fadeInMs",0);c.fadeOutMs=v.optLong("fadeOutMs",0);
@@ -185,7 +187,7 @@ public final class ProjectStore {
         p.validate(); return p;
     }
     private static JSONArray motion(Motion m)throws JSONException{JSONArray all=new JSONArray();for(java.util.List<Motion.Key> curve:m.curves){JSONArray keys=new JSONArray();for(Motion.Key k:curve)keys.put(new JSONArray().put(k.timeMs).put(k.value).put(k.x1).put(k.y1).put(k.x2).put(k.y2));all.put(keys);}return all;}
-    private static Motion motion(JSONArray all)throws JSONException{Motion m=new Motion();if(all==null)return m;if(all.length()!=6&&all.length()!=10&&all.length()!=Motion.COUNT)throw new JSONException("Invalid motion channels");for(int p=0;p<all.length();p++){JSONArray keys=all.getJSONArray(p);for(int i=0;i<keys.length();i++){JSONArray a=keys.getJSONArray(i);Motion.Key k=new Motion.Key(a.getLong(0),(float)a.getDouble(1));k.x1=(float)a.getDouble(2);k.y1=(float)a.getDouble(3);k.x2=(float)a.getDouble(4);k.y2=(float)a.getDouble(5);m.curves.get(p).add(k);}}return m;}
+    private static Motion motion(JSONArray all)throws JSONException{Motion m=new Motion();if(all==null)return m;if(all.length()!=6&&all.length()!=10&&all.length()!=11&&all.length()!=Motion.COUNT)throw new JSONException("Invalid motion channels");for(int p=0;p<all.length();p++){JSONArray keys=all.getJSONArray(p);for(int i=0;i<keys.length();i++){JSONArray a=keys.getJSONArray(i);Motion.Key k=new Motion.Key(a.getLong(0),(float)a.getDouble(1));k.x1=(float)a.getDouble(2);k.y1=(float)a.getDouble(3);k.x2=(float)a.getDouble(4);k.y2=(float)a.getDouble(5);m.curves.get(p).add(k);}}return m;}
     public static EditProject snapshot(EditProject p) {
         try { return decode(encode(p)); } catch(JSONException e) { throw new IllegalStateException(e); }
     }

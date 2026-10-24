@@ -18,6 +18,9 @@ final class ToolPanels {
     private final ArrayDeque<Panel> stack=new ArrayDeque<>();
     private Panel current;
     private String owner="";
+    private final List<Runnable> valueRefresh=new ArrayList<>();
+    private TextView previousOpacity,nextOpacity;
+    void refresh(){if(!showing())return;for(Runnable update:valueRefresh)update.run();if(previousOpacity!=null)EditorActivity.dim(previousOpacity,opacityNeighbor(false)>=0);if(nextOpacity!=null)EditorActivity.dim(nextOpacity,opacityNeighbor(true)>=0);}
     private static final class Panel{final String title;final Runnable build;Panel(String t,Runnable b){title=t;build=b;}}
     ToolPanels(EditorActivity activity){a=activity;}
 
@@ -31,6 +34,7 @@ final class ToolPanels {
 
     /** Renders the open panel, or the contextual tool grid for the current selection. */
     void render(LinearLayout into) {
+        valueRefresh.clear();previousOpacity=null;nextOpacity=null;
         if(current!=null&&!owner.equals(selectionKey()))reset();
         if(current!=null){header(into,current.title);current.build.run();return;}
         if(a.tab==2){effectsHome();return;}
@@ -85,10 +89,13 @@ final class ToolPanels {
     private void audioPanel(){
         EditProject.Clip c=a.clip();if(c==null||c.image){a.inspector.addView(a.note("This media has no audio."));return;}
         a.inspector.addView(a.button(c.unmutedVolume>=0?"Unmute":"Mute",v->{if(a.layerEditable())a.edit("Audio mute updated",()->ClipAudio.toggleMute(c));}));
-        percent("Volume",c.volume,1,v->{c.volume=v;c.unmutedVolume=-1;},null,0);
-        fadePanel(true);fadePanel(false);
+        percent("Volume",c.volume,1,v->{c.volume=v;c.unmutedVolume=-1;},c.motion,Motion.VOLUME);
+        if(c.fadeInMs>0||c.fadeOutMs>0)a.inspector.addView(a.note("Saved legacy fades remain active."));
+        for(String name:new String[]{"Noise Reduction","Loudness Normalization","Audio Visualization","Equalizer (EQ)"}){
+            TextView planned=a.button(name+" — Coming Later",null);planned.setEnabled(false);planned.setAlpha(.6f);a.inspector.addView(planned);
+        }
         if(c.track<EditProject.AUDIO_FIRST)a.inspector.addView(a.button("Extract Audio",v->runTool("Extract Audio")));
-        a.inspector.addView(a.button("Reset Audio Settings",v->{if(a.layerEditable())a.edit("Audio reset",()->{c.volume=1;c.unmutedVolume=-1;c.fadeInMs=0;c.fadeOutMs=0;});}));
+        a.inspector.addView(a.button("Reset Audio Settings",v->{if(a.layerEditable())a.edit("Audio reset",()->{c.volume=1;c.unmutedVolume=-1;c.fadeInMs=0;c.fadeOutMs=0;c.motion.curves.get(Motion.VOLUME).clear();});}));
     }
     private boolean locked(){EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();return c!=null?LayerOps.locked(a.project,a.selected):LayerOps.locked(o);}
     static String kind(EditProject.Clip c,EditProject.Overlay o){
@@ -104,7 +111,7 @@ final class ToolPanels {
     /** Pictures, videos, audio, text, shapes and image layers each get only their compatible tools. */
     static List<String> tools(EditProject.Clip c,EditProject.Overlay o){
         List<String> t=new ArrayList<>();
-        if(c!=null&&c.track>=EditProject.AUDIO_FIRST){Collections.addAll(t,"Split","Trim","Slip","Volume","Fade In","Fade Out","Duplicate");return t;}
+        if(c!=null&&c.track>=EditProject.AUDIO_FIRST){Collections.addAll(t,"Split","Trim","Slip","Volume","Duplicate");return t;}
         if(c!=null&&c.image){Collections.addAll(t,"Duration: "+EditorActivity.seconds(c.durationMs())+" s","Transform","Opacity","Effects","Chroma Key","Animation","Duplicate");return t;}
         if(c!=null){Collections.addAll(t,"Split","Trim","Slip","Speed: "+trimZero(c.speed)+"×","Extract Audio","Transform","Opacity","Effects","Chroma Key","Volume","Animation","Duplicate");return t;}
         if(o.imageUri==null&&o.shape==0){Collections.addAll(t,"Edit Text","Font","Size","Color","Alignment","Transform","Opacity","Duration: "+EditorActivity.seconds(o.endMs-o.startMs)+" s","Animation");return t;}
@@ -147,7 +154,7 @@ final class ToolPanels {
             case "Transform":category("Move & Transform");return;
             case "Effects":category("Effects");return;
             case "Opacity":open("Opacity",()->opacityPanel());return;
-            case "Volume":open("Volume",()->percent("Volume",c.volume,.7f,v->{c.volume=v;c.unmutedVolume=-1;},null,0));return;
+            case "Volume":open("Volume",()->percent("Volume",c.volume,.7f,v->{c.volume=v;c.unmutedVolume=-1;},c.motion,Motion.VOLUME));return;
             case "Duration":open("Duration",this::durationPanel);return;
             case "Trim":open("Trim",this::trimPanel);return;
             case "Slip":open("Slip",this::slipPanel);return;
@@ -210,6 +217,7 @@ final class ToolPanels {
             public void onStopTrackingTouch(SeekBar s){float v=min+(max-min)*s.getProgress()/1000f;if(a.liveBefore!=null)a.endLiveAdjust(title+" updated",()->apply.set(v));else commit(title,v,apply);}
         });
         a.inspector.addView(slider,new LinearLayout.LayoutParams(-1,a.dp(44)));
+        if(motion!=null)valueRefresh.add(()->{if(a.liveBefore!=null)return;float evaluated=motion.value(property,motionTime(),value*motionFactor)/motionFactor;String formatted=format(evaluated*displayFactor);if(!exact.hasFocus()&&!formatted.contentEquals(exact.getText()))exact.setText(formatted);int progress=Math.round((evaluated-min)/(max-min)*1000);if(progress!=slider.getProgress())slider.setProgress(progress);});
         LinearLayout actions=a.row();
         actions.addView(a.button("Apply",v->{try{float typed=Float.parseFloat(exact.getText().toString().trim())/displayFactor;if(!Float.isFinite(typed)||typed<min-1e-6f||typed>max+1e-6f)throw new NumberFormatException();commit(title,typed,apply);}catch(NumberFormatException e){a.tell("Enter "+format(min*displayFactor)+" to "+format(max*displayFactor)+(unit.isEmpty()?"":" "+unit)+".");}}),new LinearLayout.LayoutParams(0,a.dp(48),1));
         actions.addView(a.button("Reset",v->commit(title,defaultValue,apply)),new LinearLayout.LayoutParams(0,a.dp(48),1));
@@ -223,9 +231,10 @@ final class ToolPanels {
         TextView d=a.label(state==Keyframes.ON_KEY?"◆":"◇",20,state==Keyframes.STATIC?EditorActivity.MUTED:EditorActivity.CYAN,true);d.setGravity(Gravity.CENTER);
         String[] words={"not animated • tap to animate","animated • tap to add a keyframe here","keyframe at playhead • tap to remove"};
         d.setContentDescription(title+" keyframe: "+words[state]);d.setTooltipText(d.getContentDescription());d.setFocusable(true);
-        d.setOnClickListener(v->{if(!a.layerEditable())return;long t=motionTime(),tol=tolerance();
-            a.edit(state==Keyframes.ON_KEY?title+" keyframe removed":title+" keyframe added",()->{
-                if(state==Keyframes.ON_KEY&&motion.curves.get(property).size()==1){a.setStatic(property,Keyframes.disable(motion,property,t,current));}
+        valueRefresh.add(()->{int currentState=Keyframes.state(motion,property,motionTime(),tolerance());String glyph=currentState==Keyframes.ON_KEY?"◆":"◇";if(!glyph.contentEquals(d.getText()))d.setText(glyph);d.setTextColor(currentState==Keyframes.STATIC?EditorActivity.MUTED:EditorActivity.CYAN);String description=title+" keyframe: "+words[currentState];if(!description.contentEquals(d.getContentDescription())){d.setContentDescription(description);d.setTooltipText(description);}});
+        d.setOnClickListener(v->{if(!a.layerEditable())return;long t=motionTime(),tol=tolerance();int currentState=Keyframes.state(motion,property,t,tol);
+            a.edit(currentState==Keyframes.ON_KEY?title+" keyframe removed":title+" keyframe added",()->{
+                if(currentState==Keyframes.ON_KEY&&motion.curves.get(property).size()==1){a.setStatic(property,Keyframes.disable(motion,property,t,current));}
                 else Keyframes.toggle(motion,property,t,motion.value(property,t,current),tol);
             });});
         return d;
@@ -237,7 +246,23 @@ final class ToolPanels {
         if(c!=null)percent("Opacity",c.opacity,1,v->c.opacity=v,c.motion,Motion.OPACITY);else percent("Opacity",o.opacity,1,v->o.opacity=v,o.motion,Motion.OPACITY);
         a.inspector.addView(a.note("0% is fully transparent. Lower layers show through transparent regions."));
     }
+    private long opacityNeighbor(boolean next){
+        EditProject.Clip clip=a.clip();EditProject.Overlay overlay=a.overlay();Motion motion=clip!=null?clip.motion:overlay.motion;
+        long best=-1,now=a.project.playheadMs;
+        for(Motion.Key key:motion.curves.get(Motion.OPACITY)){
+            if(clip!=null&&(key.timeMs<clip.inMs||key.timeMs>clip.outMs)||overlay!=null&&(key.timeMs<0||key.timeMs>overlay.endMs-overlay.startMs))continue;
+            long time=clip!=null?a.project.placements().get(a.selected).startMs+Math.round((key.timeMs-clip.inMs)/(double)clip.speed):overlay.startMs+key.timeMs;
+            if(time<0||time>a.project.durationMs())continue;
+            if(next?time>now&&(best<0||time<best):time<now&&(best<0||time>best))best=time;
+        }return best;
+    }
     private void blendPanel(){
+        LinearLayout navigation=a.row();
+        for(boolean next:new boolean[]{false,true}){
+            long target=opacityNeighbor(next);TextView button=a.button(next?"Next Key  ›":"‹  Previous Key",v->{long destination=opacityNeighbor(next);if(destination>=0){a.pausePlayback();a.seek(destination);a.renderInspector();}});
+            if(next)nextOpacity=button;else previousOpacity=button;EditorActivity.dim(button,target>=0);navigation.addView(button,new LinearLayout.LayoutParams(0,a.dp(48),1));
+        }
+        a.inspector.addView(navigation);
         opacityPanel();EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
         if(c!=null){a.inspector.addView(a.note("ICE Lite blend modes • Normal / Darken / Lighten / Contrast"));
             for(com.blackice.bc1.core.BlendMode mode:com.blackice.bc1.core.BlendMode.values()){a.gridAction((c.blend==mode.ordinal()?"● ":"")+mode.label,()->{if(a.layerEditable())a.edit("Blend mode updated",()->c.blend=mode.ordinal());});}a.flushGrid();
@@ -397,7 +422,7 @@ final class ToolPanels {
             a.gridAction("Custom curve…",()->open("Custom curve",this::curvePanel));a.flushGrid();
             timeField("Move keyframes to (timeline seconds)",a.project.playheadMs,value->a.edit("Keyframes moved",()->Keyframes.moveAll(m,t,toMotion(value),tol)));
             LinearLayout row=a.row();
-            row.addView(a.button("Snap to nearest marker",v->{if(!a.layerEditable())return;if(a.project.markers.isEmpty()){a.tell("Add markers first (Markers & beats).");return;}long best=a.project.markers.get(0);for(long mk:a.project.markers)if(Math.abs(mk-a.project.playheadMs)<Math.abs(best-a.project.playheadMs))best=mk;long target=best;a.edit("Keyframes snapped to marker",()->Keyframes.moveAll(m,t,toMotion(target),tol));a.seek(target);}),new LinearLayout.LayoutParams(0,a.dp(48),1));
+            row.addView(a.button("Snap to nearest marker",v->{if(!a.layerEditable())return;ArrayList<Long> snapTimes=new ArrayList<>(a.project.markers);for(EditProject.Landmark landmark:a.project.landmarks)snapTimes.add(landmark.timeMs);if(snapTimes.isEmpty()){a.tell("Add a timeline marker first.");return;}long best=snapTimes.get(0);for(long mk:snapTimes)if(Math.abs(mk-a.project.playheadMs)<Math.abs(best-a.project.playheadMs))best=mk;long target=best;a.edit("Keyframes snapped to marker",()->Keyframes.moveAll(m,t,toMotion(target),tol));a.seek(target);}),new LinearLayout.LayoutParams(0,a.dp(48),1));
             row.addView(a.button("Delete keyframes here",v->{if(a.layerEditable())a.edit("Keyframes deleted",()->Keyframes.deleteAll(m,t,tol));}),new LinearLayout.LayoutParams(0,a.dp(48),1));
             a.inspector.addView(row);
         }
@@ -416,8 +441,8 @@ final class ToolPanels {
         a.inspector.addView(a.button("Save this animation as a preset",v->a.savePreset(PresetStore.ANIMATION,Attributes.ANIMATION)));
     }
     float[] currentValues(){EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
-        if(c!=null)return new float[]{c.x,c.y,c.scale,c.rotation,c.opacity,c.intensity,c.skewX,c.skewY,c.anchorX,c.anchorY,c.heightScale<0?c.scale*c.aspect:c.heightScale};
-        return new float[]{o.x,o.y,o.scale,o.rotation,o.opacity,0,o.skewX,o.skewY,o.anchorX,o.anchorY,o.heightScale<0?o.scale*o.aspect:o.heightScale};}
+        if(c!=null)return new float[]{c.x,c.y,c.scale,c.rotation,c.opacity,c.intensity,c.skewX,c.skewY,c.anchorX,c.anchorY,c.heightScale<0?c.scale*c.aspect:c.heightScale,c.volume};
+        return new float[]{o.x,o.y,o.scale,o.rotation,o.opacity,0,o.skewX,o.skewY,o.anchorX,o.anchorY,o.heightScale<0?o.scale*o.aspect:o.heightScale,0};}
     private void curvePanel(){
         Motion m=a.selectedMotion();if(m==null)return;long t=motionTime(),tol=tolerance();Motion.Key first=null;for(int p=0;p<Motion.COUNT&&first==null;p++)first=Keyframes.keyAt(m,p,t,tol);
         if(first==null){a.inspector.addView(a.note("Move the playhead onto a keyframe to edit its curve."));return;}
@@ -428,14 +453,13 @@ final class ToolPanels {
     }
     // ---- Markers ------------------------------------------------------------------------------------
     private void markersPanel(){
-        a.inspector.addView(a.note("Markers are snap targets for trims, moves, splits (move the playhead to a marker first) and keyframes. Shortcuts: M toggles a marker; , and . jump between markers."));
-        LinearLayout nav=a.row();nav.addView(a.button("‹ Previous marker",v->a.jumpMarker(false)),new LinearLayout.LayoutParams(0,a.dp(48),1));nav.addView(a.button("Next marker ›",v->a.jumpMarker(true)),new LinearLayout.LayoutParams(0,a.dp(48),1));a.inspector.addView(nav);
-        a.inspector.addView(a.button("Add / remove marker at playhead",v->a.toggleMarker()));
+        a.inspector.addView(a.note("Up to five project landmarks. Beat-detection cues remain saved separately."));a.inspector.addView(a.button("Manage timeline markers",v->LandmarkControls.show(a)));
+        LinearLayout navigation=a.row();navigation.addView(a.button("‹ Previous marker",v->a.jumpMarker(false)),new LinearLayout.LayoutParams(0,a.dp(48),1));navigation.addView(a.button("Next marker ›",v->a.jumpMarker(true)),new LinearLayout.LayoutParams(0,a.dp(48),1));a.inspector.addView(navigation);
         a.inspector.addView(a.button("Detect beats from audio…",v->a.detectBeats()));
-        for(int i=0;i<a.project.markers.size();i++){final long time=a.project.markers.get(i);final int index=i;
-            timeField("Marker "+(i+1),time,value->a.edit("Marker moved",()->{a.project.markers.remove(index);if(a.project.markers.contains(value))return;a.project.markers.add(Math.max(0,value));Collections.sort(a.project.markers);}));}
-        if(!a.project.markers.isEmpty())a.inspector.addView(a.button("Clear all markers",v->{if(a.editable())a.edit("Markers cleared",()->a.project.markers.clear());}));
+        for(int i=0;i<a.project.markers.size();i++){final int index=i;timeField("Beat cue "+(i+1),a.project.markers.get(i),value->a.edit("Beat cue moved",()->{a.project.markers.remove(index);if(!a.project.markers.contains(value))a.project.markers.add(Math.max(0,value));Collections.sort(a.project.markers);}));}
+        if(!a.project.markers.isEmpty())a.inspector.addView(a.button("Clear beat cues",v->{if(a.editable())new AlertDialog.Builder(a).setTitle("Clear beat cues?").setMessage("The five timeline landmark slots are preserved.").setNegativeButton("Cancel",null).setPositiveButton("Clear",(d,w)->a.edit("Beat cues cleared",()->a.project.markers.clear())).show();}));
     }
+
     private void multiTools(){
         a.inspector.addView(a.note(a.multiCount()+" layers selected. They move and transform together."));
         String[] names={"Align starts","Align ends","Match duration","Close gaps","Group","Ungroup","Duplicate","Delete"};

@@ -5,9 +5,10 @@ import java.util.Locale;
 /** Metadata-only media browsing; never changes clip order or the edit graph. */
 public final class MediaFilter {
     private MediaFilter() {}
-    public enum Kind { ALL, VIDEO, AUDIO, IMAGE }
+    public enum Kind { ALL, VIDEO, AUDIO, IMAGE, SHAPES }
 
     public static boolean matches(EditProject.Clip clip, Kind kind, String query) {
+        if(kind==Kind.SHAPES)return false;
         boolean audio=clip.audioOnly||EditProject.audioTrack(clip.track);
         if(kind==Kind.AUDIO&&!audio || kind==Kind.IMAGE&&(audio||!clip.image)
                 || kind==Kind.VIDEO&&(audio||clip.image))return false;
