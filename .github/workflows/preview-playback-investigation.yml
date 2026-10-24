@@ -14,9 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - label: recovery-only
-            revision: fix/preview-playback-muxer
-          - label: current
+          - label: workspace-trace
             revision: fix/preview-playback-muxer
     env:
       PREVIEW_CASE: ${{ matrix.label }}
@@ -55,6 +53,10 @@ jobs:
           p=Path('BC-1/app/src/main/java/com/blackice/bc1/editor/PreviewProxy.java')
           s=p.read_text().replace('fail(request,out,error.getMessage());','android.util.Log.e("BC1Preview", "Proxy muxer failure request="+request+" generation="+generation+" partial="+partial, error);fail(request,out,error.getMessage());')
           p.write_text(s)
+          p=Path('BC-1/app/src/androidTest/java/com/blackice/bc1/EditorWorkspaceTest.java')
+          s=p.read_text().replace('editorAdaptsAndTabsKeepVideoSurface()throws Exception{','editorAdaptsAndTabsKeepVideoSurface()throws Exception{androidx.media3.effect.DebugTraceUtil.enableTracing=true;androidx.media3.effect.DebugTraceUtil.reset();')
+          s=s.replace('state.set(a.previewDebug())','state.set(a.previewDebug()+" • Media3 trace="+androidx.media3.effect.DebugTraceUtil.generateTraceSummary())')
+          p.write_text(s)
           PY
           cat > /tmp/preview-checks.sh <<'SHELL'
           #!/usr/bin/env bash
@@ -70,7 +72,7 @@ jobs:
           if [ -f BC-1/app/src/androidTest/java/com/blackice/bc1/HomeBrowserTest.java ]; then classes="$classes,com.blackice.bc1.HomeBrowserTest"; fi
           if [ -f BC-1/app/src/androidTest/java/com/blackice/bc1/editor/PreviewRecoveryTest.java ]; then classes="$classes,com.blackice.bc1.editor.PreviewRecoveryTest"; fi
           classes="$classes,com.blackice.bc1.LandscapeStabilityTest,com.blackice.bc1.LayerRenderingTest,com.blackice.bc1.MobileSheetTest,com.blackice.bc1.PhoneMediaSpaceTest,com.blackice.bc1.PreviewProxyTest,com.blackice.bc1.PreviewScrubTest"
-          if [ "$PREVIEW_CASE" = recovery-only ]; then classes="com.blackice.bc1.editor.PreviewRecoveryTest"; fi
+          if [ "$PREVIEW_CASE" = workspace-trace ]; then classes="com.blackice.bc1.EditorWorkspaceTest#editorAdaptsAndTabsKeepVideoSurface"; fi
           adb shell am instrument -w -r -e class "$classes" com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee preview-diagnostics/instrumentation.txt
           if grep -E 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' preview-diagnostics/instrumentation.txt; then exit 1; fi
           grep -E '^OK \([0-9]+ tests?\)' preview-diagnostics/instrumentation.txt
