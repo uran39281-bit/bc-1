@@ -144,6 +144,8 @@ public final class EditorActivity extends Activity {
         if(status!=null)status.setText(running?export.getString("status","Exporting…"):message);
         main.postDelayed(this,player!=null&&player.isPlaying()?33:100);
     }};
+    // Retain the requested identity through configuration changes while disk loading is in flight.
+    private String openingProjectId;
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);getWindow().setStatusBarColor(BG);getWindow().setNavigationBarColor(BG);
         thumbnails=new ThumbnailCache(this);previewProxy=new PreviewProxy(this);live=new com.blackice.bc1.engine.bc.LivePreview(this);addDrawer=new AddDrawer(this);presets=new PresetStore(this);uiLocked=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("ui-locked",false);
@@ -159,6 +161,7 @@ public final class EditorActivity extends Activity {
         buildWorkspace();
         String id=state==null?getIntent().getStringExtra("project-id"):state.getString("project-id",getIntent().getStringExtra("project-id"));
         if(id==null)id=getSharedPreferences(PREFS,MODE_PRIVATE).getString("last-project",null);
+        openingProjectId=id;
         final String initialId=id;
         io.execute(()->{
             EditProject loaded=null;String failure=null;
@@ -174,7 +177,7 @@ public final class EditorActivity extends Activity {
     @Override protected void onStart(){super.onStart();active=true;main.post(pulse);if(!loading)showLive();}
     @Override protected void onStop(){cancelLiveAdjust();active=false;main.removeCallbacks(pulse);main.removeCallbacks(warmPreview);saveNow();releasePreview();if(previewProxy!=null)previewProxy.cancel();if(live!=null)live.releaseDecoders();super.onStop();}
     @Override protected void onDestroy(){main.removeCallbacks(autosave);if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
-    @Override protected void onSaveInstanceState(Bundle state){state.putString("project-id",project.id);cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());saveNow();super.onSaveInstanceState(state);}
+    @Override protected void onSaveInstanceState(Bundle state){state.putString("project-id",loading?openingProjectId:project.id);cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());saveNow();super.onSaveInstanceState(state);}
     @Override public void onConfigurationChanged(Configuration config){super.onConfigurationChanged(config);cancelLiveAdjust();buildWorkspace();}
     boolean exporting(){return getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getBoolean("running",false)||exportLaunching;}
     boolean editable(){if(uiLocked){tell("UI locked • unlock editing in Settings");return false;}if(loading||importing){tell("Wait for the current import to finish.");return false;}if(exporting()){tell("Wait for export to finish, or cancel it to continue editing.");return false;}return true;}
