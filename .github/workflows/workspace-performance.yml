@@ -1,5 +1,5 @@
 name: Workspace performance comparison
-# Same-emulator landscape media and portrait settings probes; verify final search coalescing.
+# Same-emulator landscape media and portrait settings probes; verify final search coalescing and Android-compatible test I/O.
 on:
   workflow_dispatch:
   push:

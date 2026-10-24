@@ -73,10 +73,13 @@ public class EditorWorkspaceTest {
                     java.lang.reflect.Method render=EditorActivity.class.getDeclaredMethod("renderMediaBrowser");render.setAccessible(true);render.invoke(a);
                     android.widget.EditText search=(android.widget.EditText)described(a.getWindow().getDecorView(),"Search project media");
                     for(int i=0;i<32;i++)search.setText(i%2==0?"ICE":"ICE / B");
+                }catch(ReflectiveOperationException e){throw new AssertionError(e);}});
+                Thread.sleep(100);inst.waitForIdleSync();
+                scenario.onActivity(a->{
                     ViewGroup card=(ViewGroup)described(a.getWindow().getDecorView(),"Media ICE / B");
                     currentCard.set(card);
                     assertFalse("Current card starts with a placeholder",((android.widget.ImageView)((ViewGroup)card.getChildAt(0)).getChildAt(0)).getDrawable() instanceof android.graphics.drawable.BitmapDrawable);
-                }catch(ReflectiveOperationException e){throw new AssertionError(e);}});
+                });
                 decodeAllowed.countDown();deadline=SystemClock.elapsedRealtime()+15000;
                 while(cache.get().peek(project.clips.get(1))==null&&SystemClock.elapsedRealtime()<deadline)Thread.sleep(100);
                 assertNotNull("Decode actually completed",cache.get().peek(project.clips.get(1)));inst.waitForIdleSync();
@@ -140,20 +143,22 @@ public class EditorWorkspaceTest {
                 Thread.sleep(500);
                 scenario.onActivity(a->{android.widget.HorizontalScrollView scroll=(android.widget.HorizontalScrollView)described(a.getWindow().getDecorView(),"Timeline scroll");scroll.scrollTo(140,0);assertTrue("Timeline scroll is available after zoom",scroll.getScrollX()>0);});capture("v10-phone-9x16");
                 shell("wm size 1920x1080");shell("wm density 160");Thread.sleep(1800);inst.waitForIdleSync();scenario.onActivity(a->{assertTrue(surface(a.getWindow().getDecorView()).getWidth()>500);});assertVisiblePreview(scenario);capture("v10-wide-16x9");
+                java.util.concurrent.atomic.AtomicReference<View> filterSurface=new java.util.concurrent.atomic.AtomicReference<>();
                 scenario.onActivity(a->{
                     View root=a.getWindow().getDecorView();View first=described(root,"Media ICE / OPENING"),second=described(root,"Media ICE / DETAIL");
                     assertNotNull(first);assertNotNull(second);int[] p1=new int[2],p2=new int[2];first.getLocationOnScreen(p1);second.getLocationOnScreen(p2);
                     assertEquals("V1 desktop cards share a row",p1[1],p2[1]);assertTrue("Two readable media columns",p2[0]>p1[0]&&first.getWidth()>100);
-                    View previewParent=(View)surface(root).getParent();
+                    filterSurface.set((View)surface(root).getParent());
                     described(root,"Filter media: Video").performClick();assertNotNull(text(root,"No matching media"));assertNotNull(text(root,"0 / 6 items"));
                     described(root,"Filter media: Audio").performClick();assertNotNull(text(root,"No matching media"));
                     described(root,"Filter media: Image").performClick();assertNotNull(text(root,"2 / 6 items"));
                     ((android.widget.EditText)described(root,"Search project media")).setText(" detail ");
+                });Thread.sleep(100);inst.waitForIdleSync();scenario.onActivity(a->{View root=a.getWindow().getDecorView();
                     assertNotNull(text(root,"1 / 6 items"));assertNull(described(root,"Media ICE / OPENING"));
                     described(root,"Media ICE / DETAIL").performClick();
                     assertEquals("Filtered index maps to the original clip","ICE / DETAIL",a.clip().name);assertNotNull(text(a.inspector,"Media Settings"));assertNotNull(text(a.inspector,"ICE / DETAIL"));
                     assertTrue(described(root,"Media ICE / DETAIL").isSelected());
-                    assertSame("Filtering never recreates the preview surface",previewParent,surface(root).getParent());
+                    assertSame("Filtering never recreates the preview surface",filterSurface.get(),surface(root).getParent());
                 });
                 scenario.recreate();Thread.sleep(2500);inst.waitForIdleSync();assertVisiblePreview(scenario);
                 scenario.onActivity(a->{View root=a.getWindow().getDecorView();assertEquals(" detail ",((android.widget.EditText)described(root,"Search project media")).getText().toString());assertTrue(described(root,"Filter media: Image").isSelected());assertNotNull(text(root,"1 / 6 items"));assertTrue(described(root,"Media ICE / DETAIL").isSelected());});capture("v102-media-filtered");

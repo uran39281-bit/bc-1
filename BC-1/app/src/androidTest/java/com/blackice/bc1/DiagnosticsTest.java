@@ -18,9 +18,9 @@ public class DiagnosticsTest {
         File[] reports=new File(context.getFilesDir(),"crash-logs").listFiles();assertNotNull(reports);assertTrue(reports.length<=12);
         for(File f:reports)assertTrue("Report byte size bounded",f.length()<=128000);
         // Export uses exactly this UTF-8 report, independently of the dialog lifecycle.
-        File exported=new File(context.getCacheDir(),"diagnostics-acceptance.txt");try(OutputStream out=new FileOutputStream(exported)){out.write(report.getBytes(StandardCharsets.UTF_8));}assertEquals(report,java.nio.file.Files.readString(exported.toPath()));
+        File exported=new File(context.getCacheDir(),"diagnostics-acceptance.txt");try(OutputStream out=new FileOutputStream(exported)){out.write(report.getBytes(StandardCharsets.UTF_8));}assertEquals(report,new String(java.nio.file.Files.readAllBytes(exported.toPath()),StandardCharsets.UTF_8));
         // The next-launch restoration path explicitly distinguishes a checkpoint from a confirmed crash.
-        File session=new File(context.getFilesDir(),"diagnostic-session.txt");java.nio.file.Files.writeString(session.toPath(),"Session state: background\nRecent operation categories:\nEditing");
+        File session=new File(context.getFilesDir(),"diagnostic-session.txt");java.nio.file.Files.write(session.toPath(),"Session state: background\nRecent operation categories:\nEditing".getBytes(StandardCharsets.UTF_8));
         java.lang.reflect.Method restore=CrashLogs.class.getDeclaredMethod("restoreSession");restore.setAccessible(true);restore.invoke(context.getApplicationContext());
         assertTrue(CrashLogs.report(context).contains("not proof of a crash"));
     }

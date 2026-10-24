@@ -86,7 +86,7 @@ public final class ProjectStore {
             if(!record.isFile()) throw new IOException("Project no longer exists.");
             // Proxy keys include project identity; duplicates have different keys even when media is shared.
             String previewKey=null;
-            try { EditProject p=load(id);p.playheadMs=0;
+            try { EditProject p=load(id);p.playheadMs=0;p.landmarks.clear();
                 byte[] hash=java.security.MessageDigest.getInstance("SHA-256").digest(encode(p).getBytes(StandardCharsets.UTF_8));
                 StringBuilder key=new StringBuilder();for(byte b:hash)key.append(String.format(Locale.ROOT,"%02x",b&255));previewKey=key.toString();
             } catch(Exception ignored) { /* A damaged project can still be deleted. */ }
