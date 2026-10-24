@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.*;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import androidx.media3.transformer.*;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import java.io.*;
@@ -17,6 +18,15 @@ import static org.junit.Assert.*;
 public class PreviewRecoveryTest {
     private final android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();
     private final Context context=inst.getTargetContext();
+    /** No samples are emitted, so the real watchdog expires after initialization without a timing race. */
+    private AssetLoader.Factory stalledInput(){
+        return (item,looper,listener,settings)->new AssetLoader(){
+            public void start(){listener.onDurationUs(item.durationUs);}
+            public int getProgress(ProgressHolder holder){return Transformer.PROGRESS_STATE_UNAVAILABLE;}
+            public com.google.common.collect.ImmutableMap<Integer,String> getDecoderNames(){return com.google.common.collect.ImmutableMap.of();}
+            public void release(){}
+        };
+    }
     private File prepare(PreviewProxy proxy,EditProject project)throws Exception{
         CountDownLatch done=new CountDownLatch(1);AtomicReference<File> file=new AtomicReference<>();AtomicReference<String> error=new AtomicReference<>();
         inst.runOnMainSync(()->proxy.prepare(project,new PreviewProxy.Listener(){
@@ -28,7 +38,7 @@ public class PreviewRecoveryTest {
     }
     @Test public void realMedia3WatchdogRecoversOnceWithCorrectFramesAndCache()throws Exception{
         EditProject project=new EditProject();project.previewHeight=360;
-        java.util.List<File> sources=new java.util.ArrayList<>();PreviewProxy proxy=new PreviewProxy(context,1);
+        java.util.List<File> sources=new java.util.ArrayList<>();PreviewProxy proxy=new PreviewProxy(context,1000,stalledInput());
         try{
             for(int color:new int[]{Color.RED,Color.BLUE}){
                 File source=new File(context.getFilesDir(),"recovery-"+project.id+"-"+sources.size()+".png");sources.add(source);
@@ -57,7 +67,7 @@ public class PreviewRecoveryTest {
         Bitmap image=Bitmap.createBitmap(160,90,Bitmap.Config.ARGB_8888);image.eraseColor(Color.BLUE);
         try(OutputStream out=new FileOutputStream(source)){image.compress(Bitmap.CompressFormat.PNG,100,out);}image.recycle();
         EditProject.Clip clip=new EditProject.Clip();clip.name="Cancellation fixture";clip.uri=Uri.fromFile(source).toString();clip.image=true;clip.sourceDurationMs=clip.outMs=6000;project.clips.add(clip);
-        PreviewProxy proxy=new PreviewProxy(context,1);java.util.concurrent.atomic.AtomicBoolean cancelled=new java.util.concurrent.atomic.AtomicBoolean();
+        PreviewProxy proxy=new PreviewProxy(context,1000,stalledInput());java.util.concurrent.atomic.AtomicBoolean cancelled=new java.util.concurrent.atomic.AtomicBoolean();
         java.util.concurrent.atomic.AtomicInteger late=new java.util.concurrent.atomic.AtomicInteger();
         try{
             inst.runOnMainSync(()->proxy.prepare(project,new PreviewProxy.Listener(){

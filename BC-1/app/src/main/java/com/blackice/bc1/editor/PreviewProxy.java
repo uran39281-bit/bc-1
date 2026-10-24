@@ -28,6 +28,7 @@ public final class PreviewProxy implements AutoCloseable {
     private final Handler main=new Handler(Looper.getMainLooper());
     private final File directory;
     private final long muxerTimeoutMs;
+    private final AssetLoader.Factory assetLoaderFactory;
     // Main-thread diagnostics; a recovered request must never loop back into Media3.
     int timeoutRecoveries;
     private Transformer transformer;
@@ -38,12 +39,12 @@ public final class PreviewProxy implements AutoCloseable {
     private java.util.concurrent.atomic.AtomicBoolean coreStop;
 
     public PreviewProxy(Context context) {
-        this(context,Transformer.DEFAULT_MAX_DELAY_BETWEEN_MUXER_SAMPLES_MS);
+        this(context,Transformer.DEFAULT_MAX_DELAY_BETWEEN_MUXER_SAMPLES_MS,null);
     }
-    /** Package-visible deadline lets device regressions exercise the real watchdog and recovery. */
-    PreviewProxy(Context context,long muxerTimeoutMs) {
+    /** Package-visible injection lets device tests stall input while using the real Media3 watchdog. */
+    PreviewProxy(Context context,long muxerTimeoutMs,AssetLoader.Factory assetLoaderFactory) {
         if(muxerTimeoutMs<=0)throw new IllegalArgumentException("A positive muxer deadline is required");
-        this.context=context.getApplicationContext();this.muxerTimeoutMs=muxerTimeoutMs;
+        this.context=context.getApplicationContext();this.muxerTimeoutMs=muxerTimeoutMs;this.assetLoaderFactory=assetLoaderFactory;
         directory=new File(context.getCacheDir(),"bc1-preview-v11");
     }
     public static boolean required(EditProject project) {
@@ -78,7 +79,7 @@ public final class PreviewProxy implements AutoCloseable {
             if(needsIceLite(snapshot)){prepareWithIceLite(snapshot,completed,request,out);return;}
             transformer=new Transformer.Builder(context)
                     .setMaxDelayBetweenMuxerSamplesMs(muxerTimeoutMs)
-                    .setAssetLoaderFactory(CompositionFactory.assetLoader(context))
+                    .setAssetLoaderFactory(assetLoaderFactory!=null?assetLoaderFactory:CompositionFactory.assetLoader(context))
                     .setVideoMimeType(MimeTypes.VIDEO_H264).setAudioMimeType(MimeTypes.AUDIO_AAC)
                     .setPortraitEncodingEnabled(true)
                     .setVideoFrameProcessorFactory(CompositionFactory.frameProcessor())
