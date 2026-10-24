@@ -15,19 +15,48 @@ public final class CrashLogs extends Application {
     private static volatile CrashLogs app;
     private static volatile String operation="Idle";
     private static final int LIMIT=12;
+    private final java.util.concurrent.ExecutorService writer=java.util.concurrent.Executors.newSingleThreadExecutor();
+    private final ArrayDeque<String> history=new ArrayDeque<>();
+    private final java.util.concurrent.atomic.AtomicBoolean queued=new java.util.concurrent.atomic.AtomicBoolean();
+    private volatile String projectContext="No project context";
+    private volatile boolean foreground;
+    private long lastCheckpoint;
+    private File sessionFile(){return new File(getFilesDir(),"diagnostic-session.txt");}
+    public static void project(com.blackice.bc1.editor.EditProject p){CrashLogs a=app;if(a==null||p==null)return;int image=0,audio=0;for(com.blackice.bc1.editor.EditProject.Clip c:p.clips){if(c.image)image++;if(c.audioOnly)audio++;}
+        a.projectContext="Clips: "+p.clips.size()+" images="+image+" audio="+audio+" overlays="+p.overlays.size()+" fps="+p.frameRate+" previewHeight="+p.previewHeight+" portrait="+p.portrait;
+    }
+    private void checkpoint(boolean force){long now=SystemClock.elapsedRealtime();if(!force&&now-lastCheckpoint<5000)return;if(!queued.compareAndSet(false,true))return;lastCheckpoint=now;
+        writer.execute(()->{try{String recent; synchronized(history){recent=String.join("\n",history);}String data="Session state: "+(foreground?"foreground":"background")+"\n"+projectContext+"\nRecent operation categories:\n"+recent;
+            android.util.AtomicFile file=new android.util.AtomicFile(sessionFile());FileOutputStream out=null;try{out=file.startWrite();out.write(data.getBytes(StandardCharsets.UTF_8));file.finishWrite(out);}catch(Exception error){if(out!=null)file.failWrite(out);}
+        }finally{queued.set(false);}});
+    }
+    private void restoreSession(){try{if(sessionFile().isFile()){
+        String previous=new String(Files.readAllBytes(sessionFile().toPath()),StandardCharsets.UTF_8);
+        persist("Previous session checkpoint (not proof of a crash; system reclamation or normal background exit is possible):\n"+previous);
+    }}catch(Exception ignored){/* Diagnostics must not prevent startup. */}}
+
     @Override public void onCreate(){super.onCreate();app=this;
         Thread.UncaughtExceptionHandler previous=Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler((thread,error)->{try{record("Fatal Java exception",error);}finally{
             if(previous!=null)previous.uncaughtException(thread,error);else{android.os.Process.killProcess(android.os.Process.myPid());System.exit(10);}}});
-        new Thread(()->collectExits(),"bc1-exit-diagnostics").start();
+        writer.execute(()->{restoreSession();collectExits();});
+        registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks(){
+            int visible;
+            public void onActivityStarted(Activity activity){visible++;foreground=true;checkpoint(true);}
+            public void onActivityStopped(Activity activity){visible=Math.max(0,visible-1);foreground=visible>0;checkpoint(true);}
+            public void onActivityCreated(Activity a,Bundle b){}public void onActivityResumed(Activity a){}public void onActivityPaused(Activity a){}public void onActivitySaveInstanceState(Activity a,Bundle b){}public void onActivityDestroyed(Activity a){}
+        });
     }
-    public static void operation(String value){String first=value==null?"":value.split(" ",2)[0];operation=Arrays.asList("Rotation","Position","Scale","Width","Height","Anchor","Transforms","Opacity","Blend","Audio","Clip","Layer","Trimmed","Duration","Speed","Project","Frame","Imported","Export").contains(first)?first:"Editing";}
+    public static void operation(String value){String first=value==null?"":value.split(" ",2)[0];operation=Arrays.asList("Rotation","Position","Scale","Width","Height","Anchor","Transforms","Opacity","Blend","Audio","Clip","Layer","Trimmed","Duration","Speed","Project","Frame","Imported","Export","Playback","Scrubbing","Dialog").contains(first)?first:"Editing";
+        CrashLogs a=app;if(a!=null){synchronized(a.history){a.history.addLast(SystemClock.elapsedRealtime()+" "+operation);while(a.history.size()>40)a.history.removeFirst();}a.checkpoint(false);}
+    }
     public static void record(String stage,Throwable error){CrashLogs a=app;if(a==null)return;
-        StringBuilder b=new StringBuilder(stage).append('\n');Set<Throwable> seen=Collections.newSetFromMap(new IdentityHashMap<>());
+        StringBuilder b=new StringBuilder(stage).append("\nThread ID: ").append(Thread.currentThread().getId()).append('\n');Set<Throwable> seen=Collections.newSetFromMap(new IdentityHashMap<>());
         for(int n=0;error!=null&&n<6&&seen.add(error);n++,error=error.getCause()){
             b.append(error.getClass().getName()).append('\n');if(error instanceof android.media.MediaCodec.CodecException){android.media.MediaCodec.CodecException codec=(android.media.MediaCodec.CodecException)error;b.append("Decoder code: ").append(codec.getErrorCode()).append(" recoverable=").append(codec.isRecoverable()).append(" transient=").append(codec.isTransient()).append('\n');}StackTraceElement[] stack=error.getStackTrace();
             for(int i=0;i<Math.min(80,stack.length);i++)b.append("  at ").append(stack[i]).append('\n');}
-        a.persist(b.toString());
+        String recent;synchronized(a.history){recent=String.join("\n",a.history);}String detail=b+"\n"+a.projectContext+"\nRecent operations:\n"+recent;
+        if("Fatal Java exception".equals(stage))a.persist(detail);else try{a.writer.execute(()->a.persist(detail));}catch(RuntimeException ignored){}
     }
     private static File directory(Context c){return new File(c.getFilesDir(),"crash-logs");}
     private synchronized void persist(String detail){try{File dir=directory(this);if(!dir.isDirectory()&&!dir.mkdirs())return;
@@ -36,7 +65,7 @@ public final class CrashLogs extends Application {
         File[] files=dir.listFiles();if(files!=null){Arrays.sort(files,Comparator.comparingLong(File::lastModified).reversed());for(int i=LIMIT;i<files.length;i++)if(!files[i].delete())android.util.Log.w("BC1Diagnostics","Could not prune report");}
     }catch(IOException e){android.util.Log.e("BC1Diagnostics","Could not persist diagnostics",e);}}
     private static String header(Context c){String version="unknown";try{android.content.pm.PackageInfo p=c.getPackageManager().getPackageInfo(c.getPackageName(),0);version=p.versionName+" ("+(Build.VERSION.SDK_INT>=28?p.getLongVersionCode():p.versionCode)+")";}catch(Exception ignored){}
-        Runtime r=Runtime.getRuntime();return "BC-1 diagnostic • "+new Date()+"\nVersion: "+version+"\nAndroid: "+Build.VERSION.RELEASE+" / API "+Build.VERSION.SDK_INT+"\nDevice: "+Build.MANUFACTURER+" "+Build.MODEL+"\nJava heap used/max bytes: "+(r.totalMemory()-r.freeMemory())+"/"+r.maxMemory()+"\nNative heap bytes: "+Debug.getNativeHeapAllocatedSize()+"\nException messages and media identifiers omitted for privacy.";}
+        Runtime r=Runtime.getRuntime();return "BC-1 diagnostic • "+new Date()+"\nVersion: "+version+"\nAndroid: "+Build.VERSION.RELEASE+" / API "+Build.VERSION.SDK_INT+"\nDevice: "+Build.MANUFACTURER+" "+Build.MODEL+"\nJava heap used/max bytes: "+(r.totalMemory()-r.freeMemory())+"/"+r.maxMemory()+"\nFree app storage bytes: "+c.getFilesDir().getUsableSpace()+"\nNative heap bytes: "+Debug.getNativeHeapAllocatedSize()+"\nException messages and media identifiers omitted for privacy.";}
     private void collectExits(){if(Build.VERSION.SDK_INT<30)return;try{ActivityManager manager=(ActivityManager)getSystemService(ACTIVITY_SERVICE);long last=getSharedPreferences("crash-diagnostics",0).getLong("last-exit",0),latest=last;
         for(ApplicationExitInfo info:manager.getHistoricalProcessExitReasons(getPackageName(),0,LIMIT)){latest=Math.max(latest,info.getTimestamp());if(info.getTimestamp()<=last)continue;
             int reason=info.getReason();if(reason==ApplicationExitInfo.REASON_CRASH||reason==ApplicationExitInfo.REASON_CRASH_NATIVE||reason==ApplicationExitInfo.REASON_ANR||reason==ApplicationExitInfo.REASON_LOW_MEMORY)

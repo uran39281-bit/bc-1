@@ -86,7 +86,10 @@ final class ToolPanels {
         EditProject.Clip c=a.clip();if(c==null||c.image){a.inspector.addView(a.note("This media has no audio."));return;}
         a.inspector.addView(a.button(c.unmutedVolume>=0?"Unmute":"Mute",v->{if(a.layerEditable())a.edit("Audio mute updated",()->ClipAudio.toggleMute(c));}));
         percent("Volume",c.volume,1,v->{c.volume=v;c.unmutedVolume=-1;},null,0);
-        fadePanel(true);fadePanel(false);
+        if(c.fadeInMs>0||c.fadeOutMs>0)a.inspector.addView(a.note("Saved legacy fades remain active."));
+        for(String name:new String[]{"Noise Reduction","Loudness Normalization","Audio Visualization","Equalizer (EQ)"}){
+            TextView planned=a.button(name+" — Coming Later",null);planned.setEnabled(false);planned.setAlpha(.6f);a.inspector.addView(planned);
+        }
         if(c.track<EditProject.AUDIO_FIRST)a.inspector.addView(a.button("Extract Audio",v->runTool("Extract Audio")));
         a.inspector.addView(a.button("Reset Audio Settings",v->{if(a.layerEditable())a.edit("Audio reset",()->{c.volume=1;c.unmutedVolume=-1;c.fadeInMs=0;c.fadeOutMs=0;});}));
     }
@@ -237,7 +240,22 @@ final class ToolPanels {
         if(c!=null)percent("Opacity",c.opacity,1,v->c.opacity=v,c.motion,Motion.OPACITY);else percent("Opacity",o.opacity,1,v->o.opacity=v,o.motion,Motion.OPACITY);
         a.inspector.addView(a.note("0% is fully transparent. Lower layers show through transparent regions."));
     }
+    private long opacityNeighbor(boolean next){
+        EditProject.Clip clip=a.clip();EditProject.Overlay overlay=a.overlay();Motion motion=clip!=null?clip.motion:overlay.motion;
+        long best=-1,now=a.project.playheadMs;
+        for(Motion.Key key:motion.curves.get(Motion.OPACITY)){
+            long time=clip!=null?a.project.placements().get(a.selected).startMs+Math.round((key.timeMs-clip.inMs)/(double)clip.speed):overlay.startMs+key.timeMs;
+            if(time<0||time>a.project.durationMs())continue;
+            if(next?time>now&&(best<0||time<best):time<now&&(best<0||time>best))best=time;
+        }return best;
+    }
     private void blendPanel(){
+        LinearLayout navigation=a.row();
+        for(boolean next:new boolean[]{false,true}){
+            long target=opacityNeighbor(next);TextView button=a.button(next?"Next Key  ›":"‹  Previous Key",v->{a.pausePlayback();a.seek(target);a.renderInspector();});
+            EditorActivity.dim(button,target>=0);navigation.addView(button,new LinearLayout.LayoutParams(0,a.dp(48),1));
+        }
+        a.inspector.addView(navigation);
         opacityPanel();EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
         if(c!=null){a.inspector.addView(a.note("ICE Lite blend modes • Normal / Darken / Lighten / Contrast"));
             for(com.blackice.bc1.core.BlendMode mode:com.blackice.bc1.core.BlendMode.values()){a.gridAction((c.blend==mode.ordinal()?"● ":"")+mode.label,()->{if(a.layerEditable())a.edit("Blend mode updated",()->c.blend=mode.ordinal());});}a.flushGrid();

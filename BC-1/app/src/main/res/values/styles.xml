@@ -6,7 +6,21 @@
         <item name="android:textColorPrimary">#E6F5FF</item>
         <item name="android:textColorSecondary">#91A7BC</item>
         <item name="android:fontFamily">sans</item>
+        <item name="android:alertDialogTheme">@style/BlackIceDialog</item>
+        <item name="android:popupTheme">@style/BlackIceDialog</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:navigationBarColor">#090F19</item>
+    </style>
+    <style name="BlackIceDialog" parent="android:style/Theme.Material.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/dialog_surface</item>
+        <item name="android:colorBackground">#0C1B2B</item>
+        <item name="android:colorAccent">#40BFFF</item>
+        <item name="android:colorControlNormal">#9DBAD1</item>
+        <item name="android:colorControlActivated">#40BFFF</item>
+        <item name="android:textColorPrimary">#F2F6FA</item>
+        <item name="android:textColorSecondary">#97A8BA</item>
+        <item name="android:windowMinWidthMajor">65%</item>
+        <item name="android:windowMinWidthMinor">92%</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
     </style>
 </resources>

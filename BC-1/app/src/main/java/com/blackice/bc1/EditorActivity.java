@@ -271,6 +271,7 @@ public final class EditorActivity extends Activity {
     }
     void remember(){try {undo.addLast(ProjectStore.encode(project));while(undo.size()>30)undo.removeFirst();redo.clear();}catch(Exception e){tell(e.getMessage());}}
     void changed(String text) {
+        CrashLogs.project(project);
         project.validate();dirty=true;editRevision++;message=text;refreshProject();showLive();main.removeCallbacks(autosave);main.postDelayed(autosave,300);
     }
     void saveNow() {
@@ -403,7 +404,7 @@ public final class EditorActivity extends Activity {
         timelineTools.addView(zoomSlider,new LinearLayout.LayoutParams(dp(wideLayout?140:90),dp(40)));syncZoomSlider();
         timelineTools.addView(compactButton("+","Zoom in timeline",v->zoomTimeline(1.5f,Float.NaN)));
         TextView snap=headerIcon("Magnet","Snapping: "+(snapping?"on":"off"),v->{snapping=!snapping;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("snapping",snapping).apply();renderTimelineTools();});snap.setSelected(snapping);snap.setCompoundDrawables(icon("Magnet",snapping?CYAN:MUTED),null,null,null);timelineTools.addView(snap);
-        timelineTools.addView(headerIcon("Fit","Fit timeline",v->fitTimeline()));timelineTools.addView(headerIcon("Setup","Timeline settings",v->{tab=4;renderInspector();}));
+        timelineTools.addView(headerIcon("Fit","Fit timeline",v->fitTimeline()));
     }
     void syncZoomSlider(){if(zoomSlider!=null)zoomSlider.setProgress((int)Math.round(1000*Math.log(pixelsPerSecond/8)/Math.log(300)));}
     static void dim(View v,boolean enabled){v.setEnabled(enabled);v.setAlpha(enabled?1f:.38f);}
@@ -1173,7 +1174,7 @@ public final class EditorActivity extends Activity {
         LinearLayout title=row();title.setGravity(Gravity.CENTER_VERTICAL);LinearLayout titles=column();titles.addView(label("Project Media",15,TEXT,true));titles.addView(label("Import, then drag media onto the timeline.",10,MUTED,false));title.addView(titles,new LinearLayout.LayoutParams(0,-2,1));
         title.addView(headerIcon("Sort","Sort media",v->new AlertDialog.Builder(this).setTitle("Sort media").setSingleChoiceItems(new String[]{"Import order","Name","Duration"},mediaSort,(d,n)->{mediaSort=n;d.dismiss();renderMediaGrid();}).show()));
         mediaBrowser.addView(title);
-        LinearLayout addTools=row();addTools.addView(button("Add content",v->{tab=0;renderInspector();}),new LinearLayout.LayoutParams(0,dp(48),1));addTools.addView(button("Layers",v->{tab=3;renderInspector();}),new LinearLayout.LayoutParams(0,dp(48),1));mediaBrowser.addView(addTools);
+
         TextView importButton=button("Import Media",v->pick(IMPORT,"*/*"));importButton.setContentDescription("+ Import media");importButton.setCompoundDrawables(icon("Add",TEXT),null,null,null);importButton.setCompoundDrawablePadding(dp(8));importButton.setTextSize(13);
         LinearLayout.LayoutParams importLp=new LinearLayout.LayoutParams(-1,dp(48));importLp.topMargin=dp(10);importLp.bottomMargin=dp(8);mediaBrowser.addView(importButton,importLp);
         LinearLayout filters=row();filters.setBaselineAligned(false);
