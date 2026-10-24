@@ -142,8 +142,8 @@ public final class EditorActivity extends Activity {
         long completed=export.getLong("finishedAt",0);
         if(!running&&!exportLaunching&&!loading&&(wasExporting||completed>lastExportSeen)){lastExportSeen=completed;tell(export.getString("status","Export ended"));if(wasExporting)showLive();}
         wasExporting=running;
-        if(exportButton!=null)exportButton.setText(running?"Cancel":"Export");
-        if(status!=null)status.setText(running?export.getString("status","Exporting…"):message);
+        if(exportButton!=null){String label=running?"Cancel":"Export";if(!label.contentEquals(exportButton.getText()))exportButton.setText(label);}
+        if(status!=null){String label=running?export.getString("status","Exporting…"):message;if(!label.contentEquals(status.getText()))status.setText(label);}
         main.postDelayed(this,player!=null&&player.isPlaying()?33:100);
     }};
     // Retain the requested identity through configuration changes while disk loading is in flight.
@@ -1337,7 +1337,7 @@ public final class EditorActivity extends Activity {
                 ImageView image=(ImageView)frame.getChildAt(0);
                 if(!(image.getTag() instanceof EditProject.Clip))continue;
                 EditProject.Clip asset=(EditProject.Clip)image.getTag();if(asset.audioOnly)continue;
-                Bitmap bitmap=thumbnails.peek(asset);if(bitmap!=null)image.setImageBitmap(bitmap);
+                Bitmap bitmap=thumbnails.peek(asset);if(bitmap!=null&&(!(image.getDrawable() instanceof android.graphics.drawable.BitmapDrawable)||((android.graphics.drawable.BitmapDrawable)image.getDrawable()).getBitmap()!=bitmap))image.setImageBitmap(bitmap);
             }
         }
     }

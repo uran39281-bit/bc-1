@@ -1,9 +1,9 @@
 name: Workspace performance comparison
-# Same-emulator landscape media and portrait settings probes; verify final search coalescing and Android-compatible test I/O.
+# Same-emulator landscape media and portrait settings probes; include unchanged-label and cached-thumbnail invalidation guards.
 on:
   workflow_dispatch:
   push:
-    branches: ['feature/workspace-stability']
+    branches: ['feature/workspace-stability', 'feature/workspace-render-check']
     paths: ['.github/workflows/workspace-performance.yml']
 permissions:
   contents: read
