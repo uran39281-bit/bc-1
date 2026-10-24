@@ -292,6 +292,7 @@ public final class EditorActivity extends Activity {
         catch(Exception e){tell(e.getMessage());}
     }
     void refreshProject() {
+        CrashLogs.project(project);
         if(selected>=project.clips.size())selected=-1;if(selectedOverlay>=project.overlays.size())selectedOverlay=-1;
         if(projectLabel!=null)projectLabel.setText(project.name+(dirty?" •":"")+"  ▾");
         if(timeline!=null){timeline.getLayoutParams().height=Math.round(timeline.contentHeight());timeline.requestLayout();timeline.invalidate();}
@@ -547,6 +548,7 @@ public final class EditorActivity extends Activity {
     }
     /** Project settings open on demand from the top bar instead of occupying a permanent tab. */
     void projectSettingsDialog(){
+        CrashLogs.operation("Dialog");
         String[] entries={"Project name: "+project.name,"Canvas: "+(project.portrait?"1080 × 1920 / 9:16":"1920 × 1080 / 16:9"),"Frame rate: "+project.frameRate+" fps","Background: Black","Project storage"};
         new AlertDialog.Builder(this).setTitle("Project Settings").setItems(entries,(d,i)->{
             if(i==0)numberDialog("Project name",project.name,name->edit("Project renamed",()->{if(name.isBlank()||name.length()>80)throw new IllegalArgumentException("Use 1–80 characters");project.name=name;}));
@@ -669,7 +671,7 @@ public final class EditorActivity extends Activity {
     boolean layerEditable(){if(!editable())return false;for(int i:selectedClips())if(LayerOps.locked(project,i)){tell("Layer locked • unlock it in Layers to edit");return false;}for(int i:selectedOverlays())if(project.overlays.get(i).locked){tell("Layer locked • unlock it in Layers to edit");return false;}return true;}
     void pausePlayback(){if(player!=null)player.pause();}
     /** Slider drag start: remember the project for one undo entry and switch to the live preview. */
-    void beginLiveAdjust(){if(!layerEditable())return;try{liveBefore=ProjectStore.encode(project);}catch(Exception e){liveBefore=null;return;}if(player!=null||previewPending)releasePreview();main.removeCallbacks(warmPreview);previewProxy.cancel();}
+    void beginLiveAdjust(){if(!layerEditable())return;CrashLogs.operation("Transforms");try{liveBefore=ProjectStore.encode(project);}catch(Exception e){liveBefore=null;return;}if(player!=null||previewPending)releasePreview();main.removeCallbacks(warmPreview);previewProxy.cancel();}
     /** During a drag: apply the value and redraw at once, without validation or undo. */
     void liveAdjust(Runnable apply){if(liveBefore==null)return;try{apply.run();if(previewControls!=null)previewControls.invalidate();renderLive();}catch(RuntimeException ignored){}}
     void cancelLiveAdjust(){transformPanel.clearGesture();String before=liveBefore;liveBefore=null;if(before==null)return;try{project=ProjectStore.decode(before);}catch(Exception e){throw new IllegalStateException(e);}renderInspector();renderLive();if(previewControls!=null)previewControls.invalidate();}
@@ -1049,10 +1051,10 @@ public final class EditorActivity extends Activity {
     /** Copies media into the app. Video, pictures and audio layers go to Project Media, ready to drag onto
      * the timeline; music and overlay pictures are placed directly. One undo step. */
     void importUris(java.util.List<Uri> uris,int request){
-        if(uris.isEmpty()||!editable())return;importing=true;tell("Importing media copies…");long at=addDrawer.insertTime();
+        if(uris.isEmpty()||!editable())return;CrashLogs.operation("Imported");importing=true;tell("Importing media copies…");long at=addDrawer.insertTime();
         io.execute(()->{
             java.util.List<EditProject.Clip> imported=new ArrayList<>();java.util.List<String> errors=new ArrayList<>();
-            for(Uri uri:uris)try{imported.add(new MediaImporter(this).importClip(uri,(request==MUSIC||request==AUDIO_LAYER),request==OVERLAY?1024:2048));}catch(Exception e){errors.add(e.getMessage());}
+            for(Uri uri:uris)try{imported.add(new MediaImporter(this).importClip(uri,(request==MUSIC||request==AUDIO_LAYER),request==OVERLAY?1024:2048));}catch(Exception e){CrashLogs.record("Media import failed",e);errors.add(e.getMessage());}
             main.post(()->{importing=false;if(isDestroyed())return;remember();long cursor=at;
                 int binned=0;
                 for(EditProject.Clip c:imported){
@@ -1083,6 +1085,7 @@ public final class EditorActivity extends Activity {
         if(project.clips.size()>0&&clip()!=null&&clip().track>=EditProject.AUDIO_FIRST)loadWaveform(clip(),true);
     }
     void exportMenu() {
+        CrashLogs.operation("Dialog");
         if(exporting()){ExportWorkspace.progress(this);return;}
         if(loading||importing)return;if((project.clips.isEmpty()&&project.overlays.isEmpty())){tell("Import at least one video or image before exporting.");return;}
         ExportWorkspace.show(this);
@@ -1360,7 +1363,7 @@ public final class EditorActivity extends Activity {
     void slider(String name,float value,ValueAction action){TextView title=note(name+"  "+Math.round(value*100)+"%");inspector.addView(title);SeekBar slider=new SeekBar(this);slider.setMax(100);slider.setProgress(Math.round(value*100));slider.setContentDescription(name);inspector.addView(slider,new LinearLayout.LayoutParams(-1,dp(48)));slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(SeekBar s,int p,boolean user){title.setText(name+"  "+p+"%");}public void onStartTrackingTouch(SeekBar s){if(player!=null)player.pause();}public void onStopTrackingTouch(SeekBar s){if(editable())action.apply(s.getProgress()/100f);}});}
     LinearLayout form(){LinearLayout l=column();l.setPadding(dp(18),dp(8),dp(18),dp(10));return l;}
     EditText field(LinearLayout form,String title,String value){form.addView(note(title));EditText e=new EditText(this);e.setText(value);e.setTextColor(TEXT);e.setSingleLine(false);e.setMinHeight(dp(48));form.addView(e);return e;}
-    void dialog(String title,LinearLayout form,Runnable apply,Runnable delete){ScrollView scroll=new ScrollView(this);scroll.addView(form);AlertDialog.Builder b=new AlertDialog.Builder(this).setTitle(title).setView(scroll).setPositiveButton("Apply",null).setNegativeButton("Cancel",null);if(delete!=null)b.setNeutralButton("Remove",(d,w)->{if(editable())delete.run();});AlertDialog dialog=b.create();dialog.setOnShowListener(x->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{if(!editable())return;try{apply.run();dialog.dismiss();}catch(Exception e){Toast.makeText(this,e.getMessage()==null?"Check the entered values.":e.getMessage(),Toast.LENGTH_LONG).show();}}));dialog.show();}
+    void dialog(String title,LinearLayout form,Runnable apply,Runnable delete){CrashLogs.operation("Dialog");ScrollView scroll=new ScrollView(this);scroll.addView(form);AlertDialog.Builder b=new AlertDialog.Builder(this).setTitle(title).setView(scroll).setPositiveButton("Apply",null).setNegativeButton("Cancel",null);if(delete!=null)b.setNeutralButton("Remove",(d,w)->{if(editable())delete.run();});AlertDialog dialog=b.create();dialog.setOnShowListener(x->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{if(!editable())return;try{apply.run();dialog.dismiss();}catch(Exception e){Toast.makeText(this,e.getMessage()==null?"Check the entered values.":e.getMessage(),Toast.LENGTH_LONG).show();}}));dialog.show();}
     void numberDialog(String title,String value,TextAction action){LinearLayout form=form();EditText input=field(form,title,value);dialog(title,form,()->action.apply(input.getText().toString().trim()),null);}
     static long parseMs(String value){double seconds=Double.parseDouble(value);if(!Double.isFinite(seconds)||Math.abs(seconds)>7_200_000)throw new IllegalArgumentException("Enter a valid time in seconds.");return Math.round(seconds*1000);}
     static float parseFloat(EditText field){float value=Float.parseFloat(field.getText().toString());if(!Float.isFinite(value))throw new IllegalArgumentException("Enter a finite number.");return value;}
