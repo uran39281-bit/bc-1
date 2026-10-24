@@ -1,0 +1,643 @@
+10-24 06:25:21.120  3549  3549 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-24 06:25:21.125  3549  3549 I AndroidRuntime: Using default boot image
+10-24 06:25:21.125  3549  3549 I AndroidRuntime: Leaving lock profiling enabled
+10-24 06:25:21.417  3549  3549 D AndroidRuntime: Calling main entry com.android.commands.am.Am
+10-24 06:25:24.173  3566  3603 I TestRunner: run started: 62 tests
+10-24 06:25:24.178  3566  3603 I TestRunner: started: boundedReportsRetainTechnicalEvidenceAndExcludePrivateMessages(com.blackice.bc1.DiagnosticsTest)
+10-24 06:25:24.352  3566  3603 I TestRunner: finished: boundedReportsRetainTechnicalEvidenceAndExcludePrivateMessages(com.blackice.bc1.DiagnosticsTest)
+10-24 06:25:24.358  3566  3603 I TestRunner: started: stateSavedBeforeDiskLoadRetainsRequestedProjectIdentity(com.blackice.bc1.EditorRestoreTest)
+10-24 06:25:28.788  3566  3603 I TestRunner: finished: stateSavedBeforeDiskLoadRetainsRequestedProjectIdentity(com.blackice.bc1.EditorRestoreTest)
+10-24 06:25:28.789  3566  3603 I TestRunner: started: rapidSearchDuringDecodeUpdatesCurrentThumbnail(com.blackice.bc1.EditorWorkspaceTest)
+10-24 06:25:31.110  3566  3725 D BC1Live : frame at 0 waits for a surface
+10-24 06:25:31.167  3566  3725 D BC1Live : surface attached
+10-24 06:25:33.049  3566  3725 D BC1Live : layer program 0 compiled in 337 ms
+10-24 06:25:36.031  3566  3725 D BC1Live : slow frame: setup 884 ms, open+prepare 171 ms, latch 0 ms, draw 3099 ms, swap 219 ms
+10-24 06:25:36.033  3566  3725 D BC1Live : frame 1 at 0 ms took 4376 ms, 1 sources open
+10-24 06:25:43.072  3566  3603 I TestRunner: finished: rapidSearchDuringDecodeUpdatesCurrentThumbnail(com.blackice.bc1.EditorWorkspaceTest)
+10-24 06:25:43.115  3566  3603 I TestRunner: started: editorAdaptsAndTabsKeepVideoSurface(com.blackice.bc1.EditorWorkspaceTest)
+10-24 06:25:44.547  3566  3892 D BC1Live : frame at 0 waits for a surface
+10-24 06:25:44.551  3566  3892 D BC1Live : surface attached
+10-24 06:25:45.032  3566  3892 D BC1Live : layer program 0 compiled in 183 ms
+10-24 06:25:48.035  3566  3892 D BC1Live : slow frame: setup 78 ms, open+prepare 6 ms, latch 0 ms, draw 2974 ms, swap 211 ms
+10-24 06:25:48.035  3566  3892 D BC1Live : frame 1 at 0 ms took 3270 ms, 1 sources open
+10-24 06:26:09.638  3566  3566 D BC1Preview: state 2 pos=0 playhead=0
+10-24 06:26:10.905  3566  3566 D BC1Preview: state 3 pos=0 playhead=0
+10-24 06:26:15.460  3566  3566 D BC1Preview: state 4 pos=3725 playhead=3725
+10-24 06:26:18.034  3566  3892 D BC1Live : surface attached
+10-24 06:26:18.659  3566  4331 D BC1Live : frame at 1000 waits for a surface
+10-24 06:26:18.682  3566  4331 D BC1Live : surface attached
+10-24 06:26:19.340  3566  4331 D BC1Live : layer program 0 compiled in 25 ms
+10-24 06:26:21.670  3566  3566 D BC1Preview: playback render ready
+10-24 06:26:21.741  3566  4331 D BC1Live : slow frame: setup 325 ms, open+prepare 177 ms, latch 0 ms, draw 2300 ms, swap 126 ms
+10-24 06:26:21.741  3566  4331 D BC1Live : frame 1 at 1000 ms took 2930 ms, 2 sources open
+10-24 06:26:24.457  3566  4331 D BC1Live : slow frame: setup 0 ms, open+prepare 4 ms, latch 0 ms, draw 142 ms, swap 237 ms
+10-24 06:26:24.463  3566  4331 D BC1Live : frame 2 at 750 ms took 388 ms, 2 sources open
+10-24 06:26:24.826  3566  4425 D BC1Live : frame at 750 waits for a surface
+10-24 06:26:24.852  3566  4425 D BC1Live : surface attached
+10-24 06:26:25.237  3566  4425 D BC1Live : layer program 0 compiled in 40 ms
+10-24 06:26:26.041  3566  3566 D BC1Preview: playback render ready
+10-24 06:26:28.488  3566  4425 D BC1Live : slow frame: setup 19 ms, open+prepare 231 ms, latch 0 ms, draw 3118 ms, swap 172 ms
+10-24 06:26:28.488  3566  4425 D BC1Live : frame 1 at 750 ms took 3542 ms, 2 sources open
+10-24 06:26:30.511  3566  4425 D BC1Live : surface attached
+10-24 06:26:30.899  3566  4515 D BC1Live : frame at 0 waits for a surface
+10-24 06:26:30.908  3566  4515 D BC1Live : surface attached
+10-24 06:26:31.197  3566  4515 D BC1Live : layer program 0 compiled in 173 ms
+10-24 06:26:33.086  3566  3566 D BC1Preview: playback render ready
+10-24 06:26:34.536  3566  4515 D BC1Live : slow frame: setup 29 ms, open+prepare 12 ms, latch 0 ms, draw 3385 ms, swap 127 ms
+10-24 06:26:34.536  3566  4515 D BC1Live : frame 1 at 0 ms took 3554 ms, 1 sources open
+10-24 06:26:36.732  3566  3603 I TestRunner: finished: editorAdaptsAndTabsKeepVideoSurface(com.blackice.bc1.EditorWorkspaceTest)
+10-24 06:26:36.743  3566  3603 I TestRunner: started: setupShowsAndCopiesRedactedReport(com.blackice.bc1.ExportDiagnosticsUiTest)
+10-24 06:26:39.939  3566  3603 I TestRunner: finished: setupShowsAndCopiesRedactedReport(com.blackice.bc1.ExportDiagnosticsUiTest)
+10-24 06:26:39.949  3566  3603 I TestRunner: started: mainAndFootageShareStateAndKeepTimelineAccessible(com.blackice.bc1.FootageWorkspaceTest)
+10-24 06:26:47.182  3566  4715 D BC1Live : frame at 0 waits for a surface
+10-24 06:26:47.187  3566  4715 D BC1Live : frame at 2000 waits for a surface
+10-24 06:26:47.219  3566  4715 D BC1Live : surface attached
+10-24 06:26:47.787  3566  4715 D BC1Live : layer program 0 compiled in 176 ms
+10-24 06:26:50.870  3566  4715 D BC1Live : slow frame: setup 41 ms, open+prepare 109 ms, latch 0 ms, draw 3115 ms, swap 144 ms
+10-24 06:26:50.871  3566  4715 D BC1Live : frame 1 at 2000 ms took 3411 ms, 1 sources open
+10-24 06:26:52.686  3566  4838 D BC1Live : frame at 2000 waits for a surface
+10-24 06:26:52.712  3566  4838 D BC1Live : surface attached
+10-24 06:26:53.490  3566  4838 D BC1Live : layer program 0 compiled in 323 ms
+10-24 06:26:56.795  3566  4838 D BC1Live : slow frame: setup 166 ms, open+prepare 226 ms, latch 0 ms, draw 3584 ms, swap 73 ms
+10-24 06:26:56.796  3566  4838 D BC1Live : frame 1 at 2000 ms took 4051 ms, 1 sources open
+10-24 06:26:56.799  3566  4838 D BC1Live : surface attached
+10-24 06:26:56.810  3566  4838 D BC1Live : frame at 2000 waits for a surface
+10-24 06:26:57.023  3566  4858 D BC1Live : frame at 2000 waits for a surface
+10-24 06:26:57.024  3566  4858 D BC1Live : surface attached
+10-24 06:26:57.658  3566  4858 D BC1Live : layer program 0 compiled in 158 ms
+10-24 06:26:59.968  3566  4858 D BC1Live : slow frame: setup 284 ms, open+prepare 5 ms, latch 0 ms, draw 2386 ms, swap 81 ms
+10-24 06:26:59.971  3566  4858 D BC1Live : frame 1 at 2000 ms took 2758 ms, 1 sources open
+10-24 06:27:01.635  3566  4858 D BC1Live : surface attached
+10-24 06:27:02.325  3566  4950 D BC1Live : frame at 2000 waits for a surface
+10-24 06:27:02.351  3566  4950 D BC1Live : surface attached
+10-24 06:27:02.789  3566  4950 D BC1Live : layer program 0 compiled in 155 ms
+10-24 06:27:05.616  3566  4950 D BC1Live : slow frame: setup 118 ms, open+prepare 9 ms, latch 0 ms, draw 2881 ms, swap 100 ms
+10-24 06:27:05.640  3566  4950 D BC1Live : frame 1 at 2000 ms took 3133 ms, 1 sources open
+10-24 06:27:06.854  3566  4950 D BC1Live : surface attached
+10-24 06:27:08.516  3566  3603 I TestRunner: finished: mainAndFootageShareStateAndKeepTimelineAccessible(com.blackice.bc1.FootageWorkspaceTest)
+10-24 06:27:08.531  3566  3603 I TestRunner: started: creationOpensEditorAndBackSavesBeforeReturningHome(com.blackice.bc1.HomeBrowserTest)
+10-24 06:27:11.849  3566  3603 I TestRunner: finished: creationOpensEditorAndBackSavesBeforeReturningHome(com.blackice.bc1.HomeBrowserTest)
+10-24 06:27:11.869  3566  3603 I TestRunner: started: invalidBundleDoesNotChangeProjectInventory(com.blackice.bc1.HomeBrowserTest)
+10-24 06:27:12.012  3566  3603 I TestRunner: finished: invalidBundleDoesNotChangeProjectInventory(com.blackice.bc1.HomeBrowserTest)
+10-24 06:27:12.016  3566  3603 I TestRunner: started: damagedProjectsRemainVisible(com.blackice.bc1.HomeBrowserTest)
+10-24 06:27:12.033  3566  3603 I TestRunner: finished: damagedProjectsRemainVisible(com.blackice.bc1.HomeBrowserTest)
+10-24 06:27:12.034  3566  3603 I TestRunner: started: bundleRestoresIndependentProjectAndMedia(com.blackice.bc1.HomeBrowserTest)
+10-24 06:27:12.158  3566  3603 I TestRunner: finished: bundleRestoresIndependentProjectAndMedia(com.blackice.bc1.HomeBrowserTest)
+10-24 06:27:12.159  3566  3603 I TestRunner: started: menuSearchNavigationResizeAndScreenshots(com.blackice.bc1.HomeBrowserTest)
+10-24 06:27:22.102  3566  3603 I TestRunner: finished: menuSearchNavigationResizeAndScreenshots(com.blackice.bc1.HomeBrowserTest)
+10-24 06:27:22.131  3566  3603 I TestRunner: started: duplicateRenameDeletePreserveEditsAndSource(com.blackice.bc1.HomeBrowserTest)
+10-24 06:27:22.189  3566  3603 I TestRunner: finished: duplicateRenameDeletePreserveEditsAndSource(com.blackice.bc1.HomeBrowserTest)
+10-24 06:27:22.191  3566  3603 I TestRunner: started: rotationReleaseSurvivesPanelRebuildAndUndo(com.blackice.bc1.LandscapeStabilityTest)
+10-24 06:27:23.339  3566  5311 D BC1Live : frame at 0 waits for a surface
+10-24 06:27:23.362  3566  5311 D BC1Live : surface attached
+10-24 06:27:23.947  3566  5311 D BC1Live : slow frame: setup 119 ms, open+prepare 0 ms, latch 0 ms, draw 1 ms, swap 220 ms
+10-24 06:27:23.947  3566  5311 D BC1Live : frame 1 at 0 ms took 342 ms, 0 sources open
+10-24 06:27:29.694  3566  3603 I TestRunner: finished: rotationReleaseSurvivesPanelRebuildAndUndo(com.blackice.bc1.LandscapeStabilityTest)
+10-24 06:27:29.703  3566  3603 I TestRunner: started: exportHonoursOrderVisibilityAndTransforms(com.blackice.bc1.LayerRenderingTest)
+10-24 06:27:52.422  3566  3603 I TestRunner: finished: exportHonoursOrderVisibilityAndTransforms(com.blackice.bc1.LayerRenderingTest)
+10-24 06:27:52.423  3566  3603 I TestRunner: started: soloIsolatesOnlyInPreview(com.blackice.bc1.LayerRenderingTest)
+10-24 06:28:01.021  3566  3603 I TestRunner: finished: soloIsolatesOnlyInPreview(com.blackice.bc1.LayerRenderingTest)
+10-24 06:28:01.022  3566  3603 I TestRunner: started: emptyProjectShapeSheetPreservesFrameAndPersistsVectors(com.blackice.bc1.MobileSheetTest)
+10-24 06:28:05.282  3566  5814 D BC1Live : frame at 0 waits for a surface
+10-24 06:28:05.290  3566  5814 D BC1Live : frame at 0 waits for a surface
+10-24 06:28:05.292  3566  5814 D BC1Live : frame at 500 waits for a surface
+10-24 06:28:05.318  3566  5814 D BC1Live : surface attached
+10-24 06:28:05.744  3566  5814 D BC1Live : slow frame: setup 211 ms, open+prepare 0 ms, latch 0 ms, draw 8 ms, swap 197 ms
+10-24 06:28:05.744  3566  5814 D BC1Live : frame 1 at 500 ms took 417 ms, 0 sources open
+10-24 06:28:06.110  3566  5826 D BC1Live : frame at 500 waits for a surface
+10-24 06:28:06.112  3566  5826 D BC1Live : surface attached
+10-24 06:28:06.322  3566  5826 D BC1Live : frame 1 at 500 ms took 144 ms, 0 sources open
+10-24 06:28:07.993  3566  3603 I TestRunner: finished: emptyProjectShapeSheetPreservesFrameAndPersistsVectors(com.blackice.bc1.MobileSheetTest)
+10-24 06:28:08.013  3566  3603 I TestRunner: started: mediaBrowserHasSpaceAndReturnsToEditingWithoutProjectLoss(com.blackice.bc1.PhoneMediaSpaceTest)
+10-24 06:28:09.789  3566  5948 D BC1Live : frame at 0 waits for a surface
+10-24 06:28:09.814  3566  5948 D BC1Live : surface attached
+10-24 06:28:10.387  3566  5948 D BC1Live : layer program 0 compiled in 128 ms
+10-24 06:28:12.907  3566  5948 D BC1Live : slow frame: setup 231 ms, open+prepare 69 ms, latch 0 ms, draw 2603 ms, swap 44 ms
+10-24 06:28:12.907  3566  5948 D BC1Live : frame 1 at 0 ms took 2948 ms, 1 sources open
+10-24 06:28:13.030  3566  5956 D BC1Live : frame at 0 waits for a surface
+10-24 06:28:13.033  3566  5956 D BC1Live : surface attached
+10-24 06:28:13.384  3566  5956 D BC1Live : layer program 0 compiled in 312 ms
+10-24 06:28:15.686  3566  5956 D BC1Live : slow frame: setup 13 ms, open+prepare 14 ms, latch 0 ms, draw 2557 ms, swap 57 ms
+10-24 06:28:15.687  3566  5956 D BC1Live : frame 1 at 0 ms took 2643 ms, 1 sources open
+10-24 06:28:21.095  3566  6021 D BC1Live : frame at 0 waits for a surface
+10-24 06:28:21.109  3566  6021 D BC1Live : surface attached
+10-24 06:28:21.480  3566  6021 D BC1Live : layer program 0 compiled in 138 ms
+10-24 06:28:24.758  3566  6021 D BC1Live : slow frame: setup 106 ms, open+prepare 7 ms, latch 0 ms, draw 3285 ms, swap 130 ms
+10-24 06:28:24.758  3566  6021 D BC1Live : frame 1 at 0 ms took 3530 ms, 1 sources open
+10-24 06:28:25.040  3566  6035 D BC1Live : frame at 0 waits for a surface
+10-24 06:28:25.045  3566  6035 D BC1Live : surface attached
+10-24 06:28:25.441  3566  6035 D BC1Live : layer program 0 compiled in 209 ms
+10-24 06:28:28.338  3566  6035 D BC1Live : slow frame: setup 77 ms, open+prepare 6 ms, latch 0 ms, draw 3028 ms, swap 78 ms
+10-24 06:28:28.346  3566  6035 D BC1Live : frame 1 at 0 ms took 3198 ms, 1 sources open
+10-24 06:28:28.799  3566  3603 I TestRunner: finished: mediaBrowserHasSpaceAndReturnsToEditingWithoutProjectLoss(com.blackice.bc1.PhoneMediaSpaceTest)
+10-24 06:28:28.838  3566  3603 I TestRunner: started: cancellationCacheReuseAndEditInvalidation(com.blackice.bc1.PreviewProxyTest)
+10-24 06:28:37.705  3566  3603 I TestRunner: finished: cancellationCacheReuseAndEditInvalidation(com.blackice.bc1.PreviewProxyTest)
+10-24 06:28:37.706  3566  3603 I TestRunner: started: fastScrubbingKeepsTheLivePreviewWorking(com.blackice.bc1.PreviewScrubTest)
+10-24 06:28:39.617  3566  6185 D BC1Live : frame at 0 waits for a surface
+10-24 06:28:39.625  3566  6185 D BC1Live : surface attached
+10-24 06:28:40.620  3566  6185 D BC1Live : layer program 0 compiled in 360 ms
+10-24 06:28:43.905  3566  6185 D BC1Live : slow frame: setup 33 ms, open+prepare 363 ms, latch 78 ms, draw 3550 ms, swap 92 ms
+10-24 06:28:43.905  3566  6185 D BC1Live : frame 1 at 0 ms took 4120 ms, 1 sources open
+10-24 06:28:44.587  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 533 ms, latch 27 ms, draw 22 ms, swap 22 ms
+10-24 06:28:44.587  3566  6185 D BC1Live : frame 2 at 1510 ms took 606 ms, 1 sources open
+10-24 06:28:45.102  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 469 ms, latch 1 ms, draw 19 ms, swap 24 ms
+10-24 06:28:45.102  3566  6185 D BC1Live : frame 3 at 2944 ms took 515 ms, 1 sources open
+10-24 06:28:46.072  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 927 ms, latch 0 ms, draw 39 ms, swap 1 ms
+10-24 06:28:46.095  3566  6185 D BC1Live : frame 4 at 903 ms took 992 ms, 1 sources open
+10-24 06:28:46.937  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 819 ms, latch 0 ms, draw 19 ms, swap 3 ms
+10-24 06:28:46.938  3566  6185 D BC1Live : frame 5 at 779 ms took 842 ms, 1 sources open
+10-24 06:28:47.517  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 541 ms, latch 2 ms, draw 31 ms, swap 2 ms
+10-24 06:28:47.517  3566  6185 D BC1Live : frame 6 at 2970 ms took 577 ms, 1 sources open
+10-24 06:28:48.234  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 672 ms, latch 8 ms, draw 29 ms, swap 5 ms
+10-24 06:28:48.234  3566  6185 D BC1Live : frame 7 at 689 ms took 716 ms, 1 sources open
+10-24 06:28:48.853  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 595 ms, latch 0 ms, draw 16 ms, swap 6 ms
+10-24 06:28:48.853  3566  6185 D BC1Live : frame 8 at 231 ms took 619 ms, 1 sources open
+10-24 06:28:49.709  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 830 ms, latch 5 ms, draw 18 ms, swap 0 ms
+10-24 06:28:49.709  3566  6185 D BC1Live : frame 9 at 2144 ms took 856 ms, 1 sources open
+10-24 06:28:51.376  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 1604 ms, latch 0 ms, draw 40 ms, swap 20 ms
+10-24 06:28:51.376  3566  6185 D BC1Live : frame 10 at 1739 ms took 1666 ms, 1 sources open
+10-24 06:28:51.634  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 132 ms, latch 51 ms, draw 46 ms, swap 24 ms
+10-24 06:28:51.634  3566  6185 D BC1Live : frame 11 at 2212 ms took 257 ms, 1 sources open
+10-24 06:28:53.746  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 1780 ms, latch 0 ms, draw 35 ms, swap 2 ms
+10-24 06:28:53.746  3566  6185 D BC1Live : frame 14 at 3006 ms took 1819 ms, 1 sources open
+10-24 06:28:55.086  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 1321 ms, latch 0 ms, draw 14 ms, swap 4 ms
+10-24 06:28:55.087  3566  6185 D BC1Live : frame 15 at 2546 ms took 1341 ms, 1 sources open
+10-24 06:28:55.493  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 324 ms, latch 0 ms, draw 67 ms, swap 13 ms
+10-24 06:28:55.494  3566  6185 D BC1Live : frame 16 at 3 ms took 406 ms, 1 sources open
+10-24 06:28:56.246  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 397 ms, latch 1 ms, draw 79 ms, swap 34 ms
+10-24 06:28:56.246  3566  6185 D BC1Live : frame 18 at 1385 ms took 513 ms, 1 sources open
+10-24 06:28:56.716  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 450 ms, latch 0 ms, draw 16 ms, swap 2 ms
+10-24 06:28:56.718  3566  6185 D BC1Live : frame 19 at 2943 ms took 471 ms, 1 sources open
+10-24 06:28:57.975  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 1220 ms, latch 0 ms, draw 23 ms, swap 11 ms
+10-24 06:28:57.975  3566  6185 D BC1Live : frame 20 at 1680 ms took 1256 ms, 1 sources open
+10-24 06:28:58.135  3566  6185 D BC1Live : frame 21 at 1795 ms took 159 ms, 1 sources open
+10-24 06:28:58.396  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 149 ms, latch 95 ms, draw 16 ms, swap 0 ms
+10-24 06:28:58.397  3566  6185 D BC1Live : frame 22 at 2534 ms took 261 ms, 1 sources open
+10-24 06:29:00.304  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 1704 ms, latch 0 ms, draw 17 ms, swap 2 ms
+10-24 06:29:00.304  3566  6185 D BC1Live : frame 25 at 2959 ms took 1725 ms, 1 sources open
+10-24 06:29:00.343  3566  3603 I BC1Preview: test: last scrub target 2029
+10-24 06:29:00.890  3566  6185 D BC1Live : slow frame: setup 0 ms, open+prepare 568 ms, latch 0 ms, draw 15 ms, swap 0 ms
+10-24 06:29:00.890  3566  6185 D BC1Live : frame 26 at 1869 ms took 585 ms, 1 sources open
+10-24 06:29:01.889  3566  3603 I TestRunner: finished: fastScrubbingKeepsTheLivePreviewWorking(com.blackice.bc1.PreviewScrubTest)
+10-24 06:29:01.891  3566  3603 I TestRunner: started: scrollingUnderCenteredPlayheadShowsPixelsWithoutPressingPlay(com.blackice.bc1.PreviewScrubTest)
+10-24 06:29:02.078  3566  6308 D BC1Live : frame at 0 waits for a surface
+10-24 06:29:02.105  3566  6308 D BC1Live : surface attached
+10-24 06:29:03.251  3566  6308 D BC1Live : layer program 0 compiled in 634 ms
+10-24 06:29:06.146  3566  6308 D BC1Live : slow frame: setup 125 ms, open+prepare 355 ms, latch 5 ms, draw 3366 ms, swap 175 ms
+10-24 06:29:06.146  3566  6308 D BC1Live : frame 1 at 0 ms took 4028 ms, 1 sources open
+10-24 06:29:06.415  3566  6308 D BC1Live : slow frame: setup 0 ms, open+prepare 241 ms, latch 1 ms, draw 18 ms, swap 6 ms
+10-24 06:29:06.415  3566  6308 D BC1Live : frame 2 at 1000 ms took 268 ms, 1 sources open
+10-24 06:29:12.575  3566  6308 D BC1Live : slow frame: setup 0 ms, open+prepare 5792 ms, latch 0 ms, draw 73 ms, swap 60 ms
+10-24 06:29:12.575  3566  6308 D BC1Live : frame 3 at 4000 ms took 5927 ms, 1 sources open
+10-24 06:29:26.475  3566  3566 D BC1Preview: state 2 pos=4000 playhead=4000
+10-24 06:29:27.010  3566  3566 D BC1Preview: state 3 pos=4010 playhead=4000
+10-24 06:29:27.784  3566  6308 D BC1Live : slow frame: setup 0 ms, open+prepare 577 ms, latch 0 ms, draw 16 ms, swap 0 ms
+10-24 06:29:27.784  3566  6308 D BC1Live : frame 5 at 4000 ms took 595 ms, 1 sources open
+10-24 06:29:28.954  3566  6308 D BC1Live : slow frame: setup 0 ms, open+prepare 989 ms, latch 2 ms, draw 95 ms, swap 83 ms
+10-24 06:29:28.954  3566  6308 D BC1Live : frame 6 at 1000 ms took 1170 ms, 1 sources open
+10-24 06:29:29.797  3566  3603 I TestRunner: finished: scrollingUnderCenteredPlayheadShowsPixelsWithoutPressingPlay(com.blackice.bc1.PreviewScrubTest)
+10-24 06:29:29.798  3566  3603 I TestRunner: started: separateInstancesPreserveEveryCompletedSaveWhileReading(com.blackice.bc1.ProjectStoreConcurrencyTest)
+10-24 06:29:33.605  3566  3603 I TestRunner: finished: separateInstancesPreserveEveryCompletedSaveWhileReading(com.blackice.bc1.ProjectStoreConcurrencyTest)
+10-24 06:29:33.607  3566  3603 I TestRunner: started: dragLeavesGapsMovesBetweenRowsAndDropsMedia(com.blackice.bc1.TimelineDragTest)
+10-24 06:29:34.744  3566  6644 D BC1Live : frame at 0 waits for a surface
+10-24 06:29:34.747  3566  6644 D BC1Live : surface attached
+10-24 06:29:35.162  3566  6644 D BC1Live : layer program 0 compiled in 219 ms
+10-24 06:29:37.087  3566  6644 D BC1Live : slow frame: setup 82 ms, open+prepare 30 ms, latch 0 ms, draw 2095 ms, swap 45 ms
+10-24 06:29:37.087  3566  6644 D BC1Live : frame 1 at 0 ms took 2257 ms, 1 sources open
+10-24 06:29:39.272  3566  3603 I TestRunner: finished: dragLeavesGapsMovesBetweenRowsAndDropsMedia(com.blackice.bc1.TimelineDragTest)
+10-24 06:29:39.313  3566  3603 I TestRunner: started: phoneAndDexGesturesHistoryAndSaveReopen(com.blackice.bc1.TimelineInteractionTest)
+10-24 06:29:41.965  3566  6733 D BC1Live : frame at 0 waits for a surface
+10-24 06:29:42.021  3566  6733 D BC1Live : surface attached
+10-24 06:29:42.500  3566  6733 D BC1Live : layer program 0 compiled in 201 ms
+10-24 06:29:45.552  3566  6733 D BC1Live : slow frame: setup 13 ms, open+prepare 92 ms, latch 0 ms, draw 3185 ms, swap 68 ms
+10-24 06:29:45.552  3566  6733 D BC1Live : frame 1 at 0 ms took 3359 ms, 1 sources open
+10-24 06:29:52.398  3566  6773 D BC1Live : frame at 500 waits for a surface
+10-24 06:29:52.401  3566  6773 D BC1Live : surface attached
+10-24 06:29:52.871  3566  6773 D BC1Live : layer program 0 compiled in 279 ms
+10-24 06:29:55.172  3566  6773 D BC1Live : slow frame: setup 162 ms, open+prepare 4 ms, latch 0 ms, draw 2509 ms, swap 70 ms
+10-24 06:29:55.182  3566  6773 D BC1Live : frame 1 at 500 ms took 2756 ms, 1 sources open
+10-24 06:29:57.092  3566  6818 D BC1Live : frame at 0 waits for a surface
+10-24 06:29:57.110  3566  6818 D BC1Live : surface attached
+10-24 06:29:57.621  3566  6818 D BC1Live : layer program 0 compiled in 112 ms
+10-24 06:29:59.693  3566  6818 D BC1Live : slow frame: setup 104 ms, open+prepare 199 ms, latch 0 ms, draw 2137 ms, swap 47 ms
+10-24 06:29:59.694  3566  6818 D BC1Live : frame 1 at 0 ms took 2488 ms, 1 sources open
+10-24 06:30:05.141  3566  6863 D BC1Live : frame at 500 waits for a surface
+10-24 06:30:05.148  3566  6863 D BC1Live : surface attached
+10-24 06:30:05.631  3566  6863 D BC1Live : layer program 0 compiled in 311 ms
+10-24 06:30:07.896  3566  6863 D BC1Live : slow frame: setup 150 ms, open+prepare 9 ms, latch 0 ms, draw 2427 ms, swap 148 ms
+10-24 06:30:07.896  3566  6863 D BC1Live : frame 1 at 500 ms took 2736 ms, 1 sources open
+10-24 06:30:09.246  3566  3603 I TestRunner: finished: phoneAndDexGesturesHistoryAndSaveReopen(com.blackice.bc1.TimelineInteractionTest)
+10-24 06:30:09.248  3566  3603 I TestRunner: started: controlsUseLiveTransactionsAndKeepIndependentKeys(com.blackice.bc1.TransformControlsTest)
+10-24 06:30:10.582  3566  6949 D BC1Live : frame at 0 waits for a surface
+10-24 06:30:10.592  3566  6949 D BC1Live : surface attached
+10-24 06:30:11.082  3566  6949 D BC1Live : layer program 0 compiled in 151 ms
+10-24 06:30:14.021  3566  6949 D BC1Live : slow frame: setup 225 ms, open+prepare 13 ms, latch 0 ms, draw 3030 ms, swap 59 ms
+10-24 06:30:14.021  3566  6949 D BC1Live : frame 1 at 0 ms took 3328 ms, 1 sources open
+10-24 06:30:15.164  3566  6949 D BC1Live : slow frame: setup 0 ms, open+prepare 0 ms, latch 0 ms, draw 287 ms, swap 123 ms
+10-24 06:30:15.164  3566  6949 D BC1Live : frame 2 at 0 ms took 410 ms, 1 sources open
+10-24 06:30:16.527  3566  6949 D BC1Live : surface attached
+10-24 06:30:17.005  3566  6992 D BC1Live : frame at 0 waits for a surface
+10-24 06:30:17.037  3566  6992 D BC1Live : surface attached
+10-24 06:30:17.691  3566  6992 D BC1Live : layer program 0 compiled in 324 ms
+10-24 06:30:21.001  3566  6992 D BC1Live : slow frame: setup 155 ms, open+prepare 4 ms, latch 0 ms, draw 3588 ms, swap 45 ms
+10-24 06:30:21.001  3566  6992 D BC1Live : frame 1 at 0 ms took 3793 ms, 1 sources open
+10-24 06:30:21.231  3566  7010 D BC1Live : frame at 0 waits for a surface
+10-24 06:30:21.244  3566  7010 D BC1Live : surface attached
+10-24 06:30:21.678  3566  7010 D BC1Live : layer program 0 compiled in 246 ms
+10-24 06:30:23.713  3566  7010 D BC1Live : slow frame: setup 172 ms, open+prepare 4 ms, latch 0 ms, draw 2227 ms, swap 51 ms
+10-24 06:30:23.713  3566  7010 D BC1Live : frame 1 at 0 ms took 2457 ms, 1 sources open
+10-24 06:30:28.020  3566  3603 I TestRunner: finished: controlsUseLiveTransactionsAndKeepIndependentKeys(com.blackice.bc1.TransformControlsTest)
+10-24 06:30:28.050  3566  3603 I TestRunner: started: extractedAudioLayerOffsetsAndFadesInExport(com.blackice.bc1.VideoEditorTest)
+10-24 06:30:35.160  3566  3603 I TestRunner: finished: extractedAudioLayerOffsetsAndFadesInExport(com.blackice.bc1.VideoEditorTest)
+10-24 06:30:35.162  3566  3603 I TestRunner: started: everyVideoTransitionExportsCorrectEndpointsAndMidpoint(com.blackice.bc1.VideoEditorTest)
+10-24 06:31:46.480  3566  3603 I TestRunner: finished: everyVideoTransitionExportsCorrectEndpointsAndMidpoint(com.blackice.bc1.VideoEditorTest)
+10-24 06:31:46.482  3566  3603 I TestRunner: started: missingMediaRecordsRedactedCauseAndNextExportRecovers(com.blackice.bc1.VideoEditorTest)
+10-24 06:31:48.777  3566  3566 E BC1Export: Export failed
+10-24 06:31:48.777  3566  3566 E BC1Export: androidx.media3.transformer.ExportException: Asset loader error
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.transformer.ExoPlayerAssetLoader$PlayerListener.onPlayerError(ExoPlayerAssetLoader.java:517)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl.lambda$updatePlaybackInfo$21(ExoPlayerImpl.java:2387)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl$$ExternalSyntheticLambda34.invoke(D8$$SyntheticClass:0)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.common.util.ListenerSet$ListenerHolder.invoke(ListenerSet.java:466)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.common.util.ListenerSet.lambda$queueEvent$0(ListenerSet.java:334)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.common.util.ListenerSet$$ExternalSyntheticLambda1.run(D8$$SyntheticClass:0)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.common.util.ListenerSet.flushEvents(ListenerSet.java:358)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl.updatePlaybackInfo(ExoPlayerImpl.java:2450)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl.handlePlaybackInfo(ExoPlayerImpl.java:2273)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl.lambda$new$1$androidx-media3-exoplayer-ExoPlayerImpl(ExoPlayerImpl.java:375)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImpl$$ExternalSyntheticLambda13.run(D8$$SyntheticClass:0)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at android.os.Handler.handleCallback(Handler.java:959)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at android.os.Handler.dispatchMessage(Handler.java:100)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at android.os.Looper.loopOnce(Looper.java:232)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at android.os.Looper.loop(Looper.java:317)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+10-24 06:31:48.777  3566  3566 E BC1Export: Caused by: androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:1021)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:993)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at android.os.Handler.dispatchMessage(Handler.java:103)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	... 3 more
+10-24 06:31:48.777  3566  3566 E BC1Export: Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: /data/user/0/com.blackice.bc1.preview/cache/private-missing-video.mp4: open failed: ENOENT (No such file or directory)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:203)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:113)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:277)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:89)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1298)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:453)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at java.lang.Thread.run(Thread.java:1012)
+10-24 06:31:48.777  3566  3566 E BC1Export: Caused by: java.io.FileNotFoundException: /data/user/0/com.blackice.bc1.preview/cache/private-missing-video.mp4: open failed: ENOENT (No such file or directory)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at libcore.io.IoBridge.open(IoBridge.java:574)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:183)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	... 8 more
+10-24 06:31:48.777  3566  3566 E BC1Export: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at libcore.io.Linux.open(Native Method)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:563)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:563)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at android.app.ActivityThread$AndroidOs.open(ActivityThread.java:8591)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	at libcore.io.IoBridge.open(IoBridge.java:560)
+10-24 06:31:48.777  3566  3566 E BC1Export: 	... 12 more
+10-24 06:32:21.180  3566  3603 I TestRunner: finished: missingMediaRecordsRedactedCauseAndNextExportRecovers(com.blackice.bc1.VideoEditorTest)
+10-24 06:32:21.182  3566  3603 I TestRunner: started: projectBundlesRoundTripMediaAndRejectTraversal(com.blackice.bc1.VideoEditorTest)
+10-24 06:32:21.300  3566  3603 I TestRunner: finished: projectBundlesRoundTripMediaAndRejectTraversal(com.blackice.bc1.VideoEditorTest)
+10-24 06:32:21.310  3566  3603 I TestRunner: started: corruptOrFutureProjectDoesNotReplaceSavedProject(com.blackice.bc1.VideoEditorTest)
+10-24 06:32:21.357  3566  3603 I TestRunner: finished: corruptOrFutureProjectDoesNotReplaceSavedProject(com.blackice.bc1.VideoEditorTest)
+10-24 06:32:21.361  3566  3603 I TestRunner: started: projectRoundTripEditsMusicTextAnd1080pExport(com.blackice.bc1.VideoEditorTest)
+10-24 06:32:21.421  3566  3603 I BC1ExportTest: 1080p service export iteration 0
+10-24 06:32:59.833  3566  3603 I BC1ExportTest: 1080p service export iteration 1
+10-24 06:33:37.546  3566  3603 I BC1ExportTest: 1080p service export iteration 2
+10-24 06:34:19.082  3566  3603 I TestRunner: finished: projectRoundTripEditsMusicTextAnd1080pExport(com.blackice.bc1.VideoEditorTest)
+10-24 06:34:19.084  3566  3603 I TestRunner: started: previewSeeksAfterTrimAcrossBothTracks(com.blackice.bc1.VideoEditorTest)
+10-24 06:34:29.162  3566  3603 I TestRunner: finished: previewSeeksAfterTrimAcrossBothTracks(com.blackice.bc1.VideoEditorTest)
+10-24 06:34:29.170  3566  3603 I TestRunner: started: videoEffectsAndTimedImageOverlayReachTheExport(com.blackice.bc1.VideoEditorTest)
+10-24 06:34:40.975  3566  3603 I TestRunner: finished: videoEffectsAndTimedImageOverlayReachTheExport(com.blackice.bc1.VideoEditorTest)
+10-24 06:34:40.976  3566  3603 I TestRunner: started: audioWaveformDecodesRealPeaks(com.blackice.bc1.VideoEditorTest)
+10-24 06:34:41.017  3566  3603 I TestRunner: finished: audioWaveformDecodesRealPeaks(com.blackice.bc1.VideoEditorTest)
+10-24 06:34:41.018  3566  3603 I TestRunner: started: independentLayerKeyframesCompositeAndChromaKey(com.blackice.bc1.VideoEditorTest)
+10-24 06:34:58.906  3566  3603 I TestRunner: finished: independentLayerKeyframesCompositeAndChromaKey(com.blackice.bc1.VideoEditorTest)
+10-24 06:34:58.907  3566  3603 I TestRunner: started: foregroundExportCanBeCancelledWithoutPublishing(com.blackice.bc1.VideoEditorTest)
+10-24 06:35:01.592  3566  3603 I TestRunner: finished: foregroundExportCanBeCancelledWithoutPublishing(com.blackice.bc1.VideoEditorTest)
+10-24 06:35:01.595  3566  3603 I TestRunner: started: speedAndTextStyleSurviveReopenAndExport(com.blackice.bc1.VideoEditorTest)
+10-24 06:35:12.188  3566  3603 I TestRunner: finished: speedAndTextStyleSurviveReopenAndExport(com.blackice.bc1.VideoEditorTest)
+10-24 06:35:12.189  3566  3603 I TestRunner: started: landmarksShortcutsClockAndResponsiveMedia(com.blackice.bc1.WorkflowControlsTest)
+10-24 06:35:17.169  3566  9621 D BC1Live : frame at 0 waits for a surface
+10-24 06:35:17.173  3566  9621 D BC1Live : surface attached
+10-24 06:35:17.534  3566  9621 D BC1Live : slow frame: setup 152 ms, open+prepare 0 ms, latch 0 ms, draw 1 ms, swap 196 ms
+10-24 06:35:17.535  3566  9621 D BC1Live : frame 1 at 0 ms took 350 ms, 0 sources open
+10-24 06:35:17.930  3566  9621 D BC1Live : surface attached
+10-24 06:35:18.560  3566  9646 D BC1Live : frame at 0 waits for a surface
+10-24 06:35:18.581  3566  9646 D BC1Live : surface attached
+10-24 06:35:19.239  3566  9646 D BC1Live : slow frame: setup 236 ms, open+prepare 0 ms, latch 0 ms, draw 1 ms, swap 172 ms
+10-24 06:35:19.239  3566  9646 D BC1Live : frame 1 at 0 ms took 411 ms, 0 sources open
+10-24 06:35:19.439  3566  9660 D BC1Live : frame at 0 waits for a surface
+10-24 06:35:19.458  3566  9660 D BC1Live : surface attached
+10-24 06:35:19.831  3566  9660 D BC1Live : slow frame: setup 48 ms, open+prepare 0 ms, latch 0 ms, draw 1 ms, swap 233 ms
+10-24 06:35:19.831  3566  9660 D BC1Live : frame 1 at 0 ms took 284 ms, 0 sources open
+10-24 06:35:24.371  3566  3603 I TestRunner: finished: landmarksShortcutsClockAndResponsiveMedia(com.blackice.bc1.WorkflowControlsTest)
+10-24 06:35:24.382  3566  3603 I TestRunner: started: measureSearchBurstAndScrolling(com.blackice.bc1.WorkspacePerformanceProbeTest)
+10-24 06:35:31.206  3566  3603 I BC1Performance: PERFORMANCE phase=current layout=landscape-project-media searchBurstMs=365 frames=61 over16ms=61 p95ms=100.326122 uiP95ms=2.68799
+10-24 06:35:38.442  3566  3603 I BC1Performance: PERFORMANCE phase=current layout=portrait-settings searchBurstMs=-1 frames=62 over16ms=62 p95ms=133.948885 uiP95ms=1.968384
+10-24 06:35:38.794  3566  3603 I TestRunner: finished: measureSearchBurstAndScrolling(com.blackice.bc1.WorkspacePerformanceProbeTest)
+10-24 06:35:38.812  3566  3603 I TestRunner: started: emulatorWorkspacesKeepMonitorAndToolsUsable(com.blackice.bc1.WorkspaceTest)
+10-24 06:35:50.046  3566  3603 I TestRunner: finished: emulatorWorkspacesKeepMonitorAndToolsUsable(com.blackice.bc1.WorkspaceTest)
+10-24 06:35:50.049  3566  3603 I TestRunner: started: addDrawerPanelsLayersAndKeyframesOnPhoneAndDex(com.blackice.bc1.WorkspaceV2Test)
+10-24 06:35:50.923  3566 10014 D BC1Live : frame at 0 waits for a surface
+10-24 06:35:50.966  3566 10014 D BC1Live : surface attached
+10-24 06:35:51.640  3566 10014 D BC1Live : layer program 0 compiled in 157 ms
+10-24 06:35:54.398  3566 10014 D BC1Live : slow frame: setup 256 ms, open+prepare 9 ms, latch 0 ms, draw 2878 ms, swap 37 ms
+10-24 06:35:54.398  3566 10014 D BC1Live : frame 1 at 0 ms took 3182 ms, 1 sources open
+10-24 06:35:54.676  3566 10014 D BC1Live : slow frame: setup 0 ms, open+prepare 0 ms, latch 0 ms, draw 18 ms, swap 258 ms
+10-24 06:35:54.676  3566 10014 D BC1Live : frame 2 at 2500 ms took 277 ms, 1 sources open
+10-24 06:35:55.432  3566 10014 D BC1Live : slow frame: setup 0 ms, open+prepare 0 ms, latch 0 ms, draw 266 ms, swap 74 ms
+10-24 06:35:55.433  3566 10014 D BC1Live : frame 3 at 2500 ms took 342 ms, 1 sources open
+10-24 06:35:56.387  3566 10033 D BC1Live : frame at 2500 waits for a surface
+10-24 06:35:56.390  3566 10033 D BC1Live : surface attached
+10-24 06:35:56.778  3566 10033 D BC1Live : layer program 0 compiled in 216 ms
+10-24 06:35:58.794  3566 10033 D BC1Live : slow frame: setup 154 ms, open+prepare 4 ms, latch 0 ms, draw 2180 ms, swap 51 ms
+10-24 06:35:58.794  3566 10033 D BC1Live : frame 1 at 2500 ms took 2391 ms, 1 sources open
+10-24 06:35:59.970  3566 10076 D BC1Live : frame at 0 waits for a surface
+10-24 06:36:00.006  3566 10076 D BC1Live : surface attached
+10-24 06:36:00.608  3566 10076 D BC1Live : layer program 0 compiled in 281 ms
+10-24 06:36:03.014  3566 10076 D BC1Live : slow frame: setup 105 ms, open+prepare 6 ms, latch 0 ms, draw 2579 ms, swap 107 ms
+10-24 06:36:03.014  3566 10076 D BC1Live : frame 1 at 0 ms took 2798 ms, 1 sources open
+10-24 06:36:05.681  3566 10094 D BC1Live : frame at 2500 waits for a surface
+10-24 06:36:05.689  3566 10094 D BC1Live : surface attached
+10-24 06:36:05.944  3566 10094 D BC1Live : layer program 0 compiled in 96 ms
+10-24 06:36:08.724  3566 10094 D BC1Live : slow frame: setup 140 ms, open+prepare 3 ms, latch 0 ms, draw 2790 ms, swap 86 ms
+10-24 06:36:08.725  3566 10094 D BC1Live : frame 1 at 2500 ms took 3020 ms, 1 sources open
+10-24 06:36:09.676  3566  3603 I TestRunner: finished: addDrawerPanelsLayersAndKeyframesOnPhoneAndDex(com.blackice.bc1.WorkspaceV2Test)
+10-24 06:36:09.678  3566  3603 I TestRunner: started: realMedia3WatchdogRecoversOnceWithCorrectFramesAndCache(com.blackice.bc1.editor.PreviewRecoveryTest)
+10-24 06:36:10.707  3566  3566 E BC1Preview: Playback proxy failed (request=1, generation=1)
+10-24 06:36:10.707  3566  3566 E BC1Preview: androidx.media3.transformer.ExportException: Muxer error
+10-24 06:36:10.707  3566  3566 E BC1Preview: 	at androidx.media3.transformer.Transformer.lambda$maybeInitializeExportWatchdogTimer$0$androidx-media3-transformer-Transformer(Transformer.java:1301)
+10-24 06:36:10.707  3566  3566 E BC1Preview: 	at androidx.media3.transformer.Transformer$$ExternalSyntheticLambda1.onTimeout(D8$$SyntheticClass:0)
+10-24 06:36:10.707  3566  3566 E BC1Preview: 	at androidx.media3.transformer.WatchdogTimer$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+10-24 06:36:10.707  3566  3566 E BC1Preview: 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:487)
+10-24 06:36:10.707  3566  3566 E BC1Preview: 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+10-24 06:36:10.707  3566  3566 E BC1Preview: 	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:307)
+10-24 06:36:10.707  3566  3566 E BC1Preview: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+10-24 06:36:10.707  3566  3566 E BC1Preview: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+10-24 06:36:10.707  3566  3566 E BC1Preview: 	at java.lang.Thread.run(Thread.java:1012)
+10-24 06:36:10.707  3566  3566 E BC1Preview: Caused by: java.lang.IllegalStateException: Abort: no output sample written in the last 1000 milliseconds. DebugTrace: "Tracing disabled"
+10-24 06:36:10.707  3566  3566 E BC1Preview: 	at androidx.media3.transformer.Transformer.lambda$maybeInitializeExportWatchdogTimer$0$androidx-media3-transformer-Transformer(Transformer.java:1303)
+10-24 06:36:10.707  3566  3566 E BC1Preview: 	... 8 more
+10-24 06:36:10.707  3566  3566 W BC1Preview: Recovering stalled playback proxy with ICE Lite
+10-24 06:36:10.966  3566 10130 D BC1Live : layer program 0 compiled in 95 ms
+10-24 06:36:13.669  3566  3603 I TestRunner: finished: realMedia3WatchdogRecoversOnceWithCorrectFramesAndCache(com.blackice.bc1.editor.PreviewRecoveryTest)
+10-24 06:36:13.671  3566  3603 I TestRunner: started: cancelledRecoveryCannotAffectReplacementOfTheSameProject(com.blackice.bc1.editor.PreviewRecoveryTest)
+10-24 06:36:14.678  3566  3566 E BC1Preview: Playback proxy failed (request=1, generation=1)
+10-24 06:36:14.678  3566  3566 E BC1Preview: androidx.media3.transformer.ExportException: Muxer error
+10-24 06:36:14.678  3566  3566 E BC1Preview: 	at androidx.media3.transformer.Transformer.lambda$maybeInitializeExportWatchdogTimer$0$androidx-media3-transformer-Transformer(Transformer.java:1301)
+10-24 06:36:14.678  3566  3566 E BC1Preview: 	at androidx.media3.transformer.Transformer$$ExternalSyntheticLambda1.onTimeout(D8$$SyntheticClass:0)
+10-24 06:36:14.678  3566  3566 E BC1Preview: 	at androidx.media3.transformer.WatchdogTimer$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+10-24 06:36:14.678  3566  3566 E BC1Preview: 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:487)
+10-24 06:36:14.678  3566  3566 E BC1Preview: 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+10-24 06:36:14.678  3566  3566 E BC1Preview: 	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:307)
+10-24 06:36:14.678  3566  3566 E BC1Preview: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+10-24 06:36:14.678  3566  3566 E BC1Preview: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+10-24 06:36:14.678  3566  3566 E BC1Preview: 	at java.lang.Thread.run(Thread.java:1012)
+10-24 06:36:14.678  3566  3566 E BC1Preview: Caused by: java.lang.IllegalStateException: Abort: no output sample written in the last 1000 milliseconds. DebugTrace: "Tracing disabled"
+10-24 06:36:14.678  3566  3566 E BC1Preview: 	at androidx.media3.transformer.Transformer.lambda$maybeInitializeExportWatchdogTimer$0$androidx-media3-transformer-Transformer(Transformer.java:1303)
+10-24 06:36:14.678  3566  3566 E BC1Preview: 	... 8 more
+10-24 06:36:14.678  3566  3566 W BC1Preview: Recovering stalled playback proxy with ICE Lite
+10-24 06:36:15.691  3566  3566 E BC1Preview: Playback proxy failed (request=3, generation=3)
+10-24 06:36:15.691  3566  3566 E BC1Preview: androidx.media3.transformer.ExportException: Muxer error
+10-24 06:36:15.691  3566  3566 E BC1Preview: 	at androidx.media3.transformer.Transformer.lambda$maybeInitializeExportWatchdogTimer$0$androidx-media3-transformer-Transformer(Transformer.java:1301)
+10-24 06:36:15.691  3566  3566 E BC1Preview: 	at androidx.media3.transformer.Transformer$$ExternalSyntheticLambda1.onTimeout(D8$$SyntheticClass:0)
+10-24 06:36:15.691  3566  3566 E BC1Preview: 	at androidx.media3.transformer.WatchdogTimer$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+10-24 06:36:15.691  3566  3566 E BC1Preview: 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:487)
+10-24 06:36:15.691  3566  3566 E BC1Preview: 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+10-24 06:36:15.691  3566  3566 E BC1Preview: 	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:307)
+10-24 06:36:15.691  3566  3566 E BC1Preview: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+10-24 06:36:15.691  3566  3566 E BC1Preview: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+10-24 06:36:15.691  3566  3566 E BC1Preview: 	at java.lang.Thread.run(Thread.java:1012)
+10-24 06:36:15.691  3566  3566 E BC1Preview: Caused by: java.lang.IllegalStateException: Abort: no output sample written in the last 1000 milliseconds. DebugTrace: "Tracing disabled"
+10-24 06:36:15.691  3566  3566 E BC1Preview: 	at androidx.media3.transformer.Transformer.lambda$maybeInitializeExportWatchdogTimer$0$androidx-media3-transformer-Transformer(Transformer.java:1303)
+10-24 06:36:15.691  3566  3566 E BC1Preview: 	... 8 more
+10-24 06:36:15.692  3566  3566 W BC1Preview: Recovering stalled playback proxy with ICE Lite
+10-24 06:36:15.980  3566 10237 D BC1Live : layer program 0 compiled in 93 ms
+10-24 06:36:19.600  3566  3603 I TestRunner: finished: cancelledRecoveryCannotAffectReplacementOfTheSameProject(com.blackice.bc1.editor.PreviewRecoveryTest)
+10-24 06:36:19.602  3566  3603 I TestRunner: started: hevcExport(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:36:27.327  3566  3603 I TestRunner: finished: hevcExport(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:36:27.328  3566  3603 I TestRunner: started: eightLayerBenchmarkRuns(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:37:20.021  3566  3603 I BC1Bench: ICE Lite benchmark • Google sdk_gphone64_x86_64 • Android 15
+10-24 06:37:20.021  3566  3603 I BC1Bench: 8 layers × 1080p60, 1.0 s timeline
+10-24 06:37:20.021  3566  3603 I BC1Bench: Export speed: 1.2 frames/s (0.02× real time)
+10-24 06:37:20.021  3566  3603 I BC1Bench: Estimated 15-minute export: 755 min
+10-24 06:37:20.021  3566  3603 I BC1Bench: Render passes: 1 • decoder budget 16 • direct layer drawing: yes
+10-24 06:37:20.021  3566  3603 I TestRunner: finished: eightLayerBenchmarkRuns(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:37:20.022  3566  3603 I TestRunner: started: acceptanceExportIsFrameAccurateWithSoundAndTransition(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:37:35.583  3566  3603 I TestRunner: finished: acceptanceExportIsFrameAccurateWithSoundAndTransition(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:37:35.584  3566  3603 I TestRunner: started: highFrameRateSourceSkipsSupersededFrames(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:37:39.548  3566  3603 I TestRunner: finished: highFrameRateSourceSkipsSupersededFrames(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:37:39.549  3566  3603 I TestRunner: started: deviceReportAndBudget(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:37:39.552  3566  3603 I BC1Report: Google sdk_gphone64_x86_64 • Android 15 (API 35)
+10-24 06:37:39.552  3566  3603 I BC1Report: Chip: AOSP ranchu
+10-24 06:37:39.552  3566  3603 I BC1Report: Memory: 2.6 GB
+10-24 06:37:39.552  3566  3603 I BC1Report: 
+10-24 06:37:39.552  3566  3603 I BC1Report: Export presets (encoder support):
+10-24 06:37:39.552  3566  3603 I BC1Report:   1080p60  H.264 no  HEVC no
+10-24 06:37:39.552  3566  3603 I BC1Report:   1080p120  H.264 no  HEVC no
+10-24 06:37:39.552  3566  3603 I BC1Report:   1440p120  H.264 no  HEVC no
+10-24 06:37:39.552  3566  3603 I BC1Report:   2160p60  H.264 no  HEVC no
+10-24 06:37:39.552  3566  3603 I BC1Report:   2160p120  H.264 no  HEVC no
+10-24 06:37:39.552  3566  3603 I BC1Report: A 4K 120 fps request exports as: 1080p30 H.264 (2160p120 is not supported on this device)
+10-24 06:37:39.552  3566  3603 I BC1Report: 
+10-24 06:37:39.552  3566  3603 I BC1Report: Video codecs:
+10-24 06:37:39.552  3566  3603 I BC1Report:   Decoder c2.goldfish.h264.decoder (hardware)
+10-24 06:37:39.552  3566  3603 I BC1Report:     H.264 up to 4096x4096 • 32 instances • 4K60 yes • 4K120 no
+10-24 06:37:39.552  3566  3603 I BC1Report:   Decoder c2.goldfish.hevc.decoder (hardware)
+10-24 06:37:39.552  3566  3603 I BC1Report:     HEVC up to 4096x4096 • 32 instances • 4K60 yes • 4K120 no
+10-24 06:37:39.552  3566  3603 I BC1Report:   Decoder c2.android.avc.decoder (software)
+10-24 06:37:39.552  3566  3603 I BC1Report:     H.264 up to 4080x4080 • 32 instances • 4K60 yes • 4K120 no
+10-24 06:37:39.552  3566  3603 I BC1Report:   Decoder OMX.google.h264.decoder (software)
+10-24 06:37:39.552  3566  3603 I BC1Report:     H.264 up to 4080x4080 • 32 instances • 4K60 yes • 4K120 no
+10-24 06:37:39.552  3566  3603 I BC1Report:   Encoder c2.android.avc.encoder (software)
+10-24 06:37:39.552  3566  3603 I BC1Report:     H.264 up to 2048x2048 • 32 instances • 4K60 no • 4K120 no
+10-24 06:37:39.552  3566  3603 I BC1Report:   Encoder OMX.google.h264.encoder (software)
+10-24 06:37:39.552  3566  3603 I BC1Report:     H.264 up to 2048x2048 • 32 instances • 4K60 no • 4K120 no
+10-24 06:37:39.552  3566  3603 I BC1Report:   Decoder c2.android.hevc.decoder (software)
+10-24 06:37:39.552  3566  3603 I BC1Report:     HEVC up to 4096x4096 • 32 instances • 4K60 no • 4K120 no
+10-24 06:37:39.552  3566  3603 I BC1Report:   Decoder OMX.google.hevc.decoder (software)
+10-24 06:37:39.552  3566  3603 I BC1Report:     HEVC up to 4096x4096 • 32 instances • 4K60 no • 4K120 no
+10-24 06:37:39.552  3566  3603 I BC1Report:   Encoder c2.android.hevc.encoder (software)
+10-24 06:37:39.552  3566  3603 I BC1Report:     HEVC up to 512x512 • 32 instances • 4K60 no • 4K120 no
+10-24 06:37:39.552  3566  3603 I BC1Report: 
+10-24 06:37:39.552  3566  3603 I BC1Report: Reported limits are what the codecs advertise; real throughput with many 4K layers is measured by an export.
+10-24 06:37:39.584  3566  3603 I BC1Report: Decoder budget 16 (instances 16, memory 49)
+10-24 06:37:39.584  3566  3603 I TestRunner: finished: deviceReportAndBudget(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:37:39.585  3566  3603 I TestRunner: started: blackIceEffectsRenderAndChangeThePicture(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:37:39.892  3566  3603 D BC1Live : layer program 0 compiled in 83 ms
+10-24 06:37:41.869  3566  3603 D BC1Live : layer program 12 compiled in 10 ms
+10-24 06:37:43.987  3566  3603 D BC1Live : layer program 13 compiled in 12 ms
+10-24 06:37:45.952  3566  3603 D BC1Live : layer program 14 compiled in 8 ms
+10-24 06:37:49.180  3566  3603 D BC1Live : layer program 15 compiled in 8 ms
+10-24 06:37:51.140  3566  3603 D BC1Live : layer program 16 compiled in 10 ms
+10-24 06:37:53.895  3566  3603 D BC1Live : layer program 17 compiled in 8 ms
+10-24 06:37:55.786  3566  3603 D BC1Live : layer program 18 compiled in 7 ms
+10-24 06:37:58.775  3566  3603 D BC1Live : layer program 19 compiled in 8 ms
+10-24 06:38:01.911  3566  3603 D BC1Live : layer program 20 compiled in 15 ms
+10-24 06:38:04.066  3566  3603 D BC1Live : layer program 21 compiled in 12 ms
+10-24 06:38:06.110  3566  3603 D BC1Live : layer program 22 compiled in 11 ms
+10-24 06:38:08.101  3566  3603 D BC1Live : layer program 23 compiled in 11 ms
+10-24 06:38:10.602  3566  3603 D BC1Live : layer program 24 compiled in 7 ms
+10-24 06:38:12.655  3566  3603 D BC1Live : layer program 25 compiled in 10 ms
+10-24 06:38:14.663  3566  3603 D BC1Live : layer program 26 compiled in 10 ms
+10-24 06:38:16.683  3566  3603 D BC1Live : layer program 27 compiled in 7 ms
+10-24 06:38:18.670  3566  3603 D BC1Live : layer program 28 compiled in 7 ms
+10-24 06:38:20.659  3566  3603 D BC1Live : layer program 29 compiled in 7 ms
+10-24 06:38:23.637  3566  3603 D BC1Live : layer program 30 compiled in 11 ms
+10-24 06:38:25.746  3566  3603 D BC1Live : layer program 31 compiled in 11 ms
+10-24 06:38:27.875  3566  3603 D BC1Live : layer program 32 compiled in 7 ms
+10-24 06:38:30.002  3566  3603 D BC1Live : layer program 33 compiled in 7 ms
+10-24 06:38:32.180  3566  3603 D BC1Live : layer program 34 compiled in 7 ms
+10-24 06:38:34.274  3566  3603 D BC1Live : layer program 35 compiled in 8 ms
+10-24 06:38:36.359  3566  3603 D BC1Live : layer program 36 compiled in 8 ms
+10-24 06:38:38.397  3566  3603 D BC1Live : layer program 37 compiled in 7 ms
+10-24 06:38:41.515  3566  3603 D BC1Live : layer program 38 compiled in 11 ms
+10-24 06:38:43.427  3566  3603 D BC1Live : layer program 39 compiled in 10 ms
+10-24 06:38:46.760  3566  3603 D BC1Live : layer program 40 compiled in 10 ms
+10-24 06:38:48.736  3566  3603 D BC1Live : layer program 41 compiled in 7 ms
+10-24 06:38:50.782  3566  3603 D BC1Live : layer program 42 compiled in 11 ms
+10-24 06:38:53.980  3566  3603 D BC1Live : layer program 43 compiled in 10 ms
+10-24 06:38:56.010  3566  3603 D BC1Live : layer program 44 compiled in 11 ms
+10-24 06:38:58.282  3566  3603 D BC1Live : layer program 45 compiled in 11 ms
+10-24 06:39:00.727  3566  3603 D BC1Live : layer program 46 compiled in 10 ms
+10-24 06:39:02.715  3566  3603 D BC1Live : layer program 47 compiled in 8 ms
+10-24 06:39:04.932  3566  3603 I BC1Effects: Box Blur mean change 11.5
+10-24 06:39:04.985  3566  3603 I BC1Effects: Motion Blur mean change 6.5
+10-24 06:39:05.048  3566  3603 I BC1Effects: Spin Blur mean change 5.6
+10-24 06:39:05.121  3566  3603 I BC1Effects: Zoom Blur mean change 8.0
+10-24 06:39:05.159  3566  3603 I BC1Effects: Unsharp Mask mean change 3.1
+10-24 06:39:05.207  3566  3603 I BC1Effects: Contrast mean change 9.5
+10-24 06:39:05.268  3566  3603 I BC1Effects: Brightness mean change 19.5
+10-24 06:39:05.326  3566  3603 I BC1Effects: Gamma mean change 11.2
+10-24 06:39:05.385  3566  3603 I BC1Effects: Levels mean change 16.6
+10-24 06:39:05.434  3566  3603 I BC1Effects: Hue Shift mean change 58.2
+10-24 06:39:05.487  3566  3603 I BC1Effects: Warm mean change 9.1
+10-24 06:39:05.544  3566  3603 I BC1Effects: Cool mean change 8.4
+10-24 06:39:05.608  3566  3603 I BC1Effects: Posterize mean change 9.6
+10-24 06:39:05.673  3566  3603 I BC1Effects: Invert mean change 54.6
+10-24 06:39:05.715  3566  3603 I BC1Effects: Sepia mean change 24.5
+10-24 06:39:05.764  3566  3603 I BC1Effects: Ice Duotone mean change 15.4
+10-24 06:39:05.831  3566  3603 I BC1Effects: Light Leak mean change 10.7
+10-24 06:39:05.893  3566  3603 I BC1Effects: Swirl mean change 16.3
+10-24 06:39:05.946  3566  3603 I BC1Effects: Bulge mean change 6.6
+10-24 06:39:05.981  3566  3603 I BC1Effects: Pinch mean change 6.4
+10-24 06:39:06.023  3566  3603 I BC1Effects: Ripple mean change 3.0
+10-24 06:39:06.083  3566  3603 I BC1Effects: Wave mean change 6.8
+10-24 06:39:06.143  3566  3603 I BC1Effects: Fisheye mean change 30.0
+10-24 06:39:06.210  3566  3603 I BC1Effects: Mirror mean change 14.0
+10-24 06:39:06.251  3566  3603 I BC1Effects: Kaleidoscope mean change 45.2
+10-24 06:39:06.292  3566  3603 I BC1Effects: Shake mean change 5.8
+10-24 06:39:06.347  3566  3603 I BC1Effects: Threshold mean change 98.9
+10-24 06:39:06.410  3566  3603 I BC1Effects: Edge Detect mean change 66.1
+10-24 06:39:06.478  3566  3603 I BC1Effects: Emboss mean change 31.4
+10-24 06:39:06.522  3566  3603 I BC1Effects: Luma Key mean change 98.6
+10-24 06:39:06.579  3566  3603 I BC1Effects: Film Grain mean change 12.8
+10-24 06:39:06.629  3566  3603 I BC1Effects: Scanlines mean change 20.1
+10-24 06:39:06.689  3566  3603 I BC1Effects: Glitch mean change 6.8
+10-24 06:39:06.742  3566  3603 I BC1Effects: VHS mean change 11.5
+10-24 06:39:06.777  3566  3603 I BC1Effects: RGB Split mean change 6.6
+10-24 06:39:06.819  3566  3603 I BC1Effects: Halftone mean change 88.6
+10-24 06:39:06.821  3566  3603 I TestRunner: finished: blackIceEffectsRenderAndChangeThePicture(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:39:06.822  3566  3603 I TestRunner: started: stagedRenderingMatchesSinglePassAcrossEightTracks(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:39:29.198  3566  3603 I TestRunner: finished: stagedRenderingMatchesSinglePassAcrossEightTracks(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:39:29.199  3566  3603 I TestRunner: started: savedCumulativeRotationExportsTwoTurnsInBothDirections(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:39:29.426  3566  3603 D BC1Live : layer program 0 compiled in 97 ms
+10-24 06:39:32.869  3566  3603 D BC1Live : layer program 0 compiled in 107 ms
+10-24 06:39:36.006  3566  3603 I TestRunner: finished: savedCumulativeRotationExportsTwoTurnsInBothDirections(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:39:36.007  3566  3603 I TestRunner: started: planStepsDownOnlyWhenTheEncoderRefuses(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:39:36.009  3566  3603 I BC1Plan : 2160p120 request on this device → 1080p30 H.264 (2160p120 is not supported on this device) @ 8 Mb/s
+10-24 06:39:36.009  3566  3603 I TestRunner: finished: planStepsDownOnlyWhenTheEncoderRefuses(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:39:36.010  3566  3603 I TestRunner: started: blendModesMatchTheReferenceMath(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:39:55.776  3566  3603 I BC1Blend: Normal ffc0803f
+10-24 06:39:55.824  3566  3603 I BC1Blend: Darken ff417f3f
+10-24 06:39:55.881  3566  3603 I BC1Blend: Multiply ff2f402f
+10-24 06:39:55.935  3566  3603 I BC1Blend: Color Burn ff02010a
+10-24 06:39:55.990  3566  3603 I BC1Blend: Linear Burn ff030001
+10-24 06:39:56.025  3566  3603 I BC1Blend: Darker Color ff4080c1
+10-24 06:39:56.064  3566  3603 I BC1Blend: Lighten ffbf81c1
+10-24 06:39:56.099  3566  3603 I BC1Blend: Screen ffcfbfd0
+10-24 06:39:56.143  3566  3603 I BC1Blend: Color Dodge ffffffff
+10-24 06:39:56.199  3566  3603 I BC1Blend: Linear Dodge (Add) ffffffff
+10-24 06:39:56.248  3566  3603 I BC1Blend: Lighter Color ffc0803f
+10-24 06:39:56.282  3566  3603 I BC1Blend: Overlay ff617fa3
+10-24 06:39:56.325  3566  3603 I BC1Blend: Soft Light ff6080aa
+10-24 06:39:56.385  3566  3603 I BC1Blend: Hard Light ffa17f60
+10-24 06:39:56.443  3566  3603 I BC1Blend: Vivid Light ff847f83
+10-24 06:39:56.475  3566  3603 I BC1Blend: Linear Light ffc38042
+10-24 06:39:56.510  3566  3603 I BC1Blend: Pin Light ff82807e
+10-24 06:39:56.555  3566  3603 I BC1Blend: Hard Mix fffd01fc
+10-24 06:39:56.604  3566  3603 I BC1Blend: Difference ff7f0280
+10-24 06:39:56.668  3566  3603 I BC1Blend: Exclusion ff9e809f
+10-24 06:39:56.709  3566  3603 I BC1Blend: Subtract ff000180
+10-24 06:39:56.749  3566  3603 I BC1Blend: Divide ff56fefe
+10-24 06:39:56.799  3566  3603 I BC1Blend: Hue ffa86729
+10-24 06:39:56.863  3566  3603 I BC1Blend: Saturation ff4080c1
+10-24 06:39:56.921  3566  3603 I BC1Blend: Color ffa86729
+10-24 06:39:56.948  3566  3603 I BC1Blend: Luminosity ff5696d7
+10-24 06:39:56.949  3566  3603 I TestRunner: finished: blendModesMatchTheReferenceMath(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:39:56.950  3566  3603 I TestRunner: started: layersPicturesSpeedAndPortrait(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:39:58.619  3566  3603 D BC1Live : layer program 0 compiled in 891 ms
+10-24 06:40:01.472  3566  3603 I TestRunner: finished: layersPicturesSpeedAndPortrait(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:40:01.473  3566  3603 I TestRunner: started: cancellationStopsAndRemovesOutput(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:40:06.318  3566  3603 I TestRunner: finished: cancellationStopsAndRemovesOutput(com.blackice.bc1.engine.BcCoreExportTest)
+10-24 06:40:06.321  3566  3603 I TestRunner: started: blurPreservesImageOrientationAndSurvivesContextLoss(com.blackice.bc1.engine.GpuPipelineTest)
+10-24 06:40:08.694  3566  3603 I TestRunner: finished: blurPreservesImageOrientationAndSurvivesContextLoss(com.blackice.bc1.engine.GpuPipelineTest)
+10-24 06:40:08.695  3566  3603 I TestRunner: started: everyTransitionHasExactEndpoints(com.blackice.bc1.engine.GpuPipelineTest)
+10-24 06:40:09.309  3566  3603 I TestRunner: finished: everyTransitionHasExactEndpoints(com.blackice.bc1.engine.GpuPipelineTest)
+10-24 06:40:09.310  3566  3603 I TestRunner: started: opacityAndDipMidpointAreExact(com.blackice.bc1.engine.GpuPipelineTest)
+10-24 06:40:09.861  3566  3603 I TestRunner: finished: opacityAndDipMidpointAreExact(com.blackice.bc1.engine.GpuPipelineTest)
+10-24 06:40:09.862  3566  3603 I TestRunner: started: everyEffectRendersAtEveryQualityAndStrength(com.blackice.bc1.engine.GpuPipelineTest)
+10-24 06:40:11.875  3566  3603 I TestRunner: finished: everyEffectRendersAtEveryQualityAndStrength(com.blackice.bc1.engine.GpuPipelineTest)
+10-24 06:40:11.877  3566  3603 I TestRunner: started: framesFollowEditsAndScrubbing(com.blackice.bc1.engine.LivePreviewTest)
+10-24 06:40:11.883  3566 12634 D BC1Live : surface attached (reader)
+10-24 06:40:12.897  3566 12634 D BC1Live : layer program 0 compiled in 428 ms
+10-24 06:40:16.312  3566 12634 D BC1Live : slow frame: setup 8 ms, open+prepare 375 ms, latch 180 ms, draw 3696 ms, swap 147 ms
+10-24 06:40:16.312  3566 12634 D BC1Live : frame 1 at 1000 ms took 4408 ms, 1 sources open
+10-24 06:40:16.571  3566 12634 D BC1Live : effect 25 pass compiled in 6 ms
+10-24 06:40:16.930  3566  3603 I BC1Live : Parameter redraw 117 ms
+10-24 06:40:17.851  3566 12634 D BC1Live : slow frame: setup 0 ms, open+prepare 379 ms, latch 0 ms, draw 98 ms, swap 71 ms
+10-24 06:40:17.851  3566 12634 D BC1Live : frame 13 at 3000 ms took 550 ms, 1 sources open
+10-24 06:40:18.668  3566 12634 D BC1Live : slow frame: setup 0 ms, open+prepare 438 ms, latch 0 ms, draw 119 ms, swap 5 ms
+10-24 06:40:18.668  3566 12634 D BC1Live : frame 14 at 500 ms took 563 ms, 1 sources open
+10-24 06:40:18.962  3566  3603 I TestRunner: finished: framesFollowEditsAndScrubbing(com.blackice.bc1.engine.LivePreviewTest)
+10-24 06:40:18.964  3566  3603 I TestRunner: started: frameRequestedBeforeTheSurfaceIsDrawnWhenItArrives(com.blackice.bc1.engine.LivePreviewTest)
+10-24 06:40:18.978  3566 12654 D BC1Live : frame at 1000 waits for a surface
+10-24 06:40:18.980  3566 12654 D BC1Live : frame at 1001 waits for a surface
+10-24 06:40:18.982  3566 12654 D BC1Live : frame at 1002 waits for a surface
+10-24 06:40:18.984  3566 12654 D BC1Live : frame at 1003 waits for a surface
+10-24 06:40:18.986  3566 12654 D BC1Live : frame at 1004 waits for a surface
+10-24 06:40:19.286  3566 12654 D BC1Live : surface attached (reader)
+10-24 06:40:20.200  3566 12654 D BC1Live : layer program 0 compiled in 474 ms
+10-24 06:40:22.814  3566 12654 D BC1Live : slow frame: setup 8 ms, open+prepare 337 ms, latch 87 ms, draw 3000 ms, swap 88 ms
+10-24 06:40:22.815  3566 12654 D BC1Live : frame 1 at 1004 ms took 3523 ms, 1 sources open
+10-24 06:40:23.526  3566 12654 D BC1Live : slow frame: setup 0 ms, open+prepare 340 ms, latch 0 ms, draw 108 ms, swap 6 ms
+10-24 06:40:23.527  3566 12654 D BC1Live : frame 2 at 3000 ms took 456 ms, 1 sources open
+10-24 06:40:23.798  3566  3603 I TestRunner: finished: frameRequestedBeforeTheSurfaceIsDrawnWhenItArrives(com.blackice.bc1.engine.LivePreviewTest)
+10-24 06:40:23.800  3566  3603 I TestRunner: started: sourceMetadataAppliedOnceAtEveryQuarterTurn(com.blackice.bc1.engine.SourceOrientationTest)
+10-24 06:40:23.914  3566 12677 D BC1Live : surface attached (reader)
+10-24 06:40:24.475  3566 12677 D BC1Live : layer program 0 compiled in 205 ms
+10-24 06:40:26.667  3566 12677 D BC1Live : slow frame: setup 8 ms, open+prepare 283 ms, latch 52 ms, draw 2359 ms, swap 37 ms
+10-24 06:40:26.667  3566 12677 D BC1Live : frame 1 at 1000 ms took 2741 ms, 1 sources open
+10-24 06:40:29.279  3566 12771 D BC1Live : surface attached (reader)
+10-24 06:40:29.845  3566 12771 D BC1Live : layer program 0 compiled in 240 ms
+10-24 06:40:32.086  3566 12771 D BC1Live : slow frame: setup 9 ms, open+prepare 302 ms, latch 0 ms, draw 2387 ms, swap 92 ms
+10-24 06:40:32.086  3566 12771 D BC1Live : frame 1 at 1000 ms took 2794 ms, 1 sources open
+10-24 06:40:34.793  3566 12846 D BC1Live : surface attached (reader)
+10-24 06:40:35.483  3566 12846 D BC1Live : layer program 0 compiled in 328 ms
+10-24 06:40:38.914  3566 12846 D BC1Live : slow frame: setup 7 ms, open+prepare 341 ms, latch 2 ms, draw 3611 ms, swap 147 ms
+10-24 06:40:38.914  3566 12846 D BC1Live : frame 1 at 1000 ms took 4111 ms, 1 sources open
+10-24 06:40:42.456  3566 12921 D BC1Live : surface attached (reader)
+10-24 06:40:43.024  3566 12921 D BC1Live : layer program 0 compiled in 200 ms
+10-24 06:40:45.185  3566 12921 D BC1Live : slow frame: setup 11 ms, open+prepare 342 ms, latch 2 ms, draw 2267 ms, swap 94 ms
+10-24 06:40:45.186  3566 12921 D BC1Live : frame 1 at 1000 ms took 2718 ms, 1 sources open
+10-24 06:40:47.724  3566  3603 I TestRunner: finished: sourceMetadataAppliedOnceAtEveryQuarterTurn(com.blackice.bc1.engine.SourceOrientationTest)
+10-24 06:40:47.727  3566  3603 I TestRunner: started: trimmedDoubleSpeedVolumeMatchesInBothExportPipelines(com.blackice.bc1.engine.bc.AnimatedVolumeExportTest)
+10-24 06:40:55.084  3566  3603 I TestRunner: finished: trimmedDoubleSpeedVolumeMatchesInBothExportPipelines(com.blackice.bc1.engine.bc.AnimatedVolumeExportTest)
+10-24 06:40:55.085  3566  3603 I TestRunner: run finished: 62 tests, 0 failed, 0 ignored
+10-24 06:40:55.104  3549  3549 I AndroidRuntime: VM exiting with result code 0.
