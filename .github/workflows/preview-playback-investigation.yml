@@ -1,0 +1,106 @@
+name: Preview playback investigation
+on:
+  push:
+    branches: ['fix/preview-playback-muxer']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: preview-investigation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  preview:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: before-menu
+            revision: e2fbba86f15383134cc25192cf895780a289071f
+          - label: current
+            revision: main
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.revision }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Install build platform and generate test media
+        run: |
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;35.0.0"
+          if ! command -v ffmpeg >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y ffmpeg; fi
+          bash .github/scripts/bc1-media-fixtures.sh
+      - name: Add identical exception logging and repeated regression to both revisions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('BC-1/app/src/main/java/com/blackice/bc1/editor/PreviewProxy.java')
+          s=p.read_text().replace('fail(request,out,error.getMessage());','android.util.Log.e("BC1Preview", "Proxy muxer failure request="+request+" generation="+generation+" partial="+partial, error);fail(request,out,error.getMessage());')
+          p.write_text(s)
+          Path('BC-1/app/src/androidTest/java/com/blackice/bc1/PreviewPlaybackRegressionTest.java').write_text('''package com.blackice.bc1;
+          import androidx.test.ext.junit.runners.AndroidJUnit4;
+          import org.junit.Test;
+          import org.junit.runner.RunWith;
+          @RunWith(AndroidJUnit4.class)
+          public class PreviewPlaybackRegressionTest {
+            @Test public void repeatedScrubToPlayback() throws Exception {
+              for(int attempt=0;attempt<3;attempt++) {
+                android.util.Log.i("BC1Preview", "Focused playback attempt "+attempt);
+                new PreviewScrubTest().scrollingUnderCenteredPlayheadShowsPixelsWithoutPressingPlay();
+              }
+            }
+          }
+          ''')
+          PY
+      - name: Build focused regression
+        working-directory: BC-1
+        run: gradle --no-daemon -Pbc1SideBySide testDebugUnitTest assembleDebug assembleDebugAndroidTest
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            mkdir -p preview-diagnostics
+            adb install -r BC-1/app/build/outputs/apk/debug/app-debug.apk
+            adb install -r BC-1/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb logcat -c
+            adb logcat -v threadtime > preview-diagnostics/logcat.txt &
+            adb shell am instrument -w -r -e class com.blackice.bc1.PreviewPlaybackRegressionTest com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee preview-diagnostics/instrumentation.txt
+            adb logcat -d > preview-diagnostics/logcat-final.txt || true
+            if grep -E 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' preview-diagnostics/instrumentation.txt; then exit 1; fi
+            grep -E '^OK \([0-9]+ tests?\)' preview-diagnostics/instrumentation.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: preview-diagnostics-${{ matrix.label }}
+          path: preview-diagnostics/
+      - name: Publish diagnostic text
+        if: always()
+        env:
+          TOKEN: ${{ github.token }}
+          CASE: ${{ matrix.label }}
+        run: |
+          mkdir -p /tmp/preview-review
+          cp preview-diagnostics/*.txt /tmp/preview-review/ 2>/dev/null || true
+          printf 'Case: %s\nSource: %s\nRun: %s\n' "$CASE" "$(git rev-parse HEAD)" "$GITHUB_RUN_ID" > /tmp/preview-review/BUILD.txt
+          cd /tmp/preview-review
+          git init -q && git checkout -q -b diagnostics && git add .
+          git -c user.name=bc1-ci -c user.email=bc1-ci@users.noreply.github.com commit -qm "Preview diagnostics $CASE"
+          git push -qf "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "diagnostics:refs/heads/preview-diagnostics/${CASE}"
