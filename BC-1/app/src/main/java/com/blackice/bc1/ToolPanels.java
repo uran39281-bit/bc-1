@@ -18,6 +18,9 @@ final class ToolPanels {
     private final ArrayDeque<Panel> stack=new ArrayDeque<>();
     private Panel current;
     private String owner="";
+    private final List<Runnable> valueRefresh=new ArrayList<>();
+    private TextView previousOpacity,nextOpacity;
+    void refresh(){if(!showing())return;for(Runnable update:valueRefresh)update.run();if(previousOpacity!=null)EditorActivity.dim(previousOpacity,opacityNeighbor(false)>=0);if(nextOpacity!=null)EditorActivity.dim(nextOpacity,opacityNeighbor(true)>=0);}
     private static final class Panel{final String title;final Runnable build;Panel(String t,Runnable b){title=t;build=b;}}
     ToolPanels(EditorActivity activity){a=activity;}
 
@@ -31,6 +34,7 @@ final class ToolPanels {
 
     /** Renders the open panel, or the contextual tool grid for the current selection. */
     void render(LinearLayout into) {
+        valueRefresh.clear();previousOpacity=null;nextOpacity=null;
         if(current!=null&&!owner.equals(selectionKey()))reset();
         if(current!=null){header(into,current.title);current.build.run();return;}
         if(a.tab==2){effectsHome();return;}
@@ -213,6 +217,7 @@ final class ToolPanels {
             public void onStopTrackingTouch(SeekBar s){float v=min+(max-min)*s.getProgress()/1000f;if(a.liveBefore!=null)a.endLiveAdjust(title+" updated",()->apply.set(v));else commit(title,v,apply);}
         });
         a.inspector.addView(slider,new LinearLayout.LayoutParams(-1,a.dp(44)));
+        if(motion!=null)valueRefresh.add(()->{if(a.liveBefore!=null)return;float evaluated=motion.value(property,motionTime(),value*motionFactor)/motionFactor;String formatted=format(evaluated*displayFactor);if(!exact.hasFocus()&&!formatted.contentEquals(exact.getText()))exact.setText(formatted);int progress=Math.round((evaluated-min)/(max-min)*1000);if(progress!=slider.getProgress())slider.setProgress(progress);});
         LinearLayout actions=a.row();
         actions.addView(a.button("Apply",v->{try{float typed=Float.parseFloat(exact.getText().toString().trim())/displayFactor;if(!Float.isFinite(typed)||typed<min-1e-6f||typed>max+1e-6f)throw new NumberFormatException();commit(title,typed,apply);}catch(NumberFormatException e){a.tell("Enter "+format(min*displayFactor)+" to "+format(max*displayFactor)+(unit.isEmpty()?"":" "+unit)+".");}}),new LinearLayout.LayoutParams(0,a.dp(48),1));
         actions.addView(a.button("Reset",v->commit(title,defaultValue,apply)),new LinearLayout.LayoutParams(0,a.dp(48),1));
@@ -226,9 +231,10 @@ final class ToolPanels {
         TextView d=a.label(state==Keyframes.ON_KEY?"◆":"◇",20,state==Keyframes.STATIC?EditorActivity.MUTED:EditorActivity.CYAN,true);d.setGravity(Gravity.CENTER);
         String[] words={"not animated • tap to animate","animated • tap to add a keyframe here","keyframe at playhead • tap to remove"};
         d.setContentDescription(title+" keyframe: "+words[state]);d.setTooltipText(d.getContentDescription());d.setFocusable(true);
-        d.setOnClickListener(v->{if(!a.layerEditable())return;long t=motionTime(),tol=tolerance();
-            a.edit(state==Keyframes.ON_KEY?title+" keyframe removed":title+" keyframe added",()->{
-                if(state==Keyframes.ON_KEY&&motion.curves.get(property).size()==1){a.setStatic(property,Keyframes.disable(motion,property,t,current));}
+        valueRefresh.add(()->{int currentState=Keyframes.state(motion,property,motionTime(),tolerance());String glyph=currentState==Keyframes.ON_KEY?"◆":"◇";if(!glyph.contentEquals(d.getText()))d.setText(glyph);d.setTextColor(currentState==Keyframes.STATIC?EditorActivity.MUTED:EditorActivity.CYAN);String description=title+" keyframe: "+words[currentState];if(!description.contentEquals(d.getContentDescription())){d.setContentDescription(description);d.setTooltipText(description);}});
+        d.setOnClickListener(v->{if(!a.layerEditable())return;long t=motionTime(),tol=tolerance();int currentState=Keyframes.state(motion,property,t,tol);
+            a.edit(currentState==Keyframes.ON_KEY?title+" keyframe removed":title+" keyframe added",()->{
+                if(currentState==Keyframes.ON_KEY&&motion.curves.get(property).size()==1){a.setStatic(property,Keyframes.disable(motion,property,t,current));}
                 else Keyframes.toggle(motion,property,t,motion.value(property,t,current),tol);
             });});
         return d;
@@ -244,6 +250,7 @@ final class ToolPanels {
         EditProject.Clip clip=a.clip();EditProject.Overlay overlay=a.overlay();Motion motion=clip!=null?clip.motion:overlay.motion;
         long best=-1,now=a.project.playheadMs;
         for(Motion.Key key:motion.curves.get(Motion.OPACITY)){
+            if(clip!=null&&(key.timeMs<clip.inMs||key.timeMs>clip.outMs)||overlay!=null&&(key.timeMs<0||key.timeMs>overlay.endMs-overlay.startMs))continue;
             long time=clip!=null?a.project.placements().get(a.selected).startMs+Math.round((key.timeMs-clip.inMs)/(double)clip.speed):overlay.startMs+key.timeMs;
             if(time<0||time>a.project.durationMs())continue;
             if(next?time>now&&(best<0||time<best):time<now&&(best<0||time>best))best=time;
@@ -252,8 +259,8 @@ final class ToolPanels {
     private void blendPanel(){
         LinearLayout navigation=a.row();
         for(boolean next:new boolean[]{false,true}){
-            long target=opacityNeighbor(next);TextView button=a.button(next?"Next Key  ›":"‹  Previous Key",v->{a.pausePlayback();a.seek(target);a.renderInspector();});
-            EditorActivity.dim(button,target>=0);navigation.addView(button,new LinearLayout.LayoutParams(0,a.dp(48),1));
+            long target=opacityNeighbor(next);TextView button=a.button(next?"Next Key  ›":"‹  Previous Key",v->{long destination=opacityNeighbor(next);if(destination>=0){a.pausePlayback();a.seek(destination);a.renderInspector();}});
+            if(next)nextOpacity=button;else previousOpacity=button;EditorActivity.dim(button,target>=0);navigation.addView(button,new LinearLayout.LayoutParams(0,a.dp(48),1));
         }
         a.inspector.addView(navigation);
         opacityPanel();EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
