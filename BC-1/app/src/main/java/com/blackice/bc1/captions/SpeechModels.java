@@ -52,6 +52,7 @@ public final class SpeechModels {
      * Returns the model file.
      */
     public static synchronized File ensure(Context context, Model m, BooleanSupplier cancelled, IntConsumer progress) throws Exception {
+        if(m!=Model.BASE_EN)throw new IllegalArgumentException("This editor includes English recognition only. Start a new English transcription.");
         File target = file(context, m);
         if (cancelled.getAsBoolean()) throw new java.util.concurrent.CancellationException();
         if (installed(context, m)) return target;

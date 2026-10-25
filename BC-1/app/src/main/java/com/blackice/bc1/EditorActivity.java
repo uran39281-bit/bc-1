@@ -494,7 +494,7 @@ public final class EditorActivity extends Activity {
         if(!editable())return;
         final EditProject original;final String before;
         try{before=ProjectStore.encode(project);original=ProjectStore.decode(before);}catch(Exception e){tell("Cannot prepare captions: "+e.getMessage());return;}
-        captionApplying=true;main.removeCallbacks(autosave);stopLive();releasePreview();tell("Saving captions…");
+        captionApplying=true;main.removeCallbacks(autosave);pausePlayback();releasePreview();tell("Saving captions…");
         io.execute(()->{
             try{
                 EditProject committed=com.blackice.bc1.core.CaptionApplication.commit(original,result.cues,result.fromMs,result.toMs,result.jobId,
@@ -514,7 +514,7 @@ public final class EditorActivity extends Activity {
         final String id=project.id;
         new AlertDialog.Builder(this).setTitle("Resume transcription?")
             .setMessage("Continue after the last saved batch, using the original selection and recognition settings. The current unfinished batch will be repeated.")
-            .setPositiveButton("Resume",(d,w)->{if(!editable()||!id.equals(project.id))return;try{stopLive();saveNow();com.blackice.bc1.captions.CaptionService.resume(this,id);tell("Resuming transcription…");}catch(Exception e){tell(e.getMessage());}})
+            .setPositiveButton("Resume",(d,w)->{if(!editable()||!id.equals(project.id))return;try{pausePlayback();saveNow();com.blackice.bc1.captions.CaptionService.resume(this,id);tell("Resuming transcription…");}catch(Exception e){tell(e.getMessage());}})
             .setNegativeButton("Close",null).show();
     }
     void discardCaptionJob(){
@@ -1067,7 +1067,7 @@ public final class EditorActivity extends Activity {
                 o.model=models[model.getSelectedItemPosition()];o.language=com.blackice.bc1.captions.Transcriber.LANGUAGES[language.getSelectedItemPosition()][0];
                 o.translate=translate.isChecked();if(o.model.englishOnly()){o.language="en";o.translate=false;}o.clipId=clip!=null&&onlyClip.isChecked()?clip.id:null;
                 prefs.edit().putString("bundledModelChoice",o.model.name()).putString("model",o.model.name()).putString("language",o.language).putBoolean("translate",o.translate).apply();
-                stopLive();saveNow();
+                pausePlayback();saveNow();
                 try{com.blackice.bc1.captions.CaptionService.start(this,ProjectStore.snapshot(project),o);tell("Auto captions started");}
                 catch(Exception e){tell("Cannot start captions: "+e.getMessage());}
             }).show();

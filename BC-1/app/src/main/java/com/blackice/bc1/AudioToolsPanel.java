@@ -25,7 +25,7 @@ final class AudioToolsPanel {
   if(!ready(a))return;new AlertDialog.Builder(a).setTitle("Loudness normalization").setItems(new String[]{"−16 LUFS","−23 LUFS","−14 LUFS","Remove normalization"},(d,i)->{if(!ready(a))return;EditProject.Clip c=a.clip();if(i==3){a.edit("Normalization removed",()->c.audio.normalizationDb=0);return;}measure(a,c,new double[]{-16,-23,-14}[i]);}).setNegativeButton("Cancel",null).show();
  }
  static void measure(EditorActivity a,EditProject.Clip c,double target){
-  a.stopLive();if(a.player!=null)a.player.pause();String id=a.project.id;long revision=a.editRevision;EditProject.Clip copy=c.copy();AtomicBoolean stop=new AtomicBoolean();
+  a.pausePlayback();if(a.player!=null)a.player.pause();String id=a.project.id;long revision=a.editRevision;EditProject.Clip copy=c.copy();AtomicBoolean stop=new AtomicBoolean();
   AlertDialog dialog=new AlertDialog.Builder(a).setTitle("Measuring loudness locally").setMessage("Preparing…").setNegativeButton("Cancel",(d,w)->stop.set(true)).setCancelable(false).show();
   new Thread(()->{try{
    LoudnessMeter meter=AudioAnalysis.measure(a.getApplicationContext(),copy,stop,p->a.main.post(()->{if(dialog.isShowing())dialog.setMessage(p+"%");}));float gain=(float)meter.gainFor(target);

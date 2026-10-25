@@ -140,7 +140,7 @@ final class ToolPanels {
         long t=a.project.playheadMs;
         if(which==0)a.edit("Trimmed start to playhead",()->o.startMs=t);
         else if(which==2)a.edit("Trimmed end to playhead",()->o.endMs=t);
-        else a.edit("Layer split",()->{if(a.project.overlays.size()>=20)throw new IllegalArgumentException("Up to 20 text, shape and image layers.");EditProject.Overlay right=o.copy();long offset=t-o.startMs;right.startMs=t;Keyframes.splitAt(right.motion,offset);o.endMs=t;a.project.overlays.add(a.project.overlays.indexOf(o)+1,right);});
+        else a.edit("Layer split",()->{if(!com.blackice.bc1.core.CaptionBuilder.GROUP.equals(o.group)&&a.project.regularOverlayCount()>=20)throw new IllegalArgumentException("Up to 20 text, shape and image layers.");EditProject.Overlay right=o.copy();long offset=t-o.startMs;right.startMs=t;Keyframes.splitAt(right.motion,offset);o.endMs=t;a.project.overlays.add(a.project.overlays.indexOf(o)+1,right);});
     }
     void runTool(String tool){
         if(tool.startsWith("Duration:"))tool="Duration";else if(tool.startsWith("Speed:"))tool="Speed";
