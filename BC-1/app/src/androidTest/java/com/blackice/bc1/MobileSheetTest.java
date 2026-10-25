@@ -25,8 +25,8 @@ public class MobileSheetTest {
     scenario.onActivity(a->assertTrue("Reopened vector must be visibly rendered: "+a.live.debug(),rendered.get()));h.capture("v130-main-workspace");
    }
    // All shape IDs persist, have nonempty vector geometry, and render through the shared painter.
-   EditProject vectors=new EditProject();for(int id=1;id<EditProject.SHAPES.length;id++){EditProject.Overlay o=new EditProject.Overlay();o.shape=id;o.startMs=0;o.endMs=1000;vectors.overlays.add(o);RectF bounds=new RectF();ShapePaths.create(id,50,2).computeBounds(bounds,true);assertTrue(EditProject.SHAPES[id],bounds.width()>0&&bounds.height()>0);}
-   assertEquals(18,ProjectStore.decode(ProjectStore.encode(vectors)).overlays.size());
+   EditProject vectors=new EditProject();for(int id=1;id<EditProject.SHAPES.length;id++){EditProject.Overlay o=new EditProject.Overlay();o.shape=id;o.startMs=0;o.endMs=1000;if(id>=19||id<=11)vectors.overlays.add(o);RectF bounds=new RectF();ShapePaths.create(id,50,2).computeBounds(bounds,true);assertTrue(EditProject.SHAPES[id],bounds.width()>0&&bounds.height()>0);}
+   assertEquals(20,ProjectStore.decode(ProjectStore.encode(vectors)).overlays.size());
    File out=new File(h.inst.getTargetContext().getFilesDir(),"qa/v130-shapes-only.mp4");out.getParentFile().mkdirs();new BcExporter(h.inst.getTargetContext(),vectors,180,new AtomicBoolean(),n->{}).export(out);assertTrue(out.length()>1000);
   }finally{h.shell("wm size "+size);h.shell("wm density "+density);h.inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("mode","AUTO").commit();}
  }

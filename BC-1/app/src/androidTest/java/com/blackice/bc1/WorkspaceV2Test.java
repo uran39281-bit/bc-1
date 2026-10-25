@@ -45,32 +45,34 @@ public class WorkspaceV2Test {
                     assertNotNull(described(root,wide?"Preview scaling, volume and fullscreen":"Preview resolution"));
                     if(wide){assertNotNull(described(root,"Resize timeline height"));assertNotNull(described(root,"Save project"));assertNotNull(text(root,"Favorites"));assertNotNull(described(root,"Grid / List: show list"));assertNotNull(described(root,"Sort media"));assertTrue(a.timeline.getWidth()>0);assertNull(text(a.header,"Audio"));assertNull("Redundant media navigation removed",text(a.mediaBrowser,"Add content"));a.tab=0;a.addDrawer.category=1;a.renderInspector();assertEquals(1,a.addDrawer.category);a.addDrawer.category=0;a.renderInspector();assertEquals("Navigation preserves the project",duration,a.project.durationMs());}
                     assertNull("No separate + Add button repeats the navigation",text(root,"+ Add"));
-                    if(wide){a.tab=0;a.addDrawer.category=2;a.renderInspector();assertEquals(2,a.addDrawer.category);assertNotNull("Add categories remain reachable after removing header tabs",described(root,"Add Media"));assertNotNull("Shapes share the Text tab",text(root,"+ Rectangle"));}
-                    else{described(root,"Add content").performClick();for(String category:AddDrawer.CATEGORIES)assertNotNull("Add drawer category "+category,described(root,"Add "+category));
+                    if(wide){a.tab=0;a.addDrawer.category=2;a.renderInspector();assertEquals(2,a.addDrawer.category);assertNotNull("Add categories remain reachable after removing header tabs",described(root,"Add Media"));assertNotNull("Shapes are available in the shared catalog",described(root,"Insert shape: Square"));}
+                    else{described(root,"Add content").performClick();for(String category:AddDrawer.CATEGORIES)assertNotNull("Add drawer category "+category,described(root,"Add "+(category.equals("Media")?"Project Media":category)));
                         described(root,"Add Audio").performClick();assertNotNull("Insert at playhead by default",text(root,"● At playhead"));described(root,"Add Shapes").performClick();}});
                 Thread.sleep(300);capture(wide?"v2-wide-add-drawer":"v2-phone-add-drawer");
-                scenario.onActivity(a->{View root=a.getWindow().getDecorView();a.seek(1000);text(root,"+ Rectangle").performClick();
+                scenario.onActivity(a->{a.seek(1000);described(a.getWindow().getDecorView(),"Insert shape: Square").performClick();});
+                WorkflowControlsTest.click(this,"Add as new layer at playhead");
+                scenario.onActivity(a->{View root=a.getWindow().getDecorView();
                     assertEquals(1,a.project.overlays.size());assertEquals("Inserted at the playhead",1000,a.project.overlays.get(0).startMs);assertEquals(0,a.selectedOverlay);
-                    // Selected layer: name, Duplicate, Delete, More replace Settings / Export.
-                    assertNotNull(text(root,"Rectangle"));assertNotNull(text(root,"Settings"));assertNotNull(described(root,"Duplicate"));assertNotNull(described(root,"More actions"));
-                    if(wide)assertNotNull(text(root,"Media Settings"));else assertNotNull("Shape tools",text(root,"Color"));assertNull("No slip for shapes",text(root,"Slip"));assertNotNull(text(root,"Move & Transform"));
-                    text(root,wide?"Blending & Opacity":"Opacity").performClick();assertNotNull("Focused panel",text(root,"‹  Back"));
+                    // Selected layer: contextual media actions; wide layout exposes duplication/deletion in More.
+                    assertEquals(1,a.project.overlays.get(0).shape);assertNotNull(text(root,"Square"));assertNotNull(text(root,"Settings"));if(!wide)assertNotNull(described(root,"Duplicate"));assertNotNull(described(root,wide?"Selected media actions":"More actions"));
+                    assertNotNull(text(root,"Media Settings"));assertNotNull("Shape tools",described(root,"Media Settings: Shape & Style"));assertNull("No slip for shapes",text(root,"Slip"));assertNotNull(text(root,"Move & Transform"));
+                    text(root,"Blending & Opacity").performClick();assertNotNull("Focused panel",text(root,"‹  Back"));
                     View diamond=described(root,"Opacity keyframe: not animated • tap to animate");assertNotNull(diamond);diamond.performClick();
                     assertEquals("Diamond enables animation with a key at the playhead",1,a.project.overlays.get(0).motion.curves.get(Motion.OPACITY).size());
                     assertNotNull(described(a.getWindow().getDecorView(),"Opacity keyframe: keyframe at playhead • tap to remove"));
                     a.seek(2500);a.renderInspector();EditText exact=field(a.getWindow().getDecorView(),"Opacity exact value in %");assertNotNull(exact);exact.setText("40");text(a.getWindow().getDecorView(),"Apply").performClick();
                     assertEquals("Edit while animated creates a second keyframe",2,a.project.overlays.get(0).motion.curves.get(Motion.OPACITY).size());
                     assertEquals(.4f,a.project.overlays.get(0).motion.value(Motion.OPACITY,1500,1),1e-3);
-                    text(a.getWindow().getDecorView(),"‹  Back").performClick();assertEquals("Back keeps the selection",0,a.selectedOverlay);assertEquals("Back keeps the playhead",2500,a.project.playheadMs);if(wide){a.moreAction("Color");a.panels.back();}else assertNotNull(text(a.getWindow().getDecorView(),"Color"));
+                    text(a.getWindow().getDecorView(),"‹  Back").performClick();assertEquals("Back keeps the selection",0,a.selectedOverlay);assertEquals("Back keeps the playhead",2500,a.project.playheadMs);if(wide){a.moreAction("Color");a.panels.back();}else assertNotNull(described(a.getWindow().getDecorView(),"Media Settings: Shape & Style"));
                     text(a.getWindow().getDecorView(),"Move & Transform").performClick();});
                 Thread.sleep(300);capture(wide?"v2-wide-transform":"v2-phone-transform");
                 scenario.onActivity(a->{View root=a.getWindow().getDecorView();
                     // Per-layer lock blocks edits and is separate from the workspace lock.
-                    a.moreAction("Lock layer");assertTrue(a.project.overlays.get(0).locked);assertFalse(a.uiLocked);
-                    described(root,"Duplicate").performClick();assertEquals("Locked layers cannot be duplicated",1,a.project.overlays.size());
+                    a.moreAction("Lock layer");assertTrue(a.project.overlays.get(0).locked);assertFalse(a.uiLocked);a.panels.back();
+                    if(wide)a.moreAction("Duplicate After");else described(root,"Duplicate").performClick();assertEquals("Locked layers cannot be duplicated",1,a.project.overlays.size());
                     a.nudge(10,0);assertEquals("Locked layers cannot move",0,a.project.overlays.get(0).x,0);
                     a.moreAction("Unlock layer");a.nudge(10,0);assertEquals(10*TransformMath.pixelX(1920),a.project.overlays.get(0).x,1e-5);
-                    described(a.getWindow().getDecorView(),"Delete").performClick();assertTrue(a.project.overlays.isEmpty());a.undo(false);assertEquals("Delete is undoable",1,a.project.overlays.size());
+                    if(wide)a.moreAction("Delete");else described(a.getWindow().getDecorView(),"Delete").performClick();assertTrue(a.project.overlays.isEmpty());a.undo(false);assertEquals("Delete is undoable",1,a.project.overlays.size());
                     a.deselect();a.tab=0;a.addDrawer.category=2;a.renderInspector();text(a.getWindow().getDecorView(),"+ Title").performClick();
                     assertEquals(2,a.project.overlays.size());assertEquals("BLACK ICE",a.project.overlays.get(1).text);
                     if(wide){a.moreAction("Edit Text");assertNotNull(text(a.inspector,"Apply text"));a.panels.back();}else{assertNotNull("Text tools",text(a.getWindow().getDecorView(),"Edit Text"));assertNotNull(text(a.getWindow().getDecorView(),"Font"));}

@@ -7,7 +7,7 @@ import java.util.UUID;
 /** Portable edit decision list. Times are integer milliseconds; media is never modified. */
 public final class EditProject {
     /** Schema 5: eight visual tracks (0 main, 1–7 layers) and audio on tracks 8–11 (was 4–7). */
-    public static final int SCHEMA = 8;
+    public static final int SCHEMA = 9;
     /** Visual tracks: 0 is the main sequence, 1..VISUAL_TRACKS-1 are independent video/image layers. */
     public static final int MAX_CAPTIONS=2000;
     public String appliedCaptionJobId="";
@@ -108,7 +108,7 @@ public final class EditProject {
         public Overlay copy(){Overlay o=new Overlay();o.visualizerClipId=visualizerClipId;o.visualizerStyle=visualizerStyle;o.text=text;o.imageUri=imageUri;o.startMs=startMs;o.endMs=endMs;o.x=x;o.y=y;o.scale=scale;o.opacity=opacity;o.motion=motion.copy();o.font=font;o.color=color;o.alignment=alignment;o.shape=shape;o.name=name;o.group=group;o.hidden=hidden;o.solo=solo;o.locked=locked;o.flipH=flipH;o.flipV=flipV;o.rotation=rotation;o.heightScale=heightScale;o.aspect=aspect;o.skewX=skewX;o.skewY=skewY;o.anchorX=anchorX;o.anchorY=anchorY;o.borderWidth=borderWidth;o.shadow=shadow;o.borderColor=borderColor;o.blend=blend;return o;}
         public String label(){if(visualizerClipId!=null)return "Audio visualizer (disabled)";if(name!=null&&!name.isEmpty())return name;if(imageUri!=null)return "Image";if(shape>0)return SHAPES[shape];return text;}
     }
-    public static final String[] SHAPES={"Text","Rectangle","Ellipse","Triangle","Line","Plus","Arc","Speech bubble","Pie","Hexagon","Flower","Diagonal arrow","Trapezoid","Crescent","Wide rectangle","Star","Thick line","Polygon","Decorative rectangle"};
+    public static final String[] SHAPES={"Text","Square","Circle","Triangle","Line","Cross","Arc","Speech bubble","Pie","Hexagon","Flower","Diagonal arrow","Trapezoid","Half moon","Rectangle","Star","Thick line","Polygon","Decorative rectangle","Oval","Diamond","Octagon","Rhombus","Heart","Half circle","Arrow","Three-leaf clover","Monkey head"};
     public static final String[] BLENDS={"Normal","Multiply","Screen","Overlay","Add","Darken","Lighten"};
     public static final class Music {
         public String uri, name;
