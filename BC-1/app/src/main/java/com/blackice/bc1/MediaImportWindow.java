@@ -27,12 +27,20 @@ final class MediaImportWindow {
     void resume(){String now=gallery.access(false)+":"+gallery.access(true);if(!now.equals(accessState)){accessState=now;refresh();}}
     MediaImportWindow(EditorActivity a){this.a=a;gallery=new DeviceMedia(a);}
     boolean showing(){return window!=null&&window.isShowing();}
-    void save(Bundle b){b.putBoolean("browse-open",showing());b.putString("browse-query",query);b.putString("browse-album",album);b.putInt("browse-filter",filter);b.putInt("browse-scroll",scroll==null?scrollY:scroll.getScrollY());}
+    void save(Bundle b){b.putBoolean("browse-open",showing()||restoreOpen);b.putString("browse-query",query);b.putString("browse-album",album);b.putInt("browse-filter",filter);b.putInt("browse-scroll",scroll==null?scrollY:scroll.getScrollY());}
     void restore(Bundle b){if(b==null)return;restoreOpen=b.getBoolean("browse-open");query=b.getString("browse-query","");album=b.getString("browse-album","All albums");filter=b.getInt("browse-filter");scrollY=b.getInt("browse-scroll");}
-    void close(){if(scroll!=null)scrollY=scroll.getScrollY();if(window!=null)window.dismiss();generation++;}
-    void reposition(){if(showing()){close();a.getWindow().getDecorView().post(this::show);}}
+    void close(){restoreOpen=false;if(scroll!=null)scrollY=scroll.getScrollY();if(window!=null)window.dismiss();generation++;}
+    /** Preserve the requested window before its anchor hierarchy is replaced. */
+    void prepareForLayout(){
+        restoreOpen=restoreOpen||showing();
+        if(scroll!=null)scrollY=scroll.getScrollY();
+        if(window!=null){window.setOnDismissListener(null);window.dismiss();}
+        generation++;
+    }
+    void reposition(){if(restoreOpen&&!a.loading)a.getWindow().getDecorView().post(()->{if(restoreOpen)show();});}
     void show(){
         if(a.isFinishing()||a.isDestroyed()||showing())return;
+        restoreOpen=true;
         content=a.column();content.setPadding(a.dp(14),a.dp(10),a.dp(14),a.dp(10));content.setBackground(a.panelBackground());content.setContentDescription("Browse files window");
         LinearLayout heading=a.row();heading.setGravity(Gravity.CENTER_VERTICAL);heading.addView(a.label("Browse files",18,EditorActivity.TEXT,true),new LinearLayout.LayoutParams(0,a.dp(48),1));
         heading.addView(a.compactButton("×","Close Browse files",v->close()),new LinearLayout.LayoutParams(a.dp(48),a.dp(48)));content.addView(heading);
@@ -52,7 +60,7 @@ final class MediaImportWindow {
         int popupHeight=Math.min(a.dp(700),height-gap*2);int y=top+gap;
         if(!a.wideLayout){width=available-gap*2;x=left+gap;popupHeight=Math.min(popupHeight,Math.round(height*.82f));y=top+height-popupHeight-gap;}
         window=new PopupWindow(content,width,popupHeight,true);window.setBackgroundDrawable(a.panelBackground());window.setElevation(a.dp(18));window.setOutsideTouchable(true);window.setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED);window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        window.setOnDismissListener(()->{if(scroll!=null)scrollY=scroll.getScrollY();generation++;});window.showAtLocation(decor,Gravity.TOP|Gravity.LEFT,x,y);
+        window.setOnDismissListener(()->{restoreOpen=false;if(scroll!=null)scrollY=scroll.getScrollY();generation++;});window.showAtLocation(decor,Gravity.TOP|Gravity.LEFT,x,y);
         content.setFocusableInTouchMode(true);content.requestFocus();render();if(items==null)load();
     }
     void refresh(){items=null;if(showing()){render();load();}}

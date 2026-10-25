@@ -53,8 +53,8 @@ public class WorkspaceV2Test {
                 WorkflowControlsTest.click(this,"Add as new layer at playhead");
                 scenario.onActivity(a->{View root=a.getWindow().getDecorView();
                     assertEquals(1,a.project.overlays.size());assertEquals("Inserted at the playhead",1000,a.project.overlays.get(0).startMs);assertEquals(0,a.selectedOverlay);
-                    // Selected layer: name, Duplicate, Delete, More replace Settings / Export.
-                    assertEquals(1,a.project.overlays.get(0).shape);assertNotNull(text(root,"Square"));assertNotNull(text(root,"Settings"));assertNotNull(described(root,"Duplicate"));assertNotNull(described(root,"More actions"));
+                    // Selected layer: contextual media actions; wide layout exposes duplication/deletion in More.
+                    assertEquals(1,a.project.overlays.get(0).shape);assertNotNull(text(root,"Square"));assertNotNull(text(root,"Settings"));if(!wide)assertNotNull(described(root,"Duplicate"));assertNotNull(described(root,wide?"Selected media actions":"More actions"));
                     assertNotNull(text(root,"Media Settings"));assertNotNull("Shape tools",described(root,"Media Settings: Shape & Style"));assertNull("No slip for shapes",text(root,"Slip"));assertNotNull(text(root,"Move & Transform"));
                     text(root,"Blending & Opacity").performClick();assertNotNull("Focused panel",text(root,"‹  Back"));
                     View diamond=described(root,"Opacity keyframe: not animated • tap to animate");assertNotNull(diamond);diamond.performClick();
@@ -69,10 +69,10 @@ public class WorkspaceV2Test {
                 scenario.onActivity(a->{View root=a.getWindow().getDecorView();
                     // Per-layer lock blocks edits and is separate from the workspace lock.
                     a.moreAction("Lock layer");assertTrue(a.project.overlays.get(0).locked);assertFalse(a.uiLocked);a.panels.back();
-                    described(root,"Duplicate").performClick();assertEquals("Locked layers cannot be duplicated",1,a.project.overlays.size());
+                    if(wide)a.moreAction("Duplicate After");else described(root,"Duplicate").performClick();assertEquals("Locked layers cannot be duplicated",1,a.project.overlays.size());
                     a.nudge(10,0);assertEquals("Locked layers cannot move",0,a.project.overlays.get(0).x,0);
                     a.moreAction("Unlock layer");a.nudge(10,0);assertEquals(10*TransformMath.pixelX(1920),a.project.overlays.get(0).x,1e-5);
-                    described(a.getWindow().getDecorView(),"Delete").performClick();assertTrue(a.project.overlays.isEmpty());a.undo(false);assertEquals("Delete is undoable",1,a.project.overlays.size());
+                    if(wide)a.moreAction("Delete");else described(a.getWindow().getDecorView(),"Delete").performClick();assertTrue(a.project.overlays.isEmpty());a.undo(false);assertEquals("Delete is undoable",1,a.project.overlays.size());
                     a.deselect();a.tab=0;a.addDrawer.category=2;a.renderInspector();text(a.getWindow().getDecorView(),"+ Title").performClick();
                     assertEquals(2,a.project.overlays.size());assertEquals("BLACK ICE",a.project.overlays.get(1).text);
                     if(wide){a.moreAction("Edit Text");assertNotNull(text(a.inspector,"Apply text"));a.panels.back();}else{assertNotNull("Text tools",text(a.getWindow().getDecorView(),"Edit Text"));assertNotNull(text(a.getWindow().getDecorView(),"Font"));}

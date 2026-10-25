@@ -33,6 +33,6 @@ public class MediaBrowserGalleryTest {
  }
  static void waitBrowser(ActivityScenario<EditorActivity> scenario)throws Exception{
   java.util.concurrent.atomic.AtomicBoolean ready=new java.util.concurrent.atomic.AtomicBoolean();long end=android.os.SystemClock.elapsedRealtime()+15000;
-  while(!ready.get()&&android.os.SystemClock.elapsedRealtime()<end){scenario.onActivity(a->ready.set(a.mediaImportWindow.showing()&&!a.mediaImportWindow.loading&&a.mediaImportWindow.items!=null));Thread.sleep(100);}assertTrue("Browser loaded",ready.get());
+  while(!ready.get()&&android.os.SystemClock.elapsedRealtime()<end){scenario.onActivity(a->ready.set(a.mediaImportWindow.showing()&&!a.mediaImportWindow.loading&&a.mediaImportWindow.items!=null));Thread.sleep(100);}if(!ready.get())scenario.onActivity(a->fail("Browser loaded: showing="+a.mediaImportWindow.showing()+", requested="+a.mediaImportWindow.restoreOpen+", loading="+a.mediaImportWindow.loading+", items="+(a.mediaImportWindow.items==null?"null":a.mediaImportWindow.items.size())+", projectLoading="+a.loading));
  }
 }
