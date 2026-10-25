@@ -1,0 +1,1 @@
+Test build of feature/workspace-stability at 41571ffa86725cc3558c456a1445c01910598f76 (run 40226857785). Package com.blackice.bc1.preview installs beside BC-1.
