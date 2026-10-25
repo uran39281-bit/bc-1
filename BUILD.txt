@@ -1,0 +1,1 @@
+Test build of feature/media-browser-shapes at 505b640620ab51e0ecf2740470a5afd41b71b43e (run 40245622088). Package com.blackice.bc1.preview installs beside BC-1.
