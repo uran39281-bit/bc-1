@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /* loaded from: classes6.dex */
+@androidx.annotation.OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
 public final class ClipAudioProcessor extends BaseAudioProcessor {
     private AudioDsp dsp;
     private float[] scratch = new float[0];

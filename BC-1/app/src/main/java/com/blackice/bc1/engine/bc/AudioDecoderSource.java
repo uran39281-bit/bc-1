@@ -84,7 +84,7 @@ final class AudioDecoderSource implements Resampler.Source, AutoCloseable {
         try {
             this.codec.configure(format, (Surface) null, (MediaCrypto) null, 0);
             this.codec.start();
-            this.extractor.seekTo(startUs, 0);
+            this.extractor.seekTo(startUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
         } catch (Exception e) {
             this.codec.release();
             this.codec = null;
