@@ -1,43 +1,58 @@
 package com.blackice.bc1.core;
 
+import com.blackice.bc1.audio.AudioSettings;
 import com.blackice.bc1.editor.EditProject;
 import com.blackice.bc1.editor.LayerOps;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
-/**
- * ICE Lite audio graph: every sound source as a timed segment with its gain envelope. Pure Java.
- * Clip sound follows the shipping rules: visual clips keep their sound even when the picture is hidden,
- * muted audio lanes are silent, pictures carry no sound, and the music bed loops to the end of the timeline.
- */
+/* loaded from: classes6.dex */
 public final class AudioPlan {
+    public final long durationMs;
+    public final List<Segment> segments;
+
     public static final class Segment {
-        public final String uri;
-        public final long timelineStartMs, durationMs, sourceInMs;
-        public final float speed, volume;
-        public final long fadeInMs, fadeOutMs;
+        public AudioSettings audio = new AudioSettings();
+        public final long durationMs;
+        public final long fadeInMs;
+        public final long fadeOutMs;
         public final boolean music;
+        public final long sourceInMs;
+        public final float speed;
+        public final long timelineStartMs;
+        public final String uri;
+        public final float volume;
 
         Segment(String uri, long start, long duration, long in, float speed, float volume, long fadeIn, long fadeOut, boolean music) {
-            this.uri = uri; timelineStartMs = start; durationMs = duration; sourceInMs = in;
-            this.speed = speed; this.volume = volume; fadeInMs = fadeIn; fadeOutMs = fadeOut; this.music = music;
+            this.uri = uri;
+            this.timelineStartMs = start;
+            this.durationMs = duration;
+            this.sourceInMs = in;
+            this.speed = speed;
+            this.volume = volume;
+            this.fadeInMs = fadeIn;
+            this.fadeOutMs = fadeOut;
+            this.music = music;
         }
 
-        public long timelineEndMs() { return timelineStartMs + durationMs; }
+        public long timelineEndMs() {
+            return this.timelineStartMs + this.durationMs;
+        }
 
-        /** Gain at a time measured from the segment start (fades are linear, like the Media3 GainProcessor). */
         public float gainAt(double localMs) {
-            double envelope = 1;
-            if (fadeInMs > 0) envelope = Math.min(envelope, localMs / fadeInMs);
-            if (fadeOutMs > 0) envelope = Math.min(envelope, (durationMs - localMs) / fadeOutMs);
-            return (float) (volume * Math.max(0, Math.min(1, envelope)));
+            double envelope = this.fadeInMs > 0 ? Math.min(1.0d, localMs / this.fadeInMs) : 1.0d;
+            if (this.fadeOutMs > 0) {
+                envelope = Math.min(envelope, (this.durationMs - localMs) / this.fadeOutMs);
+            }
+            return (float) (this.volume * Math.pow(10.0d, this.audio.normalizationDb / 20.0d) * Math.max(0.0d, Math.min(1.0d, envelope)));
         }
     }
 
-    public final List<Segment> segments;
-    public final long durationMs;
-
-    private AudioPlan(List<Segment> segments, long durationMs) { this.segments = segments; this.durationMs = durationMs; }
+    private AudioPlan(List<Segment> segments, long durationMs) {
+        this.segments = segments;
+        this.durationMs = durationMs;
+    }
 
     public static AudioPlan of(EditProject project, boolean preview) {
         project.validate();
@@ -46,31 +61,60 @@ public final class AudioPlan {
         boolean solo = preview && LayerOps.anySolo(project);
         for (EditProject.Placement p : project.placements()) {
             EditProject.Clip c = p.clip;
-            if (c.image) continue;
-            boolean renders = LayerOps.renders(project, c, preview);
-            float volume = c.volume;
-            if (c.track >= 4 && !renders) volume = 0;
-            if (c.track < 4 && solo && !renders) volume = 0;
-            if (volume <= 0) continue;
-            list.add(new Segment(c.uri, p.startMs, c.durationMs(), c.inMs, c.speed, volume, c.fadeInMs, c.fadeOutMs, false));
+            if (!c.image) {
+                boolean renders = LayerOps.renders(project, c, preview);
+                float volume = c.volume;
+                if (c.track >= 8 && !renders) {
+                    volume = 0.0f;
+                }
+                float volume2 = (c.track >= 8 || !solo || renders) ? volume : 0.0f;
+                if (volume2 > 0.0f) {
+                    Segment segment = new Segment(c.uri, p.startMs, c.durationMs(), c.inMs, c.speed, volume2, c.fadeInMs, c.fadeOutMs, false);
+                    segment.audio = c.audio.copy();
+                    list.add(segment);
+                    solo = solo;
+                }
+            }
         }
         EditProject.Music m = project.music;
-        if (m != null && m.startMs < duration && m.volume > 0) {
-            long cursor = m.startMs; int count = 0;
+        if (m != null && m.startMs < duration && m.volume > 0.0f) {
+            long cursor = m.startMs;
+            int count = 0;
+            long cursor2 = cursor;
             do {
-                long length = Math.min(m.outMs - m.inMs, duration - cursor);
-                list.add(new Segment(m.uri, cursor, length, m.inMs, 1f, m.volume, 0, 0, true));
-                cursor += length;
-                if (++count > 2000) throw new IllegalArgumentException("Music segment is too short to loop across this project. Use a longer trim.");
-            } while (m.loop && cursor < duration);
+                long cursor3 = m.outMs;
+                long length = Math.min(cursor3 - m.inMs, duration - cursor2);
+                list.add(new Segment(m.uri, cursor2, length, m.inMs, 1.0f, m.volume, 0L, 0L, true));
+                cursor2 += length;
+                count++;
+                if (count > 2000) {
+                    throw new IllegalArgumentException("Music segment is too short to loop across this project. Use a longer trim.");
+                }
+                if (!m.loop) {
+                    break;
+                }
+            } while (cursor2 < duration);
         }
         return new AudioPlan(list, duration);
     }
 
-    /** Segments that produce sound inside [fromMs, toMs). */
+    public AudioPlan filter(Predicate<Segment> keep) {
+        List<Segment> kept = new ArrayList<>();
+        for (Segment s : this.segments) {
+            if (keep.test(s)) {
+                kept.add(s);
+            }
+        }
+        return new AudioPlan(kept, this.durationMs);
+    }
+
     public List<Segment> between(long fromMs, long toMs) {
         List<Segment> result = new ArrayList<>();
-        for (Segment s : segments) if (s.timelineStartMs < toMs && s.timelineEndMs() > fromMs) result.add(s);
+        for (Segment s : this.segments) {
+            if (s.timelineStartMs < toMs && s.timelineEndMs() > fromMs) {
+                result.add(s);
+            }
+        }
         return result;
     }
 }

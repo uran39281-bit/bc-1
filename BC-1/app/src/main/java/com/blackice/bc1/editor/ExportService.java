@@ -89,7 +89,7 @@ public final class ExportService extends Service {
             ExportEngine.Route route=ExportEngine.route(ExportEngine.resolve(engineName,getPackageName()),decoders,com.blackice.bc1.engine.bc.HdrCheck.anyHdr(this,project),com.blackice.bc1.core.RenderPlan.usesBlend(project));
             routeNote=route.reason;
             getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("route",routeNote==null?"":routeNote).apply();
-            if(route.engine==ExportEngine.BC_CORE||(project.clips.isEmpty()&&!project.overlays.isEmpty())){startCore(project);return START_NOT_STICKY;}
+            if(route.engine==ExportEngine.BC_CORE||(PreviewProxy.withoutVisualClips(project)&&!project.overlays.isEmpty())){startCore(project);return START_NOT_STICKY;}
             transformer=new Transformer.Builder(this).setAssetLoaderFactory(CompositionFactory.assetLoader(this)).setVideoMimeType(plan.codec.mime).setAudioMimeType(MimeTypes.AUDIO_AAC)
                     .setPortraitEncodingEnabled(true)
                     .setVideoFrameProcessorFactory(CompositionFactory.frameProcessor())

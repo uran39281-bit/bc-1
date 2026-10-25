@@ -81,7 +81,7 @@ public final class RenderPlan {
         drawOrder.addAll(even);
         for (int layer = 1; layer < EditProject.VISUAL_TRACKS; layer++)
             for (EditProject.Placement p : placements) if (p.clip.track == layer) drawOrder.add(p);
-        if (drawOrder.isEmpty() && project.overlays.isEmpty()) throw new IllegalArgumentException("Keep at least one video or image layer in the project.");
+        if (!preview && drawOrder.isEmpty() && project.overlays.isEmpty()) throw new IllegalArgumentException("Keep at least one video or image layer in the project.");
     }
 
     public EditProject project() { return project; }

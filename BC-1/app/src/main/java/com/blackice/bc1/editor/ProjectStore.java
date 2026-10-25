@@ -103,7 +103,7 @@ public final class ProjectStore {
     }
     public static String encode(EditProject p) throws JSONException {
         // Anything on the timeline is also listed in the media bin.
-        p.ensureLibrary(); p.validate(); JSONObject j=new JSONObject(); j.put("schema",EditProject.SCHEMA).put("id",p.id).put("name",p.name)
+        p.ensureLibrary(); p.validate(); JSONObject j=new JSONObject(); j.put("appliedCaptionJobId",p.appliedCaptionJobId).put("schema",EditProject.SCHEMA).put("id",p.id).put("name",p.name)
                 .put("portrait",p.portrait).put("previewHeight",p.previewHeight).put("playheadMs",p.playheadMs)
                 .put("frameRate",p.frameRate).put("loopInMs",p.loopInMs).put("loopOutMs",p.loopOutMs);
         JSONArray tracks=new JSONArray();
@@ -112,7 +112,7 @@ public final class ProjectStore {
         j.put("tracks",tracks); JSONArray markers=new JSONArray(); for(long m:p.markers) markers.put(m); j.put("markers",markers);
         JSONArray clips=new JSONArray();
         for(EditProject.Clip c:p.clips) clips.put(new JSONObject().put("id",c.id).put("uri",c.uri).put("name",c.name)
-                .put("audioOnly",c.audioOnly).put("image",c.image).put("sourceDurationMs",c.sourceDurationMs).put("inMs",c.inMs).put("outMs",c.outMs)
+                .put("audio",c.audio.json()).put("audioOnly",c.audioOnly).put("image",c.image).put("sourceDurationMs",c.sourceDurationMs).put("inMs",c.inMs).put("outMs",c.outMs)
                 .put("effect",c.effect).put("intensity",c.intensity).put("opacity",c.opacity).put("volume",c.volume).put("unmutedVolume",c.unmutedVolume).put("speed",c.speed)
                 .put("track",c.track).put("startMs",c.startMs).put("gapMs",c.gapMs).put("fadeInMs",c.fadeInMs).put("fadeOutMs",c.fadeOutMs)
                 .put("x",c.x).put("y",c.y).put("scale",c.scale).put("rotation",c.rotation).put("motion",motion(c.motion))
@@ -125,7 +125,7 @@ public final class ProjectStore {
                 .put("sourceDurationMs",a.sourceDurationMs).put("inMs",a.inMs).put("outMs",a.outMs).put("width",a.width).put("height",a.height));
         j.put("library",library); JSONArray overlays=new JSONArray();
         for(EditProject.Overlay o:p.overlays) overlays.put(new JSONObject().put("id",o.id).put("text",o.text)
-                .put("motion",motion(o.motion)).put("imageUri",o.imageUri).put("startMs",o.startMs).put("endMs",o.endMs)
+                .put("visualizerClipId",o.visualizerClipId).put("visualizerStyle",o.visualizerStyle).put("motion",motion(o.motion)).put("imageUri",o.imageUri).put("startMs",o.startMs).put("endMs",o.endMs)
                 .put("x",o.x).put("y",o.y).put("scale",o.scale).put("opacity",o.opacity).put("font",o.font).put("color",o.color).put("alignment",o.alignment)
                 .put("shape",o.shape).put("name",o.name).put("group",o.group).put("hidden",o.hidden).put("solo",o.solo).put("locked",o.locked)
                 .put("flipH",o.flipH).put("flipV",o.flipV).put("rotation",o.rotation).put("heightScale",o.heightScale).put("aspect",o.aspect).put("skewX",o.skewX).put("skewY",o.skewY)
@@ -139,7 +139,7 @@ public final class ProjectStore {
     public static EditProject decode(String json) throws JSONException {
         JSONObject j=new JSONObject(json);
         if(j.getInt("schema")<1||j.getInt("schema")>EditProject.SCHEMA) throw new JSONException("Project version not supported; original file is preserved.");
-        EditProject p=new EditProject(); p.id=j.getString("id"); p.name=j.getString("name"); p.portrait=j.getBoolean("portrait");
+        EditProject p=new EditProject();p.appliedCaptionJobId=j.optString("appliedCaptionJobId",""); p.id=j.getString("id"); p.name=j.getString("name"); p.portrait=j.getBoolean("portrait");
         p.previewHeight=j.getInt("previewHeight"); p.playheadMs=j.getLong("playheadMs");
         // Schema 4 additions; earlier files receive defaults that render identically.
         p.frameRate=j.optInt("frameRate",30); p.loopInMs=j.optLong("loopInMs",-1); p.loopOutMs=j.optLong("loopOutMs",-1);
@@ -151,7 +151,7 @@ public final class ProjectStore {
             track.locked=v.optBoolean("locked"); track.muted=v.optBoolean("muted"); track.collapsed=v.optBoolean("collapsed"); }
         JSONArray markers=j.optJSONArray("markers"); if(markers!=null) for(int i=0;i<markers.length();i++) p.markers.add(markers.getLong(i));
         JSONArray clips=j.getJSONArray("clips");
-        for(int i=0;i<clips.length();i++) { JSONObject v=clips.getJSONObject(i); EditProject.Clip c=new EditProject.Clip();
+        for(int i=0;i<clips.length();i++) { JSONObject v=clips.getJSONObject(i); EditProject.Clip c=new EditProject.Clip();c.audio=com.blackice.bc1.audio.AudioSettings.from(v.optJSONObject("audio"));
             c.track=v.optInt("track",0);if(legacyTracks&&c.track>=4)c.track+=4;c.startMs=v.optLong("startMs",0);c.gapMs=v.optLong("gapMs",0);c.fadeInMs=v.optLong("fadeInMs",0);c.fadeOutMs=v.optLong("fadeOutMs",0);
             c.x=(float)v.optDouble("x",0);c.y=(float)v.optDouble("y",0);c.scale=(float)v.optDouble("scale",1);c.rotation=(float)v.optDouble("rotation",0);c.motion=motion(v.optJSONArray("motion"));
             c.chroma=v.optBoolean("chroma",false);c.keyColor=v.optInt("keyColor",0xFF00FF00);c.keyTolerance=(float)v.optDouble("keyTolerance",.25);c.keySoftness=(float)v.optDouble("keySoftness",.08);c.keySpill=(float)v.optDouble("keySpill",.5);
@@ -169,7 +169,7 @@ public final class ProjectStore {
             if(p.libraryIndex(a.uri)<0&&p.library.size()<EditProject.LIBRARY_LIMIT) p.library.add(a); }
         p.ensureLibrary();
         JSONArray overlays=j.getJSONArray("overlays");
-        for(int i=0;i<overlays.length();i++) { JSONObject v=overlays.getJSONObject(i); EditProject.Overlay o=new EditProject.Overlay();
+        for(int i=0;i<overlays.length();i++) { JSONObject v=overlays.getJSONObject(i); EditProject.Overlay o=new EditProject.Overlay();o.visualizerClipId=v.optString("visualizerClipId",null);o.visualizerStyle=v.optInt("visualizerStyle",0);
             o.motion=motion(v.optJSONArray("motion"));o.id=v.getString("id"); o.text=v.getString("text"); o.imageUri=v.optString("imageUri",null);
             o.startMs=v.getLong("startMs"); o.endMs=v.getLong("endMs"); o.x=(float)v.getDouble("x"); o.y=(float)v.getDouble("y");
             o.scale=(float)v.getDouble("scale"); o.opacity=(float)v.getDouble("opacity");o.font=v.optString("font","sans-serif-medium");o.color=v.optInt("color",0xFFFFFFFF);o.alignment=v.optInt("alignment",1);

@@ -3,6 +3,7 @@ plugins { id 'com.android.application' }
 android {
     namespace 'com.blackice.bc1'
     compileSdk 36
+    ndkVersion "27.2.12479018"
 
     defaultConfig {
         applicationId 'com.blackice.bc1'
@@ -10,14 +11,18 @@ android {
         if (project.hasProperty('bc1SideBySide')) applicationIdSuffix '.preview'
         // ICE Lite test builds install beside the released app and never touch its projects.
         if (project.hasProperty('bc1IceLite')) { applicationIdSuffix '.icelite'; versionNameSuffix '-icelite' }
-        manifestPlaceholders = [appLabel: project.hasProperty('bc1IceLite') ? 'BC-1 ICE Lite test' : project.hasProperty('bc1SideBySide') ? 'BC-1 v1.4.1-dev' : 'BC-1 Dual Workspace']
+        manifestPlaceholders = [appLabel: project.hasProperty('bc1IceLite') ? 'BC-1 ICE Lite test' : project.hasProperty('bc1SideBySide') ? 'Black Ice Editor Preview' : 'Black Ice Editor']
         minSdk 26
         targetSdk 35
-        versionCode 28
-        versionName '1.4.1-dev'
+        versionCode 33
+        versionName '1.8.0'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        ndk { abiFilters.addAll(project.hasProperty('bc1Abis') ? project.property('bc1Abis').toString().split(',').toList() : ['arm64-v8a','x86_64']) }
+        externalNativeBuild { cmake { arguments '-DANDROID_STL=c++_static', '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON' } }
     }
 
+    externalNativeBuild { cmake { path 'src/main/cpp/CMakeLists.txt'; version '3.22.1' } }
+    sourceSets.main.assets.srcDir layout.buildDirectory.dir('generated/modelAssets')
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -34,3 +39,27 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.6.2'
     androidTestImplementation 'androidx.test.ext:junit:1.3.0'
 }
+
+// Download only on the BUILD machine. The verified file is packaged in every APK;
+// speech recognition on the phone never downloads a model or sends audio anywhere.
+def modelOutput=layout.buildDirectory.file('generated/modelAssets/speech/ggml-base.en-q5_1.bin')
+tasks.register('prepareBundledSpeechModel') {
+ inputs.property('sha256','4baf70dd0d7c4247ba2b81fafd9c01005ac77c2f9ef064e00dcf195d0e2fdd2f')
+ outputs.file(modelOutput)
+ doLast {
+  def target=modelOutput.get().asFile;target.parentFile.mkdirs()
+  def temporary=new File(target.parentFile,target.name+'.tmp')
+  def digest=java.security.MessageDigest.getInstance('SHA-256')
+  def source=project.findProperty('bc1ModelFile')
+  def input=source ? new File(source.toString()).newInputStream() : new URL('https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en-q5_1.bin').openStream()
+  try {
+   input.withCloseable { stream -> temporary.withOutputStream { out ->
+    byte[] buffer=new byte[65536];int n
+    while((n=stream.read(buffer))!=-1){out.write(buffer,0,n);digest.update(buffer,0,n)}
+   } }
+   if(temporary.length()!=59721011L || digest.digest().encodeHex().toString()!='4baf70dd0d7c4247ba2b81fafd9c01005ac77c2f9ef064e00dcf195d0e2fdd2f')throw new GradleException('Bundled speech model integrity check failed')
+   java.nio.file.Files.move(temporary.toPath(),target.toPath(),java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+  }finally{temporary.delete()}
+ }
+}
+tasks.named('preBuild').configure { dependsOn 'prepareBundledSpeechModel' }

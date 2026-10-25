@@ -26,7 +26,9 @@ public final class EditorActivity extends Activity {
     boolean dirty,reducedMotion,favoritesOnly,mediaList,fullscreenPreview; float monitorVolume=1f; LinearLayout timelineTools; int mediaSort,customTimelineHeight; long editRevision;
     final java.util.Set<String> favoriteMedia=new java.util.HashSet<>();
     public static final String PREFS="bc1-editor";
-    static final int IMPORT=701,MUSIC=702,OVERLAY=703,EXPORT=704,REPLACE=705,MEDIA_ACCESS=113;
+    static final int IMPORT=701,MUSIC=702,OVERLAY=703,EXPORT=704,REPLACE=705,MEDIA_ACCESS=113,SUBTITLE_EXPORT=706;
+    private String pendingSubtitleExport;
+    boolean captionApplying;
     static final String[] NAV={"Add","Edit","Effects","Layers"};
     final ToolPanels panels=new ToolPanels(this);
     final TransformPanel transformPanel=new TransformPanel(this);
@@ -141,7 +143,11 @@ public final class EditorActivity extends Activity {
         if(!running&&!exportLaunching&&!loading&&(wasExporting||completed>lastExportSeen)){lastExportSeen=completed;tell(export.getString("status","Export ended"));if(wasExporting)showLive();}
         wasExporting=running;
         if(exportButton!=null)exportButton.setText(running?"Cancel":"Export");
-        if(status!=null)status.setText(running?export.getString("status","Exporting…"):message);
+                android.content.SharedPreferences captions=getSharedPreferences(com.blackice.bc1.captions.CaptionService.PREFS,MODE_PRIVATE);
+        boolean captioning=captions.getBoolean("running",false)&&com.blackice.bc1.captions.CaptionService.isRunning();
+        if(status!=null)status.setText(running?export.getString("status","Exporting…"):captioning?captions.getString("status","Captioning…"):message);
+        if(++captionPolls%10==0)collectCaptions(captions);
+
         main.postDelayed(this,player!=null&&player.isPlaying()?33:100);
     }};
     // Retain the requested identity through configuration changes while disk loading is in flight.
@@ -153,10 +159,13 @@ public final class EditorActivity extends Activity {
         android.content.SharedPreferences exportState=getSharedPreferences(ExportService.PREFS,MODE_PRIVATE);
         if(exportState.getBoolean("running",false)&&!ExportService.isRunning())exportState.edit().putBoolean("running",false)
                 .putBoolean("success",false).putString("status","Previous export was interrupted. Export again to create a complete MP4.").putLong("finishedAt",System.currentTimeMillis()).apply();
+        android.content.SharedPreferences speechState=getSharedPreferences(com.blackice.bc1.captions.CaptionService.PREFS,MODE_PRIVATE);
+        if(speechState.getBoolean("running",false)&&!com.blackice.bc1.captions.CaptionService.isRunning())speechState.edit().putBoolean("running",false)
+                .putString("status","Transcription was interrupted. Resume saved progress in Speech & captions.").putLong("finishedAt",System.currentTimeMillis()).apply();
         try {mode=LayoutPolicy.Preference.valueOf(getSharedPreferences(PREFS,MODE_PRIVATE).getString("mode","AUTO"));}catch(Exception ignored){}
         snapping=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("snapping",true);
         workspaceFocus=getSharedPreferences(PREFS,MODE_PRIVATE).getInt("workspace-focus",0);
-        if(state!=null){transformPanel.linked=state.getBoolean("transform-linked",true);transformPanel.tab=state.getInt("transform-tab",0);mediaSort=state.getInt("media-sort",0);mediaList=state.getBoolean("media-list",false);favoritesOnly=state.getBoolean("media-favorites",false);customTimelineHeight=state.getInt("timeline-height",0);selected=state.getInt("selected",-1);selectedOverlay=state.getInt("selected-overlay",-1);pixelsPerSecond=state.getFloat("timeline-zoom",48);tab=state.getInt("tab",0);mediaQuery=state.getString("media-query","");try{mediaKind=MediaFilter.Kind.valueOf(state.getString("media-kind","ALL"));}catch(IllegalArgumentException ignored){}}
+        if(state!=null){pendingSubtitleExport=state.getString("subtitle-export");transformPanel.linked=state.getBoolean("transform-linked",true);transformPanel.tab=state.getInt("transform-tab",0);mediaSort=state.getInt("media-sort",0);mediaList=state.getBoolean("media-list",false);favoritesOnly=state.getBoolean("media-favorites",false);customTimelineHeight=state.getInt("timeline-height",0);selected=state.getInt("selected",-1);selectedOverlay=state.getInt("selected-overlay",-1);pixelsPerSecond=state.getFloat("timeline-zoom",48);tab=state.getInt("tab",0);mediaQuery=state.getString("media-query","");try{mediaKind=MediaFilter.Kind.valueOf(state.getString("media-kind","ALL"));}catch(IllegalArgumentException ignored){}}
         if(state==null)tab=1;
         buildWorkspace();
         String id=state==null?getIntent().getStringExtra("project-id"):state.getString("project-id",getIntent().getStringExtra("project-id"));
@@ -177,10 +186,10 @@ public final class EditorActivity extends Activity {
     @Override protected void onStart(){super.onStart();active=true;main.post(pulse);if(!loading)showLive();}
     @Override protected void onStop(){cancelLiveAdjust();active=false;main.removeCallbacks(pulse);main.removeCallbacks(warmPreview);saveNow();releasePreview();if(previewProxy!=null)previewProxy.cancel();if(live!=null)live.releaseDecoders();super.onStop();}
     @Override protected void onDestroy(){main.removeCallbacks(autosave);if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
-    @Override protected void onSaveInstanceState(Bundle state){state.putString("project-id",loading?openingProjectId:project.id);cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());saveNow();super.onSaveInstanceState(state);}
+    @Override protected void onSaveInstanceState(Bundle state){state.putString("subtitle-export",pendingSubtitleExport);state.putString("project-id",loading?openingProjectId:project.id);cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());saveNow();super.onSaveInstanceState(state);}
     @Override public void onConfigurationChanged(Configuration config){super.onConfigurationChanged(config);cancelLiveAdjust();buildWorkspace();}
     boolean exporting(){return getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getBoolean("running",false)||exportLaunching;}
-    boolean editable(){if(uiLocked){tell("UI locked • unlock editing in Settings");return false;}if(loading||importing){tell("Wait for the current import to finish.");return false;}if(exporting()){tell("Wait for export to finish, or cancel it to continue editing.");return false;}return true;}
+    boolean editable(){if(captionApplying){tell("Saving captions…");return false;}if(uiLocked){tell("UI locked • unlock editing in Settings");return false;}if(loading||importing){tell("Wait for the current import to finish.");return false;}if(exporting()){tell("Wait for export to finish, or cancel it to continue editing.");return false;}return true;}
     void releasePreview(){
         main.removeCallbacks(flushSeek);main.removeCallbacks(checkSeek);seekQueued=false;seekInFlight=false;
         // Only a render the user is waiting for is cancelled; a background one (warmPreview) keeps going.
@@ -274,7 +283,7 @@ public final class EditorActivity extends Activity {
         project.validate();dirty=true;editRevision++;message=text;refreshProject();showLive();main.removeCallbacks(autosave);main.postDelayed(autosave,300);
     }
     void saveNow() {
-        main.removeCallbacks(autosave);if(loading||liveBefore!=null)return;
+        main.removeCallbacks(autosave);if(loading||captionApplying||liveBefore!=null)return;
         if(player!=null)project.playheadMs=Math.min(project.durationMs(),Math.max(0,player.getCurrentPosition()));
         EditProject snapshot=ProjectStore.snapshot(project);long savingRevision=editRevision;
         io.execute(()->{try{store.save(snapshot);main.post(()->{if(isDestroyed()||!project.id.equals(snapshot.id))return;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("last-project",snapshot.id).apply();if(savingRevision==editRevision){dirty=false;renderHeader();}});}
@@ -452,6 +461,68 @@ public final class EditorActivity extends Activity {
     void effectsDialog(){tell("Effects — Coming Later");}
     void splitSelected(){if(clip()!=null)edit("Clip split",()->project.split(selected,project.playheadMs));}
     /** Failed/no-op commands do not consume undo or discard redo. */
+    private int captionPolls;private long captionsSeen=-1;private String captionsSeenProject,captionsSeenJob;
+    void collectCaptions(android.content.SharedPreferences captions){
+        if(loading||uiLocked||importing||exporting()||captionApplying)return;
+        if(!project.id.equals(captionsSeenProject)){captionsSeenProject=project.id;captionsSeen=-1;captionsSeenJob=null;}
+        long finished=captions.getLong("finishedAt",0);
+        com.blackice.bc1.captions.CaptionService.Taken result=com.blackice.bc1.captions.CaptionService.takeResult(this,project.id);
+        if(result!=null){
+            if(result.jobId.equals(captionsSeenJob))return;
+            captionsSeen=finished;captionsSeenJob=result.jobId;
+            final String projectId=project.id;
+            if(!result.jobId.isEmpty()&&result.jobId.equals(project.appliedCaptionJobId)){
+                io.execute(()->com.blackice.bc1.captions.CaptionService.acknowledge(getApplicationContext(),projectId,result));return;
+            }
+            if(result.cues.isEmpty()){tell(result.summary);com.blackice.bc1.captions.CaptionService.acknowledge(this,projectId,result);return;}
+            if(!result.fingerprint.equals(com.blackice.bc1.core.CaptionState.fingerprint(project))){
+                new AlertDialog.Builder(this).setTitle("Caption source changed")
+                    .setMessage("These captions use the original selection and timing. Add them for review, or discard them and transcribe again.")
+                    .setPositiveButton("Add for review",(d,w)->{if(projectId.equals(project.id))applyCaptionResult(result);})
+                    .setNegativeButton("Discard",(d,w)->com.blackice.bc1.captions.CaptionService.acknowledge(this,projectId,result)).show();
+            }else applyCaptionResult(result);
+        }else if(finished>captionsSeen&&!captions.getBoolean("running",false)){
+            captionsSeen=finished;if(finished>0&&project.id.equals(captions.getString("project","")))tell(captions.getString("status","Captions finished"));
+        }
+    }
+    void reviewPendingCaptions(){
+        if(!editable())return;
+        if(com.blackice.bc1.captions.CaptionService.takeResult(this,project.id)==null){tell("No finished captions are waiting.");return;}
+        captionsSeenJob=null;collectCaptions(getSharedPreferences(com.blackice.bc1.captions.CaptionService.PREFS,MODE_PRIVATE));
+    }
+    private void applyCaptionResult(com.blackice.bc1.captions.CaptionService.Taken result){
+        if(!editable())return;
+        final EditProject original;final String before;
+        try{before=ProjectStore.encode(project);original=ProjectStore.decode(before);}catch(Exception e){tell("Cannot prepare captions: "+e.getMessage());return;}
+        captionApplying=true;main.removeCallbacks(autosave);pausePlayback();releasePreview();tell("Saving captions…");
+        io.execute(()->{
+            try{
+                EditProject committed=com.blackice.bc1.core.CaptionApplication.commit(original,result.cues,result.fromMs,result.toMs,result.jobId,
+                    store::save,()->com.blackice.bc1.captions.CaptionService.acknowledge(getApplicationContext(),original.id,result));
+                getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("last-project",committed.id).apply();
+                main.post(()->{captionApplying=false;if(isDestroyed())return;
+                    if(original.id.equals(project.id)){project=committed;pushUndo(before);changed("Auto captions saved • "+result.summary);}
+                });
+            }catch(Exception e){main.post(()->{captionApplying=false;if(isDestroyed())return;
+                tell("Captions were not saved: "+e.getMessage()+". Use Review pending result to retry.");showLive();
+            });}
+        });
+    }
+    void resumeCaptions(){
+        if(!editable())return;
+        if(!com.blackice.bc1.captions.CaptionJobs.exists(this,project.id)){tell("No saved transcription for this project.");return;}
+        final String id=project.id;
+        new AlertDialog.Builder(this).setTitle("Resume transcription?")
+            .setMessage("Continue after the last saved batch, using the original selection and recognition settings. The current unfinished batch will be repeated.")
+            .setPositiveButton("Resume",(d,w)->{if(!editable()||!id.equals(project.id))return;try{pausePlayback();saveNow();com.blackice.bc1.captions.CaptionService.resume(this,id);tell("Resuming transcription…");}catch(Exception e){tell(e.getMessage());}})
+            .setNegativeButton("Close",null).show();
+    }
+    void discardCaptionJob(){
+        if(!editable())return;final String id=project.id;
+        if(!com.blackice.bc1.captions.CaptionJobs.exists(this,id)){tell("No saved transcription for this project.");return;}
+        new AlertDialog.Builder(this).setTitle("Discard saved transcription?").setMessage("This removes unfinished recognition progress. Existing timeline captions stay in your project.")
+            .setPositiveButton("Discard",(d,w)->{try{com.blackice.bc1.captions.CaptionService.discardJob(this,id);tell("Saved transcription discarded");}catch(Exception e){tell(e.getMessage());}}).setNegativeButton("Keep",null).show();
+    }
     void edit(String message,Runnable operation){
         if(!editable())return;pausePlayback();CrashLogs.operation(message);String before;try{before=ProjectStore.encode(project);}catch(Exception e){tell(e.getMessage());return;}
         int selection=selected;
@@ -568,6 +639,8 @@ public final class EditorActivity extends Activity {
             addAction("Diagnostics → Crash Logs",()->CrashLogs.show(this));
             addAction("Export diagnostics",()->exportDiagnostics());
             addAction("Device video capabilities",()->deviceVideoReport());
+            addAction("Speech & captions",()->CaptionPanel.show(this));
+            addAction("Speech speed test",this::speechBenchmark);
             addAction("Engine benchmark (8 layers × 1080p60)",()->engineBenchmark());
 
             inspector.addView(note("BC-1 v"+appVersion()+"\nExport: H.264 or HEVC MP4 + AAC, 1080p to 4K, 24 to 120 fps (device permitting); Media3 or ICE Lite engine. Lower-rate sources keep their cadence.\nSpace: play • Ctrl+Z/Y: undo/redo • Ctrl+S: save\nS: split • arrows: frame step • Ctrl+D: duplicate\nCtrl+wheel: zoom • Shift+wheel: scroll • right-click: clip menu\n3D Page Curl remains excluded."));
@@ -833,7 +906,7 @@ public final class EditorActivity extends Activity {
     }
     void insertElement(PresetStore.Preset preset,long at){edit("Element added",()->{int added=PresetStore.insertElement(project,preset.payload,at);selected=-1;selectedOverlay=-1;multiClips.clear();multiOverlays.clear();tell("Added "+added+" layer(s)");});}
     void addOverlay(int shape,String text,float scale){
-        if(!editable())return;if(project.overlays.size()>=20){tell("Up to 20 text, shape and image layers.");return;}
+        if(!editable())return;if(project.regularOverlayCount()>=20){tell("Up to 20 text, shape and image layers.");return;}
         long at=addDrawer.insertTime();
         edit(shape>0?EditProject.SHAPES[shape]+" added":"Text added",()->{EditProject.Overlay o=new EditProject.Overlay();o.shape=shape;if(shape==0)o.text=text;else{o.text=EditProject.SHAPES[shape];o.y=0;o.color=0xFF40BFFF;}o.scale=Math.max(.1f,Math.min(2,scale*.7f));
             o.startMs=at;o.endMs=at+Math.max(EditProject.MIN_CLIP_MS,Math.min(3000,Math.max(project.durationMs()-at,3000)));project.overlays.add(o);selected=-1;selectedOverlay=project.overlays.size()-1;tab=1;});
@@ -940,6 +1013,102 @@ public final class EditorActivity extends Activity {
         addAction("Remove overlay",()->edit("Overlay removed",()->{project.overlays.remove(o);selectedOverlay=-1;}));
     }
     /** Runs ICE Lite on a generated 8-layer 1080p60 project and reports speed and a 15-minute estimate. */
+    void exportSubtitles(boolean vtt){
+        if(!editable())return;
+        if(com.blackice.bc1.core.SubtitleFiles.captions(project).isEmpty()){tell("Generate captions first.");return;}
+        try {
+            java.io.File snapshot=java.io.File.createTempFile("subtitles-", ".txt", getCacheDir());
+            java.nio.file.Files.write(snapshot.toPath(),com.blackice.bc1.core.SubtitleFiles.encode(project,vtt).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            pendingSubtitleExport=snapshot.getAbsolutePath();
+        } catch(java.io.IOException e){tell("Could not prepare subtitles: "+e.getMessage());return;}
+        Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+                .setType(vtt?"text/vtt":"application/x-subrip").putExtra(Intent.EXTRA_TITLE,project.name.replaceAll("[^a-zA-Z0-9 ._-]","_")+(vtt?".vtt":".srt"));
+        try{startActivityForResult(intent,SUBTITLE_EXPORT);}catch(ActivityNotFoundException e){if(pendingSubtitleExport!=null)new java.io.File(pendingSubtitleExport).delete();pendingSubtitleExport=null;tell("No document provider is installed.");}
+    }
+
+    /** Auto captions: whisper speech-to-text on the timeline (or the selected clip), added as a caption text group. */
+    void autoCaptions(){
+        if(!editable())return;
+        if(com.blackice.bc1.captions.CaptionService.isRunning()){
+            new AlertDialog.Builder(this).setTitle("Auto captions running").setMessage(getSharedPreferences(com.blackice.bc1.captions.CaptionService.PREFS,MODE_PRIVATE).getString("status","Captioning…"))
+                .setPositiveButton("Cancel captions",(d,w)->com.blackice.bc1.captions.CaptionService.cancel(this)).setNegativeButton("Keep going",null).show();return;}
+        if(!com.blackice.bc1.captions.WhisperLib.available()){tell("Auto captions are not available on this device's CPU type.");return;}
+        if(project.clips.isEmpty()){tell("Add a video or audio clip with speech first.");return;}
+        android.content.SharedPreferences prefs=getSharedPreferences(com.blackice.bc1.captions.CaptionService.PREFS,MODE_PRIVATE);
+        LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(dp(20),dp(8),dp(20),0);
+        com.blackice.bc1.captions.SpeechModels.Model[] models=new com.blackice.bc1.captions.SpeechModels.Model[]{com.blackice.bc1.captions.SpeechModels.Model.BASE_EN};
+        String[] modelLabels=new String[models.length];
+        for(int i=0;i<models.length;i++)modelLabels[i]=models[i].describe()+(com.blackice.bc1.captions.SpeechModels.installed(this,models[i])?" • downloaded":"");
+        android.widget.Spinner model=spinner(box,"Speech model",modelLabels,Math.max(0,java.util.Arrays.asList(models).indexOf(modelOr(prefs.getString("bundledModelChoice","BASE_EN")))));
+        String[] languageLabels=new String[com.blackice.bc1.captions.Transcriber.LANGUAGES.length];int languageIndex=0;
+        for(int i=0;i<languageLabels.length;i++){languageLabels[i]=com.blackice.bc1.captions.Transcriber.LANGUAGES[i][1];if(com.blackice.bc1.captions.Transcriber.LANGUAGES[i][0].equals(prefs.getString("language","auto")))languageIndex=i;}
+        android.widget.Spinner language=spinner(box,"Spoken language",languageLabels,languageIndex);
+        android.widget.CheckBox translate=new android.widget.CheckBox(this);translate.setText("Translate captions to English");translate.setChecked(prefs.getBoolean("translate",false));box.addView(translate);
+        Runnable updateLanguage = () -> {
+            boolean english = models[model.getSelectedItemPosition()].englishOnly();
+            language.setEnabled(!english); translate.setEnabled(!english);
+            if (english) { language.setSelection(1); translate.setChecked(false); }
+        };
+        model.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(android.widget.AdapterView<?> parent, android.view.View view, int position, long id) { updateLanguage.run(); }
+            public void onNothingSelected(android.widget.AdapterView<?> parent) { }
+        });
+        updateLanguage.run();
+        EditProject.Clip clip=selected>=0&&selected<project.clips.size()?project.clips.get(selected):null;
+        android.widget.CheckBox onlyClip=new android.widget.CheckBox(this);
+        if(clip!=null&&!clip.image){onlyClip.setText("Only the selected clip ("+clip.name+")");onlyClip.setChecked(true);box.addView(onlyClip);}
+        int existing=0;for(EditProject.Overlay o:project.overlays)if(com.blackice.bc1.core.CaptionBuilder.GROUP.equals(o.group))existing++;
+        TextView info=new TextView(this);info.setTextColor(0xFFB8C7D9);info.setPadding(0,dp(10),0,0);
+        info.setText("Ice Voice 01 includes Whisper Base English and works offline immediately. Speech stays on this phone. The separate music bed is excluded; music inside footage may still be heard."+(existing>0?"\n\nThe "+existing+" existing captions in the chosen range will be replaced (Undo restores them).":"")+"\n\nYou can leave the app while it runs.");
+        box.addView(info);
+        new AlertDialog.Builder(this).setTitle("Ice Voice 01 · Auto captions").setView(box).setNegativeButton("Cancel",null)
+            .setPositiveButton("Start",(d,w)->{
+                com.blackice.bc1.captions.Transcriber.Options o=new com.blackice.bc1.captions.Transcriber.Options();
+                o.model=models[model.getSelectedItemPosition()];o.language=com.blackice.bc1.captions.Transcriber.LANGUAGES[language.getSelectedItemPosition()][0];
+                o.translate=translate.isChecked();if(o.model.englishOnly()){o.language="en";o.translate=false;}o.clipId=clip!=null&&onlyClip.isChecked()?clip.id:null;
+                prefs.edit().putString("bundledModelChoice",o.model.name()).putString("model",o.model.name()).putString("language",o.language).putBoolean("translate",o.translate).apply();
+                pausePlayback();saveNow();
+                try{com.blackice.bc1.captions.CaptionService.start(this,ProjectStore.snapshot(project),o);tell("Auto captions started");}
+                catch(Exception e){tell("Cannot start captions: "+e.getMessage());}
+            }).show();
+    }
+    private static com.blackice.bc1.captions.SpeechModels.Model modelOr(String name){try{return com.blackice.bc1.captions.SpeechModels.Model.valueOf(name);}catch(RuntimeException e){return com.blackice.bc1.captions.SpeechModels.Model.BASE_EN;}}
+    private android.widget.Spinner spinner(LinearLayout into,String label,String[] items,int index){
+        TextView title=new TextView(this);title.setText(label);title.setTextColor(0xFFB8C7D9);title.setPadding(0,dp(8),0,0);into.addView(title);
+        android.widget.Spinner s=new android.widget.Spinner(this);s.setAdapter(new android.widget.ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,items));s.setSelection(index);s.setContentDescription(label);into.addView(s);return s;
+    }
+    /** Downloaded speech models: sizes and delete. */
+    void speechModels(){
+        com.blackice.bc1.captions.SpeechModels.Model[] models=new com.blackice.bc1.captions.SpeechModels.Model[]{com.blackice.bc1.captions.SpeechModels.Model.BASE_EN};
+        String[] rows=new String[models.length];
+        for(int i=0;i<models.length;i++){java.io.File f=com.blackice.bc1.captions.SpeechModels.file(this,models[i]);boolean have=com.blackice.bc1.captions.SpeechModels.installed(this,models[i]);
+            rows[i]=models[i].label+": "+(models[i].bundled()?(have?"included • ready offline":"included • prepares offline on first use"):have?String.format(java.util.Locale.US,"downloaded, %.0f MB • tap to delete",f.length()/1e6):"not downloaded");}
+        new AlertDialog.Builder(this).setTitle("Speech models (auto captions)").setItems(rows,(d,which)->{
+            if(models[which].bundled()){tell("Ice Voice 01 uses pretrained Whisper Base English. It is included in the app and prepares locally when needed; no download or training is required.");return;}
+            if(!com.blackice.bc1.captions.SpeechModels.installed(this,models[which])){tell(models[which].label+" downloads when you first use it in Auto captions.");return;}
+            new AlertDialog.Builder(this).setTitle("Delete "+models[which].label+" model?").setMessage("It will download again the next time you use it.")
+                .setPositiveButton("Delete",(d2,w2)->{com.blackice.bc1.captions.SpeechModels.delete(this,models[which]);tell(models[which].label+" speech model deleted");}).setNegativeButton("Keep",null).show();
+        }).setNegativeButton("Close",null).show();
+    }
+    /** Transcribes a built-in 11-second speech sample with the chosen model and reports speed. */
+    void speechBenchmark(){
+        com.blackice.bc1.captions.SpeechModels.Model[] models=new com.blackice.bc1.captions.SpeechModels.Model[]{com.blackice.bc1.captions.SpeechModels.Model.BASE_EN};
+        String[] labels=new String[models.length];for(int i=0;i<models.length;i++)labels[i]=models[i].describe()+(com.blackice.bc1.captions.SpeechModels.installed(this,models[i])?" • downloaded":"");
+        new AlertDialog.Builder(this).setTitle("Captions speed test: pick a model").setItems(labels,(d,which)->{
+            java.util.concurrent.atomic.AtomicBoolean stop=new java.util.concurrent.atomic.AtomicBoolean();
+            AlertDialog running=new AlertDialog.Builder(this).setTitle("Captions speed test").setMessage("Preparing…").setNegativeButton("Stop",(d2,w)->stop.set(true)).setCancelable(false).show();
+            new Thread(()->{String report;
+                try{report=com.blackice.bc1.captions.SpeechBenchmark.run(this,models[which],stop,text->main.post(()->{if(running.isShowing())running.setMessage(text);}));}
+                catch(java.util.concurrent.CancellationException e){report=null;}
+                catch(Throwable t){report="Speed test failed: "+t.getMessage();}
+                final String text=report;
+                main.post(()->{if(running.isShowing())running.dismiss();if(text==null||isDestroyed())return;
+                    new AlertDialog.Builder(this).setTitle("Captions speed test").setMessage(text)
+                        .setPositiveButton("Copy result",(d3,w)->{((android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(android.content.ClipData.newPlainText("BC-1 captions speed test",text));tell("Result copied");})
+                        .setNegativeButton("Close",null).show();});
+            },"bc1-speech-benchmark").start();
+        }).setNegativeButton("Close",null).show();
+    }
     void engineBenchmark(){
         if(exporting()){tell("Wait for the current export to finish.");return;}
         java.util.concurrent.atomic.AtomicBoolean stop=new java.util.concurrent.atomic.AtomicBoolean();
@@ -981,7 +1150,7 @@ public final class EditorActivity extends Activity {
             edit("Trim applied",()->project.trim(selected,in,out));},null);
     }
     void overlayDialog(EditProject.Overlay existing) {
-        if(!editable())return;if(existing==null&&project.overlays.size()>=20){tell("This preview supports up to 20 overlays.");return;}EditProject.Overlay o=existing==null?new EditProject.Overlay():existing;
+        if(!editable())return;if(existing==null&&project.regularOverlayCount()>=20){tell("This preview supports up to 20 overlays.");return;}EditProject.Overlay o=existing==null?new EditProject.Overlay():existing;
         if(existing==null){o.startMs=project.playheadMs;o.endMs=Math.max(o.startMs+100,Math.min(project.durationMs(),o.startMs+3000));}
         LinearLayout form=form();EditText text=o.imageUri==null?field(form,"Text (up to 200 characters)",o.text):null;
         EditText start=field(form,"Start (seconds)",seconds(o.startMs)),end=field(form,"End (seconds)",seconds(o.endMs));
@@ -1018,12 +1187,22 @@ public final class EditorActivity extends Activity {
     void openProject(String id){loading=true;releasePreview();io.execute(()->{try{EditProject loaded=store.load(id);main.post(()->{if(isDestroyed())return;loading=false;project=loaded;undo.clear();redo.clear();selected=-1;selectedOverlay=-1;changed("Project opened");});}catch(Exception e){main.post(()->{loading=false;tell("Cannot open project: "+e.getMessage());});}});}
     void chooseMode(){if(uiLocked){tell("Unlock to change workspace layout");return;}new AlertDialog.Builder(this).setTitle("Workspace layout").setSingleChoiceItems(new String[]{"Auto • phone / tablet / DeX","Phone portrait workspace","Wide tablet / DeX workspace"},mode.ordinal(),(d,i)->{mode=LayoutPolicy.Preference.values()[i];getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("mode",mode.name()).apply();d.dismiss();buildWorkspace();}).show();}
     void pick(int request,String type) {
-        if(!editable())return;if(request==OVERLAY&&project.overlays.size()>=20){tell("This preview supports up to 20 overlays.");return;}Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType(type).addCategory(Intent.CATEGORY_OPENABLE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        if(!editable())return;if(request==OVERLAY&&project.regularOverlayCount()>=20){tell("This preview supports up to 20 overlays.");return;}Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType(type).addCategory(Intent.CATEGORY_OPENABLE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         if(request==IMPORT){intent.putExtra(Intent.EXTRA_MIME_TYPES,new String[]{"video/*","image/*"});intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,true);}
         try{startActivityForResult(intent,request);}catch(ActivityNotFoundException e){tell("No document picker is installed.");}
     }
     @Override protected void onActivityResult(int request,int result,Intent data) {
-        super.onActivityResult(request,result,data);if(result!=RESULT_OK||data==null)return;
+        super.onActivityResult(request,result,data);if(result!=RESULT_OK||data==null){
+            if(request==SUBTITLE_EXPORT&&pendingSubtitleExport!=null){new java.io.File(pendingSubtitleExport).delete();pendingSubtitleExport=null;}return;}
+        if(request==SUBTITLE_EXPORT){
+            String snapshot=pendingSubtitleExport;pendingSubtitleExport=null;Uri target=data.getData();
+            if(target==null||snapshot==null){if(snapshot!=null)new java.io.File(snapshot).delete();tell("Open subtitle export again to retry.");return;}
+            io.execute(()->{try(java.io.OutputStream out=getContentResolver().openOutputStream(target,"wt")){
+                if(out==null)throw new java.io.IOException("Cannot open the selected destination");
+                java.nio.file.Files.copy(new java.io.File(snapshot).toPath(),out);main.post(()->tell("Subtitles saved"));
+            }catch(Exception e){main.post(()->tell("Subtitle export failed: "+e.getMessage()));}finally{new java.io.File(snapshot).delete();}});return;
+        }
+
         if(request==CrashLogs.EXPORT){io.execute(()->{try(java.io.OutputStream out=getContentResolver().openOutputStream(data.getData())){out.write(CrashLogs.report(this).getBytes(java.nio.charset.StandardCharsets.UTF_8));main.post(()->tell("Diagnostic report exported"));}catch(Exception e){main.post(()->tell("Report export failed: "+e.getClass().getSimpleName()));}});return;}
         if(request==BACKUP||request==RESTORE){if(data.getData()!=null)bundle(request,data.getData());return;}
         if(request==EXPORT){if(data.getData()!=null){

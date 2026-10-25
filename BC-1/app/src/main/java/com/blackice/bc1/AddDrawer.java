@@ -72,6 +72,7 @@ final class AddDrawer {
         into.addView(a.label(audio?"DEVICE AUDIO":"DEVICE GALLERY",12,EditorActivity.CYAN,true));
     }
     private void audio(LinearLayout into){
+        into.addView(a.button("Speech & captions",v->CaptionPanel.show(a)));
         LinearLayout actions=a.row();
         actions.addView(a.button("Music track…",v->a.pick(EditorActivity.MUSIC,"audio/*")),new LinearLayout.LayoutParams(0,a.dp(48),1));
         actions.addView(a.button("Audio layer…",v->a.pick(EditorActivity.AUDIO_LAYER,"audio/*")),new LinearLayout.LayoutParams(0,a.dp(48),1));

@@ -7,8 +7,11 @@ import java.util.UUID;
 /** Portable edit decision list. Times are integer milliseconds; media is never modified. */
 public final class EditProject {
     /** Schema 5: eight visual tracks (0 main, 1–7 layers) and audio on tracks 8–11 (was 4–7). */
-    public static final int SCHEMA = 6;
+    public static final int SCHEMA = 7;
     /** Visual tracks: 0 is the main sequence, 1..VISUAL_TRACKS-1 are independent video/image layers. */
+    public static final int MAX_CAPTIONS=2000;
+    public String appliedCaptionJobId="";
+    public int regularOverlayCount(){int n=0;for(Overlay o:overlays)if(!com.blackice.bc1.core.CaptionBuilder.GROUP.equals(o.group))n++;return n;}
     public static final int VISUAL_TRACKS = 8;
     public static final int AUDIO_FIRST = 8, AUDIO_LAST = 11, TRACK_COUNT = 12;
     public static boolean audioTrack(int track) { return track >= AUDIO_FIRST; }
@@ -45,6 +48,7 @@ public final class EditProject {
     }
 
     public static final class Clip {
+        public com.blackice.bc1.audio.AudioSettings audio=new com.blackice.bc1.audio.AudioSettings();
         public String id = UUID.randomUUID().toString(), uri, name;
         public boolean image, audioOnly;
         public int track; public long startMs,fadeInMs,fadeOutMs;
@@ -69,7 +73,7 @@ public final class EditProject {
         public long transitionMs = 500;
         public long durationMs() { return Math.round((outMs - inMs)/(double)speed); }
         public Clip copy() {
-            Clip c = new Clip(); c.uri=uri; c.name=name; c.image=image;c.audioOnly=audioOnly;
+            Clip c = new Clip(); c.audio=audio.copy();c.gapMs=gapMs; c.uri=uri; c.name=name; c.image=image;c.audioOnly=audioOnly;
             c.track=track;c.startMs=startMs;c.fadeInMs=fadeInMs;c.fadeOutMs=fadeOutMs;c.x=x;c.y=y;c.scale=scale;c.rotation=rotation;c.chroma=chroma;c.keyColor=keyColor;c.keyTolerance=keyTolerance;c.keySoftness=keySoftness;c.keySpill=keySpill;c.motion=motion.copy();
             c.heightScale=heightScale;c.aspect=aspect;c.skewX=skewX;c.skewY=skewY;c.anchorX=anchorX;c.anchorY=anchorY;c.flipH=flipH;c.flipV=flipV;c.width=width;c.height=height;c.group=group;
             c.sourceDurationMs=sourceDurationMs; c.inMs=inMs; c.outMs=outMs;
@@ -79,6 +83,7 @@ public final class EditProject {
         }
     }
     public static final class Overlay {
+        public String visualizerClipId;public int visualizerStyle;
         public String id = UUID.randomUUID().toString(), text = "BLACK ICE", imageUri;
         public long startMs, endMs = 3000;
         public float x=0, y=-.65f, scale=.7f, opacity=1f; public Motion motion=new Motion();
@@ -90,8 +95,8 @@ public final class EditProject {
         public float heightScale=-1;
         public float rotation, aspect=1, skewX, skewY, anchorX, anchorY, borderWidth, shadow;
         public int borderColor=0xFF000000, blend;
-        public Overlay copy(){Overlay o=new Overlay();o.text=text;o.imageUri=imageUri;o.startMs=startMs;o.endMs=endMs;o.x=x;o.y=y;o.scale=scale;o.opacity=opacity;o.motion=motion.copy();o.font=font;o.color=color;o.alignment=alignment;o.shape=shape;o.name=name;o.group=group;o.hidden=hidden;o.solo=solo;o.locked=locked;o.flipH=flipH;o.flipV=flipV;o.rotation=rotation;o.heightScale=heightScale;o.aspect=aspect;o.skewX=skewX;o.skewY=skewY;o.anchorX=anchorX;o.anchorY=anchorY;o.borderWidth=borderWidth;o.shadow=shadow;o.borderColor=borderColor;o.blend=blend;return o;}
-        public String label(){if(name!=null&&!name.isEmpty())return name;if(imageUri!=null)return "Image";if(shape>0)return SHAPES[shape];return text;}
+        public Overlay copy(){Overlay o=new Overlay();o.visualizerClipId=visualizerClipId;o.visualizerStyle=visualizerStyle;o.text=text;o.imageUri=imageUri;o.startMs=startMs;o.endMs=endMs;o.x=x;o.y=y;o.scale=scale;o.opacity=opacity;o.motion=motion.copy();o.font=font;o.color=color;o.alignment=alignment;o.shape=shape;o.name=name;o.group=group;o.hidden=hidden;o.solo=solo;o.locked=locked;o.flipH=flipH;o.flipV=flipV;o.rotation=rotation;o.heightScale=heightScale;o.aspect=aspect;o.skewX=skewX;o.skewY=skewY;o.anchorX=anchorX;o.anchorY=anchorY;o.borderWidth=borderWidth;o.shadow=shadow;o.borderColor=borderColor;o.blend=blend;return o;}
+        public String label(){if(visualizerClipId!=null)return "Audio visualizer (disabled)";if(name!=null&&!name.isEmpty())return name;if(imageUri!=null)return "Image";if(shape>0)return SHAPES[shape];return text;}
     }
     public static final String[] SHAPES={"Text","Rectangle","Ellipse","Triangle","Line","Plus","Arc","Speech bubble","Pie","Hexagon","Flower","Diagonal arrow","Trapezoid","Crescent","Wide rectangle","Star","Thick line","Polygon","Decorative rectangle"};
     public static final String[] BLENDS={"Normal","Multiply","Screen","Overlay","Add","Darken","Lighten"};
@@ -174,7 +179,7 @@ public final class EditProject {
             throw new IllegalArgumentException("Invalid project identity.");
         if(library.size()>LIBRARY_LIMIT) throw new IllegalArgumentException("The media bin holds up to "+LIBRARY_LIMIT+" items.");
         for(Clip a:library) if(a.uri==null||a.name==null||a.sourceDurationMs<0) throw new IllegalArgumentException("Invalid media bin entry.");
-        if(clips.size()>100 || overlays.size()>20) throw new IllegalArgumentException("Preview supports up to 100 clips and 20 overlays.");
+        if(clips.size()>100 || regularOverlayCount()>20 || overlays.size()-regularOverlayCount()>MAX_CAPTIONS) throw new IllegalArgumentException("Preview supports up to 100 clips and 20 overlays.");
         if(previewHeight!=360 && previewHeight!=540 && previewHeight!=1080) throw new IllegalArgumentException("Invalid preview resolution.");
         if(frameRate!=24&&frameRate!=25&&frameRate!=30&&frameRate!=50&&frameRate!=60&&frameRate!=120) throw new IllegalArgumentException("Use 24, 25, 30, 50, 60 or 120 fps.");
         for(Track t:tracks) if(t==null||t.name==null||t.name.isEmpty()||t.name.length()>60) throw new IllegalArgumentException("Every layer needs a name of up to 60 characters.");
@@ -182,6 +187,7 @@ public final class EditProject {
         for(int i=0;i<markers.size();i++) if(markers.get(i)<0||(i>0&&markers.get(i)<=markers.get(i-1))) throw new IllegalArgumentException("Markers must be distinct times from zero.");
         if((loopInMs<0)!=(loopOutMs<0)||(loopInMs>=0&&loopOutMs-loopInMs<MIN_CLIP_MS)) throw new IllegalArgumentException("Loop range needs at least 0.10 seconds.");
         for(Clip c:clips) {
+            c.audio.validate();
             c.motion.validate();
             if(!(c.heightScale==-1||Motion.allowed(Motion.HEIGHT,c.heightScale))||!(c.aspect>=.05f&&c.aspect<=20)||!(Math.abs(c.skewX)<=80)||!(Math.abs(c.skewY)<=80)||!Motion.allowed(Motion.ANCHOR_X,c.anchorX)||!Motion.allowed(Motion.ANCHOR_Y,c.anchorY)||c.width<0||c.height<0||(c.group!=null&&c.group.length()>40)) throw new IllegalArgumentException("Invalid transform: "+c.name);
             if(c.gapMs<0||c.gapMs>7_200_000_000L||(c.track!=0&&c.gapMs!=0))throw new IllegalArgumentException("Gaps belong to main-sequence clips: "+c.name);
