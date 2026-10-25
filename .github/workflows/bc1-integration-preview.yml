@@ -45,13 +45,13 @@ jobs:
       - name: Prepare APK and provenance
         run: |
           mkdir -p delivery
-          cp BC-1/app/build/outputs/apk/debug/app-debug.apk delivery/Black-Ice-Editor-v1.9.0-integration.apk
+          cp BC-1/app/build/outputs/apk/debug/app-debug.apk delivery/Black-Ice-Editor-v1.4.2-integration.apk
           cd delivery
-          sha256sum Black-Ice-Editor-v1.9.0-integration.apk > SHA256SUMS.txt
+          sha256sum Black-Ice-Editor-v1.4.2-integration.apk > SHA256SUMS.txt
           printf 'Source %s; run %s. Only package and app label overridden for com.blackice.bc1.integration. Installs beside the existing app and preview; use project export/import to transfer a copy.\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > BUILD.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: Black-Ice-Editor-v1.9.0-integration
+          name: Black-Ice-Editor-v1.4.2-integration
           path: delivery/
           retention-days: 30
       - name: Publish downloadable integration APK

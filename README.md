@@ -1,6 +1,6 @@
 # BC-1 — Black Ice editor
 
-**New development upgrade: v1.4.1-dev** — four matching blue Media Settings tiles, live Position/Rotation/Scale controls, multi-turn rotation, independent or linked dimensions, scoped keyframes and undo. **150 JVM tests, 48 Android tests and 16 independent export checks passed.** [Download the signed Preview upgrade](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.4.1-dev/BC-1-v1.4.1-dev.apk). [QA, screenshots and limitations](docs/qa/BC-1-v1.4.1-MEDIA-TRANSFORM.md). Install over the existing Preview without uninstalling. Updated projects use schema 6; a backup is preserved before migration.
+**Current update: v1.4.2 — workspace + offline speech/audio.** Includes the updated project browser/workspace, offline English captions, noise reduction, five-band EQ, loudness normalization and volume keyframes. Audio visualizer remains disabled. [Download the separate integration APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/integration/feature/workspace-stability/Black-Ice-Editor-v1.4.2-integration.apk) · [Validation and installation notes](INTEGRATION-UPDATE.md). This development build uses `com.blackice.bc1.integration`; transfer project copies through bundle export/import and retain the existing app. The update is on [PR #10](https://github.com/uran39281-bit/bc-1/pull/10) until merged.
 
 [**All versions and APK downloads ↓**](#all-versions--downloads)
 
@@ -90,11 +90,12 @@ V1 dark/cyan interface, phone and tablet/DeX workspaces, UI Lock, thumbnail time
 
 ## All versions — downloads
 
-Every versioned APK currently published in this repository, newest first. Source-only checkpoints are not listed as downloadable builds. Test counts describe the recorded automated checks, not production-stability certification.
+Published APKs and development builds, newest update first. Source-only checkpoints are not listed as downloadable builds. Test counts describe the recorded automated checks, not production-stability certification.
 
 | Version | Download | Verification |
 | --- | --- | --- |
-| v1.4.1-dev — Media Settings and transforms (latest Preview upgrade) | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.4.1-dev/BC-1-v1.4.1-dev.apk) | 150 unit + 48 Android tests; 16 export checks; retained-key signed; [QA](docs/qa/BC-1-v1.4.1-MEDIA-TRANSFORM.md) |
+| v1.4.2 — Workspace + offline speech/audio (separate integration app) | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/integration/feature/workspace-stability/Black-Ice-Editor-v1.4.2-integration.apk) | 193 unit + 65 Android tests on the integrated application; version-only rebuild; [QA and limitations](INTEGRATION-UPDATE.md) |
+| v1.4.1-dev — Media Settings and transforms (older signed Preview upgrade) | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.4.1-dev/BC-1-v1.4.1-dev.apk) | 150 unit + 48 Android tests; 16 export checks; retained-key signed; [QA](docs/qa/BC-1-v1.4.1-MEDIA-TRANSFORM.md) |
 | v1.4.0-dev — Landscape stability | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.4.0-dev/BC-1-v1.4.0-dev.apk) | 139 unit + 46 Android tests; 14 export checks; retained-key signed; [QA](docs/qa/BC-1-v1.4.0-LANDSCAPE-STABILITY.md) |
 | v1.3.3 — Centered playhead (separate test app) | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.3.3-test/BC-1-v1.3.3-test.apk) | 44 Android tests; 10 export checks; **not a Preview upgrade**; [QA](docs/qa/BC-1-v1.3.3-CENTERED-PLAYHEAD.md) |
 | v1.3.1 — Main workspace & Footage tools | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.3.1/BC-1-v1.3.1.apk) | 137 unit + 43 Android tests; 10 export checks; [QA](v1.3.1/QA.md) |
@@ -112,8 +113,8 @@ Every versioned APK currently published in this repository, newest first. Source
 | v0.5 Motion & Layers | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v0.5/BC-1-v0.5-Preview.apk) | 29 unit + 16 Android tests passed |
 | v0.4 Timeline & Export | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v0.4/BC-1-v0.4-Preview.apk) | Previous preview preserved |
 
-**Latest Preview upgrade:** `com.blackice.bc1.preview`, v1.4.1-dev, versionCode 28, retained Preview signing certificate. Install over your existing Preview to retain projects; do not uninstall it first. The v1.3.3 test APK uses the separate `com.blackice.bc1.icelite` package.
+**Older retained-key Preview upgrade:** `com.blackice.bc1.preview`, v1.4.1-dev, versionCode 28, retained Preview signing certificate. Install over your existing Preview to retain projects; do not uninstall it first. The v1.3.3 test APK uses the separate `com.blackice.bc1.icelite` package.
 
-[Latest QA and limitations](docs/qa/BC-1-v1.4.1-MEDIA-TRANSFORM.md) · [Latest SHA256 checksum](v1.4.1-dev/SHA256SUMS.txt)
+[Current v1.4.2 validation and limitations](INTEGRATION-UPDATE.md) · [Current APK checksum](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/integration/feature/workspace-stability/SHA256SUMS.txt)
 
 Checks use an Android API35 emulator. Physical Snapdragon 8 Gen 3 and Samsung DeX performance remains unmeasured. RTX integration is a future backend. Versioned APKs are retained and never replaced with different builds.

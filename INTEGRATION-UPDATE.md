@@ -1,4 +1,6 @@
-# Black Ice Editor v1.9.0 integration
+# Black Ice Editor v1.4.2 integration
+
+This update is version **1.4.2**, as requested. Android versionCode is **35**; only the public version label changed, with no feature rollback.
 
 This combines the workspace changes in PR #10 with the offline speech/audio implementation already merged through PR #11. The main menu, project browser, editor, timeline and both export engines remain connected to the existing project system.
 
@@ -23,10 +25,10 @@ The previous v1.8 preview uses a different ephemeral signing certificate. [The i
 
 [Packaging run 40224523778](https://github.com/uran39281-bit/bc-1/actions/runs/40224523778), from `f3ddbb9647a601fe07fc8941b4fc84258a572563`, passed unit tests, lint and APK assembly. All 19 DEX/native-library/asset entries match the emulator-tested APK byte-for-byte. The APK contains ARM64 and x86_64 libraries, the verified 59,721,011-byte model, and no INTERNET permission. Media3 remains the default; Settings → Export engine can select ICE Lite.
 
-APK SHA-256: `0ec6036bb93be94d912757f5ae1542275d9729ff61e7b8ebcf5d1afc7da901e2`.
+The v1.4.2 rebuild and its new checksum are pending CI. The preceding packaging evidence describes the earlier label, not the new APK bytes.
 
 ## Limits
 
 English recognition/timing still needs human review. Noise reduction is a soft gate/rumble filter, not source separation; normalization is not a true-peak limiter and must be remeasured after changing processing/volume/speed/fades. Audio-only MP4 export needs a visual layer or caption overlay. Model preparation requires additional storage. Production signing and physical-device verification remain outstanding.
 
-[WORKSPACE-UPDATE.md](WORKSPACE-UPDATE.md) is the historical v1.5 report; its disabled audio-tool list and earlier test counts do not describe v1.9.
+[WORKSPACE-UPDATE.md](WORKSPACE-UPDATE.md) is the historical v1.5 report; its disabled audio-tool list and earlier test counts do not describe v1.4.2.
