@@ -67,6 +67,9 @@ JNIEXPORT jint JNICALL Java_com_blackice_bc1_captions_WhisperLib_nativeTranscrib
     params.n_threads = threads;
     params.translate = translate;
     params.no_context = true;
+    params.token_timestamps = true;
+    params.max_len = 64;
+    params.split_on_word = true;
     params.print_progress = false;
     params.print_realtime = false;
     params.print_special = false;

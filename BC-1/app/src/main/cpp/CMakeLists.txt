@@ -4,7 +4,16 @@ cmake_minimum_required(VERSION 3.22)
 project(bc1whisper C CXX)
 
 set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
-set(WHISPER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/whisper.cpp)
+# Dependency fetching happens at build time, never in the Android application.
+include(FetchContent)
+FetchContent_Declare(whisper_source
+ URL https://codeload.github.com/ggml-org/whisper.cpp/tar.gz/refs/tags/v1.9.5
+ URL_HASH SHA256=ff1a9053feb509ff9d7729703355541ae9690073a6b1c40eb692c962e0dc1720)
+FetchContent_GetProperties(whisper_source)
+if(NOT whisper_source_POPULATED)
+ FetchContent_Populate(whisper_source)
+endif()
+set(WHISPER_DIR ${whisper_source_SOURCE_DIR})
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)  # static whisper/ggml linked into the JNI shared library

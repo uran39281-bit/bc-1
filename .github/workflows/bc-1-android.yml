@@ -22,14 +22,14 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
       - name: Install Android SDK 36
         run: |
           SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)
-          "$SDKMANAGER" --install "platforms;android-36" "build-tools;35.0.0"
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
       - name: Install media test tools
         run: sudo apt-get update && sudo apt-get install -y ffmpeg ripgrep
       - name: Generate deterministic video and audio fixtures
@@ -39,7 +39,7 @@ jobs:
         run: gradle --no-daemon -Pbc1SideBySide testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
       - uses: actions/upload-artifact@v4
         with:
-          name: BC-1-v1.3.3-apk
+          name: Black-Ice-Editor-v1.8.0-apk
           path: BC-1/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
       - name: Publish side-by-side test APK for phones
@@ -70,7 +70,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
