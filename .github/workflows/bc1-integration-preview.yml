@@ -23,6 +23,7 @@ jobs:
         run: |
           SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)
           "$SDKMANAGER" --install "platforms;android-36" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
+      # Build 36 includes the unified media browser and expanded vector shapes.
       # The earlier preview APK used an unavailable ephemeral signing key.
       # Change only the install identity, retaining the tested application sources.
       - name: Select independent integration install

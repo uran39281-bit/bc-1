@@ -31,7 +31,7 @@ final class TimelineView extends View {
     private final Runnable autoScroll=new Runnable(){@Override public void run(){autoScrollStep();}};
     private int autoDirection;
     // Media dragged in from Project Media: target row and start, or -1 when nothing is hovering.
-    private EditProject.Clip dropAsset;private int dropTrack=-1;private long dropStart;
+    private EditProject.Clip dropAsset;private ShapeCatalog.Drag dropShape;private int dropTrack=-1,dropShapeIndex=-1;private float dropShapeY;private long dropStart;
     static final int OP_TRIM_START=1,OP_TRIM_END=2,OP_MOVE=3,OP_OV_START=4,OP_OV_END=5,OP_OV_MOVE=6,OP_MULTI=7,OP_SCRUB=8;
 
     TimelineView(EditorActivity activity){
@@ -246,6 +246,7 @@ final class TimelineView extends View {
         if(p.music!=null){long end=p.music.loop?p.durationMs():Math.min(p.durationMs(),p.music.startMs+p.music.outMs-p.music.inMs);paint.setColor(0xFF15604A);canvas.drawRoundRect(x(p.music.startMs),musicRow.top+inset,x(end),musicRow.top+inset+bar,a.dp(6),a.dp(6),paint);paint.setColor(EditorActivity.TEXT);paint.setTextSize(a.dp(11));canvas.drawText("♫  "+p.music.name,Math.max(x(p.music.startMs),left+headerWidth())+a.dp(8),musicRow.top+inset+bar/2+a.dp(4),paint);}
         if(operation!=0&&operation!=OP_SCRUB&&moved)drawDragPreview(canvas,rows,bar,inset);
         if(dropAsset!=null&&dropTrack>=0)drawDropPreview(canvas,rows,bar,inset);
+        if(dropShape!=null&&dropShapeIndex>=0)ghost(canvas,x(dropStart),dropShapeY+inset,x(dropStart+3000),bar,EditProject.SHAPES[dropShape.shape]+" · new layer");
         if(guide>=0){paint.setColor(0xAA9FEAFF);paint.setStrokeWidth(a.dp(1));for(float y=a.dp(RULER_DP);y<height;y+=a.dp(8))canvas.drawLine(x(guide),y,x(guide),y+a.dp(4),paint);}
         drawHeaders(canvas,rows,left);
         drawPlayhead(canvas,left,height);
@@ -497,22 +498,30 @@ final class TimelineView extends View {
 
     // ---- Media dropped from Project Media ------------------------------------------------------------
     @Override public boolean onDragEvent(DragEvent e){
+        Object payload=e.getLocalState();boolean shape=payload instanceof ShapeCatalog.Drag;
+        boolean valid=payload instanceof EditProject.Clip||shape&&((ShapeCatalog.Drag)payload).projectId.equals(a.project.id);
+        if(e.getAction()==DragEvent.ACTION_DRAG_STARTED)return valid&&!a.uiLocked;
+        if(e.getAction()==DragEvent.ACTION_DRAG_EXITED||e.getAction()==DragEvent.ACTION_DRAG_ENDED){clearDrop();return true;}
+        if(!valid||a.uiLocked)return false;
         switch(e.getAction()){
-            case DragEvent.ACTION_DRAG_STARTED:return e.getLocalState() instanceof EditProject.Clip&&!a.uiLocked;
-            case DragEvent.ACTION_DRAG_ENTERED:case DragEvent.ACTION_DRAG_LOCATION:{
-                rows();dropAsset=(EditProject.Clip)e.getLocalState();long start=Math.max(0,time(e.getX()));
-                if(a.snapping){long snapped=TimelineEdits.snap(a.project,-1,start,Math.round(a.dp(8)*1000/timelineScale()));start=snapped;}
-                dropStart=start;dropTrack=dropTrackFor(dropAsset,e.getY(),start);
-                // Dragging near either edge scrolls so media can be dropped anywhere.
+            case DragEvent.ACTION_DRAG_ENTERED:case DragEvent.ACTION_DRAG_LOCATION:case DragEvent.ACTION_DROP:{
+                rows();long start=Math.max(0,time(e.getX()));
+                if(a.snapping)start=TimelineEdits.snap(a.project,-1,start,Math.round(a.dp(8)*1000/timelineScale()));
+                dropStart=start;
+                if(shape){dropShape=(ShapeCatalog.Drag)payload;Row row=rowAt(e.getY());boolean audio=row!=null&&(row.kind==2||row.kind==0&&EditProject.audioTrack(row.index));
+                    dropShapeIndex=audio?-1:row!=null&&row.kind==1?row.index+1:a.project.overlays.size();dropShapeY=row==null?a.dp(RULER_DP):row.top;
+                }else{dropAsset=(EditProject.Clip)payload;dropTrack=dropTrackFor(dropAsset,e.getY(),start);}
+                if(e.getAction()==DragEvent.ACTION_DROP){int track=dropTrack,index=dropShapeIndex;clearDrop();
+                    if(shape){if(index>=0)a.addShapeAt(((ShapeCatalog.Drag)payload).shape,start,index);else a.tell("Drop shapes on a visual row, above the audio tracks.");}
+                    else if(track>=0)a.dropMedia((EditProject.Clip)payload,track,start);return true;
+                }
                 float local=e.getX()-a.timelineScroll.getScrollX();if(local>viewport()-a.dp(40))a.timelineScroll.scrollBy(a.dp(10),0);else if(local<headerWidth()+a.dp(20))a.timelineScroll.scrollBy(-a.dp(10),0);
-                invalidate();return true;}
-            case DragEvent.ACTION_DROP:{EditProject.Clip asset=(EditProject.Clip)e.getLocalState();int track=dropTrack;long start=dropStart;clearDrop();
-                if(track>=0)a.dropMedia(asset,track,start);return true;}
-            case DragEvent.ACTION_DRAG_EXITED:case DragEvent.ACTION_DRAG_ENDED:clearDrop();return true;
+                invalidate();return true;
+            }
             default:return true;
         }
     }
-    private void clearDrop(){dropAsset=null;dropTrack=-1;invalidate();}
+    private void clearDrop(){dropAsset=null;dropShape=null;dropShapeIndex=-1;dropTrack=-1;invalidate();}
     @Override public boolean onGenericMotionEvent(MotionEvent event){
         if(event.getAction()==MotionEvent.ACTION_SCROLL){float wheel=event.getAxisValue(MotionEvent.AXIS_VSCROLL),horizontal=event.getAxisValue(MotionEvent.AXIS_HSCROLL);
             if((event.getMetaState()&KeyEvent.META_CTRL_ON)!=0){a.zoomTimeline(wheel>0?1.2f:1/1.2f,event.getX()-a.timelineScroll.getScrollX());return true;}

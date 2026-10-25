@@ -34,6 +34,7 @@ public final class EditorActivity extends Activity {
     final ToolPanels panels=new ToolPanels(this);
     final TransformPanel transformPanel=new TransformPanel(this);
     AddDrawer addDrawer;
+    MediaImportWindow mediaImportWindow;
     PresetStore presets;
     /** Multi-selection (includes the primary selection when non-empty). */
     final java.util.TreeSet<Integer> multiClips=new java.util.TreeSet<>(),multiOverlays=new java.util.TreeSet<>();
@@ -139,6 +140,7 @@ public final class EditorActivity extends Activity {
             if(project.loopInMs>=0&&project.playheadMs>=project.loopOutMs){player.seekTo(project.loopInMs);project.playheadMs=project.loopInMs;}
             syncPosition();}
         syncPlayButton();
+        if(mediaImportWindow!=null)mediaImportWindow.updateStatus();
         android.content.SharedPreferences export=getSharedPreferences(ExportService.PREFS,MODE_PRIVATE);
         boolean running=export.getBoolean("running",false);
         long completed=export.getLong("finishedAt",0);
@@ -155,7 +157,7 @@ public final class EditorActivity extends Activity {
     private String openingProjectId;
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);getWindow().setStatusBarColor(BG);getWindow().setNavigationBarColor(BG);
-        thumbnails=new ThumbnailCache(this);previewProxy=new PreviewProxy(this);live=new com.blackice.bc1.engine.bc.LivePreview(this);addDrawer=new AddDrawer(this);presets=new PresetStore(this);uiLocked=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("ui-locked",false);
+        thumbnails=new ThumbnailCache(this);previewProxy=new PreviewProxy(this);live=new com.blackice.bc1.engine.bc.LivePreview(this);addDrawer=new AddDrawer(this);mediaImportWindow=new MediaImportWindow(this);mediaImportWindow.restore(state);presets=new PresetStore(this);uiLocked=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("ui-locked",false);
         store=new ProjectStore(this);inspectorWidth=getSharedPreferences(PREFS,MODE_PRIVATE).getInt("panel-width",300);
         android.content.SharedPreferences exportState=getSharedPreferences(ExportService.PREFS,MODE_PRIVATE);
         if(exportState.getBoolean("running",false)&&!ExportService.isRunning())exportState.edit().putBoolean("running",false)
@@ -180,6 +182,7 @@ public final class EditorActivity extends Activity {
             main.post(()->{if(isDestroyed())return;loading=false;if(result!=null)project=result;
                 message=error==null?((project.clips.isEmpty()&&project.overlays.isEmpty())?"Import videos or images to begin.":"Project restored • "+project.clips.size()+" clips"):error;
                 refreshProject();showLive();
+                if(mediaImportWindow.restoreOpen){mediaImportWindow.restoreOpen=false;openMediaBrowser();}
                 if(getIntent().getBooleanExtra("show-settings",false)){tab=4;renderInspector();}
             });
         });
@@ -188,9 +191,9 @@ public final class EditorActivity extends Activity {
     @Override protected void onPause(){workClock.pause();super.onPause();}
     @Override protected void onStart(){super.onStart();active=true;main.post(pulse);if(!loading)showLive();}
     @Override protected void onStop(){cancelLiveAdjust();active=false;main.removeCallbacks(pulse);main.removeCallbacks(warmPreview);saveNow();releasePreview();if(previewProxy!=null)previewProxy.cancel();if(live!=null)live.releaseDecoders();super.onStop();}
-    @Override protected void onDestroy(){main.removeCallbacks(autosave);if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
-    @Override protected void onSaveInstanceState(Bundle state){state.putString("subtitle-export",pendingSubtitleExport);state.putString("project-id",loading?openingProjectId:project.id);cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());saveNow();super.onSaveInstanceState(state);}
-    @Override public void onConfigurationChanged(Configuration config){super.onConfigurationChanged(config);cancelLiveAdjust();buildWorkspace();}
+    @Override protected void onDestroy(){if(mediaImportWindow!=null)mediaImportWindow.close();main.removeCallbacks(autosave);if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
+    @Override protected void onSaveInstanceState(Bundle state){mediaImportWindow.save(state);state.putString("subtitle-export",pendingSubtitleExport);state.putString("project-id",loading?openingProjectId:project.id);cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());saveNow();super.onSaveInstanceState(state);}
+    @Override public void onConfigurationChanged(Configuration config){super.onConfigurationChanged(config);cancelLiveAdjust();buildWorkspace();mediaImportWindow.reposition();}
     boolean exporting(){return getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getBoolean("running",false)||exportLaunching;}
     boolean editable(){if(captionApplying){tell("Saving captions…");return false;}if(uiLocked){tell("UI locked • unlock editing in Settings");return false;}if(loading||importing){tell("Wait for the current import to finish.");return false;}if(exporting()){tell("Wait for export to finish, or cancel it to continue editing.");return false;}return true;}
     void releasePreview(){
@@ -386,7 +389,7 @@ public final class EditorActivity extends Activity {
             super.onMeasure(wSpec,hSpec);
         }};
         monitor.setBackgroundColor(0xFF02060C);monitor.addView(surface,new FrameLayout.LayoutParams(-1,-1,Gravity.CENTER));monitor.addView(liveView,new FrameLayout.LayoutParams(-1,-1,Gravity.CENTER));
-        emptyPreview=label("START YOUR FIRST CUT\n\n+ Import video or images",14,CYAN,true);emptyPreview.setGravity(Gravity.CENTER);emptyPreview.setContentDescription("Import video or images");emptyPreview.setFocusable(true);emptyPreview.setBackgroundColor(Color.BLACK);emptyPreview.setOnClickListener(v->{if((project.clips.isEmpty()&&project.overlays.isEmpty())){if(mobile!=null)mobile.openAdd(3);else pick(IMPORT,"*/*");}else if(previewPending){releasePreview();previewHint("Preview cancelled • tap to prepare");}else showLive();});emptyPreview.setVisibility((project.clips.isEmpty()&&project.overlays.isEmpty())?View.VISIBLE:View.GONE);monitor.addView(emptyPreview,new FrameLayout.LayoutParams(-1,-1));
+        emptyPreview=label("START YOUR FIRST CUT\n\n+ Import video or images",14,CYAN,true);emptyPreview.setGravity(Gravity.CENTER);emptyPreview.setContentDescription("Import video or images");emptyPreview.setFocusable(true);emptyPreview.setBackgroundColor(Color.BLACK);emptyPreview.setOnClickListener(v->{if((project.clips.isEmpty()&&project.overlays.isEmpty())){openMediaBrowser();}else if(previewPending){releasePreview();previewHint("Preview cancelled • tap to prepare");}else showLive();});emptyPreview.setVisibility((project.clips.isEmpty()&&project.overlays.isEmpty())?View.VISIBLE:View.GONE);monitor.addView(emptyPreview,new FrameLayout.LayoutParams(-1,-1));
         previewControls=new PreviewEditor(this);monitor.addView(previewControls,new FrameLayout.LayoutParams(-1,-1));
         TextView compare=button("Compare",null);compare.setTextSize(10);compare.setContentDescription("Hold to compare with the layer before the current adjustments");compare.setTooltipText(compare.getContentDescription());
         compare.setOnTouchListener((v,e)->{if(e.getActionMasked()==MotionEvent.ACTION_DOWN)compare(true);else if(e.getActionMasked()==MotionEvent.ACTION_UP||e.getActionMasked()==MotionEvent.ACTION_CANCEL)compare(false);return true;});
@@ -919,6 +922,7 @@ public final class EditorActivity extends Activity {
     }
     void insertElement(PresetStore.Preset preset,long at){edit("Element added",()->{int added=PresetStore.insertElement(project,preset.payload,at);selected=-1;selectedOverlay=-1;multiClips.clear();multiOverlays.clear();tell("Added "+added+" layer(s)");});}
     void addOverlay(int shape,String text,float scale){
+        if(shape>0){addShapeAt(shape,addDrawer.insertTime(),project.overlays.size());return;}
         if(!editable())return;if(project.regularOverlayCount()>=20){tell("Up to 20 text, shape and image layers.");return;}
         long at=addDrawer.insertTime();
         edit(shape>0?EditProject.SHAPES[shape]+" added":"Text added",()->{EditProject.Overlay o=new EditProject.Overlay();o.shape=shape;if(shape==0)o.text=text;else{o.text=EditProject.SHAPES[shape];o.y=0;o.color=0xFF40BFFF;}o.scale=Math.max(.1f,Math.min(2,scale*.7f));
@@ -1198,10 +1202,15 @@ public final class EditorActivity extends Activity {
         }).show();
     }
     void openProject(String id){loading=true;releasePreview();io.execute(()->{try{EditProject loaded=store.load(id);main.post(()->{if(isDestroyed())return;loading=false;project=loaded;undo.clear();redo.clear();selected=-1;selectedOverlay=-1;changed("Project opened");});}catch(Exception e){main.post(()->{loading=false;tell("Cannot open project: "+e.getMessage());});}});}
-    void chooseMode(){if(uiLocked){tell("Unlock to change workspace layout");return;}new AlertDialog.Builder(this).setTitle("Workspace layout").setSingleChoiceItems(new String[]{"Auto • phone / tablet / DeX","Phone portrait workspace","Wide tablet / DeX workspace"},mode.ordinal(),(d,i)->{mode=LayoutPolicy.Preference.values()[i];getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("mode",mode.name()).apply();d.dismiss();buildWorkspace();}).show();}
+    void chooseMode(){if(uiLocked){tell("Unlock to change workspace layout");return;}new AlertDialog.Builder(this).setTitle("Workspace layout").setSingleChoiceItems(new String[]{"Auto • phone / tablet / DeX","Phone portrait workspace","Wide tablet / DeX workspace"},mode.ordinal(),(d,i)->{mode=LayoutPolicy.Preference.values()[i];getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("mode",mode.name()).apply();d.dismiss();buildWorkspace();mediaImportWindow.reposition();}).show();}
+    void openMediaBrowser(){
+        if(!editable())return;
+        if(mediaBrowser==null||!mediaBrowser.isShown()){tab=0;addDrawer.category=0;if(mobile!=null)mobile.dismissed=false;renderInspector();}
+        getWindow().getDecorView().post(()->mediaImportWindow.show());
+    }
     void pick(int request,String type) {
         if(!editable())return;if(request==OVERLAY&&project.regularOverlayCount()>=20){tell("This preview supports up to 20 overlays.");return;}Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType(type).addCategory(Intent.CATEGORY_OPENABLE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        if(request==IMPORT){intent.putExtra(Intent.EXTRA_MIME_TYPES,new String[]{"video/*","image/*"});intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,true);}
+        if(request==IMPORT){intent.putExtra(Intent.EXTRA_MIME_TYPES,new String[]{"video/*","image/*","audio/*"});intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,true);}
         try{startActivityForResult(intent,request);}catch(ActivityNotFoundException e){tell("No document picker is installed.");}
     }
     @Override protected void onActivityResult(int request,int result,Intent data) {
@@ -1293,6 +1302,7 @@ public final class EditorActivity extends Activity {
     }
     /** System gesture Back follows the same state hierarchy as the toolbar and keyboard. */
     @SuppressWarnings("deprecation") @Override public void onBackPressed(){
+        if(mediaImportWindow.showing()){mediaImportWindow.close();return;}
         if(fullscreenPreview){fullscreenPreview=false;buildWorkspace();return;}
         if(mobile!=null){mobile.back();return;}
         if(panels.showing()){panels.back();return;}
@@ -1350,7 +1360,7 @@ public final class EditorActivity extends Activity {
         title.addView(headerIcon("Sort","Sort media",v->new AlertDialog.Builder(this).setTitle("Sort media").setSingleChoiceItems(new String[]{"Import order","Name","Duration"},mediaSort,(d,n)->{mediaSort=n;d.dismiss();renderMediaGrid();}).show()));
         mediaBrowser.addView(title);
 
-        TextView importButton=button("Import Media",v->pick(IMPORT,"*/*"));importButton.setContentDescription("+ Import media");importButton.setCompoundDrawables(icon("Add",TEXT),null,null,null);importButton.setCompoundDrawablePadding(dp(8));importButton.setTextSize(13);
+        TextView importButton=button("Import Media",v->openMediaBrowser());importButton.setContentDescription("+ Import media");importButton.setCompoundDrawables(icon("Add",TEXT),null,null,null);importButton.setCompoundDrawablePadding(dp(8));importButton.setTextSize(13);
         LinearLayout.LayoutParams importLp=new LinearLayout.LayoutParams(-1,dp(48));importLp.topMargin=dp(10);importLp.bottomMargin=dp(8);mediaBrowser.addView(importButton,importLp);
         GridLayout filters=new GridLayout(this);filters.setColumnCount(3);
         String[] names={"All","Video","Audio","Image","Shapes"};
@@ -1385,7 +1395,7 @@ public final class EditorActivity extends Activity {
         if(mediaGrid==null)return;
         mediaGrid.removeAllViews();
         if(loading){mediaGrid.addView(note("Loading project media…"));return;}
-        if(project.library.isEmpty()&&mediaKind==MediaFilter.Kind.ALL&&mediaQuery.isBlank()&&!favoritesOnly)mediaGrid.addView(note("No imported media yet. Use Import Media, or insert a built-in shape below."));
+        if(project.library.isEmpty()&&mediaKind==MediaFilter.Kind.ALL&&mediaQuery.isBlank()&&!favoritesOnly)mediaGrid.addView(note("No imported media yet. Use Import Media to browse files."));
         for(int i=0;i<mediaFilterButtons.size();i++){
             TextView filter=mediaFilterButtons.get(i);boolean chosen=i==mediaKind.ordinal();
             filter.setSelected(chosen);filter.setTextColor(chosen?CYAN:TEXT);filter.setBackground(buttonBackground(chosen));
@@ -1395,11 +1405,11 @@ public final class EditorActivity extends Activity {
         for(EditProject.Clip asset:project.library)if((!favoritesOnly||favoriteMedia.contains(asset.uri))&&MediaFilter.matches(asset,mediaKind,mediaQuery))matches.add(asset);
         if(mediaSort==1)matches.sort((a,b)->a.name.compareToIgnoreCase(b.name));else if(mediaSort==2)matches.sort((a,b)->Long.compare(a.durationMs(),b.durationMs()));
         ArrayList<Integer> shapeIds=new ArrayList<>();
-        if(mediaKind==MediaFilter.Kind.SHAPES||mediaKind==MediaFilter.Kind.ALL){
-            for(int shape=1;shape<=4;shape++)if(EditProject.SHAPES[shape].toLowerCase(Locale.ROOT).contains(mediaQuery.trim().toLowerCase(Locale.ROOT))&&(!favoritesOnly||favoriteMedia.contains("shape:"+shape)))shapeIds.add(shape);
+        if(mediaKind==MediaFilter.Kind.SHAPES){
+            for(int shape:ShapeCatalog.ids())if(EditProject.SHAPES[shape].toLowerCase(Locale.ROOT).contains(mediaQuery.trim().toLowerCase(Locale.ROOT))&&(!favoritesOnly||favoriteMedia.contains("shape:"+shape)))shapeIds.add(shape);
             if(mediaSort==1)shapeIds.sort((x,y)->EditProject.SHAPES[x].compareToIgnoreCase(EditProject.SHAPES[y]));
         }
-        mediaCount.setText((matches.size()+shapeIds.size())+" / "+(project.library.size()+4)+" items");
+        mediaCount.setText((matches.size()+shapeIds.size())+" / "+(mediaKind==MediaFilter.Kind.SHAPES?ShapeCatalog.ids().length:project.library.size())+" items");
         if(matches.isEmpty()&&shapeIds.isEmpty()){mediaGrid.addView(note("No matching media"));return;}
         mediaRows(mediaGrid,matches,mediaColumns,mediaList);
         for(int start=0;start<shapeIds.size();start+=mediaColumns){
@@ -1413,12 +1423,22 @@ public final class EditorActivity extends Activity {
     }
     View shapeCard(int shape){
         LinearLayout card=mediaList?row():column();card.setBackground(buttonBackground(false));card.setPadding(dp(8),dp(6),dp(8),dp(6));card.setFocusable(true);card.setClickable(true);
-        View preview=new View(this){final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);@Override protected void onDraw(Canvas canvas){super.onDraw(canvas);float cx=getWidth()/2f,cy=getHeight()/2f,r=Math.max(1,Math.min(getWidth(),getHeight())*.3f);paint.setColor(CYAN);paint.setStyle(Paint.Style.FILL);
-            if(shape==1)canvas.drawRect(cx-r,cy-r*.7f,cx+r,cy+r*.7f,paint);else if(shape==2)canvas.drawOval(cx-r,cy-r*.7f,cx+r,cy+r*.7f,paint);else if(shape==3){android.graphics.Path path=new android.graphics.Path();path.moveTo(cx,cy-r);path.lineTo(cx+r,cy+r);path.lineTo(cx-r,cy+r);path.close();canvas.drawPath(path,paint);}else{paint.setStrokeWidth(dp(3));canvas.drawLine(cx-r,cy,cx+r,cy,paint);}
-        }};
+        View preview=new View(this){final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);@Override protected void onDraw(Canvas canvas){super.onDraw(canvas);float r=Math.max(1,Math.min(getWidth(),getHeight())*.42f);paint.setColor(CYAN);canvas.save();canvas.translate(getWidth()/2f,getHeight()/2f);canvas.drawPath(ShapePaths.create(shape,r,Math.max(1,r*.035f)),paint);canvas.restore();}};
         card.addView(preview,mediaList?new LinearLayout.LayoutParams(dp(64),-1):new LinearLayout.LayoutParams(-1,0,1));
-        TextView name=label((favoriteMedia.contains("shape:"+shape)?"★ ":"")+EditProject.SHAPES[shape],11,TEXT,false);name.setSingleLine(true);name.setEllipsize(android.text.TextUtils.TruncateAt.END);name.setGravity(Gravity.CENTER_VERTICAL);card.addView(name,mediaList?new LinearLayout.LayoutParams(0,-1,1):new LinearLayout.LayoutParams(-1,dp(24)));
-        card.setContentDescription("Insert shape: "+EditProject.SHAPES[shape]);card.setTooltipText("Tap to insert; hold to toggle favorite");card.setOnClickListener(v->addOverlay(shape,"",1));card.setOnLongClickListener(v->{String key="shape:"+shape;if(!favoriteMedia.remove(key))favoriteMedia.add(key);getSharedPreferences(PREFS,0).edit().putStringSet("favorite-media",new HashSet<>(favoriteMedia)).apply();renderMediaGrid();return true;});return card;
+        TextView name=label((favoriteMedia.contains("shape:"+shape)?"★ ":"")+EditProject.SHAPES[shape],11,TEXT,false);name.setMaxLines(2);name.setEllipsize(android.text.TextUtils.TruncateAt.END);name.setGravity(Gravity.CENTER_VERTICAL);card.addView(name,mediaList?new LinearLayout.LayoutParams(0,-1,1):new LinearLayout.LayoutParams(-1,dp(32)));
+        card.setContentDescription("Insert shape: "+EditProject.SHAPES[shape]);card.setTooltipText("Drag onto the timeline; tap for shape actions");
+        card.setOnClickListener(v->{String key="shape:"+shape;new AlertDialog.Builder(this).setTitle(EditProject.SHAPES[shape]).setItems(new String[]{"Add as new layer at playhead",favoriteMedia.contains(key)?"Remove favorite":"Add favorite"},(d,n)->{if(n==0)addShapeAt(shape,project.playheadMs,project.overlays.size());else{if(!favoriteMedia.remove(key))favoriteMedia.add(key);getSharedPreferences(PREFS,0).edit().putStringSet("favorite-media",new HashSet<>(favoriteMedia)).apply();renderMediaGrid();}}).setNegativeButton("Cancel",null).show();});
+        Runnable drag=()->{if(!editable())return;card.startDragAndDrop(ClipData.newPlainText("shape",EditProject.SHAPES[shape]),new View.DragShadowBuilder(preview),new ShapeCatalog.Drag(shape,project.id),0);tell("Drop "+EditProject.SHAPES[shape]+" on a visual timeline row");};
+        card.setOnLongClickListener(v->{drag.run();return true;});
+        if(wideLayout)card.setOnTouchListener(new View.OnTouchListener(){float x,y;boolean started;public boolean onTouch(View v,MotionEvent e){
+            if(e.getActionMasked()==MotionEvent.ACTION_DOWN){x=e.getX();y=e.getY();started=false;return false;}
+            if(e.getActionMasked()==MotionEvent.ACTION_MOVE&&!started){float dx=e.getX()-x,dy=e.getY()-y;boolean mouse=e.getToolType(0)==MotionEvent.TOOL_TYPE_MOUSE;if(Math.hypot(dx,dy)>ViewConfiguration.get(EditorActivity.this).getScaledTouchSlop()&&(mouse||Math.abs(dx)>Math.abs(dy))){v.getParent().requestDisallowInterceptTouchEvent(true);drag.run();started=true;return true;}}
+            if(e.getActionMasked()==MotionEvent.ACTION_UP||e.getActionMasked()==MotionEvent.ACTION_CANCEL)v.getParent().requestDisallowInterceptTouchEvent(false);return started;}});
+        return card;
+    }
+    void addShapeAt(int shape,long at,int index){
+        if(!editable())return;if(project.regularOverlayCount()>=20){tell("Up to 20 text, shape and image layers.");return;}
+        edit(EditProject.SHAPES[shape]+" added",()->{EditProject.Overlay o=ShapeCatalog.create(shape,at);int slot=Math.max(0,Math.min(index,project.overlays.size()));project.overlays.add(slot,o);selected=-1;selectedOverlay=slot;tab=1;panels.reset();});
     }
     /** Media cards in rows; shared by the desktop browser and the Add panel. */
     void mediaRows(LinearLayout into,java.util.List<EditProject.Clip> items,int columns,boolean list){

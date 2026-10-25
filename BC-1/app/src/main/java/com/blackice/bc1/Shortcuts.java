@@ -22,7 +22,7 @@ final class Shortcuts {
         if(e.getRepeatCount()>0&&command!=Command.PREVIOUS&&command!=Command.NEXT&&command!=Command.BACK_TEN&&command!=Command.FORWARD_TEN)return true;
         switch(command){
             case PLAY:a.togglePlay();break;case SAVE:a.saveNow();break;case UNDO:a.undo(false);break;case REDO:a.undo(true);break;
-            case IMPORT:a.pick(EditorActivity.IMPORT,"*/*");break;case DUPLICATE:a.duplicateSelected();break;case SPLIT:a.splitSelected();break;
+            case IMPORT:a.openMediaBrowser();break;case DUPLICATE:a.duplicateSelected();break;case SPLIT:a.splitSelected();break;
             case DELETE:View focus=a.getCurrentFocus();if(focus==null||a.timeline!=null&&a.timeline.hasFocus()||a.previewControls!=null&&a.previewControls.hasFocus())a.deleteSelection();break;
             case PREVIOUS:case NEXT:case BACK_TEN:case FORWARD_TEN:
                 int count=command==Command.BACK_TEN||command==Command.FORWARD_TEN?10:1;int direction=command==Command.PREVIOUS||command==Command.BACK_TEN?-1:1;a.pausePlayback();long frame=Math.round(a.project.playheadMs*a.project.frameRate/1000.0);a.seek(Math.round((frame+direction*count)*1000.0/a.project.frameRate));break;

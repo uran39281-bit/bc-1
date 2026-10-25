@@ -23,6 +23,19 @@ public final class ShapePaths {
    case 16:points(p,h,new float[]{-.95f,.65f,.65f,-.95f,.95f,-.65f,-.65f,.95f});break;
    case 17:points(p,h,new float[]{-1,-1,.15f,-1,.15f,0,1,1,-1,1});break;
    case 18:p.addRect(-h,-h,h,h,Path.Direction.CW);for(int i=0;i<5;i++){float x=-h+(i+.5f)*h*.4f;Path c=new Path();c.addCircle(x,-h,h*.10f,Path.Direction.CW);c.addCircle(x,h,h*.10f,Path.Direction.CW);c.addCircle(-h,x,h*.10f,Path.Direction.CW);c.addCircle(h,x,h*.10f,Path.Direction.CW);p.op(c,Path.Op.DIFFERENCE);}break;
+   case 19:p.addOval(-h,-h*.62f,h,h*.62f,Path.Direction.CW);break;
+   case 20:points(p,h,new float[]{0,-1,.72f,0,0,1,-.72f,0});break;
+   case 21:polygon(p,h,8,1);break;
+   case 22:points(p,h,new float[]{-.45f,-.7f,1,-.7f,.45f,.7f,-1,.7f});break;
+   case 23:p.moveTo(0,h*.9f);p.cubicTo(-h*.2f,h*.65f,-h,h*.1f,-h,-h*.38f);p.cubicTo(-h,-h*.95f,-h*.3f,-h*1.08f,0,-h*.5f);p.cubicTo(h*.3f,-h*1.08f,h,-h*.95f,h,-h*.38f);p.cubicTo(h,h*.1f,h*.2f,h*.65f,0,h*.9f);p.close();break;
+   case 24:p.moveTo(-h,h*.5f);p.arcTo(-h,-h*.5f,h,h*1.5f,180,180,false);p.close();break;
+   case 25:points(p,h,new float[]{-1,-.28f,.2f,-.28f,.2f,-.75f,1,0,.2f,.75f,.2f,.28f,-1,.28f});break;
+   case 26:p.addCircle(0,-h*.48f,h*.46f,Path.Direction.CW);p.addCircle(-h*.47f,h*.05f,h*.46f,Path.Direction.CW);p.addCircle(h*.47f,h*.05f,h*.46f,Path.Direction.CW);points(p,h,new float[]{-.11f,.2f,.11f,.2f,.3f,1,.05f,1});break;
+   case 27: // Original front-facing 2D monkey icon; no Blender mesh or asset is embedded.
+       p.addOval(-h,-h*.25f,-h*.45f,h*.42f,Path.Direction.CW);p.addOval(h*.45f,-h*.25f,h,h*.42f,Path.Direction.CW);
+       p.addOval(-h*.7f,-h*.9f,h*.7f,h*.65f,Path.Direction.CW);p.addOval(-h*.5f,h*.1f,h*.5f,h*.95f,Path.Direction.CW);
+       Path holes=new Path();holes.addOval(-h*.47f,-h*.22f,-h*.13f,h*.12f,Path.Direction.CW);holes.addOval(h*.13f,-h*.22f,h*.47f,h*.12f,Path.Direction.CW);
+       holes.addOval(-h*.18f,h*.32f,h*.18f,h*.44f,Path.Direction.CW);holes.addRoundRect(-h*.25f,h*.65f,h*.25f,h*.72f,h*.035f,h*.035f,Path.Direction.CW);p.op(holes,Path.Op.DIFFERENCE);break;
    default:throw new IllegalArgumentException("Unsupported shape");
   }return p;
  }

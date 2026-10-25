@@ -52,7 +52,7 @@ final class ToolPanels {
         into.addView(a.note(c!=null&&c.track==0?"Drag handles to ripple trim; drag the selected body to reorder the main sequence. Drag empty space to scrub.":"Drag handles to trim; drag the selected body to move. Drag empty space to scrub; pinch to zoom."));
     }
     /** Visual footage has one compact contextual home; its tools still use shared editor commands. */
-    boolean footage(){EditProject.Clip c=a.clip();return a.tab==1&&a.multiCount()<=1&&(c!=null&&c.track<EditProject.AUDIO_FIRST||a.overlay()!=null&&a.overlay().imageUri!=null);}
+    boolean footage(){EditProject.Clip c=a.clip();return a.tab==1&&a.multiCount()<=1&&(c!=null&&c.track<EditProject.AUDIO_FIRST||a.overlay()!=null&&(a.overlay().imageUri!=null||a.overlay().shape>0));}
     private final Map<String,Boolean> audioSources=new HashMap<>();
     private final Set<String> checkingAudio=new HashSet<>();
     private void checkAudio(EditProject.Clip c){if(c.image||audioSources.containsKey(c.uri)||!checkingAudio.add(c.uri))return;String uri=c.uri;a.io.execute(()->{boolean found=false;try{found=AudioWaveform.hasAudio(a,uri);}catch(Exception ignored){}final boolean result=found;a.main.post(()->{checkingAudio.remove(uri);audioSources.put(uri,result);if(!a.isDestroyed()&&a.clip()!=null&&uri.equals(a.clip().uri)&&footage()&&!showing())a.renderInspector();});});}
@@ -81,9 +81,10 @@ final class ToolPanels {
         mediaTiles(into,!locked()&&!a.uiLocked,visual);
     }
     private void mediaTiles(LinearLayout into,boolean editable,boolean visual){
-        String[] names={"Move & Transform","Blending & Opacity","Effects — Coming Later","Audio"};
+        boolean shape=a.overlay()!=null&&a.overlay().shape>0;
+        String[] names={"Move & Transform","Blending & Opacity","Effects",shape?"Shape & Style":"Audio"};
         String[] icons={"Transform","Blending & Opacity","Effects","Volume"};
-        for(int row=0;row<2;row++){LinearLayout line=a.row();into.addView(line);for(int col=0;col<2;col++){int index=row*2+col;MediaTile tile=new MediaTile(a,names[index],icons[index]);tile.setOnClickListener(v->{if(index==3)open("Audio",this::audioPanel);else category(names[index]);});tile.setContentDescription("Media Settings: "+names[index]);tile.setTooltipText(names[index]);EditorActivity.dim(tile,editable&&index!=2&&(index==3||visual));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,-2,1);lp.setMargins(a.dp(3),a.dp(5),a.dp(3),a.dp(5));line.addView(tile,lp);}}
+        for(int row=0;row<2;row++){LinearLayout line=a.row();into.addView(line);for(int col=0;col<2;col++){int index=row*2+col;MediaTile tile=new MediaTile(a,names[index],icons[index]);tile.setOnClickListener(v->{if(index==3){if(shape)open("Shape & Style",this::shapePanel);else open("Audio",this::audioPanel);}else category(names[index]);});tile.setContentDescription("Media Settings: "+names[index]);tile.setTooltipText(names[index]);EditorActivity.dim(tile,editable&&(index==3||visual));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,-2,1);lp.setMargins(a.dp(3),a.dp(5),a.dp(3),a.dp(5));line.addView(tile,lp);}}
     }
 
     private void audioPanel(){
@@ -181,7 +182,7 @@ final class ToolPanels {
             case "Color & Fill":open(name,this::colorPanel);return;
             case "Border & Shadow":open(name,this::borderPanel);return;
             case "Blending & Opacity":open(name,this::blendPanel);return;
-            case "Effects":open(name,this::effectsPanel);return;
+            case "Effects":open(name,this::effectsHome);return;
             case "Presets":open(name,this::presetsPanel);return;
         }
     }
@@ -364,7 +365,40 @@ final class ToolPanels {
         valueRow("Shadow",o.shadow,0,1,0,100,"%",v->o.shadow=v,null,0,1);
     }
     private void effectsPanel(){a.inspector.addView(a.note("Effects — Coming Later. Existing effect values are retained in saved projects but bypassed during preview and export."));}
-    private void effectsHome(){effectsPanel();}
+    private void effectsHome(){
+        a.inspector.addView(a.button("Styles",v->open("Styles",this::stylesPanel)));
+        a.inspector.addView(a.button("Transitions",v->open("Transitions",this::transitionsPanel)));
+        a.inspector.addView(a.button("Animation",v->open("Animation",()->{if(a.selectedMotion()==null)a.inspector.addView(a.note("Select a layer in the timeline to animate it."));else animationPanel();})));
+    }
+    private void stylesPanel(){
+        if(a.clip()==null&&a.overlay()==null){a.inspector.addView(a.note("Select a layer to edit its style."));return;}
+        if(a.overlay()!=null){a.inspector.addView(a.button("Color & Fill",v->category("Color & Fill")));a.inspector.addView(a.button("Border & Shadow",v->category("Border & Shadow")));}
+        a.inspector.addView(a.button("Blending & Opacity",v->category("Blending & Opacity")));
+        a.inspector.addView(a.button("Saved presets",v->category("Presets")));
+        effectsPanel();
+    }
+    private void transitionsPanel(){
+        EditProject.Clip c=a.clip();
+        if(c==null||c.track!=0){a.inspector.addView(a.note("Select a main-sequence clip to set its transition into the next clip."));return;}
+        EditProject.Clip next=null;for(int i=a.selected+1;i<a.project.clips.size();i++)if(a.project.clips.get(i).track==0){next=a.project.clips.get(i);break;}
+        if(next==null){a.inspector.addView(a.note("Add another main-sequence clip after this one to use a transition."));return;}
+        a.inspector.addView(a.note("Transition into "+next.name+". Timing follows the existing main-sequence overlap rules."));
+        a.inspector.addView(a.button((c.transition<0?"● ":"")+"None",v->{if(a.layerEditable())a.edit("Transition removed",()->c.transition=-1);}));
+        for(int i=0;i<EngineSettings.TRANSITIONS.length;i++){final int type=i;a.inspector.addView(a.button((c.transition==i?"● ":"")+EngineSettings.TRANSITIONS[i],v->{if(a.layerEditable())a.edit("Transition updated",()->c.transition=type);}));}
+        valueRow("Transition duration",c.transitionMs/1000f,.1f,3,.5f,1,"s",v->c.transitionMs=Math.round(v*1000),null,0,1);
+    }
+    private void shapePanel(){
+        EditProject.Overlay o=a.overlay();if(o==null||o.shape<=0)return;
+        a.inspector.addView(a.button("Shape: "+EditProject.SHAPES[o.shape],v->{int[] ids=ShapeCatalog.ids();String[] names=new String[ids.length];for(int i=0;i<ids.length;i++)names[i]=EditProject.SHAPES[ids[i]];
+            new AlertDialog.Builder(a).setTitle("Change shape").setItems(names,(d,index)->{if(a.layerEditable())a.edit("Shape changed",()->{o.shape=ids[index];o.text=EditProject.SHAPES[o.shape];});}).setNegativeButton("Cancel",null).show();}));
+        a.inspector.addView(a.button("Move & Transform",v->category("Move & Transform")));
+        a.inspector.addView(a.button("Color & Fill",v->category("Color & Fill")));
+        a.inspector.addView(a.button("Border & Shadow",v->category("Border & Shadow")));
+        a.inspector.addView(a.button("Duration",v->open("Duration",this::durationPanel)));
+        a.inspector.addView(a.button("Animation",v->open("Animation",this::animationPanel)));
+        a.inspector.addView(a.button("Reset natural proportions",v->{if(a.layerEditable())a.edit("Shape proportions reset",()->{o.aspect=1;o.heightScale=-1;o.skewX=o.skewY=0;o.motion.curves.get(Motion.HEIGHT).clear();o.motion.curves.get(Motion.SKEW_X).clear();o.motion.curves.get(Motion.SKEW_Y).clear();});}));
+        a.inspector.addView(a.note("Shapes share a square-sized area and keep their natural proportions. Link dimensions in Move & Transform to resize uniformly."));
+    }
     private void textPanel(){
         EditProject.Overlay o=a.overlay();if(o==null)return;
         EditText text=new EditText(a);text.setText(o.text);text.setTextColor(EditorActivity.TEXT);text.setMinLines(2);text.setContentDescription("Layer text");a.inspector.addView(text);
