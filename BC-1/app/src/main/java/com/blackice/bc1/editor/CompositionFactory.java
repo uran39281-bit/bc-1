@@ -141,7 +141,7 @@ public final class CompositionFactory {
         return new EditedMediaItem.Builder(source.build()).setFrameRate(frameRate).setRemoveVideo(removeVideo).setRemoveAudio(removeAudio&&!removeVideo)
             .setSpeed(new androidx.media3.common.audio.SpeedProvider(){public float getSpeed(long timeUs){return c.speed;}public long getNextSpeedChangeTimeUs(long timeUs){return C.TIME_UNSET;}})
             .setDurationUs((c.image?c.durationMs():c.sourceDurationMs)*1000)
-            .setEffects(new Effects(removeAudio?List.of():List.of(gain(volume,c.durationMs(),c.fadeInMs,c.fadeOutMs)),effects)).build();
+            .setEffects(new Effects(removeAudio?List.of():List.of(new com.blackice.bc1.audio.ClipAudioProcessor(c.audio),gain((float)(volume*Math.pow(10,c.audio.normalizationDb/20.0)),c.durationMs(),c.fadeInMs,c.fadeOutMs)),effects)).build();
     }
     private static final Map<String,Boolean> AUDIO_TRACKS=new java.util.concurrent.ConcurrentHashMap<>();
     /** Whether a source has an audio track (cached; local files only, so this is quick). */

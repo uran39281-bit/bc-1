@@ -19,34 +19,17 @@ public class CaptionBuilderTest {
         assertEquals("Hi.", c.get(0).text);
     }
 
-    @Test public void longPhrasesWrapToTwoLinesAndSplitInOrder() {
-        String text = "And so my fellow Americans ask not what your country can do for you ask what you can do for your country";
-        List<CaptionBuilder.Cue> c = cues(new long[]{300}, new long[]{5800}, new String[]{text});
-        assertTrue(c.size() >= 2);
-        StringBuilder joined = new StringBuilder();
-        long cursor = 300;
-        for (CaptionBuilder.Cue cue : c) {
-            String[] lines = cue.text.split("\n");
-            assertTrue("At most two lines: " + cue, lines.length <= 2);
-            for (String line : lines) assertTrue("Line fits: " + line, line.length() <= 38);
-            assertEquals("Cues are contiguous", cursor, cue.startMs);
-            cursor = cue.endMs;
-            joined.append(joined.length() > 0 ? " " : "").append(cue.text.replace('\n', ' '));
-        }
-        assertEquals(5800, cursor);
-        assertEquals("No words lost or reordered", text, joined.toString());
+    @Test public void wrappingNeverInventsWordTiming() {
+        String text="And so my fellow Americans ask not what your country can do for you ask what you can do for your country";
+        List<CaptionBuilder.Cue> c=cues(new long[]{300},new long[]{5800},new String[]{text});
+        assertEquals(1,c.size());assertEquals(300,c.get(0).startMs);assertEquals(5800,c.get(0).endMs);
+        assertEquals(text,c.get(0).text.replace('\n',' '));
     }
-
-    @Test public void longDurationsSplitByTimeAndShortCuesStayReadable() {
-        List<CaptionBuilder.Cue> c = cues(new long[]{0}, new long[]{12_000}, new String[]{"one two three four"});
-        assertTrue(c.size() >= 2);
-        for (CaptionBuilder.Cue cue : c) assertTrue("Cue too long: " + cue, cue.endMs - cue.startMs <= CaptionBuilder.MAX_CUE_MS);
-        assertEquals(12_000, c.get(c.size() - 1).endMs);
-        // A 200 ms word is held for the minimum time, but never over the next cue.
-        c = cues(new long[]{0, 500}, new long[]{200, 3000}, new String[]{"Yes.", "Then the rest."});
-        assertEquals(500, c.get(0).endMs);
-        c = cues(new long[]{0, 5000}, new long[]{200, 6000}, new String[]{"Yes.", "Later."});
-        assertEquals(CaptionBuilder.MIN_CUE_MS, c.get(0).endMs);
+    @Test public void recognizerTimesAreNotStretchedIntoSilence() {
+        List<CaptionBuilder.Cue> c=cues(new long[]{0,5000},new long[]{200,6000},new String[]{"Yes.","Later."});
+        assertEquals(200,c.get(0).endMs);assertEquals(5000,c.get(1).startMs);
+        c=cues(new long[]{0},new long[]{12000},new String[]{"one two three four"});
+        assertEquals(1,c.size());assertEquals(12000,c.get(0).endMs);
     }
 
     @Test public void offsetAndEndLimitApply() {

@@ -1,123 +1,202 @@
 package com.blackice.bc1.core;
 
+import com.blackice.bc1.audio.AudioDsp;
+import com.blackice.bc1.core.AudioPlan;
+import com.blackice.bc1.core.Resampler;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Renders an {@link AudioPlan} to interleaved stereo float PCM, block by block, in timeline order.
- * Pure Java: the backend only supplies decoded source PCM through {@link Opener}.
- */
+/* loaded from: classes6.dex */
 public final class AudioMixer implements AutoCloseable {
-    /** Decoded stereo source positioned at the segment's in-point. */
+    private long cursor;
+    private final Opener opener;
+    private final AudioPlan plan;
+    private final int rate;
+    private final long totalFrames;
+    private final Map<AudioPlan.Segment, Voice> voices = new IdentityHashMap();
+    private final List<AudioPlan.Segment> finished = new ArrayList();
+    private float[] scratch = new float[0];
+
     public static final class Opened {
-        public final Resampler.Source source; public final int sampleRate; public final AutoCloseable closer;
-        public Opened(Resampler.Source source, int sampleRate, AutoCloseable closer) { this.source = source; this.sampleRate = sampleRate; this.closer = closer; }
+        public final AutoCloseable closer;
+        public final int sampleRate;
+        public final Resampler.Source source;
+
+        public Opened(Resampler.Source source, int sampleRate, AutoCloseable closer) {
+            this.source = source;
+            this.sampleRate = sampleRate;
+            this.closer = closer;
+        }
     }
-    /** Opens a segment's media at its source in-point; null when the media has no sound. */
+
     public interface Opener {
         Opened open(AudioPlan.Segment segment) throws Exception;
-        /**
-         * Opens {@code segment} {@code localMs} into it (timeline time from the segment start), for playback
-         * that starts mid-timeline. The default opens at the start; the mixer then decodes up to the point.
-         */
-        default Opened openAt(AudioPlan.Segment segment, long localMs) throws Exception { return open(segment); }
-        /** True when {@link #openAt} really starts at the offset. */
-        default boolean seeks() { return false; }
+
+        default Opened openAt(AudioPlan.Segment segment, long localMs) throws Exception {
+            return open(segment);
+        }
+
+        default boolean seeks() {
+            return false;
+        }
     }
 
     private static final class Voice {
-        final AudioPlan.Segment segment; final long startFrame, endFrame; final Opened opened; final Resampler resampler;
-        long position; // frames already produced, relative to startFrame
+        final AudioDsp dsp;
+        final long endFrame;
+        final Opened opened;
+        long position;
+        final Resampler resampler;
+        final AudioPlan.Segment segment;
+        final long startFrame;
+
         Voice(AudioPlan.Segment s, long start, long end, Opened opened, int rate) {
-            segment = s; startFrame = start; endFrame = end; this.opened = opened;
-            resampler = opened == null ? null : new Resampler(opened.source, opened.sampleRate, rate, s.speed);
+            this.dsp = new AudioDsp(s.audio, rate, 2);
+            this.segment = s;
+            this.startFrame = start;
+            this.endFrame = end;
+            this.opened = opened;
+            this.resampler = opened == null ? null : new Resampler(opened.source, opened.sampleRate, rate, s.speed);
         }
     }
-
-    private final AudioPlan plan;
-    private final Opener opener;
-    private final int rate;
-    private final long totalFrames;
-    private final Map<AudioPlan.Segment, Voice> voices = new IdentityHashMap<>();
-    private final List<AudioPlan.Segment> finished = new ArrayList<>();
-    private long cursor;
-    private float[] scratch = new float[0];
 
     public AudioMixer(AudioPlan plan, Opener opener, int rate) {
-        this.plan = plan; this.opener = opener; this.rate = rate;
-        totalFrames = frameOf(plan.durationMs, rate);
+        this.plan = plan;
+        this.opener = opener;
+        this.rate = rate;
+        this.totalFrames = frameOf(plan.durationMs, rate);
     }
 
-    /** Starts mixing at {@code ms} instead of the beginning. Only before the first {@link #render}. */
     public void seek(long ms) {
-        if (!voices.isEmpty() || !finished.isEmpty()) throw new IllegalStateException("Seek before rendering");
-        cursor = Math.max(0, Math.min(totalFrames, frameOf(ms, rate)));
-        for (AudioPlan.Segment s : plan.segments) if (frameOf(s.timelineEndMs(), rate) <= cursor) finished.add(s);
+        if (!this.voices.isEmpty() || !this.finished.isEmpty()) {
+            throw new IllegalStateException("Seek before rendering");
+        }
+        this.cursor = Math.max(0L, Math.min(this.totalFrames, frameOf(ms, this.rate)));
+        for (AudioPlan.Segment s : this.plan.segments) {
+            if (frameOf(s.timelineEndMs(), this.rate) <= this.cursor) {
+                this.finished.add(s);
+            }
+        }
     }
 
-    public static long frameOf(long ms, int rate) { return Math.round(ms * (double) rate / 1000.0); }
+    public static long frameOf(long ms, int rate) {
+        return Math.round((ms * rate) / 1000.0d);
+    }
 
-    public long totalFrames() { return totalFrames; }
-    public long position() { return cursor; }
-    public boolean done() { return cursor >= totalFrames; }
+    public long totalFrames() {
+        return this.totalFrames;
+    }
 
-    /** Mixes the next block. Returns frames written (0 when the timeline is complete). */
+    public long position() {
+        return this.cursor;
+    }
+
+    public boolean done() {
+        return this.cursor >= this.totalFrames;
+    }
+
     public int render(float[] out, int maxFrames) throws Exception {
-        int frames = (int) Math.min(maxFrames, totalFrames - cursor);
-        if (frames <= 0) return 0;
-        java.util.Arrays.fill(out, 0, frames * 2, 0f);
-        long blockEnd = cursor + frames;
-        for (AudioPlan.Segment s : plan.segments) {
-            long start = frameOf(s.timelineStartMs, rate), end = Math.min(totalFrames, frameOf(s.timelineEndMs(), rate));
-            if (start >= blockEnd || end <= cursor || finished.contains(s)) continue;
-            Voice v = voices.get(s);
-            long from = Math.max(cursor, start), to = Math.min(blockEnd, end);
-            if (v == null) {
-                long late = from - start;
-                if (late > 0 && opener.seeks()) {
-                    // Starts mid-segment (playback from the playhead): open at the offset instead of decoding to it.
-                    v = new Voice(s, start, end, opener.openAt(s, late * 1000 / rate), rate);
-                    v.position = late;
-                } else v = new Voice(s, start, end, opener.open(s), rate);
-                voices.put(s, v);
-            }
-            // Catch up if the voice was opened late (never happens when rendering from zero).
-            long skip = from - (v.startFrame + v.position);
-            if (skip > 0 && v.resampler != null) { discard(v, skip); }
-            v.position = from - v.startFrame;
-            int count = (int) (to - from);
-            if (v.resampler != null && count > 0) {
-                if (scratch.length < count * 2) scratch = new float[count * 2];
-                int got = v.resampler.read(scratch, count);
-                int offset = (int) (from - cursor);
-                for (int f = 0; f < got; f++) {
-                    double localMs = (v.position + f) * 1000.0 / rate;
-                    float g = s.gainAt(localMs);
-                    out[(offset + f) * 2] += scratch[f * 2] * g;
-                    out[(offset + f) * 2 + 1] += scratch[f * 2 + 1] * g;
+        int frames;
+        int frames2 = (int) Math.min(maxFrames, this.totalFrames - this.cursor);
+        if (frames2 <= 0) {
+            return 0;
+        }
+        Arrays.fill(out, 0, frames2 * 2, 0.0f);
+        long blockEnd = this.cursor + frames2;
+        for (AudioPlan.Segment s : this.plan.segments) {
+            long start = frameOf(s.timelineStartMs, this.rate);
+            long end = Math.min(this.totalFrames, frameOf(s.timelineEndMs(), this.rate));
+            if (start < blockEnd && end > this.cursor) {
+                if (!this.finished.contains(s)) {
+                    Voice v = this.voices.get(s);
+                    long from = Math.max(this.cursor, start);
+                    long to = Math.min(blockEnd, end);
+                    if (v != null) {
+                        frames = frames2;
+                    } else {
+                        long late = from - start;
+                        if (late <= 0 || !this.opener.seeks()) {
+                            frames = frames2;
+                            v = new Voice(s, start, end, this.opener.open(s), this.rate);
+                        } else {
+                            frames = frames2;
+                            Voice v2 = new Voice(s, start, end, this.opener.openAt(s, (1000 * late) / this.rate), this.rate);
+                            v2.position = late;
+                            v = v2;
+                        }
+                        this.voices.put(s, v);
+                    }
+                    long skip = from - (v.startFrame + v.position);
+                    if (skip > 0 && v.resampler != null) {
+                        discard(v, skip);
+                    }
+                    v.position = from - v.startFrame;
+                    int count = (int) (to - from);
+                    if (v.resampler != null && count > 0) {
+                        if (this.scratch.length < count * 2) {
+                            this.scratch = new float[count * 2];
+                        }
+                        int got = v.resampler.read(this.scratch, count);
+                        v.dsp.process(this.scratch, got);
+                        int offset = (int) (from - this.cursor);
+                        int f = 0;
+                        while (f < got) {
+                            long skip2 = skip;
+                            double localMs = ((v.position + f) * 1000.0d) / this.rate;
+                            float g = s.gainAt(localMs);
+                            int i = (offset + f) * 2;
+                            out[i] = out[i] + (this.scratch[f * 2] * g);
+                            int i2 = ((offset + f) * 2) + 1;
+                            out[i2] = out[i2] + (this.scratch[(f * 2) + 1] * g);
+                            f++;
+                            skip = skip2;
+                        }
+                    }
+                    v.position += count;
+                    if (v.startFrame + v.position >= v.endFrame) {
+                        close(v);
+                        this.voices.remove(s);
+                        this.finished.add(s);
+                    }
+                    frames2 = frames;
                 }
             }
-            v.position += count;
-            if (v.startFrame + v.position >= v.endFrame) { close(v); voices.remove(s); finished.add(s); }
         }
-        for (int i = 0; i < frames * 2; i++) out[i] = Resampler.clamp(out[i]);
-        cursor = blockEnd;
-        return frames;
+        int frames3 = frames2;
+        for (int i3 = 0; i3 < frames3 * 2; i3++) {
+            out[i3] = Resampler.clamp(out[i3]);
+        }
+        this.cursor = blockEnd;
+        return frames3;
     }
 
     private void discard(Voice v, long frames) throws Exception {
-        float[] sink = new float[2 * 1024];
-        while (frames > 0) { int n = v.resampler.read(sink, (int) Math.min(1024, frames)); if (n <= 0) break; frames -= n; }
+        int n;
+        float[] sink = new float[2048];
+        while (frames > 0 && (n = v.resampler.read(sink, (int) Math.min(1024L, frames))) > 0) {
+            v.dsp.process(sink, n);
+            frames -= n;
+        }
     }
 
     private static void close(Voice v) {
-        if (v.opened != null && v.opened.closer != null) try { v.opened.closer.close(); } catch (Exception ignored) { }
+        if (v.opened == null || v.opened.closer == null) {
+            return;
+        }
+        try {
+            v.opened.closer.close();
+        } catch (Exception e) {
+        }
     }
 
-    @Override public void close() {
-        for (Voice v : voices.values()) close(v);
-        voices.clear();
+    @Override // java.lang.AutoCloseable
+    public void close() {
+        for (Voice v : this.voices.values()) {
+            close(v);
+        }
+        this.voices.clear();
     }
 }

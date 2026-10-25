@@ -14,15 +14,25 @@ import java.util.Locale;
 final class CaptionPanel {
     static void show(EditorActivity a) {
         new AlertDialog.Builder(a).setTitle("Speech & captions")
-            .setItems(new String[]{"Generate auto captions", "Review / edit captions", "Export subtitles (.srt)", "Export subtitles (.vtt)", "Speech models", "Resume saved transcription", "Review pending result", "Discard saved transcription"}, (d, which) -> {
+            .setItems(new String[]{"Generate auto captions", "Review / edit captions", "Export subtitles (.srt)", "Export subtitles (.vtt)", "Speech models", "Resume saved transcription", "Review pending result", "Discard saved transcription", "Shift caption timing"}, (d, which) -> {
                 if (which == 0) a.autoCaptions();
                 else if (which == 1) review(a);
                 else if (which == 2 || which == 3) a.exportSubtitles(which == 3);
                 else if(which==4)a.speechModels();
                 else if(which==5)a.resumeCaptions();
                 else if(which==6)a.reviewPendingCaptions();
-                else a.discardCaptionJob();
+                else if(which==7)a.discardCaptionJob();
+                else shift(a);
             }).setNegativeButton("Close", null).show();
+    }
+    static void shift(EditorActivity a) {
+        if(!a.editable())return;String id=a.project.id;
+        EditText input=new EditText(a);input.setHint("Milliseconds: positive = later, negative = earlier");input.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_SIGNED);
+        new AlertDialog.Builder(a).setTitle("Shift all captions").setView(input).setPositiveButton("Apply",(d,w)->{
+            if(!id.equals(a.project.id))return;
+            try{long delta=Long.parseLong(input.getText().toString().trim());a.edit("Caption timing shifted",()->com.blackice.bc1.core.CaptionTiming.shift(a.project,delta));}
+            catch(RuntimeException e){a.tell("Enter a signed whole number of milliseconds.");}
+        }).setNegativeButton("Cancel",null).show();
     }
     static void review(EditorActivity a) {
         List<EditProject.Overlay> captions = SubtitleFiles.captions(a.project);

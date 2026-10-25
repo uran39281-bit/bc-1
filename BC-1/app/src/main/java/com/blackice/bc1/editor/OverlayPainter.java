@@ -15,6 +15,7 @@ public final class OverlayPainter {
     public OverlayPainter(Context context){this.context=context.getApplicationContext();}
     /** Draws one text, image or shape layer through the same transform as video layers (y-down pixels). */
     public void draw(Canvas canvas,int width,int height,EditProject.Overlay o,long local) throws IOException {
+        if(o.visualizerClipId!=null)return; // Disabled while retaining old project layers.
         Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
         TransformMath.Transform t=TransformMath.of(o,local);float opacity=o.motion.value(Motion.OPACITY,local,o.opacity);
         double[] m=TransformMath.matrix(t);float ax=t.anchorX*width/2f,ay=-t.anchorY*height/2f,cx=(t.x+1)*width/2f,cy=(1-t.y)*height/2f;

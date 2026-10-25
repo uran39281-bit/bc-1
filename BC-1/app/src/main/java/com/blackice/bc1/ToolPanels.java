@@ -87,8 +87,12 @@ final class ToolPanels {
         a.inspector.addView(a.button(c.unmutedVolume>=0?"Unmute":"Mute",v->{if(a.layerEditable())a.edit("Audio mute updated",()->ClipAudio.toggleMute(c));}));
         percent("Volume",c.volume,1,v->{c.volume=v;c.unmutedVolume=-1;},null,0);
         fadePanel(true);fadePanel(false);
+        a.inspector.addView(a.button("Noise reduction",v->AudioToolsPanel.noise(a)));
+        a.inspector.addView(a.button("Equalizer",v->AudioToolsPanel.eq(a)));
+        a.inspector.addView(a.button("Loudness normalization",v->AudioToolsPanel.normalize(a)));
+        a.inspector.addView(a.note("Audio visualizer temporarily disabled"));
         if(c.track<EditProject.AUDIO_FIRST)a.inspector.addView(a.button("Extract Audio",v->runTool("Extract Audio")));
-        a.inspector.addView(a.button("Reset Audio Settings",v->{if(a.layerEditable())a.edit("Audio reset",()->{c.volume=1;c.unmutedVolume=-1;c.fadeInMs=0;c.fadeOutMs=0;});}));
+        a.inspector.addView(a.button("Reset Audio Settings",v->{if(a.layerEditable())a.edit("Audio reset",()->{c.volume=1;c.unmutedVolume=-1;c.fadeInMs=0;c.fadeOutMs=0;c.audio=new com.blackice.bc1.audio.AudioSettings();});}));
     }
     private boolean locked(){EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();return c!=null?LayerOps.locked(a.project,a.selected):LayerOps.locked(o);}
     static String kind(EditProject.Clip c,EditProject.Overlay o){
@@ -104,9 +108,9 @@ final class ToolPanels {
     /** Pictures, videos, audio, text, shapes and image layers each get only their compatible tools. */
     static List<String> tools(EditProject.Clip c,EditProject.Overlay o){
         List<String> t=new ArrayList<>();
-        if(c!=null&&c.track>=EditProject.AUDIO_FIRST){Collections.addAll(t,"Split","Trim","Slip","Volume","Fade In","Fade Out","Duplicate");return t;}
+        if(c!=null&&c.track>=EditProject.AUDIO_FIRST){Collections.addAll(t,"Split","Trim","Slip","Volume","Noise reduction","Equalizer","Loudness normalization","Fade In","Fade Out","Duplicate");return t;}
         if(c!=null&&c.image){Collections.addAll(t,"Duration: "+EditorActivity.seconds(c.durationMs())+" s","Transform","Opacity","Effects","Chroma Key","Animation","Duplicate");return t;}
-        if(c!=null){Collections.addAll(t,"Split","Trim","Slip","Speed: "+trimZero(c.speed)+"×","Extract Audio","Transform","Opacity","Effects","Chroma Key","Volume","Animation","Duplicate");return t;}
+        if(c!=null){Collections.addAll(t,"Split","Trim","Slip","Speed: "+trimZero(c.speed)+"×","Extract Audio","Transform","Opacity","Effects","Chroma Key","Volume","Noise reduction","Equalizer","Loudness normalization","Animation","Duplicate");return t;}
         if(o.imageUri==null&&o.shape==0){Collections.addAll(t,"Edit Text","Font","Size","Color","Alignment","Transform","Opacity","Duration: "+EditorActivity.seconds(o.endMs-o.startMs)+" s","Animation");return t;}
         if(o.shape>0){Collections.addAll(t,"Color","Transform","Opacity","Duration: "+EditorActivity.seconds(o.endMs-o.startMs)+" s","Animation","Duplicate");return t;}
         Collections.addAll(t,"Transform","Opacity","Duration: "+EditorActivity.seconds(o.endMs-o.startMs)+" s","Animation","Duplicate");return t;
@@ -147,6 +151,9 @@ final class ToolPanels {
             case "Transform":category("Move & Transform");return;
             case "Effects":category("Effects");return;
             case "Opacity":open("Opacity",()->opacityPanel());return;
+            case "Noise reduction":AudioToolsPanel.noise(a);return;
+            case "Equalizer":AudioToolsPanel.eq(a);return;
+            case "Loudness normalization":AudioToolsPanel.normalize(a);return;
             case "Volume":open("Volume",()->percent("Volume",c.volume,.7f,v->{c.volume=v;c.unmutedVolume=-1;},null,0));return;
             case "Duration":open("Duration",this::durationPanel);return;
             case "Trim":open("Trim",this::trimPanel);return;
