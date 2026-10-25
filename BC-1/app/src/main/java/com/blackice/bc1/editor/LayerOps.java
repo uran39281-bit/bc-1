@@ -183,7 +183,7 @@ public final class LayerOps {
         void restore(EditProject p){copyInto(p,decode(json));}
         static void copyInto(EditProject target,EditProject source){
             target.clips.clear();target.clips.addAll(source.clips);target.overlays.clear();target.overlays.addAll(source.overlays);
-            target.markers.clear();target.markers.addAll(source.markers);System.arraycopy(source.tracks,0,target.tracks,0,target.tracks.length);
+            target.markers.clear();target.markers.addAll(source.markers);target.landmarks.clear();target.landmarks.addAll(source.landmarks);System.arraycopy(source.tracks,0,target.tracks,0,target.tracks.length);
             target.music=source.music;target.loopInMs=source.loopInMs;target.loopOutMs=source.loopOutMs;target.playheadMs=source.playheadMs;
         }
     }

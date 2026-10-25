@@ -49,7 +49,7 @@ public final class PreviewProxy implements AutoCloseable {
     }
     public static boolean withoutVisualClips(EditProject project){for(EditProject.Clip c:project.clips)if(c.track<EditProject.AUDIO_FIRST)return false;return true;}
     public static boolean required(EditProject project) {
-        return withoutVisualClips(project) || !project.overlays.isEmpty() || project.clips.size()>1 || (!project.clips.isEmpty()&&project.clips.get(0).image) || com.blackice.bc1.core.RenderPlan.usesBlend(project);
+        return withoutVisualClips(project) || project.clips.stream().anyMatch(c->c.audio.active()||!c.motion.curves.get(Motion.VOLUME).isEmpty()) || !project.overlays.isEmpty() || project.clips.size()>1 || (!project.clips.isEmpty()&&project.clips.get(0).image) || com.blackice.bc1.core.RenderPlan.usesBlend(project);
     }
     /** The render in flight, by project key; a second request for the same project joins it instead of restarting. */
     private String runningKey;
@@ -63,7 +63,7 @@ public final class PreviewProxy implements AutoCloseable {
     public boolean preparing(){return runningKey!=null;}
     public void prepare(EditProject project,Listener listener) {
         try {
-            EditProject snapshot=ProjectStore.snapshot(project);snapshot.playheadMs=0;
+            EditProject snapshot=ProjectStore.snapshot(project);snapshot.playheadMs=0;snapshot.landmarks.clear();
             byte[] digest=MessageDigest.getInstance("SHA-256").digest(ProjectStore.encode(snapshot).getBytes(StandardCharsets.UTF_8));
             StringBuilder key=new StringBuilder();for(byte b:digest)key.append(String.format(java.util.Locale.ROOT,"%02x",b&255));
             if(key.toString().equals(runningKey)&&(transformer!=null||coreStop!=null)){current=listener;return;}

@@ -16,8 +16,13 @@ public class LandscapeStabilityTest {
     assertEquals(90,a.overlay().rotation,.01);a.undo(false);assertEquals(0,a.overlay().rotation,.01);a.undo(true);assertEquals(90,a.overlay().rotation,.01);
     try{assertEquals(90,ProjectStore.decode(ProjectStore.encode(a.project)).overlays.get(0).rotation,.01);}catch(Exception e){throw new AssertionError(e);}
     a.panels.reset();a.renderInspector();assertNotNull(WorkspaceV2Test.text(a.inspector,"Media Settings"));assertNull(WorkspaceV2Test.text(a.inspector,"More footage tools"));assertNull(WorkspaceV2Test.text(a.inspector,"Project"));
-    CrashLogs.operation("Rotation regression");CrashLogs.record("Regression diagnostic",new IllegalStateException("private content://secret/path"));String report=CrashLogs.report(a);assertTrue(report.contains("IllegalStateException"));assertFalse(report.contains("content://secret/path"));
-  });h.capture("v140-wide-media-settings");scene.onActivity(a->a.exportMenu());h.capture("v140-wide-export");}
+    CrashLogs.operation("Rotation regression");CrashLogs.record("Regression diagnostic",new IllegalStateException("private content://secret/path"));
+  });
+  // Nonfatal reports persist on the diagnostics worker; never block the UI waiting for disk.
+  long deadline=android.os.SystemClock.elapsedRealtime()+10000;String report="";
+  while(android.os.SystemClock.elapsedRealtime()<deadline){report=CrashLogs.report(h.inst.getTargetContext());if(report.contains("Regression diagnostic")&&report.contains("IllegalStateException"))break;Thread.sleep(100);}
+  assertTrue(report.contains("Regression diagnostic"));assertTrue(report.contains("IllegalStateException"));assertFalse(report.contains("content://secret/path"));
+  h.capture("v140-wide-media-settings");scene.onActivity(a->a.exportMenu());h.capture("v140-wide-export");}
   }finally{h.shell("wm size "+size);h.shell("wm density "+density);}
  }
  private static View find(View v,Class<?> type){if(type.isInstance(v))return v;if(v instanceof ViewGroup){ViewGroup g=(ViewGroup)v;for(int i=0;i<g.getChildCount();i++){View result=find(g.getChildAt(i),type);if(result!=null)return result;}}return null;}

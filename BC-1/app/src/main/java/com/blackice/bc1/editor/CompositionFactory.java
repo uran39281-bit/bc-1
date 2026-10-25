@@ -86,9 +86,9 @@ public final class CompositionFactory {
                 boolean renders=LayerOps.renders(project,c,preview);
                 List<Effect> effects=new ArrayList<>();if(!audioOnly){effects.add(Presentation.createForWidthAndHeight(w,h,Presentation.LAYOUT_SCALE_TO_FIT));effects.add(new ClipEffect(p,previous,ordinal%2==0,renders));if(frameDrop)effects.add(FrameDropEffect.createDefaultFrameDropEffect(project.frameRate));}
                 // Audio tracks honour mute; a hidden picture keeps its own sound (mute it with volume).
-                float volume=audioOnly&&!renders?0:c.volume;
+                float volume=audioOnly&&!renders?-1:c.volume;
                 // Pictures carry no sound, so their (silent) audio path is left untouched.
-                if(!audioOnly&&!c.image&&preview&&LayerOps.anySolo(project)&&!renders)volume=0;
+                if(!audioOnly&&!c.image&&preview&&LayerOps.anySolo(project)&&!renders)volume=-1;
                 sequence.addItem(item(c,audioOnly,videoOnly,volume,effects,project.frameRate));cursor=p.endMs;
                 if(sound!=null){if(!c.image&&hasAudio(context,c.uri)){if(p.startMs>soundCursor)sound.addGap((p.startMs-soundCursor)*1000);sound.addItem(item(c,true,false,volume,List.of(),project.frameRate));soundCursor=p.endMs;hasSound=true;}}
             }
@@ -141,7 +141,7 @@ public final class CompositionFactory {
         return new EditedMediaItem.Builder(source.build()).setFrameRate(frameRate).setRemoveVideo(removeVideo).setRemoveAudio(removeAudio&&!removeVideo)
             .setSpeed(new androidx.media3.common.audio.SpeedProvider(){public float getSpeed(long timeUs){return c.speed;}public long getNextSpeedChangeTimeUs(long timeUs){return C.TIME_UNSET;}})
             .setDurationUs((c.image?c.durationMs():c.sourceDurationMs)*1000)
-            .setEffects(new Effects(removeAudio?List.of():List.of(new com.blackice.bc1.audio.ClipAudioProcessor(c.audio),gain((float)(volume*Math.pow(10,c.audio.normalizationDb/20.0)),c.durationMs(),c.fadeInMs,c.fadeOutMs)),effects)).build();
+            .setEffects(new Effects(removeAudio?List.of():List.of(new com.blackice.bc1.audio.ClipAudioProcessor(c.audio),clipGain(c,volume<0)),effects)).build();
     }
     private static final Map<String,Boolean> AUDIO_TRACKS=new java.util.concurrent.ConcurrentHashMap<>();
     /** Whether a source has an audio track (cached; local files only, so this is quick). */
@@ -149,6 +149,13 @@ public final class CompositionFactory {
         Boolean known=AUDIO_TRACKS.get(uri);if(known!=null)return known;
         boolean result;try{result=AudioWaveform.hasAudio(context,uri);}catch(Exception e){result=false;}
         AUDIO_TRACKS.put(uri,result);return result;
+    }
+    private static GainProcessor clipGain(EditProject.Clip clip,boolean muted){
+        EditProject.Clip snapshot=clip.copy();
+        return new GainProcessor(new GainProcessor.GainProvider(){
+            public float getGainFactorAtSamplePosition(long sample,int rate){return ClipAudio.gain(snapshot,sample*1000.0/rate,muted);}
+            public long isUnityUntil(long sample,int rate){if(!muted&&snapshot.unmutedVolume<0&&snapshot.volume==1&&snapshot.audio.normalizationDb==0&&snapshot.fadeInMs==0&&snapshot.fadeOutMs==0&&snapshot.motion.curves.get(Motion.VOLUME).isEmpty())return C.TIME_END_OF_SOURCE;return getGainFactorAtSamplePosition(sample,rate)==1?sample+1:C.TIME_UNSET;}
+        });
     }
     private static GainProcessor gain(float volume){return gain(volume,0,0,0);}
     private static GainProcessor gain(float volume,long duration,long fadeIn,long fadeOut) {

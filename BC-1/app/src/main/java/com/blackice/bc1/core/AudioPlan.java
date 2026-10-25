@@ -18,6 +18,7 @@ public final class AudioPlan {
         public final long fadeInMs;
         public final long fadeOutMs;
         public final boolean music;
+        private EditProject.Clip clip;
         public final long sourceInMs;
         public final float speed;
         public final long timelineStartMs;
@@ -41,11 +42,11 @@ public final class AudioPlan {
         }
 
         public float gainAt(double localMs) {
-            double envelope = this.fadeInMs > 0 ? Math.min(1.0d, localMs / this.fadeInMs) : 1.0d;
-            if (this.fadeOutMs > 0) {
-                envelope = Math.min(envelope, (this.durationMs - localMs) / this.fadeOutMs);
-            }
-            return (float) (this.volume * Math.pow(10.0d, this.audio.normalizationDb / 20.0d) * Math.max(0.0d, Math.min(1.0d, envelope)));
+            if(clip!=null)return com.blackice.bc1.editor.ClipAudio.gain(clip,localMs,false);
+            double envelope = 1;
+            if (fadeInMs > 0) envelope = Math.min(envelope, localMs / fadeInMs);
+            if (fadeOutMs > 0) envelope = Math.min(envelope, (durationMs - localMs) / fadeOutMs);
+            return (float) (volume * Math.pow(10,audio.normalizationDb/20.0) * Math.max(0, Math.min(1, envelope)));
         }
     }
 
@@ -61,20 +62,13 @@ public final class AudioPlan {
         boolean solo = preview && LayerOps.anySolo(project);
         for (EditProject.Placement p : project.placements()) {
             EditProject.Clip c = p.clip;
-            if (!c.image) {
-                boolean renders = LayerOps.renders(project, c, preview);
-                float volume = c.volume;
-                if (c.track >= 8 && !renders) {
-                    volume = 0.0f;
-                }
-                float volume2 = (c.track >= 8 || !solo || renders) ? volume : 0.0f;
-                if (volume2 > 0.0f) {
-                    Segment segment = new Segment(c.uri, p.startMs, c.durationMs(), c.inMs, c.speed, volume2, c.fadeInMs, c.fadeOutMs, false);
-                    segment.audio = c.audio.copy();
-                    list.add(segment);
-                    solo = solo;
-                }
-            }
+            if (c.image) continue;
+            boolean renders = LayerOps.renders(project, c, preview);
+            float volume = c.volume;
+            if (EditProject.audioTrack(c.track) && !renders) continue;
+            if (!EditProject.audioTrack(c.track) && solo && !renders) continue;
+            if (c.unmutedVolume>=0 || volume<=0&&c.motion.curves.get(com.blackice.bc1.editor.Motion.VOLUME).isEmpty()) continue;
+            Segment segment=new Segment(c.uri,p.startMs,c.durationMs(),c.inMs,c.speed,volume,c.fadeInMs,c.fadeOutMs,false);segment.clip=c.copy();segment.audio=segment.clip.audio;list.add(segment);
         }
         EditProject.Music m = project.music;
         if (m != null && m.startMs < duration && m.volume > 0.0f) {

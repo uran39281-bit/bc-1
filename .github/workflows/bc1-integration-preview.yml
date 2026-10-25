@@ -1,0 +1,70 @@
+name: Black Ice integration APK
+on:
+  push:
+    paths: ['.github/workflows/bc1-integration-preview.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integration-apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Install Android build tools
+        run: |
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
+      # The earlier preview APK used an unavailable ephemeral signing key.
+      # Change only the install identity, retaining the tested application sources.
+      - name: Select independent integration install
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('BC-1/app/build.gradle')
+          text=p.read_text()
+          for old,new in [
+            ("if (project.hasProperty('bc1SideBySide')) applicationIdSuffix '.preview'", "if (project.hasProperty('bc1SideBySide')) applicationIdSuffix '.integration'"),
+            ("'Black Ice Editor Preview'", "'Black Ice Editor Integration'"),
+          ]:
+            assert text.count(old)==1, 'Build configuration changed; review integration identity'
+            text=text.replace(old,new)
+          p.write_text(text)
+          PY
+      - name: Build independent APK and run unit tests
+        working-directory: BC-1
+        run: gradle --no-daemon -Pbc1SideBySide testDebugUnitTest lintDebug assembleDebug
+      - name: Prepare APK and provenance
+        run: |
+          mkdir -p delivery
+          cp BC-1/app/build/outputs/apk/debug/app-debug.apk delivery/Black-Ice-Editor-v1.4.2-integration.apk
+          cd delivery
+          sha256sum Black-Ice-Editor-v1.4.2-integration.apk > SHA256SUMS.txt
+          printf 'Source %s; run %s. Only package and app label overridden for com.blackice.bc1.integration. Installs beside the existing app and preview; use project export/import to transfer a copy.\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > BUILD.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Black-Ice-Editor-v1.4.2-integration
+          path: delivery/
+          retention-days: 30
+      - name: Publish downloadable integration APK
+        if: github.ref_name != 'main'
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          cd delivery
+          git init -q && git checkout -q -b apk && git add . \
+            && git -c user.name=bc1-ci -c user.email=bc1-ci@users.noreply.github.com commit -qm "Integration APK for $GITHUB_SHA" \
+            && git push -qf "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "apk:refs/heads/test-apk/integration/$GITHUB_REF_NAME"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Black-Ice-integration-build-reports
+          path: BC-1/app/build/reports/

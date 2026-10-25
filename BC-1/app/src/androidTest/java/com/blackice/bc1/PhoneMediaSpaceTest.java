@@ -27,7 +27,7 @@ public class PhoneMediaSpaceTest {
                 scenario.onActivity(a->{assertFalse(a.wideLayout);assertEquals(0,a.tab);
                     assertTrue("Browser has at least 40% of window height",a.mobile.sheet.getHeight()>a.mobile.stage.getHeight()*.4f);
                     assertTrue("Timeline remains flexible below preview",a.phoneTimelineArea.getHeight()>a.dp(100));
-                    assertEquals(View.VISIBLE,a.phoneTransport.getVisibility());assertEquals(View.GONE,a.phoneTimelineTools.getVisibility());
+                    assertEquals(View.VISIBLE,a.phoneTransport.getVisibility());assertEquals(View.VISIBLE,a.phoneTimelineTools.getVisibility());
                     assertNull(WorkspaceV2Test.text(a.inspector,"Inspector"));assertNotNull(WorkspaceV2Test.described(a.inspector,"Media Footage"));
                     assertEquals(0,a.project.clips.size());
                 });

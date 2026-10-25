@@ -59,6 +59,7 @@ public final class ExportService extends Service {
         if(intent==null){stopSelf();return START_NOT_STICKY;}
         if(ACTION_CANCEL.equals(intent.getAction())) {cancelExport();return START_NOT_STICKY;}
         if(transformer!=null || coreThread!=null || copying)return START_NOT_STICKY;
+        com.blackice.bc1.CrashLogs.operation("Export");
         Notification initial=notification("Preparing export…",-1);
         if(wakeLock==null){wakeLock=getSystemService(PowerManager.class).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"BC1:export");wakeLock.setReferenceCounted(false);wakeLock.acquire(6L*60*60*1000);}
         if(Build.VERSION.SDK_INT>=35)startForeground(41,initial,ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROCESSING);
@@ -69,6 +70,7 @@ public final class ExportService extends Service {
             destination=Uri.parse(intent.getStringExtra("destination"));
             String path=intent.getStringExtra("project");
             EditProject project=ProjectStore.decode(new String(java.nio.file.Files.readAllBytes(new File(path).toPath()),StandardCharsets.UTF_8));
+            com.blackice.bc1.CrashLogs.project(project);
             new File(path).delete();
             ActiveFeatures.prepareRender(project);
             output=new File(getCacheDir(),"bc1-export-"+System.currentTimeMillis()+".mp4");
@@ -119,6 +121,7 @@ public final class ExportService extends Service {
         coreThread.start();main.post(poll);
     }
     private void recordFailure(String stage,Exception error) {
+        com.blackice.bc1.CrashLogs.record("Export failed",error);
         // Preserve nested codec/muxer causes for device QA, only in debuggable builds.
         // Do not change encoder policy or mask a failure with an automatic retry.
         if((getApplicationInfo().flags&android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0)

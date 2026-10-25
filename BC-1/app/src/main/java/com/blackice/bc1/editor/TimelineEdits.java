@@ -68,6 +68,7 @@ public final class TimelineEdits {
         long target=time,distance=tolerance+1;
         long[] fixed={0,p.playheadMs};
         for(long edge:fixed){long d=Math.abs(edge-time);if(d<=tolerance&&d<distance){target=edge;distance=d;}}
+        for(EditProject.Landmark marker:p.landmarks){long edge=marker.timeMs,d=Math.abs(edge-time);if(d<=tolerance&&d<distance){target=edge;distance=d;}}
         for(long edge:p.markers){long d=Math.abs(edge-time);if(d<=tolerance&&d<distance){target=edge;distance=d;}}
         for(EditProject.Placement placement:p.placements())if(placement.index!=excluded)
             for(long edge:new long[]{placement.startMs,placement.endMs}){
