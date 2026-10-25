@@ -187,7 +187,7 @@ public final class EditorActivity extends Activity {
             });
         });
     }
-    @Override protected void onResume(){super.onResume();workClock.resume();}
+    @Override protected void onResume(){super.onResume();workClock.resume();mediaImportWindow.resume();}
     @Override protected void onPause(){workClock.pause();super.onPause();}
     @Override protected void onStart(){super.onStart();active=true;main.post(pulse);if(!loading)showLive();}
     @Override protected void onStop(){cancelLiveAdjust();active=false;main.removeCallbacks(pulse);main.removeCallbacks(warmPreview);saveNow();releasePreview();if(previewProxy!=null)previewProxy.cancel();if(live!=null)live.releaseDecoders();super.onStop();}

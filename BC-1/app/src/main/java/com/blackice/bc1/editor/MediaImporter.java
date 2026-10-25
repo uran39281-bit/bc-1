@@ -77,7 +77,7 @@ public final class MediaImporter {
                     if(hasVideo){int[] size=videoSize(metadata);clip.width=size[0];clip.height=size[1];}
                     boolean hasAudio="yes".equals(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO));
                     if(clip.sourceDurationMs<EditProject.MIN_CLIP_MS || (audioOnly?!hasAudio:(!hasVideo&&!hasAudio)))
-                        throw new IOException(audioOnly?"No playable audio was found.":"No playable video was found. Use Music for audio files.");
+                        throw new IOException(audioOnly?"No playable audio was found.":"No playable video or audio was found.");
                 } catch(RuntimeException e) {throw new IOException("This media could not be read. Try a local MP4, JPEG/PNG, or audio file.",e);}
             }
             clip.uri=Uri.fromFile(copy).toString();return clip;

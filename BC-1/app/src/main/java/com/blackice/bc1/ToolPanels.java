@@ -69,7 +69,7 @@ final class ToolPanels {
             TextView b=tile(icons[i],labels[i],desc,()->{if(index==0)runTool(still?"Duration":"Speed");else if(index==4){if(audio&&a.layerEditable())a.edit(c.unmutedVolume>=0?"Clip unmuted":"Clip muted",()->ClipAudio.toggleMute(c));}else playheadEdit(index-1);},enabled);
             LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,a.dp(68),1);lp.setMargins(a.dp(2),a.dp(6),a.dp(2),a.dp(6));row.addView(b,lp);}
         View divider=new View(a);divider.setBackgroundColor(BlackIceTheme.BORDER);into.addView(divider,new LinearLayout.LayoutParams(-1,a.dp(1)));
-        mediaTiles(into,editable,c!=null||o.imageUri!=null);
+        mediaTiles(into,editable,true);
         // Secondary supported operations remain reachable without returning the removed category tiles.
         TextView extra=a.button("More footage tools",v->open("More footage tools",()->{for(String tool:tools(a.clip(),a.overlay()))a.gridAction(tool,()->runTool(tool));a.flushGrid();a.inspector.addView(a.button("Compare before / after",compareView->a.compare(!a.comparing)));}));extra.setContentDescription("Slip, chroma key, audio extraction and animation tools");into.addView(extra,new LinearLayout.LayoutParams(-1,a.dp(48)));
         if(c!=null&&c.track==0)into.addView(a.note("Main sequence: edge dragging uses ripple trim. Trim Start/End at playhead preserve other clip positions."));
@@ -83,7 +83,7 @@ final class ToolPanels {
     private void mediaTiles(LinearLayout into,boolean editable,boolean visual){
         boolean shape=a.overlay()!=null&&a.overlay().shape>0;
         String[] names={"Move & Transform","Blending & Opacity","Effects",shape?"Shape & Style":"Audio"};
-        String[] icons={"Transform","Blending & Opacity","Effects","Volume"};
+        String[] icons={"Transform","Blending & Opacity","Effects",shape?"Shapes":"Volume"};
         for(int row=0;row<2;row++){LinearLayout line=a.row();into.addView(line);for(int col=0;col<2;col++){int index=row*2+col;MediaTile tile=new MediaTile(a,names[index],icons[index]);tile.setOnClickListener(v->{if(index==3){if(shape)open("Shape & Style",this::shapePanel);else open("Audio",this::audioPanel);}else category(names[index]);});tile.setContentDescription("Media Settings: "+names[index]);tile.setTooltipText(names[index]);EditorActivity.dim(tile,editable&&(index==3||visual));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,-2,1);lp.setMargins(a.dp(3),a.dp(5),a.dp(3),a.dp(5));line.addView(tile,lp);}}
     }
 

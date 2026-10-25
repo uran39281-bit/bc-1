@@ -23,6 +23,8 @@ final class MediaImportWindow {
     boolean loading,restoreOpen;
     List<DeviceMedia.Item> items;
     int generation;
+    String accessState="";
+    void resume(){String now=gallery.access(false)+":"+gallery.access(true);if(!now.equals(accessState)){accessState=now;refresh();}}
     MediaImportWindow(EditorActivity a){this.a=a;gallery=new DeviceMedia(a);}
     boolean showing(){return window!=null&&window.isShowing();}
     void save(Bundle b){b.putBoolean("browse-open",showing());b.putString("browse-query",query);b.putString("browse-album",album);b.putInt("browse-filter",filter);b.putInt("browse-scroll",scroll==null?scrollY:scroll.getScrollY());}

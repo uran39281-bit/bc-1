@@ -19,7 +19,7 @@ public class ShapeCatalogTest {
   }
  }
  @Test public void schemaEightKeepsExistingGeometryAndMedia()throws Exception{
-  EditProject p=new EditProject();p.overlays.add(ShapeCatalog.create(14,0));EditProject.Clip c=new EditProject.Clip();c.uri="content://source/original";c.image=true;c.outMs=c.sourceDurationMs=3000;p.library.add(c);
+  EditProject p=new EditProject();p.overlays.add(ShapeCatalog.create(14,0));EditProject.Clip c=new EditProject.Clip();c.name="Original image";c.uri="content://source/original";c.image=true;c.outMs=c.sourceDurationMs=3000;p.library.add(c);
   org.json.JSONObject old=new org.json.JSONObject(ProjectStore.encode(p));old.put("schema",8);EditProject back=ProjectStore.decode(old.toString());assertEquals(14,back.overlays.get(0).shape);assertEquals(c.uri,back.library.get(0).uri);
  }
  @Test public void invalidPlacementDoesNotCreateLayer(){for(int id:new int[]{0,-1,28})try{ShapeCatalog.create(id,0);fail();}catch(IllegalArgumentException expected){}try{ShapeCatalog.create(1,-1);fail();}catch(IllegalArgumentException expected){}}
