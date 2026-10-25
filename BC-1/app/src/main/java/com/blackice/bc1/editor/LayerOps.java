@@ -88,7 +88,7 @@ public final class LayerOps {
         throw new IllegalArgumentException("No free unlocked layer is available for the duplicate.");
     }
     public static int duplicateOverlay(EditProject p,int index,boolean after) {
-        if(p.overlays.size()>=20) throw new IllegalArgumentException("This project supports up to 20 text, shape and image layers.");
+        if(!com.blackice.bc1.core.CaptionBuilder.GROUP.equals(p.overlays.get(index).group)&&p.regularOverlayCount()>=20) throw new IllegalArgumentException("This project supports up to 20 text, shape and image layers.");
         EditProject.Overlay o=p.overlays.get(index).copy();
         if(after){long length=o.endMs-o.startMs;o.startMs=o.endMs;o.endMs=o.startMs+length;}
         p.overlays.add(index+1,o);p.validate();return index+1;

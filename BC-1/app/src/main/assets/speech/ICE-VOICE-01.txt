@@ -1,0 +1,16 @@
+Ice Voice 01 — Black Ice offline speech feature
+Powered by pretrained OpenAI Whisper Base English, quantized to q5_1 for whisper.cpp.
+These are upstream weights, not a custom-trained Black Ice model.
+
+Source: https://huggingface.co/ggerganov/whisper.cpp
+File: ggml-base.en-q5_1.bin
+Bytes: 59721011
+SHA-256: 4baf70dd0d7c4247ba2b81fafd9c01005ac77c2f9ef064e00dcf195d0e2fdd2f
+Retrieved: 2026-10-21
+The converted model repository declares the MIT license; OpenAI Whisper's MIT
+license is included in licenses/whisper-model.txt. whisper.cpp's license is
+included in licenses/whisper.cpp.txt.
+
+The included English model is extracted locally and verified before use.
+No network fallback is used for this model. Optional multilingual models
+remain downloadable. Speech recognition processes audio on the device.

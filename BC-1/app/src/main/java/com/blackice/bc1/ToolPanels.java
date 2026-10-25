@@ -91,11 +91,12 @@ final class ToolPanels {
         a.inspector.addView(a.button(c.unmutedVolume>=0?"Unmute":"Mute",v->{if(a.layerEditable())a.edit("Audio mute updated",()->ClipAudio.toggleMute(c));}));
         percent("Volume",c.volume,1,v->{c.volume=v;c.unmutedVolume=-1;},c.motion,Motion.VOLUME);
         if(c.fadeInMs>0||c.fadeOutMs>0)a.inspector.addView(a.note("Saved legacy fades remain active."));
-        for(String name:new String[]{"Noise Reduction","Loudness Normalization","Audio Visualization","Equalizer (EQ)"}){
-            TextView planned=a.button(name+" — Coming Later",null);planned.setEnabled(false);planned.setAlpha(.6f);a.inspector.addView(planned);
-        }
+        a.inspector.addView(a.button("Noise reduction",v->AudioToolsPanel.noise(a)));
+        a.inspector.addView(a.button("Equalizer",v->AudioToolsPanel.eq(a)));
+        a.inspector.addView(a.button("Loudness normalization",v->AudioToolsPanel.normalize(a)));
+        a.inspector.addView(a.note("Audio visualizer temporarily disabled"));
         if(c.track<EditProject.AUDIO_FIRST)a.inspector.addView(a.button("Extract Audio",v->runTool("Extract Audio")));
-        a.inspector.addView(a.button("Reset Audio Settings",v->{if(a.layerEditable())a.edit("Audio reset",()->{c.volume=1;c.unmutedVolume=-1;c.fadeInMs=0;c.fadeOutMs=0;c.motion.curves.get(Motion.VOLUME).clear();});}));
+        a.inspector.addView(a.button("Reset Audio Settings",v->{if(a.layerEditable())a.edit("Audio reset",()->{c.volume=1;c.unmutedVolume=-1;c.fadeInMs=0;c.fadeOutMs=0;c.audio=new com.blackice.bc1.audio.AudioSettings();c.motion.curves.get(Motion.VOLUME).clear();});}));
     }
     private boolean locked(){EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();return c!=null?LayerOps.locked(a.project,a.selected):LayerOps.locked(o);}
     static String kind(EditProject.Clip c,EditProject.Overlay o){
@@ -111,9 +112,9 @@ final class ToolPanels {
     /** Pictures, videos, audio, text, shapes and image layers each get only their compatible tools. */
     static List<String> tools(EditProject.Clip c,EditProject.Overlay o){
         List<String> t=new ArrayList<>();
-        if(c!=null&&c.track>=EditProject.AUDIO_FIRST){Collections.addAll(t,"Split","Trim","Slip","Volume","Duplicate");return t;}
+        if(c!=null&&c.track>=EditProject.AUDIO_FIRST){Collections.addAll(t,"Split","Trim","Slip","Volume","Noise reduction","Equalizer","Loudness normalization","Duplicate");return t;}
         if(c!=null&&c.image){Collections.addAll(t,"Duration: "+EditorActivity.seconds(c.durationMs())+" s","Transform","Opacity","Effects","Chroma Key","Animation","Duplicate");return t;}
-        if(c!=null){Collections.addAll(t,"Split","Trim","Slip","Speed: "+trimZero(c.speed)+"×","Extract Audio","Transform","Opacity","Effects","Chroma Key","Volume","Animation","Duplicate");return t;}
+        if(c!=null){Collections.addAll(t,"Split","Trim","Slip","Speed: "+trimZero(c.speed)+"×","Extract Audio","Transform","Opacity","Effects","Chroma Key","Volume","Noise reduction","Equalizer","Loudness normalization","Animation","Duplicate");return t;}
         if(o.imageUri==null&&o.shape==0){Collections.addAll(t,"Edit Text","Font","Size","Color","Alignment","Transform","Opacity","Duration: "+EditorActivity.seconds(o.endMs-o.startMs)+" s","Animation");return t;}
         if(o.shape>0){Collections.addAll(t,"Color","Transform","Opacity","Duration: "+EditorActivity.seconds(o.endMs-o.startMs)+" s","Animation","Duplicate");return t;}
         Collections.addAll(t,"Transform","Opacity","Duration: "+EditorActivity.seconds(o.endMs-o.startMs)+" s","Animation","Duplicate");return t;
@@ -143,7 +144,7 @@ final class ToolPanels {
         long t=a.project.playheadMs;
         if(which==0)a.edit("Trimmed start to playhead",()->o.startMs=t);
         else if(which==2)a.edit("Trimmed end to playhead",()->o.endMs=t);
-        else a.edit("Layer split",()->{if(a.project.overlays.size()>=20)throw new IllegalArgumentException("Up to 20 text, shape and image layers.");EditProject.Overlay right=o.copy();long offset=t-o.startMs;right.startMs=t;Keyframes.splitAt(right.motion,offset);o.endMs=t;a.project.overlays.add(a.project.overlays.indexOf(o)+1,right);});
+        else a.edit("Layer split",()->{if(!com.blackice.bc1.core.CaptionBuilder.GROUP.equals(o.group)&&a.project.regularOverlayCount()>=20)throw new IllegalArgumentException("Up to 20 text, shape and image layers.");EditProject.Overlay right=o.copy();long offset=t-o.startMs;right.startMs=t;Keyframes.splitAt(right.motion,offset);o.endMs=t;a.project.overlays.add(a.project.overlays.indexOf(o)+1,right);});
     }
     void runTool(String tool){
         if(tool.startsWith("Duration:"))tool="Duration";else if(tool.startsWith("Speed:"))tool="Speed";
@@ -154,6 +155,9 @@ final class ToolPanels {
             case "Transform":category("Move & Transform");return;
             case "Effects":category("Effects");return;
             case "Opacity":open("Opacity",()->opacityPanel());return;
+            case "Noise reduction":AudioToolsPanel.noise(a);return;
+            case "Equalizer":AudioToolsPanel.eq(a);return;
+            case "Loudness normalization":AudioToolsPanel.normalize(a);return;
             case "Volume":open("Volume",()->percent("Volume",c.volume,.7f,v->{c.volume=v;c.unmutedVolume=-1;},c.motion,Motion.VOLUME));return;
             case "Duration":open("Duration",this::durationPanel);return;
             case "Trim":open("Trim",this::trimPanel);return;

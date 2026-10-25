@@ -45,10 +45,11 @@ public final class PreviewProxy implements AutoCloseable {
     PreviewProxy(Context context,long muxerTimeoutMs,AssetLoader.Factory assetLoaderFactory) {
         if(muxerTimeoutMs<=0)throw new IllegalArgumentException("A positive muxer deadline is required");
         this.context=context.getApplicationContext();this.muxerTimeoutMs=muxerTimeoutMs;this.assetLoaderFactory=assetLoaderFactory;
-        directory=new File(context.getCacheDir(),"bc1-preview-v11");
+        directory=new File(context.getCacheDir(),"bc1-preview-v12");
     }
+    public static boolean withoutVisualClips(EditProject project){for(EditProject.Clip c:project.clips)if(c.track<EditProject.AUDIO_FIRST)return false;return true;}
     public static boolean required(EditProject project) {
-        return project.clips.stream().anyMatch(c->!c.motion.curves.get(Motion.VOLUME).isEmpty()) || !project.overlays.isEmpty() || project.clips.size()>1 || (!project.clips.isEmpty()&&project.clips.get(0).image) || com.blackice.bc1.core.RenderPlan.usesBlend(project);
+        return withoutVisualClips(project) || project.clips.stream().anyMatch(c->c.audio.active()||!c.motion.curves.get(Motion.VOLUME).isEmpty()) || !project.overlays.isEmpty() || project.clips.size()>1 || (!project.clips.isEmpty()&&project.clips.get(0).image) || com.blackice.bc1.core.RenderPlan.usesBlend(project);
     }
     /** The render in flight, by project key; a second request for the same project joins it instead of restarting. */
     private String runningKey;
@@ -125,6 +126,7 @@ public final class PreviewProxy implements AutoCloseable {
     }
     /** More simultaneous video layers than Media3 can open: ICE Lite renders the preview (in passes if needed). */
     static boolean needsIceLite(EditProject project){
+        if(withoutVisualClips(project))return true;
         if(project.clips.isEmpty()&&!project.overlays.isEmpty())return true;
         if(com.blackice.bc1.core.RenderPlan.usesBlend(project))return true;
         int decoders=0;

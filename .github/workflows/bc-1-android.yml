@@ -22,14 +22,14 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
       - name: Install Android SDK 36
         run: |
           SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)
-          "$SDKMANAGER" --install "platforms;android-36" "build-tools;35.0.0"
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
       - name: Install media test tools
         run: sudo apt-get update && sudo apt-get install -y ffmpeg ripgrep
       - name: Generate deterministic video and audio fixtures
@@ -39,7 +39,7 @@ jobs:
         run: gradle --no-daemon -Pbc1SideBySide testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
       - uses: actions/upload-artifact@v4
         with:
-          name: BC-1-v1.3.3-apk
+          name: Black-Ice-Editor-v1.9.0-apk
           path: BC-1/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
       - name: Publish side-by-side test APK for phones
@@ -47,10 +47,9 @@ jobs:
         env:
           TOKEN: ${{ github.token }}
         run: |
-          (cd BC-1 && gradle --no-daemon -Pbc1IceLite assembleDebug)
-          mkdir -p /tmp/apk && cp BC-1/app/build/outputs/apk/debug/app-debug.apk /tmp/apk/BC-1-ICE-Lite-test.apk
-          cd /tmp/apk && sha256sum BC-1-ICE-Lite-test.apk > SHA256SUMS.txt
-          printf 'Test build of %s at %s (run %s). Package com.blackice.bc1.icelite installs beside BC-1.\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" "$GITHUB_RUN_ID" > BUILD.txt
+          mkdir -p /tmp/apk && cp BC-1/app/build/outputs/apk/debug/app-debug.apk /tmp/apk/Black-Ice-Editor-v1.9.0-preview.apk
+          cd /tmp/apk && sha256sum Black-Ice-Editor-v1.9.0-preview.apk > SHA256SUMS.txt
+          printf 'Test build of %s at %s (run %s). Package com.blackice.bc1.preview installs beside BC-1.\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" "$GITHUB_RUN_ID" > BUILD.txt
           git init -q && git checkout -q -b apk && git add . \
             && git -c user.name=bc1-ci -c user.email=bc1-ci@users.noreply.github.com commit -qm "Test APK for $GITHUB_SHA" \
             && git push -qf "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "apk:refs/heads/test-apk/${GITHUB_REF_NAME}"
@@ -70,7 +69,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'

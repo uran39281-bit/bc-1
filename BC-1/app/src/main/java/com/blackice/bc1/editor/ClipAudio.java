@@ -9,7 +9,7 @@ public final class ClipAudio {
         double envelope=1;
         if(c.fadeInMs>0)envelope=Math.min(envelope,localMs/c.fadeInMs);
         if(c.fadeOutMs>0)envelope=Math.min(envelope,(c.durationMs()-localMs)/c.fadeOutMs);
-        return value*(float)Math.max(0,Math.min(1,envelope));
+        return value*(float)Math.pow(10,c.audio.normalizationDb/20.0)*(float)Math.max(0,Math.min(1,envelope));
     }
     public static void toggleMute(EditProject.Clip c){
         if(c.image)throw new IllegalArgumentException("Pictures have no audio");

@@ -23,4 +23,20 @@ public class WorkflowUpdateTest {
         org.json.JSONObject data=new org.json.JSONObject(ProjectStore.encode(project()));data.put("schema",6);data.remove("landmarks");org.json.JSONArray motion=data.getJSONArray("clips").getJSONObject(0).getJSONArray("motion");motion.remove(11);
         EditProject restored=ProjectStore.decode(data.toString());assertTrue(restored.clips.get(0).motion.curves.get(Motion.VOLUME).isEmpty());assertEquals(.8f,ClipAudio.gain(restored.clips.get(0),0,false),.001f);
     }
+    @Test public void normalizedAnimatedGainSurvivesMuteAndSnapshot(){
+        EditProject p=project();EditProject.Clip c=p.clips.get(0);c.speed=2;c.fadeInMs=1000;c.volume=0;c.audio.normalizationDb=-6.0206f;
+        c.motion.put(Motion.VOLUME,new Motion.Key(2000,.8f));
+        AudioPlan.Segment segment=AudioPlan.of(p,false).segments.get(0);
+        assertEquals(.2f,segment.gainAt(500),.0001f);assertEquals(.4f,ClipAudio.gain(c,1000,false),.0001f);
+        c.audio.normalizationDb=0;assertEquals(.2f,segment.gainAt(500),.0001f);
+        ClipAudio.toggleMute(c);assertEquals(0,ClipAudio.gain(c,1000,false),0);assertTrue(AudioPlan.of(p,false).segments.isEmpty());
+    }
+    @Test public void combinedProjectKeepsAudioCaptionsLandmarksAndVolumeKeys()throws Exception{
+        EditProject p=project();EditProject.Clip c=p.clips.get(0);c.audio.noise=2;c.audio.eqDb[2]=3;c.audio.normalizationDb=-4;c.motion.put(Motion.VOLUME,new Motion.Key(c.inMs,.25f));c.fadeOutMs=400;
+        p.addLandmark(1000).label="Verse";p.appliedCaptionJobId="caption-receipt";
+        EditProject.Overlay caption=new EditProject.Overlay();caption.text="Speech";caption.group=com.blackice.bc1.core.CaptionBuilder.GROUP;caption.startMs=0;caption.endMs=1000;p.overlays.add(caption);
+        String encoded=ProjectStore.encode(p);assertEquals(8,new org.json.JSONObject(encoded).getInt("schema"));EditProject restored=ProjectStore.decode(encoded);
+        assertEquals("Verse",restored.landmarks.get(0).label);assertEquals("caption-receipt",restored.appliedCaptionJobId);assertEquals("Speech",restored.overlays.get(0).text);
+        assertEquals(2,restored.clips.get(0).audio.noise);assertEquals(3,restored.clips.get(0).audio.eqDb[2],0);assertEquals(-4,restored.clips.get(0).audio.normalizationDb,0);assertEquals(400,restored.clips.get(0).fadeOutMs);assertEquals(1,restored.clips.get(0).motion.curves.get(Motion.VOLUME).size());
+    }
 }

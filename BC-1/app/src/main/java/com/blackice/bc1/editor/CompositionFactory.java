@@ -141,7 +141,7 @@ public final class CompositionFactory {
         return new EditedMediaItem.Builder(source.build()).setFrameRate(frameRate).setRemoveVideo(removeVideo).setRemoveAudio(removeAudio&&!removeVideo)
             .setSpeed(new androidx.media3.common.audio.SpeedProvider(){public float getSpeed(long timeUs){return c.speed;}public long getNextSpeedChangeTimeUs(long timeUs){return C.TIME_UNSET;}})
             .setDurationUs((c.image?c.durationMs():c.sourceDurationMs)*1000)
-            .setEffects(new Effects(removeAudio?List.of():List.of(clipGain(c,volume<0)),effects)).build();
+            .setEffects(new Effects(removeAudio?List.of():List.of(new com.blackice.bc1.audio.ClipAudioProcessor(c.audio),clipGain(c,volume<0)),effects)).build();
     }
     private static final Map<String,Boolean> AUDIO_TRACKS=new java.util.concurrent.ConcurrentHashMap<>();
     /** Whether a source has an audio track (cached; local files only, so this is quick). */
@@ -154,7 +154,7 @@ public final class CompositionFactory {
         EditProject.Clip snapshot=clip.copy();
         return new GainProcessor(new GainProcessor.GainProvider(){
             public float getGainFactorAtSamplePosition(long sample,int rate){return ClipAudio.gain(snapshot,sample*1000.0/rate,muted);}
-            public long isUnityUntil(long sample,int rate){if(!muted&&snapshot.unmutedVolume<0&&snapshot.volume==1&&snapshot.fadeInMs==0&&snapshot.fadeOutMs==0&&snapshot.motion.curves.get(Motion.VOLUME).isEmpty())return C.TIME_END_OF_SOURCE;return getGainFactorAtSamplePosition(sample,rate)==1?sample+1:C.TIME_UNSET;}
+            public long isUnityUntil(long sample,int rate){if(!muted&&snapshot.unmutedVolume<0&&snapshot.volume==1&&snapshot.audio.normalizationDb==0&&snapshot.fadeInMs==0&&snapshot.fadeOutMs==0&&snapshot.motion.curves.get(Motion.VOLUME).isEmpty())return C.TIME_END_OF_SOURCE;return getGainFactorAtSamplePosition(sample,rate)==1?sample+1:C.TIME_UNSET;}
         });
     }
     private static GainProcessor gain(float volume){return gain(volume,0,0,0);}

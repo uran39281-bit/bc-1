@@ -1,6 +1,8 @@
 package com.blackice.bc1;
 
 import android.graphics.*;
+import android.os.Bundle;
+import android.view.accessibility.*;
 import android.view.*;
 import android.widget.ScrollView;
 import com.blackice.bc1.editor.*;
@@ -33,7 +35,7 @@ final class TimelineView extends View {
     static final int OP_TRIM_START=1,OP_TRIM_END=2,OP_MOVE=3,OP_OV_START=4,OP_OV_END=5,OP_OV_MOVE=6,OP_MULTI=7,OP_SCRUB=8;
 
     TimelineView(EditorActivity activity){
-        super(activity);a=activity;setFocusable(true);
+        super(activity);a=activity;accessibility=activity.getSystemService(AccessibilityManager.class);setFocusable(true);
         setContentDescription("Timeline: hold then drag a layer to move it in time or onto another row, drag a selected layer's edges to trim, drag the timeline beneath the centered playhead to scrub, tap the ruler to seek, pinch to zoom. Drop media from Project Media onto a row.");
         pinch=new ScaleGestureDetector(activity,new ScaleGestureDetector.SimpleOnScaleGestureListener(){
             public boolean onScaleBegin(ScaleGestureDetector d){pinching=true;operation=0;pendingDelta=0;guide=-1;stopAutoScroll();return true;}
@@ -41,20 +43,159 @@ final class TimelineView extends View {
         });
     }
     private int accessibleFocus=-1;
-    @Override public android.view.accessibility.AccessibilityNodeProvider getAccessibilityNodeProvider(){return new android.view.accessibility.AccessibilityNodeProvider(){
-        @Override public android.view.accessibility.AccessibilityNodeInfo createAccessibilityNodeInfo(int id){
-            android.view.accessibility.AccessibilityNodeInfo n=android.view.accessibility.AccessibilityNodeInfo.obtain();
-            if(id==View.NO_ID){onInitializeAccessibilityNodeInfo(n);for(int i=0;i<rows().size();i++)if(rows.get(i).kind!=2)n.addChild(TimelineView.this,i);return n;}
-            List<Row> list=rows();if(id<0||id>=list.size())return null;Row r=list.get(id);if(r.kind==2)return null;
-            n.setSource(TimelineView.this,id);n.setParent(TimelineView.this);n.setPackageName(a.getPackageName());n.setClassName("android.widget.Button");n.setEnabled(true);n.setFocusable(true);n.setClickable(true);n.setLongClickable(true);n.setAccessibilityFocused(id==accessibleFocus);
-            boolean ov=r.kind==1;boolean hidden=ov?a.project.overlays.get(r.index).hidden:EditProject.audioTrack(r.index)?a.project.tracks[r.index].muted:a.project.tracks[r.index].hidden;boolean locked=ov?a.project.overlays.get(r.index).locked:a.project.tracks[r.index].locked;
-            n.setContentDescription(a.rowName(new int[]{r.kind,r.index})+", "+(ov?"overlay ":EditProject.audioTrack(r.index)?"audio track ":"visual track ")+(r.index+1)+", "+(hidden?"hidden or muted":"enabled")+(locked?", locked":"")+". Tap to toggle visibility or mute. Long press for lock and layer options.");
-            Rect bounds=new Rect(a.timelineScroll.getScrollX(),Math.round(r.top),a.timelineScroll.getScrollX()+headerWidth(),Math.round(r.top)+a.dp(ROW_DP));n.setBoundsInParent(bounds);int[] location=new int[2];getLocationOnScreen(location);bounds.offset(location[0],location[1]);n.setBoundsInScreen(bounds);Rect visible=new Rect();n.setVisibleToUser(getGlobalVisibleRect(visible)&&Rect.intersects(bounds,visible));
-            n.addAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK);n.addAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_LONG_CLICK);n.addAction(id==accessibleFocus?android.view.accessibility.AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS:android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);return n;
+    private int hoveredRow=-1;
+    private final AccessibilityManager accessibility;
+    @Override // android.view.View
+    public AccessibilityNodeProvider getAccessibilityNodeProvider() {
+        return new AccessibilityNodeProvider() { // from class: com.blackice.bc1.TimelineView.3
+            @Override // android.view.accessibility.AccessibilityNodeProvider
+            public AccessibilityNodeInfo createAccessibilityNodeInfo(int id) {
+                AccessibilityNodeInfo n = AccessibilityNodeInfo.obtain();
+                if (id == -1) {
+                    TimelineView.this.onInitializeAccessibilityNodeInfo(n);
+                    for (int i = 0; i < TimelineView.this.rows().size(); i++) {
+                        if (((Row) TimelineView.this.rows.get(i)).kind != 2) {
+                            n.addChild(TimelineView.this, i);
+                        }
+                    }
+                    return n;
+                }
+                List<Row> list = TimelineView.this.rows();
+                if (id < 0 || id >= list.size()) {
+                    return null;
+                }
+                Row r = list.get(id);
+                if (r.kind == 2) {
+                    return null;
+                }
+                n.setSource(TimelineView.this, id);
+                n.setParent(TimelineView.this);
+                n.setPackageName(TimelineView.this.a.getPackageName());
+                n.setClassName("android.widget.Button");
+                n.setEnabled(true);
+                n.setFocusable(true);
+                n.setClickable(true);
+                n.setLongClickable(true);
+                n.setAccessibilityFocused(id == TimelineView.this.accessibleFocus);
+                boolean ov = r.kind == 1;
+                boolean hidden = ov ? TimelineView.this.a.project.overlays.get(r.index).hidden : EditProject.audioTrack(r.index) ? TimelineView.this.a.project.tracks[r.index].muted : TimelineView.this.a.project.tracks[r.index].hidden;
+                EditProject editProject = TimelineView.this.a.project;
+                boolean locked = ov ? editProject.overlays.get(r.index).locked : editProject.tracks[r.index].locked;
+                n.setContentDescription(TimelineView.this.a.rowName(new int[]{r.kind, r.index}) + ", " + (ov ? "overlay " : EditProject.audioTrack(r.index) ? "audio track " : "visual track ") + (r.index + 1) + ", " + (hidden ? "hidden or muted" : "enabled") + (locked ? ", locked" : "") + ". Tap to toggle visibility or mute. Long press for lock and layer options.");
+                Rect bounds = new Rect(TimelineView.this.a.timelineScroll.getScrollX(), Math.round(r.top), TimelineView.this.a.timelineScroll.getScrollX() + TimelineView.this.headerWidth(), Math.round(r.top) + TimelineView.this.a.dp(52.0f));
+                n.setBoundsInParent(bounds);
+                int[] location = new int[2];
+                TimelineView.this.getLocationOnScreen(location);
+                bounds.offset(location[0], location[1]);
+                n.setBoundsInScreen(bounds);
+                Rect visible = new Rect();
+                n.setVisibleToUser(TimelineView.this.getGlobalVisibleRect(visible) && Rect.intersects(bounds, visible));
+                n.addAction(16);
+                n.addAction(32);
+                n.addAction(id == TimelineView.this.accessibleFocus ? 128 : 64);
+                return n;
+            }
+
+            @Override // android.view.accessibility.AccessibilityNodeProvider
+            public boolean performAction(int id, int action, Bundle args) {
+                List<Row> list = TimelineView.this.rows();
+                if (id < 0 || id >= list.size() || list.get(id).kind == 2) {
+                    return false;
+                }
+                if (action == 16 || action == 32) {
+                    TimelineView.this.headerTap(list.get(id), 2, action == 32);
+                    return true;
+                }
+                if (action == 64) {
+                    if (!TimelineView.this.canExplore() || TimelineView.this.accessibleFocus == id) {
+                        return false;
+                    }
+                    int previous = TimelineView.this.accessibleFocus;
+                    TimelineView.this.accessibleFocus = id;
+                    TimelineView.this.sendVirtualEvent(previous, 65536);
+                    TimelineView.this.sendVirtualEvent(id, 32768);
+                    TimelineView.this.invalidate();
+                    return true;
+                }
+                if (action != 128 || TimelineView.this.accessibleFocus != id) {
+                    return false;
+                }
+                TimelineView.this.accessibleFocus = -1;
+                TimelineView.this.sendVirtualEvent(id, 65536);
+                TimelineView.this.invalidate();
+                return true;
+            }
+        };
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public boolean canExplore() {
+        return this.accessibility != null && this.accessibility.isEnabled() && this.accessibility.isTouchExplorationEnabled() && isAttachedToWindow() && getParent() != null;
+    }
+
+    /* JADX INFO: Access modifiers changed from: private */
+    public boolean sendVirtualEvent(int id, int type) {
+        AccessibilityNodeInfo node;
+        if (id == -1 || this.accessibility == null || !this.accessibility.isEnabled() || !isAttachedToWindow() || getParent() == null || (node = getAccessibilityNodeProvider().createAccessibilityNodeInfo(id)) == null) {
+            return false;
         }
-        @Override public boolean performAction(int id,int action,android.os.Bundle args){List<Row> list=rows();if(id<0||id>=list.size())return false;if(action==16||action==32){headerTap(list.get(id),2,action==32);return true;}if(action==64||action==128){accessibleFocus=action==64?id:-1;android.view.accessibility.AccessibilityEvent e=android.view.accessibility.AccessibilityEvent.obtain(action==64?32768:65536);e.setSource(TimelineView.this,id);getParent().requestSendAccessibilityEvent(TimelineView.this,e);return true;}return false;}
-    };}
-    @Override public boolean dispatchHoverEvent(MotionEvent e){if(inHeader(e.getX())){Row r=rowAt(e.getY());if(r!=null&&r.kind!=2){android.view.accessibility.AccessibilityEvent event=android.view.accessibility.AccessibilityEvent.obtain(e.getAction()==MotionEvent.ACTION_HOVER_EXIT?256:128);event.setSource(this,rows.indexOf(r));getParent().requestSendAccessibilityEvent(this,event);return true;}}return super.dispatchHoverEvent(e);}
+        AccessibilityEvent event = AccessibilityEvent.obtain(type);
+        event.setSource(this, id);
+        event.setPackageName(this.a.getPackageName());
+        event.setClassName(node.getClassName());
+        event.setContentDescription(node.getContentDescription());
+        event.setEnabled(node.isEnabled());
+        node.recycle();
+        return getParent().requestSendAccessibilityEvent(this, event);
+    }
+
+    private void updateHoveredRow(int id) {
+        if (this.hoveredRow == id) {
+            return;
+        }
+        int previous = this.hoveredRow;
+        this.hoveredRow = id;
+        sendVirtualEvent(id, 128);
+        sendVirtualEvent(previous, 256);
+    }
+
+    @Override // android.view.View
+    public boolean dispatchHoverEvent(MotionEvent e) {
+        if (!canExplore()) {
+            this.hoveredRow = -1;
+            this.accessibleFocus = -1;
+            return super.dispatchHoverEvent(e);
+        }
+        switch (e.getActionMasked()) {
+            case 7:
+            case 9:
+                rows();
+                Row r = inHeader(e.getX()) ? rowAt(e.getY()) : null;
+                int id = (r == null || r.kind == 2) ? -1 : this.rows.indexOf(r);
+                boolean wasHovering = this.hoveredRow != -1;
+                updateHoveredRow(id);
+                if (id != -1 || wasHovering) {
+                    return true;
+                }
+                break;
+            case 10:
+                if (this.hoveredRow != -1) {
+                    updateHoveredRow(-1);
+                    return true;
+                }
+                break;
+        }
+        return super.dispatchHoverEvent(e);
+    }
+
+    @Override // android.view.View
+    protected void onDetachedFromWindow() {
+        this.hoveredRow = -1;
+        this.accessibleFocus = -1;
+        stopAutoScroll();
+        super.onDetachedFromWindow();
+    }
+
     // ---- Geometry ---------------------------------------------------------------------------------
     int viewport(){int w=a.timelineScroll==null?0:a.timelineScroll.getWidth();return w>0?w:getResources().getDisplayMetrics().widthPixels;}
     /** Time zero starts centered, with enough leading space to scrub back to the beginning. */
