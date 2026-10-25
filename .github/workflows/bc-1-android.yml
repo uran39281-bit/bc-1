@@ -47,10 +47,9 @@ jobs:
         env:
           TOKEN: ${{ github.token }}
         run: |
-          (cd BC-1 && gradle --no-daemon -Pbc1IceLite assembleDebug)
-          mkdir -p /tmp/apk && cp BC-1/app/build/outputs/apk/debug/app-debug.apk /tmp/apk/BC-1-ICE-Lite-test.apk
-          cd /tmp/apk && sha256sum BC-1-ICE-Lite-test.apk > SHA256SUMS.txt
-          printf 'Test build of %s at %s (run %s). Package com.blackice.bc1.icelite installs beside BC-1.\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" "$GITHUB_RUN_ID" > BUILD.txt
+          mkdir -p /tmp/apk && cp BC-1/app/build/outputs/apk/debug/app-debug.apk /tmp/apk/Black-Ice-Editor-v1.8.0-preview.apk
+          cd /tmp/apk && sha256sum Black-Ice-Editor-v1.8.0-preview.apk > SHA256SUMS.txt
+          printf 'Test build of %s at %s (run %s). Package com.blackice.bc1.preview installs beside BC-1.\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" "$GITHUB_RUN_ID" > BUILD.txt
           git init -q && git checkout -q -b apk && git add . \
             && git -c user.name=bc1-ci -c user.email=bc1-ci@users.noreply.github.com commit -qm "Test APK for $GITHUB_SHA" \
             && git push -qf "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "apk:refs/heads/test-apk/${GITHUB_REF_NAME}"

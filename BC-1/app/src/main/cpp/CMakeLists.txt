@@ -1,4 +1,4 @@
-# Speech-to-text for auto captions: whisper.cpp (MIT, vendored v1.9.5 source in BC-1/third_party) on the CPU,
+# Speech-to-text for auto captions: whisper.cpp (MIT, hash-verified v1.9.5 dependency) on the CPU,
 # behind a small JNI bridge (bc1_whisper.cpp). Always built optimised: an unoptimised build is ~10x slower.
 cmake_minimum_required(VERSION 3.22)
 project(bc1whisper C CXX)

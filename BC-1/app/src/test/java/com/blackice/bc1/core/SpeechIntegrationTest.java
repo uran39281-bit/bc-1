@@ -55,10 +55,16 @@ public class SpeechIntegrationTest {
         EditProject p=project();String before=CaptionState.fingerprint(p);p.playheadMs=5000;assertEquals(before,CaptionState.fingerprint(p));
         p.clips.get(0).inMs=1000;assertNotEquals(before,CaptionState.fingerprint(p));
     }
-    @Test public void longUnspacedUnicodeTextFitsCaptionStorage() {
-        StringBuilder text=new StringBuilder();for(int i=0;i<300;i++)text.append("語");
-        List<CaptionBuilder.Cue> cues=CaptionBuilder.cues(new long[]{0},new long[]{6000},new String[]{text.toString()},0,6000,24);
-        EditProject p=project();CaptionBuilder.apply(p,cues);p.validate();for(CaptionBuilder.Cue c:cues)assertTrue(c.text.length()<=200);
+    @Test public void unspacedUnicodePreservesRecognizerTimingAndStorage() {
+        String text="語".repeat(100);
+        List<CaptionBuilder.Cue> cues=CaptionBuilder.cues(new long[]{300},new long[]{6000},new String[]{text},0,6000,24);
+        assertEquals(1,cues.size());assertEquals(300,cues.get(0).startMs);assertEquals(6000,cues.get(0).endMs);
+        assertEquals(text,cues.get(0).text.replace("\n",""));
+        EditProject p=project();CaptionBuilder.apply(p,cues);p.validate();
+    }
+    @Test public void oversizedSegmentRequiresRealignmentInsteadOfInventedTiming() {
+        try{CaptionBuilder.cues(new long[]{0},new long[]{6000},new String[]{"語".repeat(300)},0,6000,24);fail("Do not guess timings for oversized text");}
+        catch(IllegalArgumentException expected){assertTrue(expected.getMessage().contains("Regenerate captions"));}
     }
     @Test public void invalidCaptionTimeIsRejected() {
         for(String value:new String[]{"NaN","Infinity","-1"})try{SubtitleFiles.seconds(value);fail(value);}catch(IllegalArgumentException expected){}
