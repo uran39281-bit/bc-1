@@ -1395,7 +1395,6 @@ public final class EditorActivity extends Activity {
         if(mediaGrid==null)return;
         mediaGrid.removeAllViews();
         if(loading){mediaGrid.addView(note("Loading project media…"));return;}
-        if(project.library.isEmpty()&&mediaKind==MediaFilter.Kind.ALL&&mediaQuery.isBlank()&&!favoritesOnly)mediaGrid.addView(note("No imported media yet. Use Import Media to browse files."));
         for(int i=0;i<mediaFilterButtons.size();i++){
             TextView filter=mediaFilterButtons.get(i);boolean chosen=i==mediaKind.ordinal();
             filter.setSelected(chosen);filter.setTextColor(chosen?CYAN:TEXT);filter.setBackground(buttonBackground(chosen));
@@ -1410,7 +1409,7 @@ public final class EditorActivity extends Activity {
             if(mediaSort==1)shapeIds.sort((x,y)->EditProject.SHAPES[x].compareToIgnoreCase(EditProject.SHAPES[y]));
         }
         mediaCount.setText((matches.size()+shapeIds.size())+" / "+(mediaKind==MediaFilter.Kind.SHAPES?ShapeCatalog.ids().length:project.library.size())+" items");
-        if(matches.isEmpty()&&shapeIds.isEmpty()){mediaGrid.addView(note("No matching media"));return;}
+        if(matches.isEmpty()&&shapeIds.isEmpty()){mediaGrid.addView(note(project.library.isEmpty()&&mediaKind==MediaFilter.Kind.ALL&&mediaQuery.isBlank()&&!favoritesOnly?"No imported media yet. Use Import Media to browse files.":"No matching media"));return;}
         mediaRows(mediaGrid,matches,mediaColumns,mediaList);
         for(int start=0;start<shapeIds.size();start+=mediaColumns){
             LinearLayout row=row();row.setBaselineAligned(false);

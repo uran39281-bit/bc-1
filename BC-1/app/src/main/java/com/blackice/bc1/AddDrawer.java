@@ -56,7 +56,7 @@ final class AddDrawer {
     /** Project Media in the panel: long-press a card and drag it onto the timeline. Hidden when the
      * desktop media browser already shows it. */
     private void projectMedia(LinearLayout into,boolean audio){
-        if(a.mediaBrowser!=null&&a.wideLayout)return;
+        if(a.mediaBrowser!=null&&a.wideLayout&&a.mediaBrowser.isAttachedToWindow())return;
         a.mediaBrowser=a.column();a.mediaGridColumns=2;a.mediaColumns=a.mediaList?1:2;into.addView(a.mediaBrowser);a.renderMediaBrowser();
     }
 

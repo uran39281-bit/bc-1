@@ -22,7 +22,7 @@ final class MediaImportWindow {
     int filter,scrollY;
     boolean loading,restoreOpen;
     List<DeviceMedia.Item> items;
-    int generation;
+    volatile int generation;
     String accessState="";
     void resume(){String now=gallery.access(false)+":"+gallery.access(true);if(!now.equals(accessState)){accessState=now;refresh();}}
     MediaImportWindow(EditorActivity a){this.a=a;gallery=new DeviceMedia(a);}
@@ -80,7 +80,7 @@ final class MediaImportWindow {
         scroll.post(()->{if(showing())scroll.scrollTo(0,scrollY);});updateStatus();
     }
     View card(DeviceMedia.Item item,int token){LinearLayout card=a.column();card.setBackground(a.buttonBackground(false));card.setPadding(a.dp(4),a.dp(4),a.dp(4),a.dp(4));card.setFocusable(true);card.setContentDescription("Import "+item.name+" to Project Media");
-        if(!item.audio){ImageView image=new ImageView(a);image.setScaleType(ImageView.ScaleType.CENTER_CROP);Bitmap cached=gallery.cached(item.uri);if(cached!=null)image.setImageBitmap(cached);else{image.setImageDrawable(a.icon("Media",EditorActivity.MUTED));a.io.execute(()->{Bitmap thumb=gallery.thumbnail(item,256);if(thumb!=null)a.main.post(()->{if(showing()&&generation==token)image.setImageBitmap(thumb);});});}card.addView(image,new LinearLayout.LayoutParams(-1,0,1));}
+        if(!item.audio){ImageView image=new ImageView(a);image.setScaleType(ImageView.ScaleType.CENTER_CROP);Bitmap cached=gallery.cached(item.uri);if(cached!=null)image.setImageBitmap(cached);else{image.setImageDrawable(a.icon("Media",EditorActivity.MUTED));a.io.execute(()->{if(generation!=token)return;Bitmap thumb=gallery.thumbnail(item,256);if(thumb!=null)a.main.post(()->{if(showing()&&generation==token)image.setImageBitmap(thumb);});});}FrameLayout thumb=new FrameLayout(a);thumb.addView(image,new FrameLayout.LayoutParams(-1,-1));if(item.video){TextView badge=a.label("▶ "+EditorActivity.clock(item.durationMs),9,EditorActivity.TEXT,true);badge.setBackgroundColor(0xAA08131F);badge.setPadding(a.dp(4),a.dp(2),a.dp(4),a.dp(2));thumb.addView(badge,new FrameLayout.LayoutParams(-2,-2,Gravity.BOTTOM|Gravity.START));}card.addView(thumb,new LinearLayout.LayoutParams(-1,0,1));}
         TextView name=a.label((item.audio?"♫ ":"")+item.name,11,EditorActivity.TEXT,false);name.setMaxLines(2);name.setEllipsize(android.text.TextUtils.TruncateAt.END);card.addView(name);
         card.setOnClickListener(v->{scrollY=scroll.getScrollY();a.importUris(List.of(item.uri),item.audio?EditorActivity.AUDIO_LAYER:EditorActivity.IMPORT);updateStatus();});return card;
     }
