@@ -26,7 +26,7 @@ public final class ShapePaths {
    case 19:p.addOval(-h,-h*.62f,h,h*.62f,Path.Direction.CW);break;
    case 20:points(p,h,new float[]{0,-1,.72f,0,0,1,-.72f,0});break;
    case 21:polygon(p,h,8,1);break;
-   case 22:points(p,h,new float[]{-.45f,-.7f,1,-.7f,.45f,.7f,-1,.7f});break;
+   case 22:points(p,h,new float[]{-.45f,-.6708204f,1,-.6708204f,.45f,.6708204f,-1,.6708204f});break;
    case 23:p.moveTo(0,h*.9f);p.cubicTo(-h*.2f,h*.65f,-h,h*.1f,-h,-h*.38f);p.cubicTo(-h,-h*.95f,-h*.3f,-h*1.08f,0,-h*.5f);p.cubicTo(h*.3f,-h*1.08f,h,-h*.95f,h,-h*.38f);p.cubicTo(h,h*.1f,h*.2f,h*.65f,0,h*.9f);p.close();break;
    case 24:p.moveTo(-h,h*.5f);p.arcTo(-h,-h*.5f,h,h*1.5f,180,180,false);p.close();break;
    case 25:points(p,h,new float[]{-1,-.28f,.2f,-.28f,.2f,-.75f,1,0,.2f,.75f,.2f,.28f,-1,.28f});break;

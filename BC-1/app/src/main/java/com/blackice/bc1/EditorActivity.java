@@ -612,7 +612,7 @@ public final class EditorActivity extends Activity {
         }
         if(!reducedMotion&&android.animation.ValueAnimator.areAnimatorsEnabled()){inspector.animate().cancel();inspector.setAlpha(.8f);inspector.animate().alpha(1).setDuration(180).start();}else inspector.setAlpha(1);
         if(!panels.footage()&&(wideLayout||mobile!=null)&&(clip()!=null||overlay()!=null||multiCount()>1)&&tab!=0){LinearLayout actions=row();TextView selectedName=label(multiCount()>1?multiCount()+" layers selected":clip()!=null?clip().name:overlay().label(),12,TEXT,true);selectedName.setSingleLine(true);selectedName.setEllipsize(android.text.TextUtils.TruncateAt.END);selectedName.setOnClickListener(v->renameSelection());inspector.addView(selectedName);actions.addView(headerIcon("Close","Deselect",v->deselect()));actions.addView(headerIcon(multiCount()>1?"Group":"Duplicate",multiCount()>1?"Group selected layers":"Duplicate",v->{if(multiCount()>1)multiAction("Group");else duplicateSelected();}));actions.addView(headerIcon("Delete","Delete",v->deleteSelection()));actions.addView(headerIcon("More","More actions",v->moreMenu()));inspector.addView(actions);}
-        String[] headings={"ADD",wideLayout?"Media Settings":"CLIP EDITOR","Effects — Coming Later","LAYERS","SETTINGS"};
+        String[] headings={"ADD",wideLayout?"Media Settings":"CLIP EDITOR","Effects","LAYERS","SETTINGS"};
         TextView heading=label(headings[tab],12,CYAN,true);if((wideLayout||!(tab==1&&clip()==null&&overlay()==null&&multiCount()<=1))&&!(tab==0&&topTabs()))if((wideLayout||tab!=0)&&!panels.footage())inspector.addView(heading);heading.setContentDescription(headings[tab]+". Long press and drag to dock the tool panel in wide mode.");heading.setOnLongClickListener(v->{if(uiLocked)return false;if(inspector.getParent() instanceof ScrollView){v.startDragAndDrop(ClipData.newPlainText("panel","tools"),new View.DragShadowBuilder(v),inspector.getParent(),0);return true;}return false;});
         if(tab==0)addDrawer.render(inspector);
         else if(tab==1||tab==2)panels.render(inspector);
@@ -1356,10 +1356,12 @@ public final class EditorActivity extends Activity {
     void renderMediaBrowser(){
         if(mediaBrowser==null)return;
         mediaBrowser.removeAllViews();mediaFilterButtons.clear();
-        LinearLayout title=row();title.setGravity(Gravity.CENTER_VERTICAL);LinearLayout titles=column();titles.addView(label("Project Media",15,TEXT,true));titles.addView(label("Import, then drag media onto the timeline.",10,MUTED,false));title.addView(titles,new LinearLayout.LayoutParams(0,-2,1));
+        boolean shapeShelf=mobile!=null&&tab==0&&addDrawer.category==3;
+        LinearLayout title=row();title.setGravity(Gravity.CENTER_VERTICAL);LinearLayout titles=column();titles.addView(label(shapeShelf?"Shapes":"Project Media",15,TEXT,true));titles.addView(label(shapeShelf?"Hold and drag onto a visual timeline row.":"Import, then drag media onto the timeline.",10,MUTED,false));title.addView(titles,new LinearLayout.LayoutParams(0,-2,1));
         title.addView(headerIcon("Sort","Sort media",v->new AlertDialog.Builder(this).setTitle("Sort media").setSingleChoiceItems(new String[]{"Import order","Name","Duration"},mediaSort,(d,n)->{mediaSort=n;d.dismiss();renderMediaGrid();}).show()));
         mediaBrowser.addView(title);
 
+        if(!shapeShelf){
         TextView importButton=button("Import Media",v->openMediaBrowser());importButton.setContentDescription("+ Import media");importButton.setCompoundDrawables(icon("Add",TEXT),null,null,null);importButton.setCompoundDrawablePadding(dp(8));importButton.setTextSize(13);
         LinearLayout.LayoutParams importLp=new LinearLayout.LayoutParams(-1,dp(48));importLp.topMargin=dp(10);importLp.bottomMargin=dp(8);mediaBrowser.addView(importButton,importLp);
         GridLayout filters=new GridLayout(this);filters.setColumnCount(3);
@@ -1372,6 +1374,7 @@ public final class EditorActivity extends Activity {
         }
         TextView favorites=button("Favorites",v->{favoritesOnly=!favoritesOnly;renderMediaGrid();});favorites.setTextSize(11);favorites.setPadding(dp(3),0,dp(3),0);favorites.setTag("favorites");favorites.setCompoundDrawables(icon("Star",TEXT),null,null,null);GridLayout.LayoutParams favoriteLp=new GridLayout.LayoutParams();favoriteLp.width=0;favoriteLp.height=dp(48);favoriteLp.columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);filters.addView(favorites,favoriteLp);
         mediaBrowser.addView(filters);
+        }else{TextView favorites=headerIcon("Star","Filter favorite shapes",v->{favoritesOnly=!favoritesOnly;renderMediaGrid();});favorites.setTag("favorites");title.addView(favorites,new LinearLayout.LayoutParams(dp(48),dp(48)));}
         LinearLayout searchRow=row();searchRow.setGravity(Gravity.CENTER_VERTICAL);
         EditText search=new EditText(this);search.setSingleLine(true);search.setTextSize(12);
         search.setTextColor(TEXT);search.setHintTextColor(MUTED);search.setHint("Search media…");

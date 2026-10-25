@@ -62,7 +62,7 @@ final class MediaImportWindow {
     boolean matches(DeviceMedia.Item i){return (filter==0||filter==1&&i.video||filter==2&&i.audio||filter==3&&!i.video&&!i.audio)&&i.name.toLowerCase(Locale.ROOT).contains(query.trim().toLowerCase(Locale.ROOT));}
     void render(){if(!showing())return;for(int i=0;i<filters.getChildCount();i++){TextView tab=(TextView)filters.getChildAt(i);tab.setSelected(filter==i);tab.setBackground(a.buttonBackground(filter==i));tab.setTextColor(filter==i?EditorActivity.CYAN:EditorActivity.TEXT);}
         albums.removeAllViews();List<DeviceMedia.Item> matching=new ArrayList<>();if(items!=null)for(DeviceMedia.Item i:items)if(matches(i))matching.add(i);List<String> names=DeviceMedia.albums(matching);names.add(0,"All albums");
-        if(!names.contains(album))album="All albums";
+        if(items!=null&&!names.contains(album))album="All albums";
         for(String folder:names){TextView chip=a.button(folder,v->{album=folder;scrollY=0;render();});chip.setBackground(a.buttonBackground(folder.equals(album)));chip.setSelected(folder.equals(album));chip.setTextSize(11);chip.setContentDescription("Browse album: "+folder);albums.addView(chip,new LinearLayout.LayoutParams(-2,a.dp(44)));}renderGrid();}
     void renderGrid(){if(grid==null)return;int token=++generation;grid.removeAllViews();
         if(loading){grid.addView(a.note("Loading device media…"));return;}

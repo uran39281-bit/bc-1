@@ -364,7 +364,7 @@ final class ToolPanels {
         swatches("Border color",o.borderColor,PALETTE,value->o.borderColor=value);
         valueRow("Shadow",o.shadow,0,1,0,100,"%",v->o.shadow=v,null,0,1);
     }
-    private void effectsPanel(){a.inspector.addView(a.note("Effects — Coming Later. Existing effect values are retained in saved projects but bypassed during preview and export."));}
+    private void effectsPanel(){a.inspector.addView(a.note("Shader effects are unavailable. Saved shader-effect values are retained but bypassed during preview and export."));}
     private void effectsHome(){
         a.inspector.addView(a.button("Styles",v->open("Styles",this::stylesPanel)));
         a.inspector.addView(a.button("Transitions",v->open("Transitions",this::transitionsPanel)));

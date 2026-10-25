@@ -4,7 +4,7 @@ import android.graphics.*;
 import android.view.Gravity;
 import android.widget.TextView;
 
-/** One shared square tile geometry on phone and DeX, including the unavailable Effects tile. */
+/** One shared square tile geometry on phone and DeX, for the contextual media tools. */
 final class MediaTile extends TextView {
     private final EditorActivity a;
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
