@@ -25,7 +25,9 @@ The previous v1.8 preview uses a different ephemeral signing certificate. [The i
 
 [Packaging run 40224523778](https://github.com/uran39281-bit/bc-1/actions/runs/40224523778), from `f3ddbb9647a601fe07fc8941b4fc84258a572563`, passed unit tests, lint and APK assembly. All 19 DEX/native-library/asset entries match the emulator-tested APK byte-for-byte. The APK contains ARM64 and x86_64 libraries, the verified 59,721,011-byte model, and no INTERNET permission. Media3 remains the default; Settings → Export engine can select ICE Lite.
 
-The v1.4.2 rebuild and its new checksum are pending CI. The preceding packaging evidence describes the earlier label, not the new APK bytes.
+The requested **v1.4.2** rebuild passed [run 40226857797](https://github.com/uran39281-bit/bc-1/actions/runs/40226857797), including unit tests, lint and APK assembly. The binary manifest verifies versionName `1.4.2`, versionCode `35`, package `com.blackice.bc1.integration`. All 19 DEX/native-library/asset entries are unchanged from the fully tested integration build; this is a version-only change.
+
+APK SHA-256: `9f86e49ce31c31a1fe8d78d8bf6377186147f671ab017bf9466b77f6b0a20f17`. This CI APK retains the separate integration-app setup and is not production-signed; signing compatibility with earlier development installs is not guaranteed. Keep their project backups and do not uninstall them to bypass a signature conflict.
 
 ## Limits
 
