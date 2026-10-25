@@ -9,7 +9,8 @@ public final class CaptionState {
     private CaptionState() { }
     public static String fingerprint(EditProject p) {
         try {
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(ProjectStore.encodeForPreview(p).getBytes(StandardCharsets.UTF_8));
+            EditProject snapshot=ProjectStore.snapshot(p);snapshot.playheadMs=0;
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(ProjectStore.encode(snapshot).getBytes(StandardCharsets.UTF_8));
             StringBuilder out = new StringBuilder();
             for (byte b : digest) out.append(String.format(java.util.Locale.ROOT, "%02x", b & 255));
             return out.toString();

@@ -16,7 +16,16 @@ public final class AudioMixer implements AutoCloseable {
         public Opened(Resampler.Source source, int sampleRate, AutoCloseable closer) { this.source = source; this.sampleRate = sampleRate; this.closer = closer; }
     }
     /** Opens a segment's media at its source in-point; null when the media has no sound. */
-    public interface Opener { Opened open(AudioPlan.Segment segment) throws Exception; }
+    public interface Opener {
+        Opened open(AudioPlan.Segment segment) throws Exception;
+        /**
+         * Opens {@code segment} {@code localMs} into it (timeline time from the segment start), for playback
+         * that starts mid-timeline. The default opens at the start; the mixer then decodes up to the point.
+         */
+        default Opened openAt(AudioPlan.Segment segment, long localMs) throws Exception { return open(segment); }
+        /** True when {@link #openAt} really starts at the offset. */
+        default boolean seeks() { return false; }
+    }
 
     private static final class Voice {
         final AudioPlan.Segment segment; final long startFrame, endFrame; final Opened opened; final Resampler resampler;
@@ -41,6 +50,13 @@ public final class AudioMixer implements AutoCloseable {
         totalFrames = frameOf(plan.durationMs, rate);
     }
 
+    /** Starts mixing at {@code ms} instead of the beginning. Only before the first {@link #render}. */
+    public void seek(long ms) {
+        if (!voices.isEmpty() || !finished.isEmpty()) throw new IllegalStateException("Seek before rendering");
+        cursor = Math.max(0, Math.min(totalFrames, frameOf(ms, rate)));
+        for (AudioPlan.Segment s : plan.segments) if (frameOf(s.timelineEndMs(), rate) <= cursor) finished.add(s);
+    }
+
     public static long frameOf(long ms, int rate) { return Math.round(ms * (double) rate / 1000.0); }
 
     public long totalFrames() { return totalFrames; }
@@ -57,8 +73,16 @@ public final class AudioMixer implements AutoCloseable {
             long start = frameOf(s.timelineStartMs, rate), end = Math.min(totalFrames, frameOf(s.timelineEndMs(), rate));
             if (start >= blockEnd || end <= cursor || finished.contains(s)) continue;
             Voice v = voices.get(s);
-            if (v == null) { v = new Voice(s, start, end, opener.open(s), rate); voices.put(s, v); }
             long from = Math.max(cursor, start), to = Math.min(blockEnd, end);
+            if (v == null) {
+                long late = from - start;
+                if (late > 0 && opener.seeks()) {
+                    // Starts mid-segment (playback from the playhead): open at the offset instead of decoding to it.
+                    v = new Voice(s, start, end, opener.openAt(s, late * 1000 / rate), rate);
+                    v.position = late;
+                } else v = new Voice(s, start, end, opener.open(s), rate);
+                voices.put(s, v);
+            }
             // Catch up if the voice was opened late (never happens when rendering from zero).
             long skip = from - (v.startFrame + v.position);
             if (skip > 0 && v.resampler != null) { discard(v, skip); }

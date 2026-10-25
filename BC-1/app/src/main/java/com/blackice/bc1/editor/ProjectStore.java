@@ -103,7 +103,7 @@ public final class ProjectStore {
     }
     public static String encode(EditProject p) throws JSONException {
         // Anything on the timeline is also listed in the media bin.
-        p.ensureLibrary(); p.validate(); JSONObject j=new JSONObject(); j.put("schema",EditProject.SCHEMA).put("id",p.id).put("name",p.name)
+        p.ensureLibrary(); p.validate(); JSONObject j=new JSONObject(); j.put("appliedCaptionJobId",p.appliedCaptionJobId).put("schema",EditProject.SCHEMA).put("id",p.id).put("name",p.name)
                 .put("portrait",p.portrait).put("previewHeight",p.previewHeight).put("playheadMs",p.playheadMs)
                 .put("frameRate",p.frameRate).put("loopInMs",p.loopInMs).put("loopOutMs",p.loopOutMs);
         JSONArray tracks=new JSONArray();
@@ -139,7 +139,7 @@ public final class ProjectStore {
     public static EditProject decode(String json) throws JSONException {
         JSONObject j=new JSONObject(json);
         if(j.getInt("schema")<1||j.getInt("schema")>EditProject.SCHEMA) throw new JSONException("Project version not supported; original file is preserved.");
-        EditProject p=new EditProject(); p.id=j.getString("id"); p.name=j.getString("name"); p.portrait=j.getBoolean("portrait");
+        EditProject p=new EditProject();p.appliedCaptionJobId=j.optString("appliedCaptionJobId",""); p.id=j.getString("id"); p.name=j.getString("name"); p.portrait=j.getBoolean("portrait");
         p.previewHeight=j.getInt("previewHeight"); p.playheadMs=j.getLong("playheadMs");
         // Schema 4 additions; earlier files receive defaults that render identically.
         p.frameRate=j.optInt("frameRate",30); p.loopInMs=j.optLong("loopInMs",-1); p.loopOutMs=j.optLong("loopOutMs",-1);
