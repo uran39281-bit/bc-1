@@ -1,6 +1,6 @@
 # BC-1 — Black Ice editor
 
-**Current update: v1.4.2 — workspace + offline speech/audio.** Includes the updated project browser/workspace, offline English captions, noise reduction, five-band EQ, loudness normalization and volume keyframes. Audio visualizer remains disabled. [Download the separate integration APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/integration/feature/workspace-stability/Black-Ice-Editor-v1.4.2-integration.apk) · [Validation and installation notes](INTEGRATION-UPDATE.md). This development build uses `com.blackice.bc1.integration`; transfer project copies through bundle export/import and retain the existing app. The update is on [PR #10](https://github.com/uran39281-bit/bc-1/pull/10) until merged.
+**Current update: v1.4.2 — workspace + offline speech/audio.** Includes the updated project browser/workspace, offline English captions, noise reduction, five-band EQ, loudness normalization and volume keyframes. Audio visualizer remains disabled. [Download the separate integration APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/integration/feature/workspace-stability/Black-Ice-Editor-v1.4.2-integration.apk) · [Validation and installation notes](INTEGRATION-UPDATE.md). This development build uses `com.blackice.bc1.integration`; transfer project copies through bundle export/import and retain the existing app. Implementation and review: [PR #10](https://github.com/uran39281-bit/bc-1/pull/10).
 
 [**All versions and APK downloads ↓**](#all-versions--downloads)
 
