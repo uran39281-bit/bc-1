@@ -1,6 +1,6 @@
 # BC-1 — Black Ice editor
 
-**Current update: v1.4.2 (build 36) — Browse Files and editable shapes.** Import Media opens the unified Browse Files window beside Project Media on wide screens. All contains video, audio and images; Shapes has its own draggable, editable vector catalog. Effects groups existing Styles, Transitions and Animation controls. Existing workspace and offline speech/audio features are retained. [Download the integration APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/integration/feature/media-browser-shapes/Black-Ice-Editor-v1.4.2-integration.apk) · [Validation, screenshots and installation limits](MEDIA-SHAPES-UPDATE.md) · [PR #12](https://github.com/uran39281-bit/bc-1/pull/12). This development build uses `com.blackice.bc1.integration`; signing compatibility with an existing installation is not guaranteed. Keep the existing app and project backups if Android reports a signature conflict.
+**Current update: v1.4.3 (build 37) — instant insertion, compact timeline and Color & Fill.** Tap shapes or double-tap imported media to insert at the playhead-centered time. Includes the relocated work clock, immediate/dragged markers, five landscape track rows, larger scale range, fixed clover geometry, animated solid/gradient fills and visible offline Speech to Text. Selected-layer Add Effects remains **Coming Later**. [Download the retained-key Preview APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.3/Black-Ice-Editor-v1.4.3-Preview-build37.apk) · [Validation, screenshots and installation](v1.4.3/QA.md) · [PR #13](https://github.com/uran39281-bit/bc-1/pull/13). Install over **Black Ice Editor Preview**; keep the separate Integration app and its projects.
 
 [**All versions and APK downloads ↓**](#all-versions--downloads)
 
@@ -94,7 +94,8 @@ Published APKs and development builds, newest update first. Source-only checkpoi
 
 | Version | Download | Verification |
 | --- | --- | --- |
-| v1.4.2 (build 36) — Browse Files + editable shapes (current integration app) | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/integration/feature/media-browser-shapes/Black-Ice-Editor-v1.4.2-integration.apk) | 197 unit + 69 Android tests; 16 independent export checks; [QA, screenshots and installation limits](MEDIA-SHAPES-UPDATE.md) |
+| v1.4.3 (build 37) — Instant insertion, timeline + Color & Fill (current Preview upgrade) | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.3/Black-Ice-Editor-v1.4.3-Preview-build37.apk) | 208 unit + 74 Android tests; 18 independent export checks; retained Preview key; [QA and screenshots](v1.4.3/QA.md) |
+| v1.4.2 (build 36) — Browse Files + editable shapes (previous integration app) | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/integration/feature/media-browser-shapes/Black-Ice-Editor-v1.4.2-integration.apk) | 197 unit + 69 Android tests; 16 independent export checks; [QA, screenshots and installation limits](MEDIA-SHAPES-UPDATE.md) |
 | v1.4.2 (build 35, older) — Workspace + offline speech/audio (separate integration app) | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/integration/feature/workspace-stability/Black-Ice-Editor-v1.4.2-integration.apk) | 193 unit + 65 Android tests on the integrated application; version-only rebuild; [QA and limitations](INTEGRATION-UPDATE.md) |
 | v1.4.1-dev — Media Settings and transforms (older signed Preview upgrade) | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.4.1-dev/BC-1-v1.4.1-dev.apk) | 150 unit + 48 Android tests; 16 export checks; retained-key signed; [QA](docs/qa/BC-1-v1.4.1-MEDIA-TRANSFORM.md) |
 | v1.4.0-dev — Landscape stability | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v1.4.0-dev/BC-1-v1.4.0-dev.apk) | 139 unit + 46 Android tests; 14 export checks; retained-key signed; [QA](docs/qa/BC-1-v1.4.0-LANDSCAPE-STABILITY.md) |
@@ -114,8 +115,8 @@ Published APKs and development builds, newest update first. Source-only checkpoi
 | v0.5 Motion & Layers | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v0.5/BC-1-v0.5-Preview.apk) | 29 unit + 16 Android tests passed |
 | v0.4 Timeline & Export | [APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/main/v0.4/BC-1-v0.4-Preview.apk) | Previous preview preserved |
 
-**Older retained-key Preview upgrade:** `com.blackice.bc1.preview`, v1.4.1-dev, versionCode 28, retained Preview signing certificate. Install over your existing Preview to retain projects; do not uninstall it first. The v1.3.3 test APK uses the separate `com.blackice.bc1.icelite` package.
+**Current retained-key Preview upgrade:** `com.blackice.bc1.preview`, v1.4.3, versionCode 37. Install over Preview to retain its projects; do not uninstall it first. Integration (`com.blackice.bc1.integration`) and the older v1.3.3 test app (`com.blackice.bc1.icelite`) remain separate installations.
 
-[Current v1.4.2 validation and limitations](INTEGRATION-UPDATE.md) · [Current APK checksum](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/integration/feature/workspace-stability/SHA256SUMS.txt)
+[Current v1.4.3 validation and limitations](v1.4.3/QA.md) · [Current APK checksum](v1.4.3/SHA256SUMS.txt)
 
 Checks use an Android API35 emulator. Physical Snapdragon 8 Gen 3 and Samsung DeX performance remains unmeasured. RTX integration is a future backend. Versioned APKs are retained and never replaced with different builds.
