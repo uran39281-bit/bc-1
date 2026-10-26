@@ -14,9 +14,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Write access is used only to publish the side-by-side test APK to a test-apk/<branch> ref.
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -42,17 +39,6 @@ jobs:
           name: Black-Ice-Editor-v1.4.3-ci-candidate
           path: BC-1/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
-      - name: Publish side-by-side test APK for phones
-        if: ${{ false }} # Candidate has a temporary CI key; sign with the retained Preview key before delivery.
-        env:
-          TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p /tmp/apk && cp BC-1/app/build/outputs/apk/debug/app-debug.apk /tmp/apk/Black-Ice-Editor-v1.4.2-preview.apk
-          cd /tmp/apk && sha256sum Black-Ice-Editor-v1.4.2-preview.apk > SHA256SUMS.txt
-          printf 'Test build of %s at %s (run %s). Package com.blackice.bc1.preview installs beside BC-1.\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" "$GITHUB_RUN_ID" > BUILD.txt
-          git init -q && git checkout -q -b apk && git add . \
-            && git -c user.name=bc1-ci -c user.email=bc1-ci@users.noreply.github.com commit -qm "Test APK for $GITHUB_SHA" \
-            && git push -qf "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "apk:refs/heads/test-apk/${GITHUB_REF_NAME}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

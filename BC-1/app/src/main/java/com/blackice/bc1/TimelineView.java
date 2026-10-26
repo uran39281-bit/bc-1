@@ -276,6 +276,7 @@ final class TimelineView extends View {
         if(perFrame>=a.dp(5)){paint.setColor(0xFF345465);long f0=(long)Math.max(0,Math.floor(time(left)*p.frameRate/1000.0)),f1=(long)Math.ceil(time(right)*p.frameRate/1000.0);for(long f=f0;f<=f1&&f-f0<2000;f++){float xx=x(Math.round(f*1000.0/p.frameRate));canvas.drawLine(xx,a.dp(RULER_DP)-a.dp(4),xx,a.dp(RULER_DP),paint);}}
         for(EditProject.Landmark marker:p.landmarks){float xx=x(marker==movingMarker&&moved?markerTime:marker.timeMs);if(xx<left-a.dp(12)||xx>right+a.dp(12))continue;
             paint.setColor(EditProject.MARKER_COLORS[marker.slot]);canvas.drawRect(xx-a.dp(9),a.dp(2),xx+a.dp(9),a.dp(20),paint);
+            if(marker.id.equals(a.selectedMarkerId)){paint.setColor(Color.WHITE);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(a.dp(2));canvas.drawRect(xx-a.dp(10),a.dp(1),xx+a.dp(10),a.dp(21),paint);paint.setStyle(Paint.Style.FILL);paint.setColor(EditProject.MARKER_COLORS[marker.slot]);}
             paint.setAlpha(100);canvas.drawLine(xx,a.dp(20),xx,height,paint);paint.setAlpha(255);paint.setColor(0xFF07111B);paint.setTextSize(a.dp(11));paint.setTextAlign(Paint.Align.CENTER);canvas.drawText(""+(marker.slot+1),xx,a.dp(15),paint);paint.setTextAlign(Paint.Align.LEFT);
         }
         if(markerDrop){paint.setColor(EditorActivity.CYAN);canvas.drawRect(x(markerTime)-a.dp(8),a.dp(2),x(markerTime)+a.dp(8),a.dp(24),paint);}
