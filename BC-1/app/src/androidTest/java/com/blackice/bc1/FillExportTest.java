@@ -23,6 +23,7 @@ public class FillExportTest {
  @Test public void bothEnginesRenderAnimatedFillHugeScaleAndClover()throws Exception{
   android.app.Instrumentation inst=InstrumentationRegistry.getInstrumentation();Context context=inst.getTargetContext();
   EditProject p=new EditProject();p.name="1.4.3 fill export";p.frameRate=30;
+  File background=new File(context.getFilesDir(),"v143-fill-background.png");Bitmap black=Bitmap.createBitmap(320,180,Bitmap.Config.ARGB_8888);black.eraseColor(Color.BLACK);try(OutputStream out=new FileOutputStream(background)){black.compress(Bitmap.CompressFormat.PNG,100,out);}black.recycle();EditProject.Clip base=new MediaImporter(context).importClip(android.net.Uri.fromFile(background),false);base.outMs=base.sourceDurationMs=4000;p.clips.add(base);
   EditProject.Overlay ramp=ShapeCatalog.create(1,0);ramp.endMs=2000;ramp.scale=5;ramp.fill=new FillStyle(Color.RED);ramp.fill.gradient=true;
   FillStyle f=ramp.fill;FillStyle.Stop left=f.stops.get(f.active.get(0)),right=f.stops.get(f.active.get(1));
   left.color.keys.put(0L,(double)Color.RED);left.color.keys.put(1000L,(double)Color.GREEN);right.color.keys.put(0L,(double)Color.BLUE);right.color.keys.put(1000L,(double)Color.GREEN);

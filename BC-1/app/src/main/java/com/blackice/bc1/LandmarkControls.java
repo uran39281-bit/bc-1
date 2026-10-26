@@ -10,7 +10,7 @@ final class LandmarkControls {
     static final class Drag{final String project;Drag(String id){project=id;}}
     static void dragSource(EditorActivity a,View view){view.setOnTouchListener(new View.OnTouchListener(){float x,y;boolean dragging;
         public boolean onTouch(View v,MotionEvent e){switch(e.getActionMasked()){
-          case MotionEvent.ACTION_DOWN:x=e.getX();y=e.getY();dragging=false;return false;
+          case MotionEvent.ACTION_DOWN:x=e.getX();y=e.getY();dragging=false;v.getParent().requestDisallowInterceptTouchEvent(true);return false;
           case MotionEvent.ACTION_MOVE:if(!dragging&&Math.hypot(e.getX()-x,e.getY()-y)>ViewConfiguration.get(a).getScaledTouchSlop()){
             if(!a.editable())return true;dragging=true;v.setPressed(false);v.getParent().requestDisallowInterceptTouchEvent(true);v.startDragAndDrop(ClipData.newPlainText("marker","Marker"),new View.DragShadowBuilder(v),new Drag(a.project.id),0);return true;}return dragging;
           case MotionEvent.ACTION_UP:case MotionEvent.ACTION_CANCEL:v.getParent().requestDisallowInterceptTouchEvent(false);if(dragging){dragging=false;v.setPressed(false);return true;}return false;
