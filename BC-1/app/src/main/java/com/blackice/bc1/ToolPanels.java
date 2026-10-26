@@ -368,7 +368,7 @@ final class ToolPanels {
     private void effectsPanel(){
         a.inspector.addView(a.label("Applied effects",15,EditorActivity.TEXT,true));EditProject.Clip c=a.clip();
         TextView list=a.note(c!=null&&c.effect!=0?com.blackice.bc1.core.EffectCatalog.name(c.effect)+" • saved, currently bypassed":"No effects applied");list.setGravity(Gravity.CENTER_VERTICAL);a.inspector.addView(list,new LinearLayout.LayoutParams(-1,a.dp(100)));
-        TextView add=a.button("+ Add Effects",null);add.setBackground(a.buttonBackground(true));add.setTextColor(EditorActivity.CYAN);add.setEnabled(false);add.setContentDescription("Add Effects — Coming Later, unavailable");a.inspector.addView(add,new LinearLayout.LayoutParams(-1,a.dp(52)));a.inspector.addView(a.note("Coming Later"));
+        TextView add=a.button("+ Add Effects",null);android.graphics.drawable.GradientDrawable outline=BlackIceTheme.surface(a.getResources().getDisplayMetrics().density,false);outline.setStroke(a.dp(1),BlackIceTheme.ICE);add.setBackground(outline);add.setTextColor(BlackIceTheme.ICE);add.setEnabled(false);add.setContentDescription("Add Effects — Coming Later, unavailable");a.inspector.addView(add,new LinearLayout.LayoutParams(-1,a.dp(52)));a.inspector.addView(a.note("Coming Later"));
     }
     private void effectsHome(){
         a.inspector.addView(a.button("Styles",v->open("Styles",this::stylesPanel)));
