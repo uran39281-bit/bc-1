@@ -31,6 +31,7 @@ public final class EditorActivity extends Activity {
     boolean captionApplying;
     static final String[] NAV={"Add","Edit","Effects","Layers"};
     final ProjectClock workClock=new ProjectClock(this);
+    final FillPanel fillPanel=new FillPanel(this);
     final ToolPanels panels=new ToolPanels(this);
     final TransformPanel transformPanel=new TransformPanel(this);
     AddDrawer addDrawer;
@@ -310,7 +311,7 @@ public final class EditorActivity extends Activity {
         for(EditProject.Clip clip:project.clips)if(clip.track>=EditProject.AUDIO_FIRST)loadWaveform(clip,true);
         if(monitor!=null)monitor.requestLayout();if(emptyPreview!=null)emptyPreview.setVisibility((project.clips.isEmpty()&&project.overlays.isEmpty())?View.VISIBLE:View.GONE);renderInspector();renderMediaBrowser();syncPosition();
     }
-    void syncPosition(){String count=project.landmarks.size()+"/5";if(markerCount!=null&&!count.contentEquals(markerCount.getText()))markerCount.setText(count);if(phoneTimelineTools instanceof TextView){String label="⚑ Markers • "+count;if(!label.contentEquals(((TextView)phoneTimelineTools).getText()))((TextView)phoneTimelineTools).setText(label);}if(transformPanel!=null)transformPanel.refresh();if(panels!=null)panels.refresh();updatePlayheadTools();if(mobile!=null)mobile.sync();if(previewControls!=null)previewControls.invalidate();if(time!=null)time.setText(clock(project.playheadMs)+"  /  "+clock(project.durationMs()));if(timeline!=null)timeline.syncScroll();if(previewScrubber!=null&&!scrubbing)previewScrubber.setProgress((int)(1000*project.playheadMs/Math.max(1,project.durationMs())));}
+    void syncPosition(){String count=project.landmarks.size()+"/5";if(markerCount!=null&&!count.contentEquals(markerCount.getText()))markerCount.setText(count);if(phoneTimelineTools instanceof TextView){String label="⚑ Markers • "+count;if(!label.contentEquals(((TextView)phoneTimelineTools).getText()))((TextView)phoneTimelineTools).setText(label);}if(transformPanel!=null)transformPanel.refresh();if(panels!=null)panels.refresh();if(fillPanel!=null)fillPanel.refresh();updatePlayheadTools();if(mobile!=null)mobile.sync();if(previewControls!=null)previewControls.invalidate();if(time!=null)time.setText(clock(project.playheadMs)+"  /  "+clock(project.durationMs()));if(timeline!=null)timeline.syncScroll();if(previewScrubber!=null&&!scrubbing)previewScrubber.setProgress((int)(1000*project.playheadMs/Math.max(1,project.durationMs())));}
     long timelineEnd(){long end=project.durationMs();for(EditProject.Landmark m:project.landmarks)end=Math.max(end,m.timeMs);return end;}
     long seekTarget(){return Math.min(project.playheadMs,Math.max(0,project.durationMs()-1));}
     void seek(long ms){
@@ -397,8 +398,7 @@ public final class EditorActivity extends Activity {
         if(wideLayout)monitor.addView(compare,new FrameLayout.LayoutParams(-2,dp(40),Gravity.BOTTOM|Gravity.END));
         TextView info=monitorInfo=label(project.name+"  ·  "+(project.portrait?"9:16":"16:9")+"  ·  "+project.frameRate+" fps",11,0xFFC9D6E3,false);info.setPadding(dp(10),dp(6),dp(8),0);info.setShadowLayer(dp(3),0,0,0xCC000000);info.setSingleLine(true);info.setEllipsize(android.text.TextUtils.TruncateAt.END);if(wideLayout)monitor.addView(info,new FrameLayout.LayoutParams(-2,dp(28),Gravity.TOP|Gravity.START));
         TextView viewOptions=button("Fit ▾",v->previewOptions());viewOptions.setTextSize(11);viewOptions.setContentDescription("Preview scaling, volume and fullscreen");FrameLayout.LayoutParams viewLp=new FrameLayout.LayoutParams(dp(68),dp(34),Gravity.TOP|Gravity.END);viewLp.setMargins(0,dp(8),dp(8),0);if(wideLayout||fullscreenPreview)monitor.addView(viewOptions,viewLp);
-        TextView work=button("◷ 00:00:00",v->workClock.menu());work.setTextSize(10);work.setPadding(dp(6),0,dp(6),0);workClock.label=work;
-        FrameLayout.LayoutParams workLp=new FrameLayout.LayoutParams(dp(116),dp(48),Gravity.TOP|Gravity.START);workLp.topMargin=dp(22);monitor.addView(work,workLp);
+
         return monitor;
     }
     void previewOptions(){new AlertDialog.Builder(this).setTitle("Preview view only").setItems(new String[]{"Fit canvas","Fill viewport (cropped)","100% preview pixels","Preview volume","Fullscreen preview"},(d,i)->{
@@ -426,7 +426,7 @@ public final class EditorActivity extends Activity {
         timelineTools.addView(compactButton("+","Zoom in timeline",v->zoomTimeline(1.5f,Float.NaN)));
         TextView snap=headerIcon("Magnet","Snapping: "+(snapping?"on":"off"),v->{snapping=!snapping;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("snapping",snapping).apply();renderTimelineTools();});snap.setSelected(snapping);snap.setCompoundDrawables(icon("Magnet",snapping?CYAN:MUTED),null,null,null);timelineTools.addView(snap);
         timelineTools.addView(headerIcon("Fit","Fit timeline",v->fitTimeline()));
-        TextView markers=headerIcon("Flag","Timeline markers (maximum five)",v->LandmarkControls.show(this));markerCount=markers;markers.setText(project.landmarks.size()+"/5");timelineTools.addView(markers);
+        TextView markers=headerIcon("Flag","Timeline markers (maximum five)",v->LandmarkControls.add(this,project.playheadMs));LandmarkControls.dragSource(this,markers);markers.setOnLongClickListener(v->{LandmarkControls.show(this);return true;});markerCount=markers;markers.setText(project.landmarks.size()+"/5");timelineTools.addView(markers);
     }
     void syncZoomSlider(){if(zoomSlider!=null)zoomSlider.setProgress((int)Math.round(1000*Math.log(pixelsPerSecond/8)/Math.log(300)));}
     static void dim(View v,boolean enabled){v.setEnabled(enabled);v.setAlpha(enabled?1f:.38f);}
@@ -572,6 +572,7 @@ public final class EditorActivity extends Activity {
         if(start==Long.MAX_VALUE){tell("Select a layer to zoom to it.");return;}
         fitTimelineRange(start,end);
     }
+    String selectedMarkerId;
     void toggleMarkerAt(long time){LandmarkControls.add(this,time);}
     /** Row-handle reordering: moves one row to the target position, one swap at a time, in one undo step. */
     void reorderRows(int from,int to){
@@ -777,13 +778,14 @@ public final class EditorActivity extends Activity {
         projectLabel=label(project.name+(dirty?" •":"")+"  ▾",10,MUTED,false);projectLabel.setMaxLines(1);projectLabel.setEllipsize(android.text.TextUtils.TruncateAt.END);brand.addView(projectLabel);brand.setOnClickListener(v->projectsMenu());brand.setContentDescription("Project menu");brand.setFocusable(true);brand.setMinimumHeight(dp(52));
         header.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
         if(wideLayout){
-            header.addView(headerIcon("Undo","Undo",v->undo(false)));header.addView(headerIcon("Redo","Redo",v->undo(true)));
+            header.addView(workClockView());header.addView(headerIcon("Undo","Undo",v->undo(false)));header.addView(headerIcon("Redo","Redo",v->undo(true)));
             View gap=new View(this);header.addView(gap,new LinearLayout.LayoutParams(dp(10),1));
             TextView save=labelledIcon("Save","Save","Save project",v->{saveNow();tell("Saving project…");});header.addView(save);
         }
         header.addView(labelledIcon("Settings","Settings","Settings",v->{tab=4;renderInspector();}));
         exportButton=button("Export",v->exportMenu());exportButton.setTextSize(14);exportButton.setTextColor(BlackIceTheme.ON_ACCENT);exportButton.setBackground(BlackIceTheme.primary(getResources().getDisplayMetrics().density));LinearLayout.LayoutParams exportLp=new LinearLayout.LayoutParams(-2,dp(48));exportLp.leftMargin=dp(8);exportButton.setPadding(dp(22),0,dp(22),0);header.addView(exportButton,exportLp);
     }
+    TextView workClockView(){TextView work=button(workClock.label==null?"◷ 00:00:00":workClock.label.getText().toString(),v->workClock.menu());work.setTextSize(11);work.setSingleLine(true);work.setPadding(dp(6),0,dp(6),0);work.setContentDescription("Project work clock");work.setLayoutParams(new LinearLayout.LayoutParams(dp(100),dp(48)));workClock.label=work;return work;}
     /** Top-bar section tabs exist only in roomy wide windows. */
     boolean topTabs(){return wideLayout&&getResources().getConfiguration().screenWidthDp>=1100;}
     TextView labelledIcon(String icon,String title,String description,View.OnClickListener l){TextView b=button(title,l);b.setContentDescription(description);b.setTextSize(13);b.setTypeface(Typeface.DEFAULT);b.setCompoundDrawables(icon(icon,TEXT),null,null,null);b.setCompoundDrawablePadding(dp(8));b.setPadding(dp(12),0,dp(14),0);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-2,dp(44));lp.leftMargin=dp(4);b.setLayoutParams(lp);return b;}
@@ -923,7 +925,7 @@ public final class EditorActivity extends Activity {
     }
     void insertElement(PresetStore.Preset preset,long at){edit("Element added",()->{int added=PresetStore.insertElement(project,preset.payload,at);selected=-1;selectedOverlay=-1;multiClips.clear();multiOverlays.clear();tell("Added "+added+" layer(s)");});}
     void addOverlay(int shape,String text,float scale){
-        if(shape>0){addShapeAt(shape,addDrawer.insertTime(),project.overlays.size());return;}
+        if(shape>0){addShapeAt(shape,QuickInsertion.start(project.playheadMs,3000),project.overlays.size());return;}
         if(!editable())return;if(project.regularOverlayCount()>=20){tell("Up to 20 text, shape and image layers.");return;}
         long at=addDrawer.insertTime();
         edit(shape>0?EditProject.SHAPES[shape]+" added":"Text added",()->{EditProject.Overlay o=new EditProject.Overlay();o.shape=shape;if(shape==0)o.text=text;else{o.text=EditProject.SHAPES[shape];o.y=0;o.color=0xFF40BFFF;}o.scale=Math.max(.1f,Math.min(2,scale*.7f));
@@ -994,7 +996,7 @@ public final class EditorActivity extends Activity {
             float scale;
             if(c!=null){double content=c.width/(double)c.height;scale=mode==0?1:mode==1?TransformMath.fillScale(A,content):TransformMath.originalScale(export[0],export[1],c.width,c.height);}
             else{double[] half=layerHalf();double fit=Math.min(A/2/half[0],.5/half[1]),fill=Math.max(A/2/half[0],.5/half[1]);scale=(float)(transformPanel.current().scale*(mode==0?fit:mode==1?fill:1/transformPanel.current().scale));}
-            transformPanel.write(Motion.SCALE,TransformMath.clamp(scale,.05f,4));setAspect(1);
+            transformPanel.write(Motion.SCALE,TransformMath.clamp(scale,.05f,Motion.MAX_SCALE));setAspect(1);
             if(mode<2){transformPanel.write(Motion.X,0);transformPanel.write(Motion.Y,0);}
         });
     }
@@ -1045,6 +1047,7 @@ public final class EditorActivity extends Activity {
     }
 
     /** Auto captions: whisper speech-to-text on the timeline (or the selected clip), added as a caption text group. */
+    void speechToText(){EditProject.Clip source=clip();if(source==null||source.image){tell("Select an audio clip or video with speech in the timeline, then choose Speech to Text.");return;}autoCaptions();}
     void autoCaptions(){
         if(!editable())return;
         if(com.blackice.bc1.captions.CaptionService.isRunning()){
@@ -1260,6 +1263,10 @@ public final class EditorActivity extends Activity {
     }
     /** Places a copy of a Project Media item on a track at a time (from a drop or Add at playhead).
      * An occupied layer falls back to another free layer of the same kind. */
+    void quickInsert(EditProject.Clip asset,long capturedPlayhead){
+        long start=QuickInsertion.start(capturedPlayhead,asset.durationMs());int first=asset.audioOnly?EditProject.AUDIO_FIRST:1,last=asset.audioOnly?EditProject.AUDIO_LAST:EditProject.LAST_LAYER;
+        for(int t=first;t<=last;t++)if(!project.tracks[t].locked&&LayerOps.free(project,t,start,start+asset.durationMs(),-1)){dropMedia(asset,t,start);return;}tell("No free layer at this time. Move a clip or choose another time.");
+    }
     void dropMedia(EditProject.Clip asset,int track,long start){
         if(!editable())return;if(project.clips.size()>=100){tell("The 100-clip project limit was reached.");return;}
         edit("Added "+asset.name+" to "+project.tracks[track].name,()->{
@@ -1425,13 +1432,16 @@ public final class EditorActivity extends Activity {
             LinearLayout.LayoutParams line=new LinearLayout.LayoutParams(-1,-2);line.bottomMargin=dp(10);mediaGrid.addView(row,line);
         }
     }
+    int lastShape=-1;long lastShapeTap;String selectedMediaUri,lastMediaTapUri;long lastMediaTap;
     View shapeCard(int shape){
         LinearLayout card=mediaList?row():column();card.setBackground(buttonBackground(false));card.setPadding(dp(8),dp(6),dp(8),dp(6));card.setFocusable(true);card.setClickable(true);
         View preview=new View(this){final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);@Override protected void onDraw(Canvas canvas){super.onDraw(canvas);float r=Math.max(1,Math.min(getWidth(),getHeight())*.42f);paint.setColor(CYAN);canvas.save();canvas.translate(getWidth()/2f,getHeight()/2f);canvas.drawPath(ShapePaths.create(shape,r,Math.max(1,r*.035f)),paint);canvas.restore();}};
-        card.addView(preview,mediaList?new LinearLayout.LayoutParams(dp(64),-1):new LinearLayout.LayoutParams(-1,0,1));
+        FrameLayout shapeFrame=new FrameLayout(this);shapeFrame.addView(preview,new FrameLayout.LayoutParams(-1,-1));card.addView(shapeFrame,mediaList?new LinearLayout.LayoutParams(dp(88),-1):new LinearLayout.LayoutParams(-1,0,1));
         TextView name=label((favoriteMedia.contains("shape:"+shape)?"★ ":"")+EditProject.SHAPES[shape],11,TEXT,false);name.setMaxLines(2);name.setEllipsize(android.text.TextUtils.TruncateAt.END);name.setGravity(Gravity.CENTER_VERTICAL);card.addView(name,mediaList?new LinearLayout.LayoutParams(0,-1,1):new LinearLayout.LayoutParams(-1,dp(32)));
-        card.setContentDescription("Insert shape: "+EditProject.SHAPES[shape]);card.setTooltipText("Drag onto the timeline; tap for shape actions");
-        card.setOnClickListener(v->{String key="shape:"+shape;new AlertDialog.Builder(this).setTitle(EditProject.SHAPES[shape]).setItems(new String[]{"Add as new layer at playhead",favoriteMedia.contains(key)?"Remove favorite":"Add favorite"},(d,n)->{if(n==0)addShapeAt(shape,project.playheadMs,project.overlays.size());else{if(!favoriteMedia.remove(key))favoriteMedia.add(key);getSharedPreferences(PREFS,0).edit().putStringSet("favorite-media",new HashSet<>(favoriteMedia)).apply();renderMediaGrid();}}).setNegativeButton("Cancel",null).show();});
+        card.setContentDescription("Insert shape: "+EditProject.SHAPES[shape]);card.setTooltipText("Drag onto the timeline; tap to insert centered at the playhead");
+        card.setOnClickListener(v->{long now=android.os.SystemClock.uptimeMillis();if(lastShape==shape&&now-lastShapeTap<ViewConfiguration.getDoubleTapTimeout())return;lastShape=shape;lastShapeTap=now;addShapeAt(shape,QuickInsertion.start(project.playheadMs,3000),project.overlays.size());});
+        TextView favorite=compactButton("☆","Favorite "+EditProject.SHAPES[shape],v->{String key="shape:"+shape;if(!favoriteMedia.remove(key))favoriteMedia.add(key);getSharedPreferences(PREFS,0).edit().putStringSet("favorite-media",new HashSet<>(favoriteMedia)).apply();renderMediaGrid();});
+        favorite.setTextSize(17);favorite.setPadding(0,0,0,0);shapeFrame.addView(favorite,new FrameLayout.LayoutParams(dp(44),dp(44),Gravity.TOP|Gravity.END));
         Runnable drag=()->{if(!editable())return;card.startDragAndDrop(ClipData.newPlainText("shape",EditProject.SHAPES[shape]),new View.DragShadowBuilder(preview),new ShapeCatalog.Drag(shape,project.id),0);tell("Drop "+EditProject.SHAPES[shape]+" on a visual timeline row");};
         card.setOnLongClickListener(v->{drag.run();return true;});
         if(wideLayout)card.setOnTouchListener(new View.OnTouchListener(){float x,y;boolean started;public boolean onTouch(View v,MotionEvent e){
@@ -1462,7 +1472,7 @@ public final class EditorActivity extends Activity {
      * row; tap for actions (or to select the clip already using it). */
     View mediaCard(EditProject.Clip asset,int columns,boolean list){
         LinearLayout card=list?row():column();card.setPadding(0,0,0,0);
-        card.setTag(asset);boolean chosen=clip()!=null&&clip().uri.equals(asset.uri);
+        card.setTag(asset);boolean chosen=asset.uri.equals(selectedMediaUri);
         card.setSelected(chosen);
         FrameLayout frame=new FrameLayout(this);GradientDrawable frameBg=new GradientDrawable();frameBg.setColor(0xFF0B1826);frameBg.setCornerRadius(dp(6));frameBg.setStroke(dp(chosen?2:1),chosen?CYAN:BlackIceTheme.BORDER);frame.setBackground(frameBg);frame.setClipToOutline(true);
         ImageView image=new ImageView(this);image.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -1491,14 +1501,16 @@ public final class EditorActivity extends Activity {
                     if(e.getActionMasked()==MotionEvent.ACTION_UP||e.getActionMasked()==MotionEvent.ACTION_CANCEL){v.getParent().requestDisallowInterceptTouchEvent(false);return started;}return started;
                 }});
         }
-        card.setOnClickListener(v->mediaActions(asset));
+        TextView more=compactButton("⋮","Media actions: "+asset.name,v->{lastMediaTap=0;mediaActionsMenu(asset);});FrameLayout.LayoutParams moreLp=new FrameLayout.LayoutParams(dp(44),dp(44),Gravity.TOP|Gravity.END);frame.addView(more,moreLp);
+        card.setOnClickListener(v->{long now=android.os.SystemClock.uptimeMillis();boolean twice=asset.uri.equals(lastMediaTapUri)&&lastMediaTap>0&&now-lastMediaTap<=ViewConfiguration.getDoubleTapTimeout();selectedMediaUri=asset.uri;lastMediaTapUri=asset.uri;lastMediaTap=twice?0:now;if(twice)quickInsert(asset,project.playheadMs);else renderMediaGrid();});
         return card;
     }
     /** Tap on a Project Media item: select the clip using it, or add it at the playhead. */
-    void mediaActions(EditProject.Clip asset){
-        if(mobile!=null&&mobile.overlayInsert&&!asset.audioOnly){mediaAction(asset,"Add as new layer at playhead");return;}
+    void mediaActions(EditProject.Clip asset){selectedMediaUri=asset.uri;renderMediaGrid();}
+    void mediaActionsMenu(EditProject.Clip asset){
+
         java.util.List<String> items=new ArrayList<>();int used=-1;for(int i=0;i<project.clips.size()&&used<0;i++)if(project.clips.get(i).uri.equals(asset.uri))used=i;
-        if(used>=0){selectClip(used,true);renderMediaGrid();return;}
+        if(used>=0)items.add("Select timeline instance");
         items.add(asset.audioOnly?"Add to an audio layer at playhead":"Add to main sequence at playhead");if(!asset.audioOnly)items.add("Add as new layer at playhead");
         items.add(favoriteMedia.contains(asset.uri)?"Remove favorite":"Add favorite");if(used<0)items.add("Remove from Project Media");
         String[] names=items.toArray(new String[0]);
@@ -1506,6 +1518,7 @@ public final class EditorActivity extends Activity {
     }
     void mediaAction(EditProject.Clip asset,String action){
         long at=project.playheadMs;
+        if(action.equals("Select timeline instance")){for(int i=0;i<project.clips.size();i++)if(project.clips.get(i).uri.equals(asset.uri)){selectClip(i,false);return;}}
         if(action.startsWith("Add to")){dropMedia(asset,asset.audioOnly?(timeline==null?4:timeline.dropTrackFor(asset,-1,at)):0,at);return;}
         if(action.startsWith("Add as new layer")){int track=-1;for(int t=1;t<=EditProject.LAST_LAYER&&track<0;t++)if(LayerOps.free(project,t,at,at+asset.durationMs(),-1))track=t;if(track<0){tell("No free video layer at "+seconds(at)+" s.");return;}dropMedia(asset,track,at);return;}
         if(action.contains("favorite")){if(!favoriteMedia.remove(asset.uri))favoriteMedia.add(asset.uri);getSharedPreferences(PREFS,MODE_PRIVATE).edit().putStringSet("favorite-media",new java.util.HashSet<>(favoriteMedia)).apply();renderMediaBrowser();if(tab==0)renderInspector();return;}

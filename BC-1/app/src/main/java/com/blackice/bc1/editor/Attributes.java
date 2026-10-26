@@ -43,7 +43,7 @@ public final class Attributes {
         int applied=0;
         try {
             JSONObject t=data.optJSONObject("transform");
-            if(t!=null&&(requested&TRANSFORM)!=0&&!EditProject.audioTrack(c.track)){c.x=f(t,"x");c.y=f(t,"y");c.scale=Math.max(.05f,Math.min(4,f(t,"scale")));c.aspect=f(t,"aspect");c.heightScale=(float)t.optDouble("heightScale",-1);c.rotation=f(t,"rotation");c.skewX=f(t,"skewX");c.skewY=f(t,"skewY");c.anchorX=f(t,"anchorX");c.anchorY=f(t,"anchorY");c.flipH=t.getBoolean("flipH");c.flipV=t.getBoolean("flipV");applied|=TRANSFORM;}
+            if(t!=null&&(requested&TRANSFORM)!=0&&!EditProject.audioTrack(c.track)){c.x=f(t,"x");c.y=f(t,"y");c.scale=Math.max(.05f,Math.min(Motion.MAX_SCALE,f(t,"scale")));c.aspect=f(t,"aspect");c.heightScale=(float)t.optDouble("heightScale",-1);c.rotation=f(t,"rotation");c.skewX=f(t,"skewX");c.skewY=f(t,"skewY");c.anchorX=f(t,"anchorX");c.anchorY=f(t,"anchorY");c.flipH=t.getBoolean("flipH");c.flipV=t.getBoolean("flipV");applied|=TRANSFORM;}
             JSONObject e=data.optJSONObject("effects");
             if(e!=null&&(requested&EFFECTS)!=0&&!EditProject.audioTrack(c.track)){if(e.has("effect")){c.effect=e.getInt("effect");c.intensity=f(e,"intensity");c.chroma=e.getBoolean("chroma");c.keyColor=e.getInt("keyColor");c.keyTolerance=f(e,"keyTolerance");c.keySoftness=f(e,"keySoftness");c.keySpill=f(e,"keySpill");}c.opacity=f(e,"opacity");applied|=EFFECTS;}
             JSONArray a=data.optJSONArray("animation");
@@ -55,7 +55,7 @@ public final class Attributes {
         int applied=0;
         try {
             JSONObject t=data.optJSONObject("transform");
-            if(t!=null&&(requested&TRANSFORM)!=0){o.x=Math.max(-1,Math.min(1,f(t,"x")));o.y=Math.max(-1,Math.min(1,f(t,"y")));o.scale=Math.max(.1f,Math.min(2,f(t,"scale")));o.aspect=f(t,"aspect");o.heightScale=(float)t.optDouble("heightScale",-1);o.rotation=f(t,"rotation");o.skewX=f(t,"skewX");o.skewY=f(t,"skewY");o.anchorX=f(t,"anchorX");o.anchorY=f(t,"anchorY");o.flipH=t.getBoolean("flipH");o.flipV=t.getBoolean("flipV");applied|=TRANSFORM;}
+            if(t!=null&&(requested&TRANSFORM)!=0){o.x=Math.max(-1,Math.min(1,f(t,"x")));o.y=Math.max(-1,Math.min(1,f(t,"y")));o.scale=Math.max(.1f,Math.min(Motion.MAX_SCALE,f(t,"scale")));o.aspect=f(t,"aspect");o.heightScale=(float)t.optDouble("heightScale",-1);o.rotation=f(t,"rotation");o.skewX=f(t,"skewX");o.skewY=f(t,"skewY");o.anchorX=f(t,"anchorX");o.anchorY=f(t,"anchorY");o.flipH=t.getBoolean("flipH");o.flipV=t.getBoolean("flipV");applied|=TRANSFORM;}
             JSONObject e=data.optJSONObject("effects");
             if(e!=null&&(requested&EFFECTS)!=0){o.opacity=f(e,"opacity");applied|=EFFECTS;}
             JSONObject s=data.optJSONObject("style");

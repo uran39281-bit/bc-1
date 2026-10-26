@@ -50,9 +50,9 @@ public class WorkspaceV2Test {
                         described(root,"Add Audio").performClick();assertNotNull("Insert at playhead by default",text(root,"● At playhead"));described(root,"Add Shapes").performClick();}});
                 Thread.sleep(300);capture(wide?"v2-wide-add-drawer":"v2-phone-add-drawer");
                 scenario.onActivity(a->{a.seek(1000);described(a.getWindow().getDecorView(),"Insert shape: Square").performClick();});
-                WorkflowControlsTest.click(this,"Add as new layer at playhead");
+
                 scenario.onActivity(a->{View root=a.getWindow().getDecorView();
-                    assertEquals(1,a.project.overlays.size());assertEquals("Inserted at the playhead",1000,a.project.overlays.get(0).startMs);assertEquals(0,a.selectedOverlay);
+                    assertEquals(1,a.project.overlays.size());assertEquals("Centered insertion clamps at zero",0,a.project.overlays.get(0).startMs);assertEquals(0,a.selectedOverlay);
                     // Selected layer: contextual media actions; wide layout exposes duplication/deletion in More.
                     assertEquals(1,a.project.overlays.get(0).shape);assertNotNull(text(root,"Square"));assertNotNull(text(root,"Settings"));if(!wide)assertNotNull(described(root,"Duplicate"));assertNotNull(described(root,wide?"Selected media actions":"More actions"));
                     assertNotNull(text(root,"Media Settings"));assertNotNull("Shape tools",described(root,"Media Settings: Shape & Style"));assertNull("No slip for shapes",text(root,"Slip"));assertNotNull(text(root,"Move & Transform"));

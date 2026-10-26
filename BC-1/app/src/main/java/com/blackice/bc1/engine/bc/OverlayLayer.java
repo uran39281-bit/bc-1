@@ -24,7 +24,7 @@ final class OverlayLayer {
     }
     int texture(List<EditProject.Overlay> active, long timeMs) throws Exception {
         boolean animated = false;
-        for (EditProject.Overlay o : active) animated |= o.motion.animated();
+        for (EditProject.Overlay o : active) animated |= (o.motion.animated()||o.fill!=null&&o.fill.animated());
         if (animated || !active.equals(shown)) {
             bitmap.eraseColor(Color.TRANSPARENT);
             Canvas canvas = new Canvas(bitmap);

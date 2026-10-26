@@ -20,7 +20,7 @@ public final class TransformEdits {
     public static float[] scalePair(float width,float height,int property,float value,boolean linked) {
         float w=property==Motion.SCALE?value:width,h=property==Motion.HEIGHT?value:height;
         if(linked){if(!(width>0&&height>0))throw new IllegalArgumentException("Both dimensions must be above zero before linking.");if(property==Motion.SCALE)h=height*(value/width);else w=width*(value/height);}
-        if(!Motion.allowed(Motion.SCALE,w)||!Motion.allowed(Motion.HEIGHT,h))throw new IllegalArgumentException("Scale is outside the supported range (Width 5–400%, Height 0.25–8000%). Zero is not supported by this renderer.");
+        if(!Motion.allowed(Motion.SCALE,w)||!Motion.allowed(Motion.HEIGHT,h))throw new IllegalArgumentException("Scale is outside the supported range (Width 5–10000%, Height 0.25–200000%). Zero is not supported by this renderer.");
         return new float[]{w,h};
     }
 }

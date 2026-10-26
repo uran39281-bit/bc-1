@@ -2,6 +2,7 @@ package com.blackice.bc1.editor;
 import java.util.*;
 /** Source-time keyframes: trimming and splitting do not move animation. */
 public final class Motion {
+ public static final float MAX_SCALE=100f, MAX_HEIGHT=2000f;
  public static final String[] PROPERTIES={"X","Y","Scale","Rotation","Opacity","Intensity","Skew X","Skew Y","Anchor X","Anchor Y","Height","Volume"};
  public static final int X=0,Y=1,SCALE=2,ROTATION=3,OPACITY=4,INTENSITY=5,SKEW_X=6,SKEW_Y=7,ANCHOR_X=8,ANCHOR_Y=9,HEIGHT=10,VOLUME=11,COUNT=12;
  public static final class Key {
@@ -19,7 +20,7 @@ public final class Motion {
  }
  private static float bez(float t,float a,float b){float q=1-t;return 3*q*q*t*a+3*q*t*t*b+t*t*t;}
  public static float ease(float x,Key k){float low=0,high=1;for(int i=0;i<20;i++){float t=(low+high)*.5f;if(bez(t,k.x1,k.x2)<x)low=t;else high=t;}return bez((low+high)*.5f,k.y1,k.y2);}
- public static boolean allowed(int p,float v){return Float.isFinite(v)&&(p==VOLUME?v>=0&&v<=1:p==HEIGHT?v>=.0025f&&v<=80:p<2?Math.abs(v)<=100000:p>=8?Math.abs(v)<=2:p==2?v>=.05f&&v<=4:p==3?true:p>=6?Math.abs(v)<=80:v>=0&&v<=1);}
+ public static boolean allowed(int p,float v){return Float.isFinite(v)&&(p==VOLUME?v>=0&&v<=1:p==HEIGHT?v>=.0025f&&v<=MAX_HEIGHT:p<2?Math.abs(v)<=100000:p>=8?Math.abs(v)<=2:p==2?v>=.05f&&v<=MAX_SCALE:p==3?true:p>=6?Math.abs(v)<=80:v>=0&&v<=1);}
  public void validate(){for(int p=0;p<COUNT;p++){List<Key> keys=curves.get(p);if(keys.size()>200)throw new IllegalArgumentException("Use at most 200 keys per property.");long previous=-1;for(Key k:keys){if(k.timeMs<0||k.timeMs<=previous||!allowed(p,k.value)||!unit(k.x1)||!unit(k.x2)||!unit(k.y1)||!unit(k.y2))throw new IllegalArgumentException("Invalid motion curve.");previous=k.timeMs;}}}
  private static boolean unit(float f){return Float.isFinite(f)&&f>=0&&f<=1;}
 }

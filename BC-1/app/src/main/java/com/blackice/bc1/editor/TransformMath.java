@@ -89,7 +89,7 @@ public final class TransformMath {
     public static float originalScale(int exportW,int exportH,int sourceW,int sourceH) {
         if(sourceW<=0||sourceH<=0) return 1;
         double content=sourceW/(double)sourceH,fittedW=Math.min(exportW,exportH*content);
-        return (float)Math.max(.05,Math.min(4,sourceW/fittedW));
+        return (float)Math.max(.05,Math.min(Motion.MAX_SCALE,sourceW/fittedW));
     }
     public static float snapAngle(float degrees,float step) {
         if(step<=0) return degrees;

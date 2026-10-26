@@ -182,7 +182,7 @@ public final class CompositionFactory {
             if(bitmap==null || bitmap.getWidth()!=width || bitmap.getHeight()!=height) {
                 if(bitmap!=null) bitmap.recycle(); bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);activeMask=-1;
             }
-            boolean animated=false;for(EditProject.Overlay o:overlays)animated|=o.motion.animated();
+            boolean animated=false;for(EditProject.Overlay o:overlays)animated|=(o.motion.animated()||o.fill!=null&&o.fill.animated());
             if(activeMask==mask&&!animated) return bitmap;
             bitmap.eraseColor(Color.TRANSPARENT); Canvas canvas=new Canvas(bitmap);
             try {

@@ -127,7 +127,7 @@ public final class ProjectStore {
         j.put("library",library); JSONArray overlays=new JSONArray();
         for(EditProject.Overlay o:p.overlays) overlays.put(new JSONObject().put("id",o.id).put("text",o.text)
                 .put("visualizerClipId",o.visualizerClipId).put("visualizerStyle",o.visualizerStyle).put("motion",motion(o.motion)).put("imageUri",o.imageUri).put("startMs",o.startMs).put("endMs",o.endMs)
-                .put("x",o.x).put("y",o.y).put("scale",o.scale).put("opacity",o.opacity).put("font",o.font).put("color",o.color).put("alignment",o.alignment)
+                .put("x",o.x).put("y",o.y).put("scale",o.scale).put("opacity",o.opacity).put("font",o.font).put("color",o.color).put("fill",o.fill==null?null:o.fill.json()).put("alignment",o.alignment)
                 .put("shape",o.shape).put("name",o.name).put("group",o.group).put("hidden",o.hidden).put("solo",o.solo).put("locked",o.locked)
                 .put("flipH",o.flipH).put("flipV",o.flipV).put("rotation",o.rotation).put("heightScale",o.heightScale).put("aspect",o.aspect).put("skewX",o.skewX).put("skewY",o.skewY)
                 .put("anchorX",o.anchorX).put("anchorY",o.anchorY).put("borderWidth",o.borderWidth).put("shadow",o.shadow).put("borderColor",o.borderColor).put("blend",o.blend));
@@ -174,7 +174,7 @@ public final class ProjectStore {
         for(int i=0;i<overlays.length();i++) { JSONObject v=overlays.getJSONObject(i); EditProject.Overlay o=new EditProject.Overlay();o.visualizerClipId=v.optString("visualizerClipId",null);o.visualizerStyle=v.optInt("visualizerStyle",0);
             o.motion=motion(v.optJSONArray("motion"));o.id=v.getString("id"); o.text=v.getString("text"); o.imageUri=v.optString("imageUri",null);
             o.startMs=v.getLong("startMs"); o.endMs=v.getLong("endMs"); o.x=(float)v.getDouble("x"); o.y=(float)v.getDouble("y");
-            o.scale=(float)v.getDouble("scale"); o.opacity=(float)v.getDouble("opacity");o.font=v.optString("font","sans-serif-medium");o.color=v.optInt("color",0xFFFFFFFF);o.alignment=v.optInt("alignment",1);
+            o.scale=(float)v.getDouble("scale"); o.opacity=(float)v.getDouble("opacity");o.font=v.optString("font","sans-serif-medium");o.color=v.optInt("color",0xFFFFFFFF);o.fill=FillStyle.read(v.optJSONObject("fill"));o.alignment=v.optInt("alignment",1);
             o.shape=v.optInt("shape",0); o.name=v.isNull("name")?null:v.optString("name",null); o.group=v.isNull("group")?null:v.optString("group",null);
             o.hidden=v.optBoolean("hidden"); o.solo=v.optBoolean("solo"); o.locked=v.optBoolean("locked"); o.flipH=v.optBoolean("flipH"); o.flipV=v.optBoolean("flipV");
             o.rotation=(float)v.optDouble("rotation",0); o.heightScale=(float)v.optDouble("heightScale",-1); o.aspect=(float)v.optDouble("aspect",1); o.skewX=(float)v.optDouble("skewX",0); o.skewY=(float)v.optDouble("skewY",0);

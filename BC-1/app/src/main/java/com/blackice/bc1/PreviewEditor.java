@@ -98,7 +98,7 @@ final class PreviewEditor extends View {
         return NONE;
     }
     private void update(MotionEvent e){
-        float[] anchor=anchorPoint(base);boolean overlay=a.overlay()!=null;float limit=100000,minScale=overlay?.1f:.05f,maxScale=overlay?2:4;
+        float[] anchor=anchorPoint(base);boolean overlay=a.overlay()!=null;float limit=100000,minScale=overlay?.1f:.05f,maxScale=Motion.MAX_SCALE;
         if(gesture==PAN){
             if(e.getPointerCount()==2&&span>0)a.previewZoom=TransformMath.clamp(navZoomStart*dist(e)/span,.2f,4);
             else if(a.previewZoom!=1||a.previewPanX!=0||a.previewPanY!=0){a.previewPanX=navPanX+(e.getX()-downX)/Math.max(1,sw());a.previewPanY=navPanY+(e.getY()-downY)/Math.max(1,sh());}

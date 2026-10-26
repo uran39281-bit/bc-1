@@ -61,6 +61,7 @@ final class AddDrawer {
     }
 
     private void audio(LinearLayout into){
+        into.addView(a.button("Speech to Text",v->a.speechToText()));
         into.addView(a.button("Speech & captions",v->CaptionPanel.show(a)));
         LinearLayout actions=a.row();
         actions.addView(a.button("Music track…",v->a.pick(EditorActivity.MUSIC,"audio/*")),new LinearLayout.LayoutParams(0,a.dp(48),1));
