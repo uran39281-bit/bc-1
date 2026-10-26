@@ -113,7 +113,7 @@ public final class Keyframes {
                 // Older callers supply only the original motion channels.
                 float height=current.length>Motion.HEIGHT?current[Motion.HEIGHT]:width;
                 float small=Math.max(.2f,Math.max(.05f/width,.0025f/height));
-                float peak=Math.min(1.1f,Math.min(4f/width,80f/height));
+                float peak=Math.min(1.1f,Math.min(Motion.MAX_SCALE/width,Motion.MAX_HEIGHT/height));
                 for(int property:new int[]{Motion.SCALE,Motion.HEIGHT}){
                     float target=property==Motion.SCALE?width:height;
                     key(check,property,start,target*small,2);

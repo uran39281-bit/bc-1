@@ -35,12 +35,12 @@ public final class OverlayPainter {
             canvas.drawBitmap(image,null,r,paint);
             if(stroke>0){paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(stroke);paint.setColor(o.borderColor);paint.setAlpha(Math.round(opacity*255));canvas.drawRect(r,paint);}
         } else if(o.shape>0) {
-            float half=unit*.2f;paint.setColor(o.color);paint.setAlpha(Math.round(opacity*Color.alpha(o.color)));
+            float half=unit*.2f;fill(paint,o,local,opacity,half,half);
             Path path=ShapePaths.create(o.shape,half,Math.max(1.5f,stroke)/2+unit*.006f);
             canvas.drawPath(path,paint);
-            if(stroke>0&&o.shape!=4){paint.clearShadowLayer();paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(stroke);paint.setColor(o.borderColor);paint.setAlpha(Math.round(opacity*255));canvas.drawPath(path,paint);}
+            if(stroke>0&&o.shape!=4){paint.clearShadowLayer();paint.setShader(null);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(stroke);paint.setColor(o.borderColor);paint.setAlpha(Math.round(opacity*255));canvas.drawPath(path,paint);}
         } else {
-            paint.setColor(o.color); paint.setAlpha(Math.round(opacity*255)); paint.setTypeface(Typeface.create(o.font,Typeface.BOLD));
+            fill(paint,o,local,opacity,width*.45f,unit*.1f); paint.setTypeface(Typeface.create(o.font,Typeface.BOLD));
             paint.setTextAlign(new Paint.Align[]{Paint.Align.LEFT,Paint.Align.CENTER,Paint.Align.RIGHT}[o.alignment]);
             // Size and the 90%-width fit are computed at the displayed scale, then drawn through the matrix.
             float scale=Math.max(.05f,t.scale),size=unit*.065f*scale;
@@ -50,11 +50,17 @@ public final class OverlayPainter {
                 String text=lines[line]; paint.setTextSize(size); float measure=paint.measureText(text);
                 float fitted=measure>width*.9f?size*width*.9f/measure:size;paint.setTextSize(fitted/scale);
                 float y=(line-(lines.length-1)/2f)*size*1.25f/scale;
-                if(stroke>0){Paint outline=new Paint(paint);outline.clearShadowLayer();outline.setStyle(Paint.Style.STROKE);outline.setStrokeWidth(stroke/scale);outline.setColor(o.borderColor);outline.setAlpha(Math.round(opacity*255));canvas.drawText(text,0,y,outline);}
+                if(stroke>0){Paint outline=new Paint(paint);outline.clearShadowLayer();outline.setShader(null);outline.setStyle(Paint.Style.STROKE);outline.setStrokeWidth(stroke/scale);outline.setColor(o.borderColor);outline.setAlpha(Math.round(opacity*255));canvas.drawText(text,0,y,outline);}
                 canvas.drawText(text,0,y,paint);
             }
         }
         paint.reset();canvas.restore();
+    }
+    private static void fill(Paint paint,EditProject.Overlay o,long time,float opacity,float halfW,float halfH){
+        FillStyle f=o.fill;if(f==null||!f.gradient){int color=f==null?o.color:(int)f.solid.at(time);paint.setColor(color);paint.setAlpha(Math.round(opacity*Color.alpha(color)));return;}
+        java.util.List<FillStyle.Stop> stops=f.ordered(time);int[] colors=new int[stops.size()];float[] positions=new float[stops.size()];for(int i=0;i<stops.size();i++){colors[i]=(int)stops.get(i).color.at(time);positions[i]=(float)stops.get(i).position.at(time);}
+        double angle=Math.toRadians(f.angle.at(time));float dx=(float)Math.cos(angle),dy=(float)Math.sin(angle),extent=Math.abs(dx)*halfW+Math.abs(dy)*halfH;
+        paint.setColor(Color.WHITE);paint.setShader(new LinearGradient(-dx*extent,-dy*extent,dx*extent,dy*extent,colors,positions,Shader.TileMode.CLAMP));paint.setAlpha(Math.round(opacity*255));
     }
     public void release(){for(Bitmap b:images.values())b.recycle();images.clear();}
 }

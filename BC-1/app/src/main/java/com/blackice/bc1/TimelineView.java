@@ -14,7 +14,7 @@ import java.util.*;
  * scroll; pinch to zoom; drag a row's ≡ handle to reorder layers. Media dragged from Project Media drops
  * onto the row and time under the finger. One continuous drag is one undo entry. */
 final class TimelineView extends View {
-    static final int RULER_DP=30,ROW_DP=52,BAR_DP=40;
+    static final int RULER_DP=30,ROW_DP=42,BAR_DP=34;
     private final EditorActivity a;
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF thumbBounds=new RectF();
@@ -27,6 +27,7 @@ final class TimelineView extends View {
     private boolean pinching,moved,vertical;
     private int operation,hitClip=-1,hitOverlay=-1,headerZone=-1,reorderFrom=-1,reorderTo=-1,pendingClip=-1,pendingOverlay=-1;
     private long pendingDelta,guide=-1,downPlayhead;private float downRawX;
+    private EditProject.Landmark movingMarker;private long markerTime;private boolean markerDrop;
     private EditProject.Placement original;private EditProject.Overlay originalOverlay;
     private final Runnable autoScroll=new Runnable(){@Override public void run(){autoScrollStep();}};
     private int autoDirection;
@@ -82,7 +83,7 @@ final class TimelineView extends View {
                 EditProject editProject = TimelineView.this.a.project;
                 boolean locked = ov ? editProject.overlays.get(r.index).locked : editProject.tracks[r.index].locked;
                 n.setContentDescription(TimelineView.this.a.rowName(new int[]{r.kind, r.index}) + ", " + (ov ? "overlay " : EditProject.audioTrack(r.index) ? "audio track " : "visual track ") + (r.index + 1) + ", " + (hidden ? "hidden or muted" : "enabled") + (locked ? ", locked" : "") + ". Tap to toggle visibility or mute. Long press for lock and layer options.");
-                Rect bounds = new Rect(TimelineView.this.a.timelineScroll.getScrollX(), Math.round(r.top), TimelineView.this.a.timelineScroll.getScrollX() + TimelineView.this.headerWidth(), Math.round(r.top) + TimelineView.this.a.dp(52.0f));
+                Rect bounds = new Rect(TimelineView.this.a.timelineScroll.getScrollX(), Math.round(r.top), TimelineView.this.a.timelineScroll.getScrollX() + TimelineView.this.headerWidth(), Math.round(r.top) + TimelineView.this.a.dp(ROW_DP));
                 n.setBoundsInParent(bounds);
                 int[] location = new int[2];
                 TimelineView.this.getLocationOnScreen(location);
@@ -273,10 +274,12 @@ final class TimelineView extends View {
             paint.setColor(0xFF2E465A);for(int q=1;q<4;q++){float mx=x(ms+Math.round(interval*q/4));canvas.drawLine(mx,a.dp(24),mx,a.dp(RULER_DP),paint);}}
         float perFrame=timelineScale()/p.frameRate;
         if(perFrame>=a.dp(5)){paint.setColor(0xFF345465);long f0=(long)Math.max(0,Math.floor(time(left)*p.frameRate/1000.0)),f1=(long)Math.ceil(time(right)*p.frameRate/1000.0);for(long f=f0;f<=f1&&f-f0<2000;f++){float xx=x(Math.round(f*1000.0/p.frameRate));canvas.drawLine(xx,a.dp(RULER_DP)-a.dp(4),xx,a.dp(RULER_DP),paint);}}
-        for(EditProject.Landmark marker:p.landmarks){float xx=x(marker.timeMs);if(xx<left-a.dp(12)||xx>right+a.dp(12))continue;
+        for(EditProject.Landmark marker:p.landmarks){float xx=x(marker==movingMarker&&moved?markerTime:marker.timeMs);if(xx<left-a.dp(12)||xx>right+a.dp(12))continue;
             paint.setColor(EditProject.MARKER_COLORS[marker.slot]);canvas.drawRect(xx-a.dp(9),a.dp(2),xx+a.dp(9),a.dp(20),paint);
+            if(marker.id.equals(a.selectedMarkerId)){paint.setColor(Color.WHITE);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(a.dp(2));canvas.drawRect(xx-a.dp(10),a.dp(1),xx+a.dp(10),a.dp(21),paint);paint.setStyle(Paint.Style.FILL);paint.setColor(EditProject.MARKER_COLORS[marker.slot]);}
             paint.setAlpha(100);canvas.drawLine(xx,a.dp(20),xx,height,paint);paint.setAlpha(255);paint.setColor(0xFF07111B);paint.setTextSize(a.dp(11));paint.setTextAlign(Paint.Align.CENTER);canvas.drawText(""+(marker.slot+1),xx,a.dp(15),paint);paint.setTextAlign(Paint.Align.LEFT);
         }
+        if(markerDrop){paint.setColor(EditorActivity.CYAN);canvas.drawRect(x(markerTime)-a.dp(8),a.dp(2),x(markerTime)+a.dp(8),a.dp(24),paint);}
         paint.setColor(0xFFFFC145);for(long m:p.markers){float xx=x(m);if(xx<left-a.dp(8)||xx>right+a.dp(8))continue;Path tri=new Path();tri.moveTo(xx-a.dp(5),a.dp(18));tri.lineTo(xx+a.dp(5),a.dp(18));tri.lineTo(xx,a.dp(26));tri.close();canvas.drawPath(tri,paint);paint.setStrokeWidth(a.dp(1));canvas.drawLine(xx,a.dp(26),xx,height,paint);}
     }
     private boolean multiSelected(int clip){return a.multiClips.contains(clip);}
@@ -386,7 +389,7 @@ final class TimelineView extends View {
         if(downY>=a.dp(RULER_DP)&&inHeader(downX)){Row r=rowAt(downY);if(r!=null&&r.kind!=2){float local=downX-a.timelineScroll.getScrollX();int w=headerWidth();
             headerZone=2;}return true;}
         // The ruler moves the playhead: tap to jump, drag to scrub.
-        if(downY<a.dp(RULER_DP)){if(!inHeader(downX)){operation=OP_SCRUB;}return true;}
+        if(downY<a.dp(RULER_DP)){if(!inHeader(downX)){for(EditProject.Landmark m:a.project.landmarks)if(Math.abs(x(m.timeMs)-downX)<=a.dp(12)){movingMarker=m;markerTime=m.timeMs;return true;}operation=OP_SCRUB;}return true;}
         hitClip=hitClip(downX,downY);hitOverlay=hitClip>=0?-1:hitOverlay(downX,downY);
         // Edge handles of the selected clip win even slightly outside its bar.
         if(a.multiCount()<=1&&a.clip()!=null&&!LayerOps.locked(a.project,a.selected)){EditProject.Placement chosen=a.project.placements().get(a.selected);float y=rowTopOfTrack(chosen.clip.track);
@@ -414,6 +417,7 @@ final class TimelineView extends View {
             }
             if(pendingClip>=0){a.selectClip(pendingClip,false);pendingClip=-1;}if(pendingOverlay>=0){a.selectOverlay(pendingOverlay);pendingOverlay=-1;}}
         if(!moved)return true;
+        if(movingMarker!=null){markerTime=QuickInsertion.snapped(Math.max(0,time(e.getX())),a.project.frameRate);invalidate();return true;}
         if(operation==OP_SCRUB){scrub(e);lastRawX=e.getRawX();lastRawY=e.getRawY();return true;}
         if(reorderFrom>=0){Row r=rowAt(e.getY());reorderTo=r==null||r.kind==2?-1:rows.indexOf(r);invalidate();return true;}
         if(headerZone>=0){((ScrollView)a.timelineScroll.getParent()).scrollBy(0,Math.round(-dy));lastRawX=e.getRawX();lastRawY=e.getRawY();return true;}
@@ -456,6 +460,7 @@ final class TimelineView extends View {
     private void stopAutoScroll(){autoDirection=0;removeCallbacks(autoScroll);}
     private boolean up(MotionEvent e){
         stopAutoScroll();boolean longPress=e.getEventTime()-downTime>=ViewConfiguration.getLongPressTimeout();
+        if(movingMarker!=null){EditProject.Landmark marker=movingMarker;long target=markerTime;boolean changed=moved&&target!=marker.timeMs;reset();if(changed&&a.editable()){for(EditProject.Landmark other:a.project.landmarks)if(other!=marker&&QuickInsertion.frame(other.timeMs,a.project.frameRate)==QuickInsertion.frame(target,a.project.frameRate)){a.tell("A marker already occupies this frame.");return true;}a.edit("Marker moved",()->marker.timeMs=target);}else{a.selectedMarkerId=marker.id;if(longPress)LandmarkControls.edit(a,marker);else a.seek(marker.timeMs);}return true;}
         if(operation==OP_SCRUB){
             if(moved)scrub(e);
             else if(downY<a.dp(RULER_DP)){
@@ -493,12 +498,20 @@ final class TimelineView extends View {
             else a.selected=TimelineEdits.place(a.project,origin.index,track,origin.startMs+delta);
         });
     }
-    private void reset(){operation=0;guide=-1;pendingDelta=0;pinching=false;headerZone=-1;reorderFrom=-1;reorderTo=-1;pendingClip=-1;pendingOverlay=-1;getParent().requestDisallowInterceptTouchEvent(false);invalidate();}
+    private void reset(){movingMarker=null;operation=0;guide=-1;pendingDelta=0;pinching=false;headerZone=-1;reorderFrom=-1;reorderTo=-1;pendingClip=-1;pendingOverlay=-1;getParent().requestDisallowInterceptTouchEvent(false);invalidate();}
     @Override public boolean performClick(){super.performClick();return true;}
 
     // ---- Media dropped from Project Media ------------------------------------------------------------
     @Override public boolean onDragEvent(DragEvent e){
-        Object payload=e.getLocalState();boolean shape=payload instanceof ShapeCatalog.Drag;
+        Object payload=e.getLocalState();
+        if(payload instanceof LandmarkControls.Drag){boolean valid=((LandmarkControls.Drag)payload).project.equals(a.project.id)&&!a.uiLocked;
+          if(e.getAction()==DragEvent.ACTION_DRAG_STARTED)return valid;
+          if(!valid)return false;
+          if(e.getAction()==DragEvent.ACTION_DRAG_EXITED||e.getAction()==DragEvent.ACTION_DRAG_ENDED){markerDrop=false;invalidate();return true;}
+          markerDrop=e.getY()>=0&&e.getY()<a.dp(RULER_DP)&&!inHeader(e.getX());markerTime=QuickInsertion.snapped(Math.max(0,time(e.getX())),a.project.frameRate);
+          if(e.getAction()==DragEvent.ACTION_DROP){if(markerDrop)LandmarkControls.add(a,markerTime);markerDrop=false;}invalidate();return true;
+        }
+        boolean shape=payload instanceof ShapeCatalog.Drag;
         boolean valid=payload instanceof EditProject.Clip||shape&&((ShapeCatalog.Drag)payload).projectId.equals(a.project.id);
         if(e.getAction()==DragEvent.ACTION_DRAG_STARTED)return valid&&!a.uiLocked;
         if(e.getAction()==DragEvent.ACTION_DRAG_EXITED||e.getAction()==DragEvent.ACTION_DRAG_ENDED){clearDrop();return true;}
@@ -527,7 +540,7 @@ final class TimelineView extends View {
             if((event.getMetaState()&KeyEvent.META_CTRL_ON)!=0){a.zoomTimeline(wheel>0?1.2f:1/1.2f,event.getX()-a.timelineScroll.getScrollX());return true;}
             boolean sideways=(event.getMetaState()&KeyEvent.META_SHIFT_ON)!=0||horizontal!=0||contentHeight()<=((View)a.timelineScroll.getParent()).getHeight();
             if(sideways){float amount=horizontal!=0?horizontal:wheel;a.pausePlayback();a.seek(a.project.playheadMs-Math.round(amount*a.dp(70)/timelineScale()*1000));}
-            else((ScrollView)a.timelineScroll.getParent()).smoothScrollBy(0,Math.round(-wheel*a.dp(52)));
+            else((ScrollView)a.timelineScroll.getParent()).smoothScrollBy(0,Math.round(-wheel*a.dp(ROW_DP)));
             return true;}
         return super.onGenericMotionEvent(event);
     }

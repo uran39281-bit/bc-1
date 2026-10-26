@@ -88,7 +88,8 @@ final class ToolPanels {
     }
 
     private void audioPanel(){
-        EditProject.Clip c=a.clip();if(c==null||c.image){a.inspector.addView(a.note("This media has no audio."));return;}
+        a.inspector.addView(a.button("Speech to Text",v->a.speechToText()));
+        EditProject.Clip c=a.clip();if(c==null||c.image){a.inspector.addView(a.note("Select an audio clip or video containing speech to transcribe."));return;}
         a.inspector.addView(a.button(c.unmutedVolume>=0?"Unmute":"Mute",v->{if(a.layerEditable())a.edit("Audio mute updated",()->ClipAudio.toggleMute(c));}));
         percent("Volume",c.volume,1,v->{c.volume=v;c.unmutedVolume=-1;},c.motion,Motion.VOLUME);
         if(c.fadeInMs>0||c.fadeOutMs>0)a.inspector.addView(a.note("Saved legacy fades remain active."));
@@ -145,7 +146,7 @@ final class ToolPanels {
         long t=a.project.playheadMs;
         if(which==0)a.edit("Trimmed start to playhead",()->o.startMs=t);
         else if(which==2)a.edit("Trimmed end to playhead",()->o.endMs=t);
-        else a.edit("Layer split",()->{if(!com.blackice.bc1.core.CaptionBuilder.GROUP.equals(o.group)&&a.project.regularOverlayCount()>=20)throw new IllegalArgumentException("Up to 20 text, shape and image layers.");EditProject.Overlay right=o.copy();long offset=t-o.startMs;right.startMs=t;Keyframes.splitAt(right.motion,offset);o.endMs=t;a.project.overlays.add(a.project.overlays.indexOf(o)+1,right);});
+        else a.edit("Layer split",()->{if(!com.blackice.bc1.core.CaptionBuilder.GROUP.equals(o.group)&&a.project.regularOverlayCount()>=20)throw new IllegalArgumentException("Up to 20 text, shape and image layers.");EditProject.Overlay right=o.copy();long offset=t-o.startMs;right.startMs=t;Keyframes.splitAt(right.motion,offset);if(right.fill!=null)right.fill.split(offset);o.endMs=t;a.project.overlays.add(a.project.overlays.indexOf(o)+1,right);});
     }
     void runTool(String tool){
         if(tool.startsWith("Duration:"))tool="Duration";else if(tool.startsWith("Speed:"))tool="Speed";
@@ -182,7 +183,7 @@ final class ToolPanels {
             case "Color & Fill":open(name,this::colorPanel);return;
             case "Border & Shadow":open(name,this::borderPanel);return;
             case "Blending & Opacity":open(name,this::blendPanel);return;
-            case "Effects":open(name,this::effectsHome);return;
+            case "Effects":open(name,this::effectsPanel);return;
             case "Presets":open(name,this::presetsPanel);return;
         }
     }
@@ -350,7 +351,7 @@ final class ToolPanels {
     private static final int[] PALETTE={0xFFFFFFFF,0xFF000000,0xFF40BFFF,0xFF9FEAFF,0xFFFF4D6D,0xFFFFC145,0xFF6BE675,0xFFB388FF};
     private void colorPanel(){
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
-        if(o!=null&&o.imageUri==null){swatches(o.shape>0?"Fill color":"Text color",o.color,PALETTE,value->o.color=value);return;}
+        if(o!=null&&o.imageUri==null){a.fillPanel.build(a.inspector);return;}
         if(o!=null){a.inspector.addView(a.note("Image layers keep their own colors. Use Border & Shadow or Blending & Opacity."));return;}
         a.inspector.addView(a.note("Color adjustments for this "+(c.image?"picture":"video")+". One color effect is active at a time."));
         int[] ids={0,4,9,10,11};
@@ -364,7 +365,11 @@ final class ToolPanels {
         swatches("Border color",o.borderColor,PALETTE,value->o.borderColor=value);
         valueRow("Shadow",o.shadow,0,1,0,100,"%",v->o.shadow=v,null,0,1);
     }
-    private void effectsPanel(){a.inspector.addView(a.note("Shader effects are unavailable. Saved shader-effect values are retained but bypassed during preview and export."));}
+    private void effectsPanel(){
+        a.inspector.addView(a.label("Applied effects",15,EditorActivity.TEXT,true));EditProject.Clip c=a.clip();
+        TextView list=a.note(c!=null&&c.effect!=0?com.blackice.bc1.core.EffectCatalog.name(c.effect)+" • saved, currently bypassed":"No effects applied");list.setGravity(Gravity.CENTER_VERTICAL);a.inspector.addView(list,new LinearLayout.LayoutParams(-1,a.dp(100)));
+        TextView add=a.button("+ Add Effects",null);android.graphics.drawable.GradientDrawable outline=BlackIceTheme.surface(a.getResources().getDisplayMetrics().density,false);outline.setStroke(a.dp(1),BlackIceTheme.ICE);add.setBackground(outline);add.setTextColor(BlackIceTheme.ICE);add.setEnabled(false);add.setContentDescription("Add Effects — Coming Later, unavailable");a.inspector.addView(add,new LinearLayout.LayoutParams(-1,a.dp(52)));a.inspector.addView(a.note("Coming Later"));
+    }
     private void effectsHome(){
         a.inspector.addView(a.button("Styles",v->open("Styles",this::stylesPanel)));
         a.inspector.addView(a.button("Transitions",v->open("Transitions",this::transitionsPanel)));

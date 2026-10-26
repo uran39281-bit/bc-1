@@ -7,7 +7,7 @@ import java.util.UUID;
 /** Portable edit decision list. Times are integer milliseconds; media is never modified. */
 public final class EditProject {
     /** Schema 5: eight visual tracks (0 main, 1–7 layers) and audio on tracks 8–11 (was 4–7). */
-    public static final int SCHEMA = 9;
+    public static final int SCHEMA = 10;
     /** Visual tracks: 0 is the main sequence, 1..VISUAL_TRACKS-1 are independent video/image layers. */
     public static final int MAX_CAPTIONS=2000;
     public String appliedCaptionJobId="";
@@ -97,6 +97,7 @@ public final class EditProject {
         public String id = UUID.randomUUID().toString(), text = "BLACK ICE", imageUri;
         public long startMs, endMs = 3000;
         public float x=0, y=-.65f, scale=.7f, opacity=1f; public Motion motion=new Motion();
+        public FillStyle fill;
         public String font="sans-serif-medium";public int color=0xFFFFFFFF,alignment=1;
         /** 0 text/image, 1 rectangle, 2 ellipse, 3 triangle, 4 line. */
         public int shape;
@@ -105,7 +106,7 @@ public final class EditProject {
         public float heightScale=-1;
         public float rotation, aspect=1, skewX, skewY, anchorX, anchorY, borderWidth, shadow;
         public int borderColor=0xFF000000, blend;
-        public Overlay copy(){Overlay o=new Overlay();o.visualizerClipId=visualizerClipId;o.visualizerStyle=visualizerStyle;o.text=text;o.imageUri=imageUri;o.startMs=startMs;o.endMs=endMs;o.x=x;o.y=y;o.scale=scale;o.opacity=opacity;o.motion=motion.copy();o.font=font;o.color=color;o.alignment=alignment;o.shape=shape;o.name=name;o.group=group;o.hidden=hidden;o.solo=solo;o.locked=locked;o.flipH=flipH;o.flipV=flipV;o.rotation=rotation;o.heightScale=heightScale;o.aspect=aspect;o.skewX=skewX;o.skewY=skewY;o.anchorX=anchorX;o.anchorY=anchorY;o.borderWidth=borderWidth;o.shadow=shadow;o.borderColor=borderColor;o.blend=blend;return o;}
+        public Overlay copy(){Overlay o=new Overlay();o.visualizerClipId=visualizerClipId;o.visualizerStyle=visualizerStyle;o.text=text;o.imageUri=imageUri;o.startMs=startMs;o.endMs=endMs;o.x=x;o.y=y;o.scale=scale;o.opacity=opacity;o.motion=motion.copy();o.font=font;o.color=color;o.fill=fill==null?null:fill.copy();o.alignment=alignment;o.shape=shape;o.name=name;o.group=group;o.hidden=hidden;o.solo=solo;o.locked=locked;o.flipH=flipH;o.flipV=flipV;o.rotation=rotation;o.heightScale=heightScale;o.aspect=aspect;o.skewX=skewX;o.skewY=skewY;o.anchorX=anchorX;o.anchorY=anchorY;o.borderWidth=borderWidth;o.shadow=shadow;o.borderColor=borderColor;o.blend=blend;return o;}
         public String label(){if(visualizerClipId!=null)return "Audio visualizer (disabled)";if(name!=null&&!name.isEmpty())return name;if(imageUri!=null)return "Image";if(shape>0)return SHAPES[shape];return text;}
     }
     public static final String[] SHAPES={"Text","Square","Circle","Triangle","Line","Cross","Arc","Speech bubble","Pie","Hexagon","Flower","Diagonal arrow","Trapezoid","Half moon","Rectangle","Star","Thick line","Polygon","Decorative rectangle","Oval","Diamond","Octagon","Rhombus","Heart","Half circle","Arrow","Three-leaf clover","Monkey head"};
@@ -213,9 +214,9 @@ public final class EditProject {
         }
         List<Placement> ps=placements();
         for(int i=0;i<ps.size();i++)for(int n=i+1;n<ps.size();n++){Placement a=ps.get(i),b=ps.get(n);if(a.clip.track>0&&a.clip.track==b.clip.track&&a.startMs<b.endMs&&b.startMs<a.endMs)throw new IllegalArgumentException("Clips on the same layer cannot overlap. Use another layer or move the start time.");}
-        for(Overlay o:overlays){o.motion.validate();if(!(o.heightScale==-1||Motion.allowed(Motion.HEIGHT,o.heightScale))||o.shape<0||o.shape>=SHAPES.length||o.blend<0||o.blend>=BLENDS.length||!(o.aspect>=.05f&&o.aspect<=20)||!(Math.abs(o.skewX)<=80)||!(Math.abs(o.skewY)<=80)||!Float.isFinite(o.rotation)||!Motion.allowed(Motion.ANCHOR_X,o.anchorX)||!Motion.allowed(Motion.ANCHOR_Y,o.anchorY)||!(o.borderWidth>=0&&o.borderWidth<=1)||!(o.shadow>=0&&o.shadow<=1)||(o.name!=null&&o.name.length()>60)||(o.group!=null&&o.group.length()>40))throw new IllegalArgumentException("Invalid overlay style.");}
+        for(Overlay o:overlays){o.motion.validate();if(o.fill!=null)o.fill.validate();if(!(o.heightScale==-1||Motion.allowed(Motion.HEIGHT,o.heightScale))||o.shape<0||o.shape>=SHAPES.length||o.blend<0||o.blend>=BLENDS.length||!(o.aspect>=.05f&&o.aspect<=20)||!(Math.abs(o.skewX)<=80)||!(Math.abs(o.skewY)<=80)||!Float.isFinite(o.rotation)||!Motion.allowed(Motion.ANCHOR_X,o.anchorX)||!Motion.allowed(Motion.ANCHOR_Y,o.anchorY)||!(o.borderWidth>=0&&o.borderWidth<=1)||!(o.shadow>=0&&o.shadow<=1)||(o.name!=null&&o.name.length()>60)||(o.group!=null&&o.group.length()>40))throw new IllegalArgumentException("Invalid overlay style.");}
         for(Overlay o:overlays) if(o.startMs<0 || o.endMs<=o.startMs || !unit(o.opacity)
-                || !Float.isFinite(o.scale) || o.scale<.1f || o.scale>2 || !Float.isFinite(o.x) || Math.abs(o.x)>100000
+                || !Float.isFinite(o.scale) || o.scale<.1f || o.scale>Motion.MAX_SCALE || !Float.isFinite(o.x) || Math.abs(o.x)>100000
                 || !Float.isFinite(o.y) || Math.abs(o.y)>100000 || o.text==null || o.text.length()>200 || o.alignment<0||o.alignment>2 || !("sans-serif-medium".equals(o.font)||"serif".equals(o.font)||"monospace".equals(o.font)))
             throw new IllegalArgumentException("Invalid overlay.");
         if(music!=null && (music.uri==null || music.inMs<0 || music.outMs>music.sourceDurationMs

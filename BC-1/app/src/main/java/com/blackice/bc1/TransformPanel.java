@@ -24,13 +24,13 @@ final class TransformPanel {
     private Motion motion(){return a.selectedMotion();}
     void write(int property,float value){
         if(!Motion.allowed(property,value))throw new IllegalArgumentException(Motion.PROPERTIES[property]+" is outside the supported range.");
-        if(a.overlay()!=null&&property==Motion.SCALE&&(value<.1f||value>2))throw new IllegalArgumentException("Legacy overlay Width supports 10–200%.");
+        if(a.overlay()!=null&&property==Motion.SCALE&&value<.1f)throw new IllegalArgumentException("Overlay Width must be at least 10% of its base size.");
         if(Keyframes.set(motion(),property,a.panels.motionTime(),value,a.panels.tolerance()))a.setStatic(property,value);
     }
     private void separate(){if(a.clip()!=null)TransformEdits.separateHeight(a.clip());else TransformEdits.separateHeight(a.overlay());}
     void writeDimensions(float w,float h,boolean paired){
         TransformEdits.scalePair(w,h,Motion.SCALE,w,false);
-        if(a.overlay()!=null&&(w<.1f||w>2))throw new IllegalArgumentException("Legacy overlay Width supports 10–200%.");
+        if(a.overlay()!=null&&w<.1f)throw new IllegalArgumentException("Overlay Width must be positive and at least 10% of its base size.");
         separate();Motion m=motion();long time=a.panels.motionTime();
         if(paired&&(!m.curves.get(Motion.SCALE).isEmpty()||!m.curves.get(Motion.HEIGHT).isEmpty())){
             TransformMath.Transform t=current();Keyframes.enable(m,Motion.SCALE,time,t.scale);Keyframes.enable(m,Motion.HEIGHT,time,t.scale*t.aspect);

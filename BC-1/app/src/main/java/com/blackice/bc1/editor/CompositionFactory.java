@@ -174,25 +174,31 @@ public final class CompositionFactory {
         private final OverlayPainter painter;
         private final List<EditProject.Overlay> overlays;
         private Bitmap bitmap;
+        private int[] straightPixels;
         private int width,height,activeMask=-1;
         ProjectOverlay(Context context,List<EditProject.Overlay> overlays) { painter=new OverlayPainter(context);this.overlays=overlays; }
         @Override public void configure(Size size) {super.configure(size);width=size.getWidth();height=size.getHeight();}
         @Override public Bitmap getBitmap(long timeUs) throws VideoFrameProcessingException {
             int mask=0; for(int i=0;i<overlays.size();i++) {EditProject.Overlay o=overlays.get(i); if(timeUs/1000>=o.startMs && timeUs/1000<o.endMs) mask|=1<<i;}
             if(bitmap==null || bitmap.getWidth()!=width || bitmap.getHeight()!=height) {
-                if(bitmap!=null) bitmap.recycle(); bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);activeMask=-1;
+                if(bitmap!=null) bitmap.recycle(); bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);straightPixels=new int[width*height];activeMask=-1;
             }
-            boolean animated=false;for(EditProject.Overlay o:overlays)animated|=o.motion.animated();
+            boolean animated=false;for(EditProject.Overlay o:overlays)animated|=(o.motion.animated()||o.fill!=null&&o.fill.animated());
             if(activeMask==mask&&!animated) return bitmap;
-            bitmap.eraseColor(Color.TRANSPARENT); Canvas canvas=new Canvas(bitmap);
+            bitmap.setPremultiplied(true);bitmap.eraseColor(Color.TRANSPARENT); Canvas canvas=new Canvas(bitmap);
             try {
                 for(int i=0;i<overlays.size();i++) if((mask&(1<<i))!=0) {
                     EditProject.Overlay o=overlays.get(i);long local=Math.max(0,timeUs/1000-o.startMs);
                     painter.draw(canvas,width,height,o,local);
                 }
             } catch(java.io.IOException e) {throw new VideoFrameProcessingException(e);}
+            // Canvas stores premultiplied RGB; Media3 OverlayEffect multiplies sampled RGB by
+            // alpha itself. Upload straight RGBA so translucent fills are not darkened twice.
+            // getPixels returns straight ARGB. Reuse one output-sized buffer, independent of scale.
+            bitmap.getPixels(straightPixels,0,width,0,0,width,height);
+            bitmap.setPremultiplied(false);bitmap.setPixels(straightPixels,0,width,0,0,width,height);
             activeMask=mask; return bitmap;
         }
-        @Override public void release() throws VideoFrameProcessingException {super.release();if(bitmap!=null)bitmap.recycle();painter.release();}
+        @Override public void release() throws VideoFrameProcessingException {super.release();if(bitmap!=null)bitmap.recycle();straightPixels=null;painter.release();}
     }
 }

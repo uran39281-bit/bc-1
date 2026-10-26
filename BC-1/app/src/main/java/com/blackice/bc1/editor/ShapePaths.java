@@ -30,7 +30,7 @@ public final class ShapePaths {
    case 23:p.moveTo(0,h*.9f);p.cubicTo(-h*.2f,h*.65f,-h,h*.1f,-h,-h*.38f);p.cubicTo(-h,-h*.95f,-h*.3f,-h*1.08f,0,-h*.5f);p.cubicTo(h*.3f,-h*1.08f,h,-h*.95f,h,-h*.38f);p.cubicTo(h,h*.1f,h*.2f,h*.65f,0,h*.9f);p.close();break;
    case 24:p.moveTo(-h,h*.5f);p.arcTo(-h,-h*.5f,h,h*1.5f,180,180,false);p.close();break;
    case 25:points(p,h,new float[]{-1,-.28f,.2f,-.28f,.2f,-.75f,1,0,.2f,.75f,.2f,.28f,-1,.28f});break;
-   case 26:p.addCircle(0,-h*.48f,h*.46f,Path.Direction.CW);p.addCircle(-h*.47f,h*.05f,h*.46f,Path.Direction.CW);p.addCircle(h*.47f,h*.05f,h*.46f,Path.Direction.CW);points(p,h,new float[]{-.11f,.2f,.11f,.2f,.3f,1,.05f,1});break;
+   case 26:p.setFillType(Path.FillType.WINDING);p.addCircle(0,0,h*.25f,Path.Direction.CW);p.addCircle(0,-h*.48f,h*.46f,Path.Direction.CW);p.addCircle(-h*.47f,h*.05f,h*.46f,Path.Direction.CW);p.addCircle(h*.47f,h*.05f,h*.46f,Path.Direction.CW);points(p,h,new float[]{-.11f,.2f,.11f,.2f,.3f,1,.05f,1});break;
    case 27: // Original front-facing 2D monkey icon; no Blender mesh or asset is embedded.
        p.addOval(-h,-h*.25f,-h*.45f,h*.42f,Path.Direction.CW);p.addOval(h*.45f,-h*.25f,h,h*.42f,Path.Direction.CW);
        p.addOval(-h*.7f,-h*.9f,h*.7f,h*.65f,Path.Direction.CW);p.addOval(-h*.5f,h*.1f,h*.5f,h*.95f,Path.Direction.CW);

@@ -50,9 +50,9 @@ public class WorkspaceV2Test {
                         described(root,"Add Audio").performClick();assertNotNull("Insert at playhead by default",text(root,"● At playhead"));described(root,"Add Shapes").performClick();}});
                 Thread.sleep(300);capture(wide?"v2-wide-add-drawer":"v2-phone-add-drawer");
                 scenario.onActivity(a->{a.seek(1000);described(a.getWindow().getDecorView(),"Insert shape: Square").performClick();});
-                WorkflowControlsTest.click(this,"Add as new layer at playhead");
+
                 scenario.onActivity(a->{View root=a.getWindow().getDecorView();
-                    assertEquals(1,a.project.overlays.size());assertEquals("Inserted at the playhead",1000,a.project.overlays.get(0).startMs);assertEquals(0,a.selectedOverlay);
+                    assertEquals(1,a.project.overlays.size());assertEquals("Centered insertion clamps at zero",0,a.project.overlays.get(0).startMs);assertEquals(0,a.selectedOverlay);
                     // Selected layer: contextual media actions; wide layout exposes duplication/deletion in More.
                     assertEquals(1,a.project.overlays.get(0).shape);assertNotNull(text(root,"Square"));assertNotNull(text(root,"Settings"));if(!wide)assertNotNull(described(root,"Duplicate"));assertNotNull(described(root,wide?"Selected media actions":"More actions"));
                     assertNotNull(text(root,"Media Settings"));assertNotNull("Shape tools",described(root,"Media Settings: Shape & Style"));assertNull("No slip for shapes",text(root,"Slip"));assertNotNull(text(root,"Move & Transform"));
@@ -62,7 +62,7 @@ public class WorkspaceV2Test {
                     assertNotNull(described(a.getWindow().getDecorView(),"Opacity keyframe: keyframe at playhead • tap to remove"));
                     a.seek(2500);a.renderInspector();EditText exact=field(a.getWindow().getDecorView(),"Opacity exact value in %");assertNotNull(exact);exact.setText("40");text(a.getWindow().getDecorView(),"Apply").performClick();
                     assertEquals("Edit while animated creates a second keyframe",2,a.project.overlays.get(0).motion.curves.get(Motion.OPACITY).size());
-                    assertEquals(.4f,a.project.overlays.get(0).motion.value(Motion.OPACITY,1500,1),1e-3);
+                    assertEquals(.4f,a.project.overlays.get(0).motion.value(Motion.OPACITY,2500,1),1e-3);
                     text(a.getWindow().getDecorView(),"‹  Back").performClick();assertEquals("Back keeps the selection",0,a.selectedOverlay);assertEquals("Back keeps the playhead",2500,a.project.playheadMs);if(wide){a.moreAction("Color");a.panels.back();}else assertNotNull(described(a.getWindow().getDecorView(),"Media Settings: Shape & Style"));
                     text(a.getWindow().getDecorView(),"Move & Transform").performClick();});
                 Thread.sleep(300);capture(wide?"v2-wide-transform":"v2-phone-transform");

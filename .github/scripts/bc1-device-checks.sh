@@ -139,3 +139,9 @@ for turn in clockwise counterclockwise; do
   ffmpeg -v error -xerror -i "BC-1/app/build/reports/androidTests/qa/turns-${turn}.mp4" -f null -
   echo "Independent cumulative rotation decode passed: ${turn}"
 done
+
+# Animated fill and 10000% shapes through both real export backends.
+for engine in ice media3; do
+  ffmpeg -v error -xerror -i "BC-1/app/build/reports/androidTests/qa/v143-fill-${engine}.mp4" -f null -
+  echo "Independent animated-fill export decode passed: ${engine}"
+done
