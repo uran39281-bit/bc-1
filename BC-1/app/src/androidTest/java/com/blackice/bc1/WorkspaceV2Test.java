@@ -62,7 +62,7 @@ public class WorkspaceV2Test {
                     assertNotNull(described(a.getWindow().getDecorView(),"Opacity keyframe: keyframe at playhead • tap to remove"));
                     a.seek(2500);a.renderInspector();EditText exact=field(a.getWindow().getDecorView(),"Opacity exact value in %");assertNotNull(exact);exact.setText("40");text(a.getWindow().getDecorView(),"Apply").performClick();
                     assertEquals("Edit while animated creates a second keyframe",2,a.project.overlays.get(0).motion.curves.get(Motion.OPACITY).size());
-                    assertEquals(.4f,a.project.overlays.get(0).motion.value(Motion.OPACITY,1500,1),1e-3);
+                    assertEquals(.4f,a.project.overlays.get(0).motion.value(Motion.OPACITY,2500,1),1e-3);
                     text(a.getWindow().getDecorView(),"‹  Back").performClick();assertEquals("Back keeps the selection",0,a.selectedOverlay);assertEquals("Back keeps the playhead",2500,a.project.playheadMs);if(wide){a.moreAction("Color");a.panels.back();}else assertNotNull(described(a.getWindow().getDecorView(),"Media Settings: Shape & Style"));
                     text(a.getWindow().getDecorView(),"Move & Transform").performClick();});
                 Thread.sleep(300);capture(wide?"v2-wide-transform":"v2-phone-transform");

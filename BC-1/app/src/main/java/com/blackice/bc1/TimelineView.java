@@ -83,7 +83,7 @@ final class TimelineView extends View {
                 EditProject editProject = TimelineView.this.a.project;
                 boolean locked = ov ? editProject.overlays.get(r.index).locked : editProject.tracks[r.index].locked;
                 n.setContentDescription(TimelineView.this.a.rowName(new int[]{r.kind, r.index}) + ", " + (ov ? "overlay " : EditProject.audioTrack(r.index) ? "audio track " : "visual track ") + (r.index + 1) + ", " + (hidden ? "hidden or muted" : "enabled") + (locked ? ", locked" : "") + ". Tap to toggle visibility or mute. Long press for lock and layer options.");
-                Rect bounds = new Rect(TimelineView.this.a.timelineScroll.getScrollX(), Math.round(r.top), TimelineView.this.a.timelineScroll.getScrollX() + TimelineView.this.headerWidth(), Math.round(r.top) + TimelineView.this.a.dp(52.0f));
+                Rect bounds = new Rect(TimelineView.this.a.timelineScroll.getScrollX(), Math.round(r.top), TimelineView.this.a.timelineScroll.getScrollX() + TimelineView.this.headerWidth(), Math.round(r.top) + TimelineView.this.a.dp(ROW_DP));
                 n.setBoundsInParent(bounds);
                 int[] location = new int[2];
                 TimelineView.this.getLocationOnScreen(location);
@@ -540,7 +540,7 @@ final class TimelineView extends View {
             if((event.getMetaState()&KeyEvent.META_CTRL_ON)!=0){a.zoomTimeline(wheel>0?1.2f:1/1.2f,event.getX()-a.timelineScroll.getScrollX());return true;}
             boolean sideways=(event.getMetaState()&KeyEvent.META_SHIFT_ON)!=0||horizontal!=0||contentHeight()<=((View)a.timelineScroll.getParent()).getHeight();
             if(sideways){float amount=horizontal!=0?horizontal:wheel;a.pausePlayback();a.seek(a.project.playheadMs-Math.round(amount*a.dp(70)/timelineScale()*1000));}
-            else((ScrollView)a.timelineScroll.getParent()).smoothScrollBy(0,Math.round(-wheel*a.dp(52)));
+            else((ScrollView)a.timelineScroll.getParent()).smoothScrollBy(0,Math.round(-wheel*a.dp(ROW_DP)));
             return true;}
         return super.onGenericMotionEvent(event);
     }

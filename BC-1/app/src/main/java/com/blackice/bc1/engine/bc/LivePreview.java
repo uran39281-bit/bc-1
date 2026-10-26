@@ -96,7 +96,15 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
             if (last != null) request(last.project, last.timeMs);
         }); // the UI thread never waits for surface attachment or rendering
     }
-    @Override public void onSurfaceTextureSizeChanged(SurfaceTexture st, int w, int h) { }
+    @Override public void onSurfaceTextureSizeChanged(SurfaceTexture st, int w, int h) {
+        gl.post(() -> {
+            if(surfaceTexture!=st)return;
+            // TextureView resets its buffer size during layout. Keep the project-sized GL viewport
+            // and buffer in agreement when the phone inspector changes the preview's display size.
+            if(width>0&&height>0)st.setDefaultBufferSize(width,height);
+            Request last=latest;if(last!=null)request(last.project,last.timeMs);
+        });
+    }
     /** Returns false: the render thread releases the SurfaceTexture after its last frame, so a frame in flight never draws into a dead surface. */
     @Override public boolean onSurfaceTextureDestroyed(SurfaceTexture st) {
         if (!gl.post(() -> { if(surfaceTexture==st)detachWindow();else st.release(); })) st.release();
