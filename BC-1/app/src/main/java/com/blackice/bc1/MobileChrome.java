@@ -72,7 +72,7 @@ final class MobileChrome {
             if(a.workspaceFocus==2)height=Math.max(dp(160),(int)(h*.32f));
             height=Math.min(height,Math.max(dp(160),h-dp(338)));
             preview=Math.min(preview,Math.max(dp(80),h-height-dp(a.workspaceFocus==2?184:238)));
-            if(a.workspaceFocus==1)preview=Math.min(preview,dp(80));
+            if(a.workspaceFocus==1)preview=Math.min(preview,dp(60));
         }
         int sheetWidth=landscape?Math.min(dp(320),stage.getWidth()/2):-1;
         content.setOrientation(landscape?LinearLayout.HORIZONTAL:LinearLayout.VERTICAL);

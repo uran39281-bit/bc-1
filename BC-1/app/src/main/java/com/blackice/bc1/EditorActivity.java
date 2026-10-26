@@ -169,7 +169,7 @@ public final class EditorActivity extends Activity {
         try {mode=LayoutPolicy.Preference.valueOf(getSharedPreferences(PREFS,MODE_PRIVATE).getString("mode","AUTO"));}catch(Exception ignored){}
         snapping=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("snapping",true);
         workspaceFocus=getSharedPreferences(PREFS,MODE_PRIVATE).getInt("workspace-focus",0);
-        if(state!=null){pendingSubtitleExport=state.getString("subtitle-export");transformPanel.linked=state.getBoolean("transform-linked",true);transformPanel.tab=state.getInt("transform-tab",0);mediaSort=state.getInt("media-sort",0);mediaList=state.getBoolean("media-list",false);favoritesOnly=state.getBoolean("media-favorites",false);customTimelineHeight=state.getInt("timeline-height",0);selected=state.getInt("selected",-1);selectedOverlay=state.getInt("selected-overlay",-1);pixelsPerSecond=state.getFloat("timeline-zoom",48);tab=state.getInt("tab",0);mediaQuery=state.getString("media-query","");try{mediaKind=MediaFilter.Kind.valueOf(state.getString("media-kind","ALL"));}catch(IllegalArgumentException ignored){}}
+        if(state!=null){selectedMediaUri=state.getString("selected-media-uri");pendingSubtitleExport=state.getString("subtitle-export");transformPanel.linked=state.getBoolean("transform-linked",true);transformPanel.tab=state.getInt("transform-tab",0);mediaSort=state.getInt("media-sort",0);mediaList=state.getBoolean("media-list",false);favoritesOnly=state.getBoolean("media-favorites",false);customTimelineHeight=state.getInt("timeline-height",0);selected=state.getInt("selected",-1);selectedOverlay=state.getInt("selected-overlay",-1);pixelsPerSecond=state.getFloat("timeline-zoom",48);tab=state.getInt("tab",0);mediaQuery=state.getString("media-query","");try{mediaKind=MediaFilter.Kind.valueOf(state.getString("media-kind","ALL"));}catch(IllegalArgumentException ignored){}}
         if(state==null)tab=1;
         buildWorkspace();
         String id=state==null?getIntent().getStringExtra("project-id"):state.getString("project-id",getIntent().getStringExtra("project-id"));
@@ -193,7 +193,7 @@ public final class EditorActivity extends Activity {
     @Override protected void onStart(){super.onStart();active=true;main.post(pulse);if(!loading)showLive();}
     @Override protected void onStop(){cancelLiveAdjust();active=false;main.removeCallbacks(pulse);main.removeCallbacks(warmPreview);saveNow();releasePreview();if(previewProxy!=null)previewProxy.cancel();if(live!=null)live.releaseDecoders();super.onStop();}
     @Override protected void onDestroy(){if(mediaImportWindow!=null)mediaImportWindow.close();main.removeCallbacks(autosave);if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
-    @Override protected void onSaveInstanceState(Bundle state){mediaImportWindow.save(state);state.putString("subtitle-export",pendingSubtitleExport);state.putString("project-id",loading?openingProjectId:project.id);cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());saveNow();super.onSaveInstanceState(state);}
+    @Override protected void onSaveInstanceState(Bundle state){mediaImportWindow.save(state);state.putString("selected-media-uri",selectedMediaUri);state.putString("subtitle-export",pendingSubtitleExport);state.putString("project-id",loading?openingProjectId:project.id);cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());saveNow();super.onSaveInstanceState(state);}
     @Override public void onConfigurationChanged(Configuration config){super.onConfigurationChanged(config);cancelLiveAdjust();buildWorkspace();}
     boolean exporting(){return getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getBoolean("running",false)||exportLaunching;}
     boolean editable(){if(captionApplying){tell("Saving captions…");return false;}if(uiLocked){tell("UI locked • unlock editing in Settings");return false;}if(loading||importing){tell("Wait for the current import to finish.");return false;}if(exporting()){tell("Wait for export to finish, or cancel it to continue editing.");return false;}return true;}
@@ -730,7 +730,7 @@ public final class EditorActivity extends Activity {
     void pruneSelection(){multiClips.removeIf(i->i>=project.clips.size());multiOverlays.removeIf(i->i>=project.overlays.size());if(multiCount()==1){multiClips.clear();multiOverlays.clear();}}
     void deselect(){compareSnapshot=null;selected=-1;selectedOverlay=-1;multiClips.clear();multiOverlays.clear();panels.reset();renderInspector();}
     void baseline(){try{compareSnapshot=ProjectStore.encode(project);}catch(Exception e){compareSnapshot=null;}}
-    void selectClip(int index,boolean seekToStart){if(index!=selected)baseline();selected=index;selectedOverlay=-1;multiClips.clear();multiOverlays.clear();tab=1;if(seekToStart)seek(project.placements().get(index).startMs);renderInspector();}
+    void selectClip(int index,boolean seekToStart){selectedMediaUri=project.clips.get(index).uri;if(index!=selected)baseline();selected=index;selectedOverlay=-1;multiClips.clear();multiOverlays.clear();tab=1;if(seekToStart)seek(project.placements().get(index).startMs);renderInspector();}
     void selectOverlay(int index){if(selected>=0||index!=selectedOverlay)baseline();selected=-1;selectedOverlay=index;multiClips.clear();multiOverlays.clear();tab=1;renderInspector();}
     /** Ctrl/Shift-click or long-press: add or remove a layer from the multi-selection; groups select together. */
     void toggleMulti(int clipIndex,int overlayIndex){
@@ -1469,7 +1469,7 @@ public final class EditorActivity extends Activity {
     }
     boolean onTimeline(EditProject.Clip asset){for(EditProject.Clip c:project.clips)if(c.uri.equals(asset.uri))return true;return false;}
     /** A Project Media card: thumbnail with duration badge and name. Long-press and drag it onto a timeline
-     * row; tap for actions (or to select the clip already using it). */
+     * row; single tap selects the bin item and double activation inserts one independent clip. */
     View mediaCard(EditProject.Clip asset,int columns,boolean list){
         LinearLayout card=list?row():column();card.setPadding(0,0,0,0);
         card.setTag(asset);boolean chosen=asset.uri.equals(selectedMediaUri);
@@ -1502,11 +1502,12 @@ public final class EditorActivity extends Activity {
                 }});
         }
         TextView more=compactButton("⋮","Media actions: "+asset.name,v->{lastMediaTap=0;mediaActionsMenu(asset);});FrameLayout.LayoutParams moreLp=new FrameLayout.LayoutParams(dp(44),dp(44),Gravity.TOP|Gravity.END);frame.addView(more,moreLp);
-        card.setOnClickListener(v->{long now=android.os.SystemClock.uptimeMillis();boolean twice=asset.uri.equals(lastMediaTapUri)&&lastMediaTap>0&&now-lastMediaTap<=ViewConfiguration.getDoubleTapTimeout();selectedMediaUri=asset.uri;lastMediaTapUri=asset.uri;lastMediaTap=twice?0:now;if(twice)quickInsert(asset,project.playheadMs);else renderMediaGrid();});
+        card.setOnClickListener(v->{long now=android.os.SystemClock.uptimeMillis();boolean twice=asset.uri.equals(lastMediaTapUri)&&lastMediaTap>0&&now-lastMediaTap<=ViewConfiguration.getDoubleTapTimeout();selectedMediaUri=asset.uri;lastMediaTapUri=asset.uri;lastMediaTap=twice?0:now;if(twice)quickInsert(asset,project.playheadMs);else refreshBinSelection();});
         return card;
     }
-    /** Tap on a Project Media item: select the clip using it, or add it at the playhead. */
-    void mediaActions(EditProject.Clip asset){selectedMediaUri=asset.uri;renderMediaGrid();}
+    /** Keep bin selection separate from timeline selection and insertion. */
+    void refreshBinSelection(){renderMediaGrid();if(!wideLayout&&binGrid!=null)renderInspector();}
+    void mediaActions(EditProject.Clip asset){selectedMediaUri=asset.uri;refreshBinSelection();}
     void mediaActionsMenu(EditProject.Clip asset){
 
         java.util.List<String> items=new ArrayList<>();int used=-1;for(int i=0;i<project.clips.size()&&used<0;i++)if(project.clips.get(i).uri.equals(asset.uri))used=i;
@@ -1535,7 +1536,7 @@ public final class EditorActivity extends Activity {
             ViewGroup cells=(ViewGroup)mediaGrid.getChildAt(row);
             for(int i=0;i<cells.getChildCount();i++){
                 View card=cells.getChildAt(i);if(!(card.getTag() instanceof EditProject.Clip))continue;
-                boolean chosen=c!=null&&c.uri.equals(((EditProject.Clip)card.getTag()).uri);
+                boolean chosen=((EditProject.Clip)card.getTag()).uri.equals(selectedMediaUri);
                 if(card.isSelected()!=chosen){renderMediaGrid();return;}
             }
         }
