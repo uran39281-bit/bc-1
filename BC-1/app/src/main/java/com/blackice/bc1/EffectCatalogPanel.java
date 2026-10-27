@@ -42,7 +42,7 @@ final class EffectCatalogPanel {
     /** Native vector category art, decorative only. */
     final class Illustration extends View {
         final int kind;final Paint p=new Paint(3);Illustration(int c){super(a);kind=c;setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);}
-        protected void onDraw(Canvas c){c.save();c.scale(getWidth()/100f,getHeight()/64f);p.setStyle(Paint.Style.FILL);p.setShader(new RadialGradient(50,28,58,new int[]{0xFF103B60,0xFF040E1B},null,Shader.TileMode.CLAMP));c.drawRoundRect(0,0,100,64,5,5,p);p.setShader(null);
+        protected void onDraw(Canvas c){c.save();float fit=Math.min(getWidth()/100f,getHeight()/64f);c.translate((getWidth()-100*fit)/2f,(getHeight()-64*fit)/2f);c.scale(fit,fit);p.setStyle(Paint.Style.FILL);p.setShader(new RadialGradient(50,28,58,new int[]{0xFF103B60,0xFF040E1B},null,Shader.TileMode.CLAMP));c.drawRoundRect(0,0,100,64,5,5,p);p.setShader(null);
             switch(kind){
                 case 0:{ // Prism and separated light rays.
                     int[] spectrum={0xFFFF4971,0xFFFFA34C,0xFFFFFF70,0xFF47ED99,0xFF31CFFF,0xFF8C70FF};
