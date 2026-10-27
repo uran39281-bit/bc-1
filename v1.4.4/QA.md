@@ -12,6 +12,8 @@ The APK uses the original retained Preview signing certificate. Install over **B
 
 Certificate SHA-256: `3c578586198b9ebadd9496d38e25851ec0e90d918684dc4994e03d1d7f29a29d`.
 
+**Upgrade passed:** [publication run](https://github.com/uran39281-bit/bc-1/actions/runs/40462292400) verified installing this APK over Preview 1.4.3 without clearing app data.
+
 The publication gate installs the original signed 1.4.3 build on a disposable API 35 emulator, opens and saves a project, then uses `adb install -r` for this APK. It reopens the project and compares its trims, transform values, motion keys, shape state, canvas/frame rate and source-image bytes. Neither installation is uninstalled and application data is never cleared. The resulting [upgrade verification record](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.4/upgrade-verification.json) and [post-upgrade screenshot](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.4/upgrade-after.png) accompany the published download. This is an emulator upgrade check; external document-provider access and a physical-phone update are not claimed verified.
 
 ## Implemented changes
