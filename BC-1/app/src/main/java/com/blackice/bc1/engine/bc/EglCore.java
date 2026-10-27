@@ -65,6 +65,13 @@ final class EglCore implements AutoCloseable {
         if (!EGL14.eglMakeCurrent(display, surface, surface, context)) throw new IllegalStateException("eglMakeCurrent failed");
     }
 
+    int[] windowSize(){
+        int[] w=new int[1],h=new int[1];
+        if(!EGL14.eglQuerySurface(display,surface,EGL14.EGL_WIDTH,w,0)||!EGL14.eglQuerySurface(display,surface,EGL14.EGL_HEIGHT,h,0)||w[0]<=0||h[0]<=0)
+            throw new IllegalStateException("Preview surface dimensions unavailable");
+        return new int[]{w[0],h[0]};
+    }
+
     void setPresentationTime(long nanos) { EGLExt.eglPresentationTimeANDROID(display, surface, nanos); check("eglPresentationTimeANDROID"); }
 
     void swap() { if (!EGL14.eglSwapBuffers(display, surface)) throw new IllegalStateException("eglSwapBuffers failed: 0x" + Integer.toHexString(EGL14.eglGetError())); }

@@ -36,6 +36,19 @@ public class Workspace144Test {
   boolean visible=false;
   for(int i=0;i<20&&!visible;i++){Thread.sleep(250);Bitmap b=h.inst.getUiAutomation().takeScreenshot();if(b!=null){if(center[0]>=0&&center[1]>=0&&center[0]<b.getWidth()&&center[1]<b.getHeight())visible=Color.blue(b.getPixel(center[0],center[1]))>100;b.recycle();}}
   assertTrue("Resized canvas is visible on the composed display",visible);
+  assertRenderedShapeAligned(scene);
+ }
+ void assertRenderedShapeAligned(ActivityScenario<EditorActivity> scene)throws Exception{
+  final Rect[] viewport={new Rect()};final RectF[] expected={new RectF()};
+  scene.onActivity(a->{int[] origin=new int[2];a.liveView.getLocationOnScreen(origin);int w=a.liveView.getWidth(),h=a.liveView.getHeight();viewport[0].set(origin[0],origin[1],origin[0]+w,origin[1]+h);EditProject.Overlay o=a.project.overlays.get(0);float[] c=LayerGeometry.corners(TransformMath.of(o,a.project.playheadMs-o.startMs),a.previewAspect(),w,h,a.layerBounds(null,o));expected[0].set(origin[0]+c[0],origin[1]+c[1],origin[0]+c[4],origin[1]+c[5]);});
+  Rect actual=new Rect();boolean matches=false;
+  for(int attempt=0;attempt<20&&!matches;attempt++){
+   Thread.sleep(250);Bitmap b=h.inst.getUiAutomation().takeScreenshot();assertNotNull(b);Rect v=viewport[0];int left=b.getWidth(),top=b.getHeight(),right=-1,bottom=-1;
+   for(int y=Math.max(0,v.top);y<Math.min(b.getHeight(),v.bottom);y++)for(int x=Math.max(0,v.left);x<Math.min(b.getWidth(),v.right);x++){int color=b.getPixel(x,y);if(Color.red(color)>60&&Color.red(color)<160&&Color.green(color)>180&&Color.blue(color)>210){left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}}
+   b.recycle();actual.set(left,top,right+1,bottom+1);RectF e=expected[0];matches=right>=left&&Math.abs(actual.left-e.left)<6&&Math.abs(actual.right-e.right)<6&&Math.abs(actual.top-e.top)<6&&Math.abs(actual.bottom-e.bottom)<6;
+  }
+  if(!matches)h.capture("v144-alignment-failure");
+  assertTrue("Rendered cyan shape "+actual+" must match logical selection bounds "+expected[0],matches);
  }
  static int count(View v,String value){int n=v instanceof TextView&&value.contentEquals(((TextView)v).getText())?1:0;if(v instanceof ViewGroup)for(int i=0;i<((ViewGroup)v).getChildCount();i++)n+=count(((ViewGroup)v).getChildAt(i),value);return n;}
  @Test public void decoderCropAndOrientationUseDisplayedDimensions(){android.media.MediaFormat format=android.media.MediaFormat.createVideoFormat("video/avc",1920,1088);format.setInteger("crop-left",0);format.setInteger("crop-right",1919);format.setInteger("crop-top",0);format.setInteger("crop-bottom",1079);assertArrayEquals(new int[]{1920,1080},com.blackice.bc1.engine.bc.VideoGeometry.displaySize(format,0));assertArrayEquals(new int[]{1080,1920},com.blackice.bc1.engine.bc.VideoGeometry.displaySize(format,90));assertArrayEquals(new int[]{1080,1920},com.blackice.bc1.engine.bc.VideoGeometry.displaySize(format,270));}
