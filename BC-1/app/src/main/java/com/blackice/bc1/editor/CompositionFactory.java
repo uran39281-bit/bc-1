@@ -55,8 +55,8 @@ public final class CompositionFactory {
     }
     private static Composition buildAtHeight(Context context,EditProject project,int shortEdge,boolean preview,boolean frameDrop) {
         project.validate(); if(project.clips.isEmpty()) throw new IllegalArgumentException("Import a video or image first.");
-        int longEdge=(shortEdge*16/9+1)/2*2;
-        int w=project.portrait?shortEdge:longEdge, h=project.portrait?longEdge:shortEdge;
+        int[] size=project.canvasSize(shortEdge);
+        int w=size[0],h=size[1];
         List<EditProject.Placement> placements=project.placements(); long duration=project.durationMs();
         List<EditedMediaItemSequence> sequences=new ArrayList<>();
         List<List<EditProject.Placement>> videoInputs=new ArrayList<>();

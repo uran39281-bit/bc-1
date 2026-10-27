@@ -70,7 +70,7 @@ public final class BcExporter {
 
     /** H.264 at the project frame rate and the given short edge, without a device check. */
     public BcExporter(Context context, EditProject project, int shortEdge, AtomicBoolean cancelled, Listener listener) {
-        this(context, project, ExportPlanner.fixed(shortEdge, project.frameRate, VideoCodec.H264, project.portrait), cancelled, listener);
+        this(context, project, ExportPlanner.fixed(shortEdge, project.frameRate, VideoCodec.H264, project.ratioName()), cancelled, listener);
     }
 
     public OutputSpec spec() { return spec; }

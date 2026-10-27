@@ -38,6 +38,8 @@ public final class EncoderCaps {
         return ExportPlanner.choose(shortEdge, fps, portrait, choice, EncoderCaps::supports);
     }
 
+    public static ExportPlanner.Plan plan(int shortEdge,int fps,String ratio,VideoCodec.Choice choice){return ExportPlanner.choose(shortEdge,fps,ratio,choice,EncoderCaps::supports);}
+
     public static ExportPlanner.Plan plan(int shortEdge, int fps, boolean portrait) {
         return plan(shortEdge, fps, portrait, VideoCodec.Choice.AUTO);
     }

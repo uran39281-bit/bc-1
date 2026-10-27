@@ -19,7 +19,7 @@ public final class OutputSpec {
     /** Same frame size rule as the Media3 composition: 16:9 with an even long edge. */
     public static OutputSpec of(EditProject project, int shortEdge) {
         if (shortEdge < 2 || shortEdge % 2 != 0 || shortEdge > 4320) throw new IllegalArgumentException("Short edge must be an even number up to 4320.");
-        int[] size = ExportPlanner.size(shortEdge, project.portrait);
+        int[] size = project.canvasSize(shortEdge);
         return new OutputSpec(size[0], size[1], project.frameRate, project.durationMs());
     }
 
