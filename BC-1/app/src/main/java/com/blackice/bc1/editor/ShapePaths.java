@@ -11,10 +11,12 @@ public final class ShapePaths {
    case 4:p.addRect(-h,-line,h,line,Path.Direction.CW);break;
    case 5:points(p,h,new float[]{-.3f,-1,.3f,-1,.3f,-.3f,1,-.3f,1,.3f,.3f,.3f,.3f,1,-.3f,1,-.3f,.3f,-1,.3f,-1,-.3f,-.3f,-.3f});break;
    case 6:p.addArc(-h,-h,h,h,30,300);Path q=new Path();android.graphics.Paint pen=new android.graphics.Paint();pen.setStyle(android.graphics.Paint.Style.STROKE);pen.setStrokeWidth(h*.22f);pen.setStrokeCap(android.graphics.Paint.Cap.ROUND);pen.getFillPath(p,q);return q;
-   case 7:p.addRoundRect(-h,-h,h,h*.6f,h*.22f,h*.22f,Path.Direction.CW);points(p,h,new float[]{-.5f,.5f,-.5f,1,.2f,.5f});break;
+   case 7:p.addRoundRect(-h,-h,h,h*.6f,h*.22f,h*.22f,Path.Direction.CW);Path tail=new Path();points(tail,h,new float[]{-.5f,.5f,-.5f,1,.2f,.5f});p.op(tail,Path.Op.UNION);break;
    case 8:p.moveTo(0,0);p.arcTo(-h,-h,h,h,-45,285,false);p.close();break;
    case 9:polygon(p,h,6,1);break;
-   case 10:for(int i=0;i<5;i++){double t=i*Math.PI*2/5;p.addCircle((float)Math.cos(t)*h*.5f,(float)Math.sin(t)*h*.5f,h*.48f,Path.Direction.CW);}break;
+   case 10:
+       for(int i=0;i<5;i++){double t=i*Math.PI*2/5;float x=(float)Math.cos(t)*h*.5f,y=(float)Math.sin(t)*h*.5f;if(i==0)p.moveTo(x,y);else p.lineTo(x,y);}p.close();
+       for(int i=0;i<5;i++){double t=i*Math.PI*2/5;Path petal=new Path();petal.addCircle((float)Math.cos(t)*h*.5f,(float)Math.sin(t)*h*.5f,h*.48f,Path.Direction.CW);p.op(petal,Path.Op.UNION);}break;
    case 11:points(p,h,new float[]{-1,.6f,.2f,-.6f,-.2f,-1,1,-1,1,.2f,.6f,-.2f,-.6f,1});break;
    case 12:points(p,h,new float[]{-.65f,-1,.65f,-1,1,1,-1,1});break;
    case 13:p.addCircle(0,0,h,Path.Direction.CW);Path cut=new Path();cut.addCircle(h*.5f,-h*.35f,h,Path.Direction.CW);p.op(cut,Path.Op.DIFFERENCE);break;

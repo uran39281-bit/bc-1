@@ -26,7 +26,7 @@ public final class CrashLogs extends Application {
     private final android.view.Window.OnFrameMetricsAvailableListener frames=(window,metrics,dropped)->{long ns=metrics.getMetric(android.view.FrameMetrics.TOTAL_DURATION);frameCount++;if(ns>16666667)slowFrames++;worstFrameNs=Math.max(worstFrameNs,ns);};
     private File sessionFile(){return new File(getFilesDir(),"diagnostic-session.txt");}
     public static void project(com.blackice.bc1.editor.EditProject p){CrashLogs a=app;if(a==null||p==null)return;int image=0,audio=0;for(com.blackice.bc1.editor.EditProject.Clip c:p.clips){if(c.image)image++;if(c.audioOnly)audio++;}
-        a.projectContext="Clips: "+p.clips.size()+" images="+image+" audio="+audio+" overlays="+p.overlays.size()+" tracks="+p.tracks.length+" canvas="+(p.portrait?"1080x1920":"1920x1080")+" fps="+p.frameRate+" previewHeight="+p.previewHeight+" portrait="+p.portrait;
+        a.projectContext="Clips: "+p.clips.size()+" images="+image+" audio="+audio+" overlays="+p.overlays.size()+" tracks="+p.tracks.length+" canvas="+p.canvasLabel()+" fps="+p.frameRate+" previewHeight="+p.previewHeight+" portrait="+p.portrait;
     }
     private void checkpoint(boolean force){long now=SystemClock.elapsedRealtime();if(!force&&now-lastCheckpoint<5000)return;if(!queued.compareAndSet(false,true))return;lastCheckpoint=now;
         writer.execute(()->{try{String recent; synchronized(history){recent=String.join("\n",history);}String data="Checkpoint: "+new Date()+"\nSession state: "+(foreground?"foreground":"background")+"\n"+projectContext+"\nRecent operation categories:\n"+recent;

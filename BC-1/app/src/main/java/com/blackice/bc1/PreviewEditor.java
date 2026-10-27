@@ -23,16 +23,16 @@ final class PreviewEditor extends View {
         setContentDescription("Preview: tap a layer to select it, long-press for overlapping layers. Drag the selection to move, corner handles to resize, the top handle to rotate. Pinch with nothing selected to zoom the view.");
         setTooltipText("Drag to move • corners resize • top knob rotates • long-press: layers here");
     }
-    private SurfaceView surface(){return a.surface;}
+    private View surface(){return a.liveView!=null&&a.liveView.getVisibility()==View.VISIBLE?a.liveView:a.surface;}
     private float sw(){return surface().getWidth();}
     private float sh(){return surface().getHeight();}
     /** Selected visual layer is visible at the playhead. */
     boolean available(){
-        if(a.previewPending)return false;EditProject.Overlay o=a.overlay();if(o!=null)return a.project.playheadMs>=o.startMs&&a.project.playheadMs<o.endMs;
+        if(a.previewPending||a.layerBounds(a.clip(),a.overlay()).isEmpty())return false;EditProject.Overlay o=a.overlay();if(o!=null)return a.project.playheadMs>=o.startMs&&a.project.playheadMs<o.endMs;
         EditProject.Clip c=a.clip();if(c==null||c.track>=EditProject.AUDIO_FIRST)return false;EditProject.Placement p=a.project.placements().get(a.selected);return a.project.playheadMs>=p.startMs&&a.project.playheadMs<p.endMs;
     }
-    private float[] corners(TransformMath.Transform t){double[] half=a.layerHalf();float[] c=TransformMath.corners(t,sw(),sh(),half[0],half[1]);for(int i=0;i<4;i++){c[i*2]+=surface().getLeft();c[i*2+1]+=surface().getTop();}return c;}
-    private float[] anchorPoint(TransformMath.Transform t){double A=sw()/sh();double ax=t.anchorX*.5*A,ay=t.anchorY*.5,tx=t.x*.5*A,ty=t.y*.5;return new float[]{(float)(surface().getLeft()+sw()/2+(tx+ax)*sh()),(float)(surface().getTop()+sh()/2-(ty+ay)*sh())};}
+    private float[] corners(TransformMath.Transform t){float[] c=LayerGeometry.corners(t,a.previewAspect(),sw(),sh(),a.layerBounds(a.clip(),a.overlay()));for(int i=0;i<4;i++){c[i*2]+=surface().getLeft();c[i*2+1]+=surface().getTop();}return c;}
+    private float[] anchorPoint(TransformMath.Transform t){double A=a.previewAspect();double ax=t.anchorX*.5*A,ay=t.anchorY*.5,tx=t.x*.5*A,ty=t.y*.5;return new float[]{(float)(surface().getLeft()+sw()/2+(tx+ax)*sw()/A),(float)(surface().getTop()+sh()/2-(ty+ay)*sh())};}
 
     @Override protected void onDraw(Canvas canvas){
         if(a.previewZoom!=1||a.previewPanX!=0||a.previewPanY!=0){paint.setColor(0xCC08131F);canvas.drawRoundRect(getWidth()-a.dp(84),a.dp(6),getWidth()-a.dp(6),a.dp(34),a.dp(6),a.dp(6),paint);paint.setColor(EditorActivity.CYAN);paint.setTextSize(a.dp(12));canvas.drawText(Math.round(a.previewZoom*100)+"% • Fit",getWidth()-a.dp(78),a.dp(25),paint);
@@ -112,13 +112,15 @@ final class PreviewEditor extends View {
             case CORNER:{float d0=(float)Math.hypot(downX-anchor[0],downY-anchor[1]),d1=(float)Math.hypot(e.getX()-anchor[0],e.getY()-anchor[1]);float factor=d1/Math.max(1,d0);
                 // Proportional unless width/height are unlinked in Move & Transform.
                 if(a.transformPanel.linked)live.scale=TransformMath.clamp(base.scale*factor,minScale,maxScale);
-                else{float fx=Math.abs(e.getX()-anchor[0])/Math.max(1,Math.abs(downX-anchor[0])),fy=Math.abs(e.getY()-anchor[1])/Math.max(1,Math.abs(downY-anchor[1]));live.scale=TransformMath.clamp(base.scale*fx,minScale,maxScale);live.aspect=TransformMath.clamp(base.aspect*fy/Math.max(.05f,fx),.05f,20);}
+                else{float[] factors=axisFactors(e,anchor);float fx=factors[0],fy=factors[1];live.scale=TransformMath.clamp(base.scale*fx,minScale,maxScale);live.aspect=TransformMath.clamp(base.aspect*fy/Math.max(.05f,fx),.05f,20);}
                 break;}
-            case EDGE_X:{float fx=Math.abs(e.getX()-anchor[0])/Math.max(1,Math.abs(downX-anchor[0]));live.scale=TransformMath.clamp(base.scale*fx,minScale,maxScale);live.aspect=TransformMath.clamp(base.aspect/Math.max(.05f,fx),.05f,20);break;}
-            case EDGE_Y:{float fy=Math.abs(e.getY()-anchor[1])/Math.max(1,Math.abs(downY-anchor[1]));live.aspect=TransformMath.clamp(base.aspect*fy,.05f,20);break;}
+            case EDGE_X:{float fx=axisFactors(e,anchor)[0];live.scale=TransformMath.clamp(base.scale*fx,minScale,maxScale);live.aspect=TransformMath.clamp(base.aspect/Math.max(.05f,fx),.05f,20);break;}
+            case EDGE_Y:{float fy=axisFactors(e,anchor)[1];live.aspect=TransformMath.clamp(base.aspect*fy,.05f,20);break;}
             case ROTATE:{float a1=(float)Math.toDegrees(Math.atan2(e.getY()-anchor[1],e.getX()-anchor[0]));if(Math.hypot(e.getX()-anchor[0],e.getY()-anchor[1])>a.dp(16))live.rotation=snapRotation(live.rotation-TransformEdits.angleDelta(lastRotationPointer,a1));lastRotationPointer=a1;break;}
         }
     }
+    /** Scale along the rotated layer axes, not the screen axes. Skew and flips remain in the base frame. */
+    private float[] axisFactors(MotionEvent e,float[] anchor){double angle=Math.toRadians(base.rotation),cs=Math.cos(angle),sn=Math.sin(angle),A=a.previewAspect();double dx=(downX-anchor[0])*A/Math.max(1,sw()),dy=-(downY-anchor[1])/Math.max(1,sh()),x=(e.getX()-anchor[0])*A/Math.max(1,sw()),y=-(e.getY()-anchor[1])/Math.max(1,sh());double minimum=1/Math.max(1,sh());return new float[]{(float)(Math.abs(cs*x+sn*y)/Math.max(minimum,Math.abs(cs*dx+sn*dy))),(float)(Math.abs(-sn*x+cs*y)/Math.max(minimum,Math.abs(-sn*dx+cs*dy)))};}
     private float snapRotation(float r){return a.transformPanel.angleSnap>0?TransformMath.snapAngle(r,a.transformPanel.angleSnap):r;}
     /** Snap the layer's centre / edges to the frame's centre / edges within 8dp, with visible guides. */
     private void snapToGuides(){
@@ -152,13 +154,12 @@ final class PreviewEditor extends View {
     /** Visual layers active at the playhead whose transformed bounds contain the point, topmost first. */
     List<int[]> layersAt(float x,float y){
         List<int[]> hits=new ArrayList<>();long now=a.project.playheadMs;double A=sw()/(double)sh();
-        for(int i=a.project.overlays.size()-1;i>=0;i--){EditProject.Overlay o=a.project.overlays.get(i);if(o.hidden||now<o.startMs||now>=o.endMs)continue;if(contains(TransformMath.of(o,now-o.startMs),halfOf(null,o,A),x,y))hits.add(new int[]{1,i});}
+        for(int i=a.project.overlays.size()-1;i>=0;i--){EditProject.Overlay o=a.project.overlays.get(i);if(o.hidden||now<o.startMs||now>=o.endMs)continue;if(contains(TransformMath.of(o,now-o.startMs),a.layerBounds(null,o),x,y))hits.add(new int[]{1,i});}
         List<EditProject.Placement> ps=a.project.placements();
-        for(int track=EditProject.LAST_LAYER;track>=0;track--)for(EditProject.Placement p:ps)if(p.clip.track==track&&!a.project.tracks[track].hidden&&now>=p.startMs&&now<p.endMs){EditProject.Clip c=p.clip;long source=c.inMs+Math.round((now-p.startMs)*c.speed);if(contains(TransformMath.of(c,source),halfOf(c,null,A),x,y))hits.add(new int[]{0,p.index});}
+        for(int track=EditProject.LAST_LAYER;track>=0;track--)for(EditProject.Placement p:ps)if(p.clip.track==track&&!a.project.tracks[track].hidden&&now>=p.startMs&&now<p.endMs){EditProject.Clip c=p.clip;long source=c.inMs+Math.round((now-p.startMs)*c.speed);if(contains(TransformMath.of(c,source),a.layerBounds(c,null),x,y))hits.add(new int[]{0,p.index});}
         return hits;
     }
-    private double[] halfOf(EditProject.Clip c,EditProject.Overlay o,double A){return a.layerHalf(c,o);}
-    private boolean contains(TransformMath.Transform t,double[] half,float x,float y){float[] c=TransformMath.corners(t,sw(),sh(),half[0],half[1]);for(int i=0;i<4;i++){c[i*2]+=surface().getLeft();c[i*2+1]+=surface().getTop();}return TransformMath.contains(c,x,y);}
+    private boolean contains(TransformMath.Transform t,RectF bounds,float x,float y){float[] c=LayerGeometry.corners(t,a.previewAspect(),sw(),sh(),bounds);for(int i=0;i<4;i++){c[i*2]+=surface().getLeft();c[i*2+1]+=surface().getTop();}return TransformMath.contains(c,x,y);}
     /** Tap selects the topmost layer under the finger (the current one when it is still under it). */
     private void tapSelect(float x,float y){List<int[]> hits=layersAt(x,y);if(hits.isEmpty()){if(a.clip()!=null||a.overlay()!=null)a.deselect();return;}
         for(int[] h:hits)if(h[0]==0&&h[1]==a.selected||h[0]==1&&a.selected<0&&h[1]==a.selectedOverlay)return;select(hits.get(0));}

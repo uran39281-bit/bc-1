@@ -20,6 +20,13 @@ public final class EditProject {
     public static final long MIN_CLIP_MS = 100;
     public String id = UUID.randomUUID().toString(), name = "Untitled project";
     public boolean portrait;
+    /** Optional additive metadata. Empty retains legacy portrait geometry and project compatibility. */
+    public String canvasRatio="";
+    public String ratioName(){return canvasRatio==null||canvasRatio.isEmpty()?(portrait?"9:16":"16:9"):canvasRatio;}
+    public void setCanvasRatio(String ratio){if(!com.blackice.bc1.core.CanvasFormat.valid(ratio))throw new IllegalArgumentException("Unsupported canvas ratio");canvasRatio=ratio;portrait=com.blackice.bc1.core.CanvasFormat.aspect(ratio)<1;}
+    public int[] canvasSize(int edge){return com.blackice.bc1.core.CanvasFormat.size(edge,ratioName());}
+    public float canvasAspect(){int[] size=canvasSize(1080);return (float)size[0]/size[1];}
+    public String canvasLabel(){int[] size=canvasSize(1080);return size[0]+" × "+size[1]+" • "+ratioName();}
     public int previewHeight = 540;
     public long playheadMs;
     public final List<Clip> clips = new ArrayList<>();
@@ -186,6 +193,7 @@ public final class EditProject {
         return target;
     }
     public void validate() {
+        if(!com.blackice.bc1.core.CanvasFormat.valid(ratioName()))throw new IllegalArgumentException("Unsupported canvas ratio.");
         if(id==null || !id.matches("[a-zA-Z0-9-]{1,80}") || name==null || name.length()>120)
             throw new IllegalArgumentException("Invalid project identity.");
         if(library.size()>LIBRARY_LIMIT) throw new IllegalArgumentException("The media bin holds up to "+LIBRARY_LIMIT+" items.");

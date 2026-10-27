@@ -142,7 +142,7 @@ public final class HomeActivity extends Activity {
         LinearLayout details=column();details.setPadding(dp(grid?4:12),dp(grid?8:0),0,0);card.addView(details,new LinearLayout.LayoutParams(grid?-1:0,-2,grid?0:1));
         LinearLayout title=row();title.setGravity(Gravity.CENTER_VERTICAL);TextView name=text(entry.name,18,TEXT,true);name.setMaxLines(2);name.setEllipsize(TextUtils.TruncateAt.END);title.addView(name,new LinearLayout.LayoutParams(0,-2,1));
         title.addView(icon("More","Actions for "+entry.name,v->projectActions(entry,v)),new LinearLayout.LayoutParams(dp(48),dp(48)));details.addView(title);
-        if(p!=null){TextView metadata=text((p.portrait?"9:16":"16:9")+"  •  1080p  •  "+p.frameRate+" fps",12,MUTED,false);details.addView(metadata);
+        if(p!=null){TextView metadata=text(p.ratioName()+"  •  1080p  •  "+p.frameRate+" fps",12,MUTED,false);details.addView(metadata);
             details.addView(text("Edited "+android.text.format.DateUtils.getRelativeTimeSpanString(entry.edited,System.currentTimeMillis(),60000),12,MUTED,false));}
         else details.addView(text(entry.error,12,0xffffbd8a,false));return card;
     }
@@ -151,14 +151,7 @@ public final class HomeActivity extends Activity {
             case "Open":open(e);break;case "Rename":rename(e);break;case "Duplicate":work("Duplicating project…",()->{store.duplicate(e.id);return null;},false);break;
             case "Delete":new AlertDialog.Builder(this).setTitle("Delete “"+e.name+"”?").setMessage("This deletes the saved project and its recovery records. Your original videos, photos and audio are kept.").setNegativeButton("Cancel",null).setPositiveButton("Delete",(d,w)->work("Deleting project…",()->{store.delete(e.id);if(e.id.equals(getSharedPreferences(EditorActivity.PREFS,MODE_PRIVATE).getString("last-project",null)))getSharedPreferences(EditorActivity.PREFS,MODE_PRIVATE).edit().remove("last-project").apply();return null;},false)).show();break;}return true;});menu.show();}
     private void rename(ProjectStore.BrowserEntry e){EditText input=field(e.name);AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Rename project").setView(input).setNegativeButton("Cancel",null).setPositiveButton("Rename",null).create();dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{String name=input.getText().toString().trim();if(!validName(input,name))return;dialog.dismiss();work("Renaming project…",()->{store.rename(e.id,name);return null;},false);}));dialog.show();}
-    private void newProject(){if(busy)return;EditProject defaults=new EditProject();LinearLayout form=column();form.setPadding(dp(20),dp(8),dp(20),dp(8));
-        EditText name=field(defaults.name);form.addView(text("Project name",14,MUTED,false));form.addView(name);
-        Spinner ratio=spinner(form,"Aspect ratio",new String[]{"16:9 • Landscape","9:16 • Portrait"},defaults.portrait?1:0);
-        spinner(form,"Project resolution",new String[]{"1080p canvas • 1920×1080 or 1080×1920"},0);
-        int[] rates=com.blackice.bc1.core.ExportPlanner.FRAME_RATES;String[] labels=new String[rates.length];int selected=0;for(int i=0;i<rates.length;i++){labels[i]=rates[i]+" fps";if(rates[i]==defaults.frameRate)selected=i;}
-        Spinner fps=spinner(form,"Frame rate",labels,selected);form.addView(text("Preview quality and export resolution are configured separately in the editor.",12,MUTED,false));
-        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("New project").setView(form).setNegativeButton("Cancel",null).setPositiveButton("Create",null).create();dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{String title=name.getText().toString().trim();if(!validName(name,title))return;
-            defaults.name=title;defaults.portrait=ratio.getSelectedItemPosition()==1;defaults.frameRate=rates[fps.getSelectedItemPosition()];dialog.dismiss();work("Creating project…",()->{store.save(defaults);return defaults;},true);}));dialog.show();}
+    private void newProject(){if(busy)return;NewProjectDialog.show(this,project->work("Creating project…",()->{store.save(project);return project;},true));}
     private boolean validName(EditText input,String name){if(name.isBlank()||name.length()>120){input.setError("Use 1–120 characters");return false;}return true;}
     private void pickImport(){Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         try{startActivityForResult(intent,IMPORT);}catch(ActivityNotFoundException e){error("No system document picker is installed.");}}

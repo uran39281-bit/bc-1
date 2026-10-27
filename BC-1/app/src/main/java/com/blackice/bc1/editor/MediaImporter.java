@@ -94,8 +94,8 @@ public final class MediaImporter {
     public static int[] measure(Context context,String uri,boolean image) {
         try {
             String path=Uri.parse(uri).getPath();
-            if(image){BitmapFactory.Options o=new BitmapFactory.Options();o.inJustDecodeBounds=true;BitmapFactory.decodeFile(path,o);return o.outWidth>0?new int[]{o.outWidth,o.outHeight}:null;}
-            try(MediaMetadataRetriever metadata=new MediaMetadataRetriever()){metadata.setDataSource(path);int[] size=videoSize(metadata);return size[0]>0?size:null;}
+            if(image){BitmapFactory.Options o=new BitmapFactory.Options();o.inJustDecodeBounds=true;try(InputStream in=context.getContentResolver().openInputStream(Uri.parse(uri))){BitmapFactory.decodeStream(in,null,o);}return o.outWidth>0?new int[]{o.outWidth,o.outHeight}:null;}
+            try(MediaMetadataRetriever metadata=new MediaMetadataRetriever()){metadata.setDataSource(context,Uri.parse(uri));int[] size=videoSize(metadata);return size[0]>0?size:null;}
         } catch(Exception e) { return null; }
     }
 }

@@ -28,7 +28,7 @@ jobs:
           SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)
           "$SDKMANAGER" --install "platforms;android-36" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
       - name: Install media test tools
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg ripgrep
+        run: bash .github/scripts/bc1-install-media-tools.sh
       - name: Generate deterministic video and audio fixtures
         run: bash .github/scripts/bc1-media-fixtures.sh
       - name: Unit tests, lint, APK and GPU test APK
@@ -36,7 +36,7 @@ jobs:
         run: gradle --no-daemon -Pbc1SideBySide testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
       - uses: actions/upload-artifact@v4
         with:
-          name: Black-Ice-Editor-v1.4.3-ci-candidate
+          name: Black-Ice-Editor-v1.4.4-ci-candidate
           path: BC-1/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
       - uses: actions/upload-artifact@v4
@@ -46,7 +46,7 @@ jobs:
           path: BC-1/app/build/reports/
   gpu-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     # Write access is used only to publish reduced QA screenshots to a qa-screenshots/<branch> ref.
     permissions:
       contents: write
@@ -60,7 +60,7 @@ jobs:
         with:
           gradle-version: '8.11.1'
       - name: Install media test tools
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg ripgrep
+        run: bash .github/scripts/bc1-install-media-tools.sh
       - name: Enable emulator acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules

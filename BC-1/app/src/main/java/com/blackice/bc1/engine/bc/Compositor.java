@@ -76,6 +76,7 @@ final class Compositor {
     private final boolean effectPasses;
     private final java.util.Map<Integer, GlKit.Program> effect = new java.util.HashMap<>();
     private GlKit.Target effected;
+    private GlKit.Target previewOutput;
 
     Compositor(Context context, int width, int height) throws IOException { this(context, width, height, false); }
 
@@ -231,6 +232,21 @@ final class Compositor {
         GlKit.check("plain");
     }
 
+    /** Keep preview raster resolution independent of a resizable TextureView's native buffer. */
+    void beginPreviewFrame(boolean accumulate) {
+        if(previewOutput==null)previewOutput=new GlKit.Target(width,height);
+        beginFrame(accumulate);
+    }
+    private void bindOutput(){
+        if(previewOutput!=null)previewOutput.bind();
+        else { GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER,0); GLES30.glViewport(0,0,width,height); }
+    }
+    void presentPreview(int displayWidth,int displayHeight){
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER,0);
+        GLES30.glViewport(0,0,displayWidth,displayHeight);
+        drawPlain(previewOutput.texture);
+    }
+
     /** Starts an output frame on the encoder surface: opaque black, like an empty Media3 composition. */
     void beginFrame() { beginFrame(false); }
 
@@ -245,8 +261,7 @@ final class Compositor {
             current = 0;
             accum[0].bind();
         } else {
-            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
-            GLES30.glViewport(0, 0, width, height);
+            bindOutput();
         }
         clear(0, 0, 0, 1);
     }
@@ -254,8 +269,7 @@ final class Compositor {
     /** Finishes the layer stack: overlays and the encoder then see the composed frame. */
     void endLayers() {
         if (!accumulating) return;
-        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
-        GLES30.glViewport(0, 0, width, height);
+        bindOutput();
         drawPlain(accum[current].texture);
         accumulating = false;
     }
@@ -317,7 +331,7 @@ final class Compositor {
         GlKit.check("effect pass");
         // Back to where layers are being composed (begin() binds the other buffer itself for a blend layer).
         if (accumulating) accum[current].bind();
-        else { GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0); GLES30.glViewport(0, 0, width, height); }
+        else bindOutput();
         return effected.texture;
     }
 
@@ -390,6 +404,7 @@ final class Compositor {
         }
         if (accum != null) for (GlKit.Target t : accum) t.release();
         if (effected != null) effected.release();
+        if (previewOutput != null) previewOutput.release();
         overlay.release(); quad.release();
     }
 }

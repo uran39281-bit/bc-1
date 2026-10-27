@@ -25,9 +25,9 @@ public final class ExportPlanner {
         /** True when the device could not encode what was asked for. */
         public final boolean reduced;
         public final int requestedShortEdge, requestedFrameRate;
-        Plan(int shortEdge, int frameRate, VideoCodec codec, boolean portrait, int requestedShortEdge, int requestedFrameRate) {
+        Plan(int shortEdge, int frameRate, VideoCodec codec, String ratio, int requestedShortEdge, int requestedFrameRate) {
             this.shortEdge = shortEdge; this.frameRate = frameRate; this.codec = codec;
-            int[] size = size(shortEdge, portrait);
+            int[] size = CanvasFormat.size(shortEdge, ratio);
             width = size[0]; height = size[1];
             bitrate = videoBitrate(width, height, frameRate, codec);
             this.requestedShortEdge = requestedShortEdge; this.requestedFrameRate = requestedFrameRate;
@@ -108,8 +108,10 @@ public final class ExportPlanner {
 
     /** A plan without a device check (tests, previews of settings). */
     public static Plan fixed(int shortEdge, int fps, VideoCodec codec, boolean portrait) {
-        return new Plan(shortEdge, fps, codec, portrait, shortEdge, fps);
+        return fixed(shortEdge,fps,codec,portrait?"9:16":"16:9");
     }
+
+    public static Plan fixed(int shortEdge,int fps,VideoCodec codec,String ratio){return new Plan(shortEdge,fps,codec,ratio,shortEdge,fps);}
 
     public static Plan choose(int shortEdge, int fps, boolean portrait, Capability capability) {
         return choose(shortEdge, fps, portrait, VideoCodec.Choice.AUTO, capability);
@@ -121,14 +123,17 @@ public final class ExportPlanner {
      * Returns the request itself when the capability query supports nothing.
      */
     public static Plan choose(int shortEdge, int fps, boolean portrait, VideoCodec.Choice choice, Capability capability) {
+        return choose(shortEdge,fps,portrait?"9:16":"16:9",choice,capability);
+    }
+    public static Plan choose(int shortEdge,int fps,String ratio,VideoCodec.Choice choice,Capability capability){
         if (!validShortEdge(shortEdge)) shortEdge = SHORT_EDGES[0];
         for (int[] c : candidates(shortEdge, fps)) {
-            int[] size = size(c[0], portrait);
+            int[] size = CanvasFormat.size(c[0], ratio);
             for (VideoCodec codec : choice.order())
-                if (capability.supports(codec, size[0], size[1], c[1])) return new Plan(c[0], c[1], codec, portrait, shortEdge, fps);
+                if (capability.supports(codec, size[0], size[1], c[1])) return new Plan(c[0], c[1], codec, ratio, shortEdge, fps);
         }
         // The capability query reported nothing usable (seen on some emulators): keep the request and
         // let the encoder decide, exactly as exports behaved before planning existed.
-        return new Plan(shortEdge, fps, choice.order()[0], portrait, shortEdge, fps);
+        return new Plan(shortEdge, fps, choice.order()[0], ratio, shortEdge, fps);
     }
 }

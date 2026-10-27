@@ -14,13 +14,34 @@ public final class OverlayPainter {
     private final Map<String,Bitmap> images=new HashMap<>();
     public OverlayPainter(Context context){this.context=context.getApplicationContext();}
     /** Draws one text, image or shape layer through the same transform as video layers (y-down pixels). */
+    private static final int TILE=512,SAMPLES=2,GUTTER=2;
+    private Bitmap shapeTile;
+    private final Paint downsample=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
+    /** Supersample vector edges in bounded, reusable tiles. Logical geometry and video resolution
+     * stay unchanged. A tile (including filter gutters) uses at most 4.1 MiB, even at 70× scale/4K.
+     * Blend modes retain their existing destination-dependent Canvas path. */
     public void draw(Canvas canvas,int width,int height,EditProject.Overlay o,long local) throws IOException {
+        if(o.shape<=0||o.blend!=0||o.visualizerClipId!=null){drawDirect(canvas,width,height,o,local);return;}
+        RectF bounds=new RectF();LayerGeometry.shapePath(o,width,height).computeBounds(bounds,true);
+        Matrix matrix=LayerGeometry.canvasMatrix(TransformMath.of(o,local),width,height);matrix.mapRect(bounds);
+        if(o.borderWidth>0||o.shadow>0)bounds.set(0,0,width,height);else bounds.inset(-2,-2);
+        if(!bounds.intersect(0,0,width,height))return;
+        int left=Math.max(0,(int)Math.floor(bounds.left)),top=Math.max(0,(int)Math.floor(bounds.top));
+        int right=Math.min(width,(int)Math.ceil(bounds.right)),bottom=Math.min(height,(int)Math.ceil(bounds.bottom));
+        int edge=TILE*SAMPLES+GUTTER*2;
+        if(shapeTile==null)shapeTile=Bitmap.createBitmap(edge,edge,Bitmap.Config.ARGB_8888);
+        Canvas raster=new Canvas(shapeTile);Rect source=new Rect();RectF target=new RectF();
+        for(int y=top;y<bottom;y+=TILE)for(int x=left;x<right;x+=TILE){
+            int w=Math.min(TILE,right-x),h=Math.min(TILE,bottom-y);target.set(x,y,x+w,y+h);if(canvas.quickReject(target,Canvas.EdgeType.AA))continue;
+            shapeTile.eraseColor(Color.TRANSPARENT);raster.save();raster.translate(GUTTER-x*SAMPLES,GUTTER-y*SAMPLES);raster.scale(SAMPLES,SAMPLES);
+            drawDirect(raster,width,height,o,local);raster.restore();source.set(GUTTER,GUTTER,GUTTER+w*SAMPLES,GUTTER+h*SAMPLES);canvas.drawBitmap(shapeTile,source,target,downsample);
+        }
+    }
+    private void drawDirect(Canvas canvas,int width,int height,EditProject.Overlay o,long local) throws IOException {
         if(o.visualizerClipId!=null)return; // Disabled while retaining old project layers.
         Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
         TransformMath.Transform t=TransformMath.of(o,local);float opacity=o.motion.value(Motion.OPACITY,local,o.opacity);
-        double[] m=TransformMath.matrix(t);float ax=t.anchorX*width/2f,ay=-t.anchorY*height/2f,cx=(t.x+1)*width/2f,cy=(1-t.y)*height/2f;
-        float a=(float)m[0],b=(float)-m[1],c=(float)-m[2],d=(float)m[3];
-        Matrix matrix=new Matrix();matrix.setValues(new float[]{a,b,cx+ax-(a*ax+b*ay),c,d,cy+ay-(c*ax+d*ay),0,0,1});
+        Matrix matrix=LayerGeometry.canvasMatrix(t,width,height);
         canvas.save();canvas.concat(matrix);
         paint.reset();paint.setFlags(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);paint.setAlpha(Math.round(opacity*255));
         if(o.blend>0) paint.setXfermode(new PorterDuffXfermode(new PorterDuff.Mode[]{PorterDuff.Mode.SRC_OVER,PorterDuff.Mode.MULTIPLY,PorterDuff.Mode.SCREEN,PorterDuff.Mode.OVERLAY,PorterDuff.Mode.ADD,PorterDuff.Mode.DARKEN,PorterDuff.Mode.LIGHTEN}[o.blend]));
@@ -31,12 +52,12 @@ public final class OverlayPainter {
             if(image==null) try(java.io.InputStream in=context.getContentResolver().openInputStream(Uri.parse(o.imageUri))) {
                 image=BitmapFactory.decodeStream(in); if(image==null) throw new java.io.IOException("Cannot decode overlay image"); images.put(o.imageUri,image);
             }
-            float iw=width*.45f,ih=iw*image.getHeight()/image.getWidth();RectF r=new RectF(-iw/2,-ih/2,iw/2,ih/2);
+            RectF r=LayerGeometry.imageRect(width,image.getWidth(),image.getHeight());
             canvas.drawBitmap(image,null,r,paint);
             if(stroke>0){paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(stroke);paint.setColor(o.borderColor);paint.setAlpha(Math.round(opacity*255));canvas.drawRect(r,paint);}
         } else if(o.shape>0) {
             float half=unit*.2f;fill(paint,o,local,opacity,half,half);
-            Path path=ShapePaths.create(o.shape,half,Math.max(1.5f,stroke)/2+unit*.006f);
+            Path path=LayerGeometry.shapePath(o,width,height);
             canvas.drawPath(path,paint);
             if(stroke>0&&o.shape!=4){paint.clearShadowLayer();paint.setShader(null);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(stroke);paint.setColor(o.borderColor);paint.setAlpha(Math.round(opacity*255));canvas.drawPath(path,paint);}
         } else {
@@ -62,5 +83,5 @@ public final class OverlayPainter {
         double angle=Math.toRadians(f.angle.at(time));float dx=(float)Math.cos(angle),dy=(float)Math.sin(angle),extent=Math.abs(dx)*halfW+Math.abs(dy)*halfH;
         paint.setColor(Color.WHITE);paint.setShader(new LinearGradient(-dx*extent,-dy*extent,dx*extent,dy*extent,colors,positions,Shader.TileMode.CLAMP));paint.setAlpha(Math.round(opacity*255));
     }
-    public void release(){for(Bitmap b:images.values())b.recycle();images.clear();}
+    public void release(){for(Bitmap b:images.values())b.recycle();images.clear();if(shapeTile!=null){shapeTile.recycle();shapeTile=null;}}
 }

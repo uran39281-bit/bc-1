@@ -54,7 +54,7 @@ final class VideoSource implements FrameSource {
     private final GlKit.Target target;
     private final Compositor compositor;
     private final int rotation;
-    private final double displayAspect;
+    private volatile double displayAspect;
     private final long endUs;
     private final float[] stMatrix = new float[16];
     private final Object frameLock = new Object();
@@ -86,7 +86,8 @@ final class VideoSource implements FrameSource {
         if (w <= 0 || h <= 0) { extractor.release(); throw new IllegalArgumentException("Invalid video dimensions"); }
         // The compositor owns source orientation; prevent MediaCodec rotating the surface too.
         format.setInteger(MediaFormat.KEY_ROTATION, 0);
-        displayAspect = rotation == 90 || rotation == 270 ? h / (double) w : w / (double) h;
+        int[] displaySize=VideoGeometry.displaySize(format,rotation);
+        displayAspect=displaySize[0]/(double)displaySize[1];
         endUs = outMs * 1000;
 
         thread = new HandlerThread("bc1-decoder");
@@ -142,7 +143,7 @@ final class VideoSource implements FrameSource {
             outputs.add(new Out(index, info.presentationTimeUs, eos, info.size == 0));
         }
         @Override public void onError(MediaCodec mc, MediaCodec.CodecException e) { fail(e); }
-        @Override public void onOutputFormatChanged(MediaCodec mc, MediaFormat format) { }
+        @Override public void onOutputFormatChanged(MediaCodec mc, MediaFormat format) {int[] size=VideoGeometry.displaySize(format,rotation);if(size[0]>0&&size[1]>0)displayAspect=size[0]/(double)size[1];}
     }
 
     private void fail(Throwable t) {

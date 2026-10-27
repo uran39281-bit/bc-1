@@ -145,3 +145,10 @@ for engine in ice media3; do
   ffmpeg -v error -xerror -i "BC-1/app/build/reports/androidTests/qa/v143-fill-${engine}.mp4" -f null -
   echo "Independent animated-fill export decode passed: ${engine}"
 done
+
+# v1.4.4: five actual canvas ratios and shape unions through both engines.
+for file in BC-1/app/build/reports/androidTests/qa/v144-*.mp4; do
+ ffmpeg -v error -xerror -i "$file" -f null -
+ ffprobe -v error -show_streams -show_format -of json "$file" > "$file.ffprobe.json"
+ echo "Independent canvas/shape decode passed: $file"
+done

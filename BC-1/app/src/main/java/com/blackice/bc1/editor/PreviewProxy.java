@@ -144,7 +144,7 @@ public final class PreviewProxy implements AutoCloseable {
                 if(recovering&&com.blackice.bc1.engine.bc.HdrCheck.anyHdr(context,snapshot))
                     throw new IOException("This HDR preview stalled. Lower preview quality and retry; your project is preserved.");
                 new com.blackice.bc1.engine.bc.BcExporter(context,snapshot,
-                        com.blackice.bc1.core.ExportPlanner.fixed(snapshot.previewHeight,snapshot.frameRate,com.blackice.bc1.core.VideoCodec.H264,snapshot.portrait),
+                        com.blackice.bc1.core.ExportPlanner.fixed(snapshot.previewHeight,snapshot.frameRate,com.blackice.bc1.core.VideoCodec.H264,snapshot.ratioName()),
                         stop,p->main.post(()->{if(request==generation)listener.onProgress(p);})).previewSemantics(true).export(target);
                 main.post(()->{
                     if(request!=generation){target.delete();return;}

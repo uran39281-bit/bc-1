@@ -99,9 +99,8 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     @Override public void onSurfaceTextureSizeChanged(SurfaceTexture st, int w, int h) {
         gl.post(() -> {
             if(surfaceTexture!=st)return;
-            // TextureView resets its buffer size during layout. Keep the project-sized GL viewport
-            // and buffer in agreement when the phone inspector changes the preview's display size.
-            if(width>0&&height>0)st.setDefaultBufferSize(width,height);
+            // TextureView owns its native buffer size. Re-present the project-sized offscreen
+            // frame into the actual EGL window, rather than racing its layout buffer reset.
             Request last=latest;if(last!=null)request(last.project,last.timeMs);
         });
     }
@@ -131,7 +130,6 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
                 egl = new EglCore(target);
             }
         } else egl = new EglCore(target);
-        if (st != null && width > 0) st.setDefaultBufferSize(width, height);
     }
 
     /** Lets go of the current window (the view's surface is going away) but keeps the GL context when the driver allows. */
@@ -210,7 +208,6 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
             if (overlays != null) { overlays.release(); overlays = null; }
             if (compositor != null) compositor.release();
             width = spec.width; height = spec.height;
-            if (surfaceTexture != null) surfaceTexture.setDefaultBufferSize(width, height);
             compositor = new Compositor(context, width, height, true); // per-effect passes: effect changes compile in milliseconds
             overlays = new OverlayLayer(context, width, height);
         }
@@ -252,13 +249,15 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
         egl.makeCurrent();
         boolean blend = false;
         for (RenderPlan.LayerDraw d : layers) blend |= d.blend != 0;
-        compositor.beginFrame(blend);
+        compositor.beginPreviewFrame(blend);
         for (int i = 0; i < layers.size(); i++) frame[i].draw(compositor, layers.get(i));
         compositor.endLayers();
         GLES30.glFinish();
         long tDraw = System.nanoTime();
         List<EditProject.Overlay> active = plan.overlaysAt(time);
         if (!active.isEmpty()) compositor.drawOverlay(overlays.texture(active, time));
+        int[] displaySize=egl.windowSize();
+        compositor.presentPreview(displaySize[0],displaySize[1]);
         egl.swap();
         long tSwap = System.nanoTime();
         if (tSwap - t0 > 250_000_000L) android.util.Log.d("BC1Live", String.format(java.util.Locale.US,
