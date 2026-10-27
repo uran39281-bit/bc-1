@@ -460,7 +460,8 @@ public final class EditorActivity extends Activity {
                 public void onStopTrackingTouch(SeekBar slider){scrubbing=false;seek(slider.getProgress()*project.durationMs()/1000);}
             });transport.addView(previewScrubber,new LinearLayout.LayoutParams(-1,dp(26)));
         }
-        transport.addView(controls);return transport;
+        if(wideLayout){HorizontalScrollView strip=new HorizontalScrollView(this);strip.setHorizontalScrollBarEnabled(false);strip.setFillViewport(true);controls.setMinimumWidth(dp(360));strip.addView(controls,new HorizontalScrollView.LayoutParams(-1,-2));transport.addView(strip,new LinearLayout.LayoutParams(-1,-2));}
+        else transport.addView(controls);return transport;
     }
     TextView transportIcon(String icon,String description,View.OnClickListener l){TextView b=compactButton("",description,l);b.setBackground(null);b.setCompoundDrawables(icon(icon,TEXT),null,null,null);b.setPadding(dp(11),0,dp(11),0);b.setMinWidth(dp(44));b.setMinHeight(dp(44));return b;}
     void syncPlayButton(){boolean playing=player!=null&&player.isPlaying();if(play==null||Boolean.valueOf(playing).equals(play.getTag()))return;play.setTag(playing);play.setContentDescription(playing?"Pause":"Play");play.setCompoundDrawables(icon(playing?"Pause":"Play",mobile!=null?BlackIceTheme.ON_ACCENT:TEXT),null,null,null);play.setPadding(dp(playing?13:15),0,dp(playing?13:11),0);}
