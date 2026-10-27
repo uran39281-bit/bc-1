@@ -8,7 +8,7 @@ final class SelectionGeometry {
     SelectionGeometry(EditorActivity activity){a=activity;}
     int[] size(String uri,boolean image,int width,int height){if(width>0&&height>0)return new int[]{width,height};int[] found=sizes.get(uri);if(found!=null)return found;
         if(uri!=null&&!pending.contains(uri)&&!failed.contains(uri)&&!a.io.isShutdown()){pending.add(uri);a.io.execute(()->{int[] value=MediaImporter.measure(a,uri,image);a.main.post(()->{pending.remove(uri);if(a.isDestroyed())return;if(value!=null)sizes.put(uri,value);else failed.add(uri);if(a.previewControls!=null)a.previewControls.invalidate();});});}return null;}
-    RectF bounds(EditProject.Clip c,EditProject.Overlay o){double aspect=a.frameAspect();if(c!=null){int[] s=size(c.uri,c.image,c.width,c.height);return LayerGeometry.fittedBounds(aspect,s==null?0:s[0],s==null?0:s[1]);}
+    RectF bounds(EditProject.Clip c,EditProject.Overlay o){double aspect=a.previewAspect();if(c!=null){int[] s=size(c.uri,c.image,c.width,c.height);return s==null?new RectF():LayerGeometry.fittedBounds(aspect,s[0],s[1]);}
         if(o==null)return LayerGeometry.fittedBounds(aspect,0,0);
         int[] canvas=a.project.canvasSize(a.project.previewHeight);
         if(o.shape>0)return LayerGeometry.shapeBounds(o,canvas[0],canvas[1]);

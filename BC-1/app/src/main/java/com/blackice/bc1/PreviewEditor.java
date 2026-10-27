@@ -28,11 +28,11 @@ final class PreviewEditor extends View {
     private float sh(){return surface().getHeight();}
     /** Selected visual layer is visible at the playhead. */
     boolean available(){
-        if(a.previewPending)return false;EditProject.Overlay o=a.overlay();if(o!=null)return a.project.playheadMs>=o.startMs&&a.project.playheadMs<o.endMs;
+        if(a.previewPending||a.layerBounds(a.clip(),a.overlay()).isEmpty())return false;EditProject.Overlay o=a.overlay();if(o!=null)return a.project.playheadMs>=o.startMs&&a.project.playheadMs<o.endMs;
         EditProject.Clip c=a.clip();if(c==null||c.track>=EditProject.AUDIO_FIRST)return false;EditProject.Placement p=a.project.placements().get(a.selected);return a.project.playheadMs>=p.startMs&&a.project.playheadMs<p.endMs;
     }
-    private float[] corners(TransformMath.Transform t){float[] c=LayerGeometry.corners(t,a.frameAspect(),sw(),sh(),a.layerBounds(a.clip(),a.overlay()));for(int i=0;i<4;i++){c[i*2]+=surface().getLeft();c[i*2+1]+=surface().getTop();}return c;}
-    private float[] anchorPoint(TransformMath.Transform t){double A=a.frameAspect();double ax=t.anchorX*.5*A,ay=t.anchorY*.5,tx=t.x*.5*A,ty=t.y*.5;return new float[]{(float)(surface().getLeft()+sw()/2+(tx+ax)*sw()/A),(float)(surface().getTop()+sh()/2-(ty+ay)*sh())};}
+    private float[] corners(TransformMath.Transform t){float[] c=LayerGeometry.corners(t,a.previewAspect(),sw(),sh(),a.layerBounds(a.clip(),a.overlay()));for(int i=0;i<4;i++){c[i*2]+=surface().getLeft();c[i*2+1]+=surface().getTop();}return c;}
+    private float[] anchorPoint(TransformMath.Transform t){double A=a.previewAspect();double ax=t.anchorX*.5*A,ay=t.anchorY*.5,tx=t.x*.5*A,ty=t.y*.5;return new float[]{(float)(surface().getLeft()+sw()/2+(tx+ax)*sw()/A),(float)(surface().getTop()+sh()/2-(ty+ay)*sh())};}
 
     @Override protected void onDraw(Canvas canvas){
         if(a.previewZoom!=1||a.previewPanX!=0||a.previewPanY!=0){paint.setColor(0xCC08131F);canvas.drawRoundRect(getWidth()-a.dp(84),a.dp(6),getWidth()-a.dp(6),a.dp(34),a.dp(6),a.dp(6),paint);paint.setColor(EditorActivity.CYAN);paint.setTextSize(a.dp(12));canvas.drawText(Math.round(a.previewZoom*100)+"% • Fit",getWidth()-a.dp(78),a.dp(25),paint);
@@ -157,7 +157,7 @@ final class PreviewEditor extends View {
         for(int track=EditProject.LAST_LAYER;track>=0;track--)for(EditProject.Placement p:ps)if(p.clip.track==track&&!a.project.tracks[track].hidden&&now>=p.startMs&&now<p.endMs){EditProject.Clip c=p.clip;long source=c.inMs+Math.round((now-p.startMs)*c.speed);if(contains(TransformMath.of(c,source),a.layerBounds(c,null),x,y))hits.add(new int[]{0,p.index});}
         return hits;
     }
-    private boolean contains(TransformMath.Transform t,RectF bounds,float x,float y){float[] c=LayerGeometry.corners(t,a.frameAspect(),sw(),sh(),bounds);for(int i=0;i<4;i++){c[i*2]+=surface().getLeft();c[i*2+1]+=surface().getTop();}return TransformMath.contains(c,x,y);}
+    private boolean contains(TransformMath.Transform t,RectF bounds,float x,float y){float[] c=LayerGeometry.corners(t,a.previewAspect(),sw(),sh(),bounds);for(int i=0;i<4;i++){c[i*2]+=surface().getLeft();c[i*2+1]+=surface().getTop();}return TransformMath.contains(c,x,y);}
     /** Tap selects the topmost layer under the finger (the current one when it is still under it). */
     private void tapSelect(float x,float y){List<int[]> hits=layersAt(x,y);if(hits.isEmpty()){if(a.clip()!=null||a.overlay()!=null)a.deselect();return;}
         for(int[] h:hits)if(h[0]==0&&h[1]==a.selected||h[0]==1&&a.selected<0&&h[1]==a.selectedOverlay)return;select(hits.get(0));}

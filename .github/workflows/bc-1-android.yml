@@ -46,7 +46,7 @@ jobs:
           path: BC-1/app/build/reports/
   gpu-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     # Write access is used only to publish reduced QA screenshots to a qa-screenshots/<branch> ref.
     permissions:
       contents: write

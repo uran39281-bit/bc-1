@@ -84,7 +84,7 @@ public class HomeBrowserTest {
             android.view.accessibility.AccessibilityNodeInfo input=waitAccessible("Untitled project");assertNotNull("New-project text field is accessible",input);
             android.os.Bundle args=new android.os.Bundle();args.putCharSequence(android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,"Created through menu");
             assertTrue(input.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT,args));
-            android.view.accessibility.AccessibilityNodeInfo create=waitAccessible("Create");assertNotNull(create);assertTrue(create.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK));
+            android.view.accessibility.AccessibilityNodeInfo create=waitAccessible("Create project");assertNotNull(create);assertTrue(create.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK));
             Activity launched=inst.waitForMonitorWithTimeout(monitor,10000);assertTrue(launched instanceof EditorActivity);EditorActivity editor=(EditorActivity)launched;
             boolean[] loaded={false};for(int i=0;i<100;i++){inst.runOnMainSync(()->loaded[0]=!editor.loading);if(loaded[0])break;Thread.sleep(100);}assertTrue("Editor loaded created project",loaded[0]);
             String[] id={null};inst.runOnMainSync(()->{assertEquals("Created through menu",editor.project.name);assertEquals(30,editor.project.frameRate);assertFalse(editor.project.portrait);assertEquals(540,editor.project.previewHeight);id[0]=editor.project.id;editor.project.name="Saved before home";editor.saveAndProjects();});ids.add(id[0]);

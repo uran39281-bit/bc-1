@@ -362,7 +362,7 @@ public final class EditorActivity extends Activity {
             final View timelineArea=buildTimeline();
             View timelineDivider=new View(this);timelineDivider.setBackground(splitter(false));timelineDivider.setContentDescription("Resize timeline height");
             root.addView(timelineDivider,new LinearLayout.LayoutParams(-1,dp(8)));root.addView(buildTimelineTools());
-            int requestedTimelineHeight=customTimelineHeight>0?customTimelineHeight:Math.min(c.screenHeightDp<650?180:220,timelineHeight(c,true));
+            int requestedTimelineHeight=customTimelineHeight>0?customTimelineHeight:Math.min(c.screenHeightDp<650?180:240,timelineHeight(c,true));
             // Keep one scrollable track plus ruler while reserving a usable preview in short DeX windows.
             int availableTimelineHeight=c.screenHeightDp<450?Math.min(88,requestedTimelineHeight):requestedTimelineHeight;
             root.addView(timelineArea,new LinearLayout.LayoutParams(-1,dp(availableTimelineHeight)));
@@ -972,6 +972,7 @@ public final class EditorActivity extends Activity {
     }
     // ---- Transform helpers used by TransformPanel and preview editing -------------------------------
     int[] exportSize(){return project.canvasSize(1080);}
+    double previewAspect(){int[] s=project.canvasSize(project.previewHeight);return s[0]/(double)s[1];}
     double frameAspect(){int[] s=exportSize();return s[0]/(double)s[1];}
     float aspectOf(){return transformPanel.current().aspect;}
     void setAspect(float aspect){EditProject.Clip c=clip();EditProject.Overlay o=overlay();if(c!=null&&c.heightScale>=0||o!=null&&o.heightScale>=0)transformPanel.write(Motion.HEIGHT,transformPanel.current().scale*aspect);if(c!=null)c.aspect=aspect;else if(o!=null)o.aspect=aspect;}

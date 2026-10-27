@@ -15,12 +15,12 @@ final class NewProjectDialog {
     private final Activity a;private final EditProject project=new EditProject();
     private final java.util.List<RatioTile> tiles=new java.util.ArrayList<>();
     private NewProjectDialog(Activity activity){a=activity;}
-    static void show(Activity a,Consumer<EditProject> create){new NewProjectDialog(a).show(create);}
+    static AlertDialog show(Activity a,Consumer<EditProject> create){return new NewProjectDialog(a).show(create);}
     int dp(float n){return Math.round(n*a.getResources().getDisplayMetrics().density);}
     TextView text(String s,int size){TextView t=new TextView(a);t.setText(s);t.setTextSize(size);t.setTextColor(BlackIceTheme.TEXT);return t;}
     GradientDrawable background(int color,int border){GradientDrawable g=new GradientDrawable();g.setColor(color);g.setCornerRadius(dp(12));g.setStroke(dp(1),border);return g;}
     TextView button(String s,Runnable action){TextView b=text(s,14);b.setGravity(Gravity.CENTER);b.setMinHeight(dp(48));b.setPadding(dp(16),0,dp(16),0);b.setFocusable(true);b.setBackground(background(BlackIceTheme.ELEVATED,BlackIceTheme.BORDER));b.setOnClickListener(v->action.run());return b;}
-    void show(Consumer<EditProject> create){
+    AlertDialog show(Consumer<EditProject> create){
         LinearLayout root=new LinearLayout(a);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(dp(20),dp(12),dp(20),dp(16));root.setBackground(background(BlackIceTheme.PRIMARY,BlackIceTheme.BORDER));
         AlertDialog dialog=new AlertDialog.Builder(a).setView(root).create();
         LinearLayout header=new LinearLayout(a);header.setGravity(Gravity.CENTER_VERTICAL);TextView title=text("Create new project",21);title.setTypeface(null,Typeface.BOLD);header.addView(title,new LinearLayout.LayoutParams(0,-2,1));TextView close=button("×",dialog::dismiss);close.setTextSize(28);close.setContentDescription("Close create new project");header.addView(close,new LinearLayout.LayoutParams(dp(48),dp(48)));root.addView(header);
@@ -29,7 +29,7 @@ final class NewProjectDialog {
         form.addView(text("Project name",14));EditText name=new EditText(a);name.setSingleLine(true);name.setTextSize(16);name.setTextColor(BlackIceTheme.TEXT);name.setText(project.name);name.setContentDescription("Project name");name.setPadding(dp(12),0,dp(12),0);name.setBackground(background(BlackIceTheme.BACKGROUND,BlackIceTheme.BORDER));LinearLayout.LayoutParams input=new LinearLayout.LayoutParams(-1,dp(52));input.topMargin=dp(8);input.bottomMargin=dp(20);form.addView(name,input);
         form.addView(text("Aspect ratio",14));RatioFlow ratios=new RatioFlow();for(String ratio:CanvasFormat.RATIOS){RatioTile tile=new RatioTile(ratio);tiles.add(tile);ratios.addView(tile);}form.addView(ratios,new LinearLayout.LayoutParams(-1,-2));
         LinearLayout actions=new LinearLayout(a);actions.setGravity(Gravity.END);TextView cancel=button("Cancel",dialog::dismiss);actions.addView(cancel);TextView confirm=button("Create project",()->{String n=name.getText().toString().trim();if(n.isEmpty()||n.length()>120){name.setError("Use 1–120 characters");name.requestFocus();return;}project.name=n;dialog.dismiss();create.accept(project);});confirm.setBackground(background(0xFF087DCD,BlackIceTheme.ICE));LinearLayout.LayoutParams primary=new LinearLayout.LayoutParams(-2,dp(48));primary.leftMargin=dp(12);actions.addView(confirm,primary);root.addView(actions);
-        dialog.setOnShowListener(d->{dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);dialog.getWindow().setLayout(Math.min(dp(620),a.getResources().getDisplayMetrics().widthPixels-dp(24)),-2);dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE|WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);});dialog.show();
+        dialog.setOnShowListener(d->{dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);dialog.getWindow().setLayout(Math.min(dp(620),a.getResources().getDisplayMetrics().widthPixels-dp(24)),-2);dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE|WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);});dialog.show();return dialog;
     }
     final class RatioTile extends View {
         final String ratio;final Paint p=new Paint(3);
