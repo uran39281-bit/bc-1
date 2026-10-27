@@ -1,7 +1,7 @@
 """Install the retained-key release over 1.4.3 and verify a real saved project survives.
 Runs only on the disposable CI emulator. Never clears application data or uninstalls either build.
 """
-import hashlib,json,pathlib,re,shlex,struct,subprocess,time,urllib.request,xml.etree.ElementTree as ET,zlib
+import atexit,hashlib,json,pathlib,re,shlex,struct,subprocess,time,urllib.request,xml.etree.ElementTree as ET,zlib
 PKG='com.blackice.bc1.preview'
 OUT=pathlib.Path('publish')
 OLD=OUT/'previous-v143.apk'
@@ -16,10 +16,26 @@ def private(path,data=None):
     if data is None:return adb('exec-out','run-as',PKG,'cat',path)
     adb('shell','run-as',PKG,'sh','-c',shlex.quote('cat > '+path),data=data)
 def tree():
-    adb('shell','uiautomator','dump','/sdcard/v144-ui.xml')
-    return ET.fromstring(adb('exec-out','cat','/sdcard/v144-ui.xml'))
+    # A freshly started/resized activity can be busy before UIAutomator has a hierarchy.
+    # Treat that as not ready, while the bounded caller keeps waiting for the actual control.
+    try:
+        adb('shell','rm','-f','/sdcard/v144-ui.xml')
+        dump=adb('shell','uiautomator','dump','--compressed','/sdcard/v144-ui.xml')
+        raw=adb('exec-out','cat','/sdcard/v144-ui.xml')
+    except subprocess.CalledProcessError as error:
+        (OUT/'upgrade-ui-last.txt').write_bytes((error.stdout or b'')+(error.stderr or b''))
+        return ET.Element('hierarchy')
+    (OUT/'upgrade-ui-last.txt').write_bytes(dump+b'\n'+raw)
+    try:return ET.fromstring(raw)
+    except ET.ParseError:return ET.Element('hierarchy')
+def diagnostics():
+    if (OUT/'upgrade-verification.json').exists():return
+    for filename,args in [('upgrade-failure.png',('exec-out','screencap','-p')),('upgrade-logcat.txt',('logcat','-d','-t','1500'))]:
+        try:(OUT/filename).write_bytes(adb(*args))
+        except Exception:pass
+atexit.register(diagnostics)
 def click(label):
-    for _ in range(20):
+    for _ in range(30):
         for n in tree().iter('node'):
             if n.get('text')==label or n.get('content-desc')==label:
                 x1,y1,x2,y2=map(int,re.findall(r'\d+',n.get('bounds')))
@@ -34,10 +50,9 @@ def open_project():
         resumed=adb('shell','dumpsys','activity','activities').decode()
         if any('EditorActivity' in line and ('Resumed' in line or 'topResumed' in line) for line in resumed.splitlines()):
             time.sleep(5)
-            xml=adb('shell','uiautomator','dump','/sdcard/v144-ui.xml')
-            text=adb('exec-out','cat','/sdcard/v144-ui.xml').decode()
-            assert 'Could not reopen' not in text and NAME in text,text[-2000:]
-            return
+            labels=' '.join(n.get('text','') for n in tree().iter('node'))
+            assert 'Could not reopen' not in labels,labels[-2000:]
+            if NAME in labels:return
         time.sleep(.5)
     raise AssertionError('Project did not open in editor')
 def subset(expected,actual):
@@ -78,3 +93,4 @@ report=dict(result='PASS',from_version='1.4.3 (37)',to_version='1.4.4 (38)',pack
 (OUT/'upgrade-verification.json').write_text(json.dumps(report,indent=2)+'\n')
 print(json.dumps(report,indent=2))
 OLD.unlink()
+(OUT/'upgrade-ui-last.txt').unlink(missing_ok=True)
