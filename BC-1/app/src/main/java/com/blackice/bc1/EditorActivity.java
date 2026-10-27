@@ -387,11 +387,10 @@ public final class EditorActivity extends Activity {
                 int w=View.MeasureSpec.getSize(wSpec),h=View.MeasureSpec.getSize(hSpec);float ratio=project.canvasAspect();
                 float fit=Math.min(w,h*ratio);frameW=Math.max(1,Math.round(fit*previewZoom));frameH=Math.max(1,Math.round(frameW/ratio));
                 frameX=Math.round((w-frameW)/2f+previewPanX*frameW);frameY=Math.round((h-frameH)/2f+previewPanY*frameH);
+                for(View view:new View[]{surface,liveView}){FrameLayout.LayoutParams lp=(FrameLayout.LayoutParams)view.getLayoutParams();lp.width=frameW;lp.height=frameH;lp.leftMargin=frameX;lp.topMargin=frameY;lp.rightMargin=lp.bottomMargin=0;lp.gravity=Gravity.TOP|Gravity.LEFT;}
                 super.onMeasure(wSpec,hSpec);
-                int fw=View.MeasureSpec.makeMeasureSpec(frameW,View.MeasureSpec.EXACTLY),fh=View.MeasureSpec.makeMeasureSpec(frameH,View.MeasureSpec.EXACTLY);
-                surface.measure(fw,fh);liveView.measure(fw,fh);
             }
-            @Override protected void onLayout(boolean changed,int l,int t,int r,int b){super.onLayout(changed,l,t,r,b);surface.layout(frameX,frameY,frameX+frameW,frameY+frameH);liveView.layout(frameX,frameY,frameX+frameW,frameY+frameH);if(previewControls!=null)previewControls.invalidate();}
+            @Override protected void onLayout(boolean changed,int l,int t,int r,int b){super.onLayout(changed,l,t,r,b);if(previewControls!=null)previewControls.invalidate();}
         };
         monitor.setBackgroundColor(0xFF02060C);monitor.addView(surface,new FrameLayout.LayoutParams(-1,-1));monitor.addView(liveView,new FrameLayout.LayoutParams(-1,-1));
         emptyPreview=label("START YOUR FIRST CUT\n\n+ Import video or images",14,CYAN,true);emptyPreview.setGravity(Gravity.CENTER);emptyPreview.setContentDescription("Import video or images");emptyPreview.setFocusable(true);emptyPreview.setBackgroundColor(Color.BLACK);emptyPreview.setOnClickListener(v->{if((project.clips.isEmpty()&&project.overlays.isEmpty())){openMediaBrowser();}else if(previewPending){releasePreview();previewHint("Preview cancelled • tap to prepare");}else showLive();});emptyPreview.setVisibility((project.clips.isEmpty()&&project.overlays.isEmpty())?View.VISIBLE:View.GONE);monitor.addView(emptyPreview,new FrameLayout.LayoutParams(-1,-1));

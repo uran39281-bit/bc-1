@@ -112,13 +112,15 @@ final class PreviewEditor extends View {
             case CORNER:{float d0=(float)Math.hypot(downX-anchor[0],downY-anchor[1]),d1=(float)Math.hypot(e.getX()-anchor[0],e.getY()-anchor[1]);float factor=d1/Math.max(1,d0);
                 // Proportional unless width/height are unlinked in Move & Transform.
                 if(a.transformPanel.linked)live.scale=TransformMath.clamp(base.scale*factor,minScale,maxScale);
-                else{float fx=Math.abs(e.getX()-anchor[0])/Math.max(1,Math.abs(downX-anchor[0])),fy=Math.abs(e.getY()-anchor[1])/Math.max(1,Math.abs(downY-anchor[1]));live.scale=TransformMath.clamp(base.scale*fx,minScale,maxScale);live.aspect=TransformMath.clamp(base.aspect*fy/Math.max(.05f,fx),.05f,20);}
+                else{float[] factors=axisFactors(e,anchor);float fx=factors[0],fy=factors[1];live.scale=TransformMath.clamp(base.scale*fx,minScale,maxScale);live.aspect=TransformMath.clamp(base.aspect*fy/Math.max(.05f,fx),.05f,20);}
                 break;}
-            case EDGE_X:{float fx=Math.abs(e.getX()-anchor[0])/Math.max(1,Math.abs(downX-anchor[0]));live.scale=TransformMath.clamp(base.scale*fx,minScale,maxScale);live.aspect=TransformMath.clamp(base.aspect/Math.max(.05f,fx),.05f,20);break;}
-            case EDGE_Y:{float fy=Math.abs(e.getY()-anchor[1])/Math.max(1,Math.abs(downY-anchor[1]));live.aspect=TransformMath.clamp(base.aspect*fy,.05f,20);break;}
+            case EDGE_X:{float fx=axisFactors(e,anchor)[0];live.scale=TransformMath.clamp(base.scale*fx,minScale,maxScale);live.aspect=TransformMath.clamp(base.aspect/Math.max(.05f,fx),.05f,20);break;}
+            case EDGE_Y:{float fy=axisFactors(e,anchor)[1];live.aspect=TransformMath.clamp(base.aspect*fy,.05f,20);break;}
             case ROTATE:{float a1=(float)Math.toDegrees(Math.atan2(e.getY()-anchor[1],e.getX()-anchor[0]));if(Math.hypot(e.getX()-anchor[0],e.getY()-anchor[1])>a.dp(16))live.rotation=snapRotation(live.rotation-TransformEdits.angleDelta(lastRotationPointer,a1));lastRotationPointer=a1;break;}
         }
     }
+    /** Scale along the rotated layer axes, not the screen axes. Skew and flips remain in the base frame. */
+    private float[] axisFactors(MotionEvent e,float[] anchor){double angle=Math.toRadians(base.rotation),cs=Math.cos(angle),sn=Math.sin(angle),A=a.previewAspect();double dx=(downX-anchor[0])*A/Math.max(1,sw()),dy=-(downY-anchor[1])/Math.max(1,sh()),x=(e.getX()-anchor[0])*A/Math.max(1,sw()),y=-(e.getY()-anchor[1])/Math.max(1,sh());double minimum=1/Math.max(1,sh());return new float[]{(float)(Math.abs(cs*x+sn*y)/Math.max(minimum,Math.abs(cs*dx+sn*dy))),(float)(Math.abs(-sn*x+cs*y)/Math.max(minimum,Math.abs(-sn*dx+cs*dy)))};}
     private float snapRotation(float r){return a.transformPanel.angleSnap>0?TransformMath.snapAngle(r,a.transformPanel.angleSnap):r;}
     /** Snap the layer's centre / edges to the frame's centre / edges within 8dp, with visible guides. */
     private void snapToGuides(){
