@@ -24,7 +24,7 @@ jobs:
           gradle-version: '8.11.1'
       - name: Install media tools and fixtures
         run: |
-          sudo apt-get update && sudo apt-get install -y ffmpeg ripgrep
+          bash .github/scripts/bc1-install-media-tools.sh
           bash .github/scripts/bc1-media-fixtures.sh
       - name: Enable emulator acceleration
         run: |

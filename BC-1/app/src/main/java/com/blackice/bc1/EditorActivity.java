@@ -1194,7 +1194,7 @@ public final class EditorActivity extends Activity {
     }
     void projectsMenu() {
         if(!editable())return;new AlertDialog.Builder(this).setTitle("Black Ice projects").setItems(new String[]{"New project","Recent projects","Rename project","Save project","Undo","Redo"},(d,index)->{
-            if(index==0)numberDialog("New project name","Untitled project",name->{if(name.isBlank()||name.length()>120)throw new IllegalArgumentException("Use a name from 1 to 120 characters.");saveNow();releasePreview();project=new EditProject();project.name=name;undo.clear();redo.clear();selected=-1;selectedOverlay=-1;changed("New project ready");});
+            if(index==0)NewProjectDialog.show(this,created->{saveNow();releasePreview();project=created;undo.clear();redo.clear();selected=-1;selectedOverlay=-1;changed("New project ready");});
             if(index==1){saveNow();io.execute(()->{java.util.List<ProjectStore.Entry> recent=store.recent();main.post(()->{if(isDestroyed())return;
                 if(recent.isEmpty()){tell("No saved projects yet.");return;}
                 new AlertDialog.Builder(this).setTitle("Recent projects").setItems(recent.stream().map(e->e.name).toArray(String[]::new),(x,i)->openProject(recent.get(i).id)).show();});});}
