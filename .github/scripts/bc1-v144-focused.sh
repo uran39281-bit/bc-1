@@ -19,7 +19,7 @@ cleanup(){
  sudo dmesg | tail -n 100 > v144-focused-qa/host-kernel.txt || true
 }
 trap cleanup EXIT
-adb shell am instrument -w -r -e class com.blackice.bc1.Workspace144Test,com.blackice.bc1.CanvasShapeExportTest,com.blackice.bc1.HomeBrowserTest com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee v144-focused-qa/instrumentation.txt
+adb shell am instrument -w -r -e class com.blackice.bc1.Workspace144Test,com.blackice.bc1.CanvasShapeExportTest,com.blackice.bc1.HomeBrowserTest,com.blackice.bc1.EditorWorkspaceTest,com.blackice.bc1.MediaShapesTest com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee v144-focused-qa/instrumentation.txt
 adb exec-out run-as com.blackice.bc1.preview tar -C files/qa -cf - . > v144-focused-qa/qa.tar
 tar -xf v144-focused-qa/qa.tar -C v144-focused-qa/qa
 if rg 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' v144-focused-qa/instrumentation.txt; then exit 1; fi
