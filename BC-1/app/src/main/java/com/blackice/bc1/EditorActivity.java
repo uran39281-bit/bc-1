@@ -197,7 +197,7 @@ public final class EditorActivity extends Activity {
         if(ordinary==null)text+="\n\nThe ordinary saved version cannot be read. Keep saved version is unavailable.";
         text+="\n\nKeep saved version discards these recovered edits and opens the saved project.";
         AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Recover project?").setMessage(text).setCancelable(false)
-            .setPositiveButton("Restore",(d,w)->{useSession(candidate.project,ordinaryHash);projectSession.edited(project,false);})
+            .setPositiveButton("Restore",(d,w)->{useSession(candidate.project,ordinaryHash);projectSession.restoredIdentity=candidate.identity;projectSession.edited(project,false);})
             .setNeutralButton("Later",(d,w)->{HomeActivity.deferRecovery();returnHome();})
             .setNegativeButton("Keep saved version",(d,w)->new AlertDialog.Builder(this).setTitle("Discard recovered edits?").setMessage("Discard these recovered edits and open the saved project.").setNegativeButton("Cancel",(x,y)->offerRecovery(ordinary,ordinaryHash,candidate)).setPositiveButton("Discard recovered edits",(x,y)->{io.execute(()->{try{EditProject validated=store.load(candidate.project.id);String current=DocumentIdentity.fingerprint(validated);new RecoveryStore(this).discard(candidate.project.id,candidate.identity);main.post(()->{if(!isDestroyed())useSession(validated,current);});}catch(Exception e){main.post(()->{tell("Recovery was retained: "+e.getMessage());offerRecovery(ordinary,ordinaryHash,candidate);});}});}).setCancelable(false).show()).create();
         dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(ordinary!=null));dialog.show();

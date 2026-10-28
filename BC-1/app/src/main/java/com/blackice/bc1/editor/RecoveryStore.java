@@ -39,9 +39,16 @@ public final class RecoveryStore {
         if(!id.equals(p.id)||e.getInt("schema")<1||e.getInt("schema")>EditProject.SCHEMA||!fingerprint.equals(e.getString("fingerprint")))throw new IOException("Recovery identity check failed");
         return new Candidate(p,e.getString("session"),e.getString("base"),fingerprint,e.getString("checksum"),e.getLong("revision"),e.getLong("captured"));
     }
-    public void saved(String id,String session,long revision,String fingerprint)throws IOException{ synchronized(ProjectStore.FILE_LOCK){savedLocked(id,session,revision,fingerprint);} }
-    private void savedLocked(String id,String session,long revision,String fingerprint)throws IOException{
-        for(boolean previous:new boolean[]{false,true}){File f=file(id,previous);try{Candidate c=parse(new AtomicFile(f).readFully(),id);if(c.fingerprint.equals(fingerprint)||c.session.equals(session)&&c.revision<=revision)new AtomicFile(f).delete();}catch(Exception ignored){/* Invalid generations remain available for diagnostics. */}}
+    public void saved(String id,String session,long revision,String fingerprint)throws IOException{saved(id,session,revision,fingerprint,null);}
+    public void saved(String id,String session,long revision,String fingerprint,String restoredIdentity)throws IOException{
+        synchronized(ProjectStore.FILE_LOCK){
+            boolean newestRetired=false;
+            for(boolean previous:new boolean[]{false,true}){File f=file(id,previous);try{
+                Candidate c=parse(new AtomicFile(f).readFully(),id);
+                boolean retired=newestRetired||c.fingerprint.equals(fingerprint)||c.session.equals(session)&&c.revision<=revision||c.identity.equals(restoredIdentity);
+                if(retired){new AtomicFile(f).delete();if(!previous)newestRetired=true;}
+            }catch(Exception ignored){/* Invalid generations remain available for diagnostics. */}}
+        }
     }
     public void discard(String id,String identity)throws IOException{ synchronized(ProjectStore.FILE_LOCK){discardLocked(id,identity);} }
     private void discardLocked(String id,String identity)throws IOException{

@@ -29,6 +29,17 @@ public class ProjectRecoveryTest {
         assertEquals(newest.identity,recovery.read(p.id).identity);assertEquals("recovery-test second",recovery.read(p.id).project.name);
         assertEquals("recovery-test",store.load(p.id).name);recovery.discard(p.id,newest.identity);assertNull(recovery.read(p.id));
     }
+    @Test public void savingRestoredContentRetiresItsAncestorsButNotANewerCheckpoint()throws Exception{
+        EditProject p=project();RecoveryStore recovery=new RecoveryStore(context);String base=DocumentIdentity.fingerprint(p);
+        p.name="recovery-test old";recovery.write(p,"old-session",base,1);p.name="recovery-test restored";RecoveryStore.Candidate restored=recovery.write(p,"old-session",base,2);
+        // A successful save of the restored revision supersedes its older fallback too.
+        store.save(p);recovery.saved(p.id,"new-session",1,DocumentIdentity.fingerprint(p),restored.identity);assertNull(recovery.read(p.id));
+        p.name="recovery-test before restore";restored=recovery.write(p,"old-session",base,3);p.name="recovery-test edited after restore";store.save(p);
+        recovery.saved(p.id,"new-session",1,DocumentIdentity.fingerprint(p),restored.identity);assertNull(recovery.read(p.id));
+        p.name="recovery-test new checkpoint";RecoveryStore.Candidate newest=recovery.write(p,"new-session",base,3);recovery.saved(p.id,"new-session",2,"older content",restored.identity);assertEquals(newest.identity,recovery.read(p.id).identity);
+        // An interrupted AtomicFile promotion cannot replace the committed generation.
+        Files.write(new File(root,"project-recovery-v1/"+p.id+".current.new").toPath(),new byte[]{1,2,3});assertEquals(newest.identity,new RecoveryStore(context).read(p.id).identity);
+    }
     @Test public void failedOrdinarySaveIsStickyAndRetryUsesCurrentModel()throws Exception{
         EditProject p=project();String base=DocumentIdentity.fingerprint(p);ProjectSession[] holder=new ProjectSession[1];main(()->holder[0]=ProjectSession.attach(context,p,base));ProjectSession s=holder[0];
         File directory=new File(root,"projects-v1"),parked=new File(root,"parked-projects");assertTrue(directory.renameTo(parked));assertTrue(directory.createNewFile());

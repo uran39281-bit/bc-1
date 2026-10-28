@@ -14,8 +14,8 @@ final class ProjectSession {
     final Handler main=new Handler(Looper.getMainLooper());
     final LatestQueue<Snapshot> saves,checkpoints,hashes;
     EditProject model;long revision,saveRequest,lastCheckpointAttempt,firstPendingEdit;String savedHash,currentHash,saveFailure,recoveryWarning;
-    String recoveryIdentity;long recoveryCaptured;boolean saving;volatile boolean closed;volatile long committedRevision=-1;volatile String committedHash;Runnable listener,afterSave;
-    private static final class Snapshot {final EditProject project;final long revision,request;final String base;Snapshot(ProjectSession s,long request){project=s.model.copy();revision=s.revision;this.request=request;base=s.savedHash;}}
+    String recoveryIdentity,restoredIdentity;long recoveryCaptured;boolean saving;volatile boolean closed;volatile long committedRevision=-1;volatile String committedHash;Runnable listener,afterSave;
+    private static final class Snapshot {final EditProject project;final long revision,request;final String base,restored;Snapshot(ProjectSession s,long request){project=s.model.copy();revision=s.revision;this.request=request;base=s.savedHash;restored=s.restoredIdentity;}}
     ProjectSession(Context context,EditProject model,String ordinaryHash){this.id=model.id;this.model=model;savedHash=ordinaryHash;currentHash=ordinaryHash;store=new ProjectStore(context.getApplicationContext());recovery=new RecoveryStore(context.getApplicationContext());
         saves=new LatestQueue<>(WRITER,this::writeSave);checkpoints=new LatestQueue<>(WRITER,this::writeCheckpoint);
         hashes=new LatestQueue<>(WRITER,s->{try{String hash=DocumentIdentity.fingerprint(s.project);main.post(()->{if(s.revision==revision){currentHash=hash;notifyChange();}});}catch(Exception e){main.post(()->{saveFailure="Project could not be validated: "+e.getMessage();notifyChange();});}});
@@ -33,7 +33,7 @@ final class ProjectSession {
     void save(Runnable onSuccess){if(closed)return;afterSave=onSuccess==null?afterSave:onSuccess;saveFailure=null;saving=true;notifyChange();saves.submit(new Snapshot(this,++saveRequest));}
     private void writeSave(Snapshot s){try{
         store.save(s.project);String hash=DocumentIdentity.fingerprint(s.project);committedRevision=s.revision;committedHash=hash;
-        recovery.saved(id,session,s.revision,hash);
+        recovery.saved(id,session,s.revision,hash,s.restored);
         main.post(()->{savedHash=hash;if(revision==s.revision){currentHash=hash;model.name=s.project.name;}if(s.request==saveRequest){saving=false;saveFailure=null;}notifyChange();if(!saving&&afterSave!=null){if(!dirty()){Runnable exit=afterSave;afterSave=null;exit.run();}else save(null);}});
     }catch(Exception error){main.post(()->{if(s.request!=saveRequest)return;saving=false;saveFailure=error.getMessage()==null?"Storage is unavailable.":error.getMessage();afterSave=null;notifyChange();});}}
     private void writeCheckpoint(Snapshot s){try{
