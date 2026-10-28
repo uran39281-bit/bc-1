@@ -31,4 +31,15 @@ final class EasingControls {
     void apply(int property,int preset){Motion m=a.selectedMotion();if(m==null||!a.layerEditable())return;List<Motion.Key> keys=m.curves.get(property);String id=selected.get(scope(property));
         for(int i=0;i+1<keys.size();i++){Motion.Key key=keys.get(i);if(key.id.equals(id)){if(Keyframes.easingOf(key)==preset)return;a.edit(Motion.PROPERTIES[property]+" easing updated",()->Keyframes.ease(key,preset));return;}}
     }
+    String fillScope(String property){return a.project.id+":"+a.overlay().id+":fill:"+property;}
+    void selectFill(String property,FillStyle.Track track,long time){String scope=fillScope(property);FillStyle.Track.Interval key=track.interval(time);if(key==null)selected.remove(scope);else selected.put(scope,key.id);}
+    void buildFill(LinearLayout parent,String title,String property,java.util.function.Supplier<FillStyle.Track> source,Runnable activate){
+        FillStyle.Track track=source.get();List<Long> times=new ArrayList<>(track.keys.keySet());String scope=fillScope(property),id=selected.get(scope);int index=-1;
+        for(int i=0;i<times.size();i++)if(track.interval(times.get(i)).id.equals(id)){index=i;break;}
+        boolean editable=index>=0&&index+1<times.size();String status=index<0?"Select a keyframe.":!editable?"No next keyframe.":title+" · Key "+(index+1)+" → Key "+(index+2);
+        TextView selector=a.button(status,v->{FillStyle.Track current=source.get();List<Long> options=new ArrayList<>(current.keys.keySet());if(options.isEmpty()){a.tell("Add a keyframe to "+title+" first.");return;}String[] names=new String[options.size()];for(int i=0;i<names.length;i++)names[i]="Key "+(i+1)+" · "+EditorActivity.seconds(options.get(i))+" s";new AlertDialog.Builder(a).setTitle(title+" keyframe").setItems(names,(d,i)->{activate.run();selectFill(property,source.get(),options.get(i));a.renderInspector();}).setNegativeButton("Cancel",null).show();});selector.setContentDescription(title+" easing: "+status);parent.addView(selector,new LinearLayout.LayoutParams(-1,a.dp(48)));
+        int preset=editable?track.interval(times.get(index)).easing:-1;LinearLayout row=null;
+        for(int i=0;i<4;i++){if(i%2==0){row=a.row();parent.addView(row);}final int choice=i;TextView b=a.button(Keyframes.EASINGS[i],v->{if(!a.layerEditable())return;FillStyle.Track current=source.get();String selectedId=selected.get(scope);for(long time:current.keys.keySet())if(current.interval(time).id.equals(selectedId)&&current.keys.higherKey(time)!=null){if(current.interval(time).easing==choice)return;activate.run();a.fillPanel.commit(title+" easing updated",()->source.get().ease(time,choice));return;}});b.setContentDescription(title+" "+Keyframes.EASINGS[i]);b.setSelected(editable&&preset==i);b.setTextColor(editable&&preset==i?EditorActivity.CYAN:EditorActivity.TEXT);b.setBackground(a.buttonBackground(editable&&preset==i));EditorActivity.dim(b,editable&&!a.selectionLocked()&&!a.uiLocked);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,a.dp(48),1);lp.topMargin=a.dp(8);if(i%2==1)lp.leftMargin=a.dp(8);row.addView(b,lp);}
+    }
+
 }

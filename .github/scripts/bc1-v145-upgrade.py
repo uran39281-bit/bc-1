@@ -62,6 +62,9 @@ def subset(expected,actual):
         if len(expected)==6 and all(isinstance(x,(int,float)) for x in expected) and len(actual)==8:
             assert actual[6] and actual[7]==-1, 'Legacy interpolation must remain unchanged'
             actual=actual[:6]
+        if len(expected)==2 and all(isinstance(x,(int,float)) for x in expected) and len(actual)==4:
+            assert actual[2] and actual[3]==0, "Legacy fill interpolation must stay linear"
+            actual=actual[:2]
         assert len(expected)==len(actual)
         for a,b in zip(expected,actual):subset(a,b)
     elif isinstance(expected,float):assert abs(expected-actual)<1e-5,(expected,actual)
@@ -80,6 +83,7 @@ private('files/media/upgrade-source.png',png)
 motion=[[[0,-.2,.25,.1,.25,1],[700,.3,.25,.1,.25,1]]]+[[] for _ in range(11)]
 clip=dict(id='upgrade-image',uri=f'file:///data/user/0/{PKG}/files/media/upgrade-source.png',name='Preserved image',image=True,sourceDurationMs=2000,inMs=100,outMs=1600,effect=0,intensity=.5,opacity=.8,volume=1,transition=-1,transitionMs=0,easing=0,width=64,height=32,rotation=17,x=.12,y=-.1,scale=.7,motion=motion)
 shape=dict(id='upgrade-shape',text='Rectangle',shape=14,startMs=0,endMs=1500,x=-.3,y=.1,scale=1.2,opacity=.65,rotation=29,color=-16731137)
+shape["fill"]=dict(gradient=True,solid=dict(base=-1,keys=[]),angle=dict(base=0,keys=[[0,0],[1500,90]]),stops=[dict(id="left",position=dict(base=0,keys=[]),color=dict(base=-65536,keys=[[0,-65536],[1500,-16776961]])),dict(id="right",position=dict(base=1,keys=[]),color=dict(base=-16776961,keys=[]))],active=["left","right"],structures=[])
 project=dict(schema=10,id=ID,name=NAME,portrait=False,previewHeight=540,playheadMs=500,frameRate=30,clips=[clip],overlays=[shape])
 path='files/projects-v1/'+ID+'.json'
 private(path,json.dumps(project).encode())
@@ -92,7 +96,7 @@ open_project();click('Save project');time.sleep(1)
 after=json.loads(private(path));expected=dict(project,schema=11);subset(expected,after)
 assert private('files/media/upgrade-source.png')==png
 (OUT/'upgrade-after.png').write_bytes(adb('exec-out','screencap','-p'))
-report=dict(result='PASS',from_version='1.4.4 (38)',to_version='1.4.5 (39)',package=PKG,project_id=ID,source_sha256=hashlib.sha256(png).hexdigest(),verified=['Install -r accepted original Preview signing lineage','Project opens in the editor before and after upgrade','Source URI and original image bytes retained','Trim, opacity, rotation, scale, position and motion keyframes retained','Shape, timing and opacity retained','Canvas and frame rate unchanged'])
+report=dict(result='PASS',from_version='1.4.4 (38)',to_version='1.4.5 (39)',package=PKG,project_id=ID,source_sha256=hashlib.sha256(png).hexdigest(),verified=['Install -r accepted original Preview signing lineage','Project opens in the editor before and after upgrade','Source URI and original image bytes retained','Trim, opacity, rotation, scale, position and motion keyframes retained','Shape, timing, opacity and legacy linear gradient/color keys retained','Canvas and frame rate unchanged'])
 (OUT/'upgrade-verification.json').write_text(json.dumps(report,indent=2)+'\n')
 print(json.dumps(report,indent=2))
 OLD.unlink()
