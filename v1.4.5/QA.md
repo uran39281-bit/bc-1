@@ -41,6 +41,10 @@ Actual exports through **ICE Lite and Media3** verify recovered Fit/Fill geometr
 
 The publication gate installs signed Preview 1.4.4, opens and saves a real fixture, installs this APK with `adb install -r`, and verifies reopening plus source-image bytes, trim, transforms, motion keys, shape properties and legacy gradient/color keys. Publication only proceeds if that upgrade passes. Its [verification record](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.5/upgrade-verification.json) and [screenshot](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.5/upgrade-after.png) accompany the immutable APK.
 
+The first publication attempt installed the upgrade and reopened the fixture, but the CLI UI inspector could not obtain an idle hierarchy while the live work clock updated. The harness now invokes the registered Ctrl+S shortcut and awaits the real asynchronous schema-11 save before comparing project data. This changes the test harness only; the qualified APK remains byte-identical.
+
+**Upgrade and publication: PASS.** [Run 40700462187](https://github.com/uran39281-bit/bc-1/actions/runs/40700462187) installed Preview 1.4.5 build 39 over the retained-key 1.4.4 build 38, reopened the fixture, saved through Ctrl+S, compared the preserved project and original media, and published the immutable APK. No uninstall or application-data clearing was used.
+
 ## Screenshots
 
 Actual emulator captures use deterministic test projects, not user media. A fixture named “1.4.4 · Workspace” is a project name, not the installed application version.
