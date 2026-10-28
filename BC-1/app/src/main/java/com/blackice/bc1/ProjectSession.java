@@ -39,7 +39,7 @@ final class ProjectSession {
     private void writeCheckpoint(Snapshot s){try{
         if(closed||s.revision<=committedRevision)return;String hash=DocumentIdentity.fingerprint(s.project);
         // Reload the ordinary identity at the serial writer boundary to avoid redundant checkpoints.
-        String ordinary=DocumentIdentity.fingerprint(store.load(id));
+        String ordinary;try{ordinary=DocumentIdentity.fingerprint(store.load(id));}catch(Exception unreadable){ordinary="";}
         if(hash.equals(ordinary)){recovery.saved(id,session,s.revision,hash);main.post(()->{if(s.revision==revision){currentHash=hash;notifyChange();}});return;}
         RecoveryStore.Candidate c=recovery.write(s.project,session,committedHash!=null?committedHash:s.base==null?"":s.base,s.revision);
         main.post(()->{recoveryIdentity=c.identity;recoveryCaptured=c.captured;recoveryWarning=null;if(s.revision==revision)currentHash=hash;notifyChange();});

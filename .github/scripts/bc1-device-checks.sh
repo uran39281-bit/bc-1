@@ -152,3 +152,9 @@ for file in BC-1/app/build/reports/androidTests/qa/v144-*.mp4; do
  ffprobe -v error -show_streams -show_format -of json "$file" > "$file.ffprobe.json"
  echo "Independent canvas/shape decode passed: $file"
 done
+
+# v1.4.5: recovered Fit/Fill and exact quadratic easing through both real engines.
+for engine in ice media3; do
+ ffmpeg -v error -xerror -i "BC-1/app/build/reports/androidTests/qa/v145-framing-${engine}.mp4" -f null -
+ echo "Independent recovered framing/easing decode passed: ${engine}"
+done

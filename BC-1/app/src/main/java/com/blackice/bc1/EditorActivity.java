@@ -156,7 +156,7 @@ public final class EditorActivity extends Activity {
         main.postDelayed(this,player!=null&&player.isPlaying()?33:100);
     }};
     // Retain the requested identity through configuration changes while disk loading is in flight.
-    private String openingProjectId;
+    private String openingProjectId,restoredPanel;
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);getWindow().setStatusBarColor(BG);getWindow().setNavigationBarColor(BG);
         thumbnails=new ThumbnailCache(this);previewProxy=new PreviewProxy(this);live=new com.blackice.bc1.engine.bc.LivePreview(this);addDrawer=new AddDrawer(this);mediaImportWindow=new MediaImportWindow(this);mediaImportWindow.restore(state);presets=new PresetStore(this);uiLocked=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("ui-locked",false);
@@ -170,7 +170,7 @@ public final class EditorActivity extends Activity {
         try {mode=LayoutPolicy.Preference.valueOf(getSharedPreferences(PREFS,MODE_PRIVATE).getString("mode","AUTO"));}catch(Exception ignored){}
         snapping=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("snapping",true);
         workspaceFocus=getSharedPreferences(PREFS,MODE_PRIVATE).getInt("workspace-focus",0);
-        effectCatalog.restore(state);if(state!=null){selectedMediaUri=state.getString("selected-media-uri");pendingSubtitleExport=state.getString("subtitle-export");transformPanel.linked=state.getBoolean("transform-linked",true);transformPanel.tab=state.getInt("transform-tab",0);mediaSort=state.getInt("media-sort",0);mediaList=state.getBoolean("media-list",false);favoritesOnly=state.getBoolean("media-favorites",false);customTimelineHeight=state.getInt("timeline-height",0);selected=state.getInt("selected",-1);selectedOverlay=state.getInt("selected-overlay",-1);pixelsPerSecond=state.getFloat("timeline-zoom",48);tab=state.getInt("tab",0);mediaQuery=state.getString("media-query","");try{mediaKind=MediaFilter.Kind.valueOf(state.getString("media-kind","ALL"));}catch(IllegalArgumentException ignored){}}
+        effectCatalog.restore(state);easingControls.restore(state);if(state!=null){restoredPanel=state.getString("focused-panel");selectedMediaUri=state.getString("selected-media-uri");pendingSubtitleExport=state.getString("subtitle-export");transformPanel.linked=state.getBoolean("transform-linked",true);transformPanel.tab=state.getInt("transform-tab",0);mediaSort=state.getInt("media-sort",0);mediaList=state.getBoolean("media-list",false);favoritesOnly=state.getBoolean("media-favorites",false);customTimelineHeight=state.getInt("timeline-height",0);selected=state.getInt("selected",-1);selectedOverlay=state.getInt("selected-overlay",-1);pixelsPerSecond=state.getFloat("timeline-zoom",48);tab=state.getInt("tab",0);mediaQuery=state.getString("media-query","");try{mediaKind=MediaFilter.Kind.valueOf(state.getString("media-kind","ALL"));}catch(IllegalArgumentException ignored){}}
         if(state==null)tab=1;
         buildWorkspace();
         String id=state==null?getIntent().getStringExtra("project-id"):state.getString("project-id",getIntent().getStringExtra("project-id"));
@@ -190,7 +190,7 @@ public final class EditorActivity extends Activity {
             if(ordinary!=null){useSession(ordinary,ordinaryHash);if(error!=null)tell(error);}
             else{loading=false;new AlertDialog.Builder(this).setTitle("Could not open project").setMessage(error==null?"Project storage is unavailable.":error).setPositiveButton("Back to Projects",(d,w)->returnHome()).setCancelable(false).show();}
         });});}
-    void useSession(EditProject loaded,String ordinaryHash){if(projectSession!=null)projectSession.listener=null;projectSession=ProjectSession.attach(this,loaded,ordinaryHash);project=projectSession.model;loading=false;projectSession.listener=this::saveStateChanged;saveStateChanged();refreshProject();showLive();if(mediaImportWindow.restoreOpen)openMediaBrowser();if(getIntent().getBooleanExtra("show-settings",false)){tab=4;renderInspector();}}
+    void useSession(EditProject loaded,String ordinaryHash){if(projectSession!=null)projectSession.listener=null;projectSession=ProjectSession.attach(this,loaded,ordinaryHash);project=projectSession.model;loading=false;projectSession.listener=this::saveStateChanged;saveStateChanged();refreshProject();if(restoredPanel!=null){String panel=restoredPanel;restoredPanel=null;panels.category(panel);}showLive();if(mediaImportWindow.restoreOpen)openMediaBrowser();if(getIntent().getBooleanExtra("show-settings",false)){tab=4;renderInspector();}}
     void offerRecovery(EditProject ordinary,String ordinaryHash,RecoveryStore.Candidate candidate){
         String text=candidate.project.name+"\n"+java.text.DateFormat.getDateTimeInstance().format(new java.util.Date(candidate.captured))+"\n\nYour previous editing session ended unexpectedly.\nRestore the last recovery checkpoint? Edits made after this checkpoint may be unavailable.";
         if(!candidate.base.equals(ordinaryHash))text+="\n\nThe saved project also changed. Both versions will remain intact until you explicitly save or discard the recovered edits.";
@@ -198,7 +198,7 @@ public final class EditorActivity extends Activity {
         text+="\n\nKeep saved version discards these recovered edits and opens the saved project.";
         AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Recover project?").setMessage(text).setCancelable(false)
             .setPositiveButton("Restore",(d,w)->{useSession(candidate.project,ordinaryHash);projectSession.edited(project,false);})
-            .setNeutralButton("Later",(d,w)->returnHome())
+            .setNeutralButton("Later",(d,w)->{HomeActivity.deferRecovery();returnHome();})
             .setNegativeButton("Keep saved version",(d,w)->new AlertDialog.Builder(this).setTitle("Discard recovered edits?").setMessage("Discard these recovered edits and open the saved project.").setNegativeButton("Cancel",(x,y)->offerRecovery(ordinary,ordinaryHash,candidate)).setPositiveButton("Discard recovered edits",(x,y)->{io.execute(()->{try{EditProject validated=store.load(candidate.project.id);String current=DocumentIdentity.fingerprint(validated);new RecoveryStore(this).discard(candidate.project.id,candidate.identity);main.post(()->{if(!isDestroyed())useSession(validated,current);});}catch(Exception e){main.post(()->{tell("Recovery was retained: "+e.getMessage());offerRecovery(ordinary,ordinaryHash,candidate);});}});}).setCancelable(false).show()).create();
         dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(ordinary!=null));dialog.show();
     }
@@ -215,7 +215,7 @@ public final class EditorActivity extends Activity {
     @Override protected void onStart(){super.onStart();active=true;main.post(pulse);if(!loading)showLive();}
     @Override protected void onStop(){cancelLiveAdjust();active=false;main.removeCallbacks(pulse);main.removeCallbacks(warmPreview);if(projectSession!=null)projectSession.checkpoint();releasePreview();if(previewProxy!=null)previewProxy.cancel();if(live!=null)live.releaseDecoders();super.onStop();}
     @Override protected void onDestroy(){if(mediaImportWindow!=null)mediaImportWindow.close();main.removeCallbacks(autosave);if(projectSession!=null){projectSession.model=project;projectSession.listener=null;}if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
-    @Override protected void onSaveInstanceState(Bundle state){effectCatalog.save(state);mediaImportWindow.save(state);state.putString("selected-media-uri",selectedMediaUri);state.putString("subtitle-export",pendingSubtitleExport);state.putString("project-id",loading?openingProjectId:project.id);cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());if(projectSession!=null)projectSession.checkpoint();super.onSaveInstanceState(state);}
+    @Override protected void onSaveInstanceState(Bundle state){if(panels.showing())state.putString("focused-panel",panels.title());easingControls.save(state);effectCatalog.save(state);mediaImportWindow.save(state);state.putString("selected-media-uri",selectedMediaUri);state.putString("subtitle-export",pendingSubtitleExport);state.putString("project-id",loading?openingProjectId:project.id);cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());if(projectSession!=null)projectSession.checkpoint();super.onSaveInstanceState(state);}
     @Override public void onConfigurationChanged(Configuration config){super.onConfigurationChanged(config);cancelLiveAdjust();buildWorkspace();}
     boolean exporting(){return getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getBoolean("running",false)||exportLaunching;}
     boolean editable(){if(captionApplying){tell("Saving captions…");return false;}if(uiLocked){tell("UI locked • unlock editing in Settings");return false;}if(loading||importing){tell("Wait for the current import to finish.");return false;}if(exporting()){tell("Wait for export to finish, or cancel it to continue editing.");return false;}return true;}
@@ -435,7 +435,6 @@ public final class EditorActivity extends Activity {
     /** Editing tools on the left (dimmed until a layer that supports them is selected); zoom, snapping and
      * fit on the right. These are the only timeline zoom controls. */
     void renderTimelineTools(){if(timelineTools==null)return;timelineTools.removeAllViews();playheadTools.clear();EditProject.Clip c=clip();EditProject.Overlay o=overlay();boolean any=c!=null||o!=null;
-        if(any&&!wideLayout)for(String tool:new String[]{"Split","Trim","Duplicate","Transform","Animation"}){boolean supported=any&&ToolPanels.tools(c,o).stream().anyMatch(t->t.equals(tool));TextView b=headerIcon(tool,tool,v->{tab=1;panels.runTool(tool);});dim(b,supported);timelineTools.addView(b);}
         TextView delete=headerIcon("Delete","Delete selected layer",v->deleteSelection());dim(delete,any);timelineTools.addView(delete);
         TextView undoButton=headerIcon("Undo","Undo",v->undo(false)),redoButton=headerIcon("Redo","Redo",v->undo(true));dim(undoButton,!undo.isEmpty());dim(redoButton,!redo.isEmpty());timelineTools.addView(undoButton);timelineTools.addView(redoButton);
         timelineTools.addView(new View(this),new LinearLayout.LayoutParams(0,1,1));
@@ -806,7 +805,6 @@ public final class EditorActivity extends Activity {
         header.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
         if(wideLayout){
             header.addView(workClockView());
-            View gap=new View(this);header.addView(gap,new LinearLayout.LayoutParams(dp(10),1));
             TextView save=labelledIcon("Save","Save","Save project",v->{saveNow();tell("Saving project…");});header.addView(save);header.addView(saveStatusView());
         }
         header.addView(labelledIcon("Settings","Settings","Settings",v->{tab=4;renderInspector();}));

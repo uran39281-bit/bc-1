@@ -11,7 +11,7 @@ import java.util.*;
 public final class ProjectStore {
     // AtomicFile has no locking of its own. openRead() may discard another instance's active
     // .new file, so every project transaction shares this process-wide, reentrant lock.
-    private static final Object FILE_LOCK = new Object();
+    static final Object FILE_LOCK = new Object();
     private final File directory, cacheDirectory;
     public ProjectStore(Context context) { cacheDirectory=context.getCacheDir(); directory=new File(context.getFilesDir(),"projects-v1"); directory.mkdirs(); }
     public void save(EditProject p) throws IOException, JSONException {

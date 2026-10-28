@@ -23,6 +23,7 @@ public final class HomeActivity extends Activity {
     private final ExecutorService io=Executors.newSingleThreadExecutor();
     private final Handler main=new Handler(Looper.getMainLooper());
     private static boolean startupRecoveryChecked;
+    static void deferRecovery(){startupRecoveryChecked=true;}
     private ProjectStore store;
     private ThumbnailCache thumbnails;
     private java.util.List<ProjectStore.BrowserEntry> entries=new ArrayList<>();

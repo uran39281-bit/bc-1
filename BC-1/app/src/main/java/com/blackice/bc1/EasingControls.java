@@ -9,6 +9,8 @@ import java.util.*;
 final class EasingControls {
     final EditorActivity a;final Map<String,String> selected=new HashMap<>();
     EasingControls(EditorActivity a){this.a=a;}
+    void save(android.os.Bundle state){android.os.Bundle keys=new android.os.Bundle();for(Map.Entry<String,String> entry:selected.entrySet())keys.putString(entry.getKey(),entry.getValue());state.putBundle("easing-selection",keys);}
+    void restore(android.os.Bundle state){if(state==null)return;android.os.Bundle keys=state.getBundle("easing-selection");if(keys!=null)for(String key:keys.keySet()){String id=keys.getString(key);if(id!=null)selected.put(key,id);}}
     String scope(int property){return a.project.id+":"+(a.clip()!=null?a.clip().id:a.overlay()!=null?a.overlay().id:"")+":"+property;}
     void select(int property,long time){Motion m=a.selectedMotion();if(m==null)return;Motion.Key k=Keyframes.keyAt(m,property,time,a.panels.tolerance());if(k!=null)selected.put(scope(property),k.id);else selected.remove(scope(property));}
     void build(LinearLayout parent,int property){

@@ -30,7 +30,7 @@ public class DailyUpdateTest {
                     a.panels.back();a.panels.category("Effects");assertEquals("Only title/back row and Add Effects",2,a.inspector.getChildCount());WorkspaceV2Test.text(a.inspector,"Add Effects").performClick();assertTrue(a.effectCatalog.showing);a.effectCatalog.close();a.panels.back();a.panels.category("Move & Transform");a.transformPanel.tab=2;a.renderInspector();
                 });Thread.sleep(500);h.capture("v145-wide-transform");
                 h.shell("wm size 1080x1920");h.shell("wm density 420");Thread.sleep(1000);
-                scene.onActivity(a->{assertNotNull(a.mobile);assertNotNull(WorkspaceV2Test.text(a.inspector,"Fit Canvas"));assertNotNull(WorkspaceV2Test.described(a.timelineTools,"Undo"));a.saveNow();});Thread.sleep(500);h.capture("v145-phone-transform");
+                scene.onActivity(a->{assertNotNull("Phone workspace",a.mobile);assertNotNull("Framing panel survives resize",WorkspaceV2Test.text(a.inspector,"Fit Canvas"));assertNotNull("Undo in phone timeline toolbar",WorkspaceV2Test.described(a.timelineTools,"Undo"));a.saveNow();});Thread.sleep(500);h.capture("v145-phone-transform");
             }
         }finally{h.shell("wm size "+size);h.shell("wm density "+density);}
     }
