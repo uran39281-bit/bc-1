@@ -9,7 +9,7 @@ NEW=OUT/'Black-Ice-Editor-v1.4.5-Preview-build39.apk'
 NAME='Upgrade fixture'
 ID='v145-upgrade-fixture'
 def run(*args,data=None):
-    return subprocess.run(args,input=data,stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True).stdout
+    return subprocess.run(args,input=data,stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True,timeout=120).stdout
 
 def adb(*args,data=None):return run('adb',*args,data=data)
 def private(path,data=None):
@@ -43,13 +43,14 @@ def click(label):
                     adb('shell','input','tap',str((x1+x2)//2),str((y1+y2)//2));return
         time.sleep(.5)
     raise AssertionError('Control not available: '+label)
-def open_project():
+def open_project(verify_title=True):
     adb('shell','am','start','-n',PKG+'/com.blackice.bc1.HomeActivity')
     click(NAME)
     for _ in range(30):
         resumed=adb('shell','dumpsys','activity','activities').decode()
         if any('EditorActivity' in line and ('Resumed' in line or 'topResumed' in line) for line in resumed.splitlines()):
             time.sleep(5)
+            if not verify_title:return  # Saving/schema migration below proves the intended project opened.
             labels=' '.join(n.get('text','') for n in tree().iter('node'))
             assert 'Could not reopen' not in labels,labels[-2000:]
             if NAME in labels:return
@@ -92,11 +93,21 @@ before=json.loads(private(path));subset(project,before)
 adb('shell','am','force-stop',PKG)
 print(adb('install','-r',str(NEW)).decode(),flush=True)
 package=adb('shell','dumpsys','package',PKG).decode();assert 'versionCode=39' in package and 'versionName=1.4.5' in package
-open_project();click('Save project');time.sleep(1)
-after=json.loads(private(path));expected=dict(project,schema=11);subset(expected,after)
+# The live work clock continuously changes accessibility text. UiAutomator's CLI
+# waits for global UI idleness and can fail to dump an otherwise healthy editor.
+# Exercise the real registered Ctrl+S command, then await its asynchronous disk write.
+open_project(verify_title=False)
+print('Opened upgraded editor; saving through Ctrl+S',flush=True)
+adb('shell','input','keycombination','113','47')
+for _ in range(40):
+    after=json.loads(private(path))
+    if after.get('schema')==11:break
+    time.sleep(.25)
+else:raise AssertionError('Ctrl+S did not persist the upgraded project schema')
+expected=dict(project,schema=11);subset(expected,after)
 assert private('files/media/upgrade-source.png')==png
 (OUT/'upgrade-after.png').write_bytes(adb('exec-out','screencap','-p'))
-report=dict(result='PASS',from_version='1.4.4 (38)',to_version='1.4.5 (39)',package=PKG,project_id=ID,source_sha256=hashlib.sha256(png).hexdigest(),verified=['Install -r accepted original Preview signing lineage','Project opens in the editor before and after upgrade','Source URI and original image bytes retained','Trim, opacity, rotation, scale, position and motion keyframes retained','Shape, timing, opacity and legacy linear gradient/color keys retained','Canvas and frame rate unchanged'])
+report=dict(result='PASS',from_version='1.4.4 (38)',to_version='1.4.5 (39)',package=PKG,project_id=ID,source_sha256=hashlib.sha256(png).hexdigest(),verified=['Install -r accepted original Preview signing lineage','Project opens before and after upgrade; Ctrl+S persists schema 11','Source URI and original image bytes retained','Trim, opacity, rotation, scale, position and motion keyframes retained','Shape, timing, opacity and legacy linear gradient/color keys retained','Canvas and frame rate unchanged'])
 (OUT/'upgrade-verification.json').write_text(json.dumps(report,indent=2)+'\n')
 print(json.dumps(report,indent=2))
 OLD.unlink()
