@@ -15,6 +15,7 @@ public class DiagnosticsTest {
         for(int i=0;i<14;i++)CrashLogs.record("Diagnostic acceptance probe",new IllegalArgumentException("PRIVATE_TOKEN /private/path/source.mp4"));
         long deadline=android.os.SystemClock.elapsedRealtime()+10000;String report="";while(android.os.SystemClock.elapsedRealtime()<deadline){report=CrashLogs.report(context);if(report.contains("Diagnostic acceptance probe")&&new File(context.getFilesDir(),"crash-logs").listFiles().length>=12)break;Thread.sleep(100);}
         assertTrue(report.contains("java.lang.IllegalArgumentException"));assertTrue(report.contains("DiagnosticsTest"));assertTrue(report.contains("Thread ID:"));assertFalse(report.contains("PRIVATE_TOKEN"));assertFalse(report.contains("private-media-title"));assertFalse(report.contains("/private/path"));
+        java.lang.reflect.Field writer=CrashLogs.class.getDeclaredField("writer");writer.setAccessible(true);((java.util.concurrent.ExecutorService)writer.get(context.getApplicationContext())).submit(()->{}).get(10,java.util.concurrent.TimeUnit.SECONDS);
         File[] reports=new File(context.getFilesDir(),"crash-logs").listFiles();assertNotNull(reports);assertTrue(reports.length<=12);
         for(File f:reports)assertTrue("Report byte size bounded",f.length()<=128000);
         // Export uses exactly this UTF-8 report, independently of the dialog lifecycle.

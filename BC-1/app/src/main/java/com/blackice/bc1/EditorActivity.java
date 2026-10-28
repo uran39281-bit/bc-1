@@ -23,6 +23,7 @@ import java.util.concurrent.*;
 @androidx.annotation.OptIn(markerClass = {androidx.media3.common.util.UnstableApi.class, androidx.media3.common.util.ExperimentalApi.class})
 public final class EditorActivity extends Activity {
     static final int BG=BlackIceTheme.BACKGROUND,PANEL=BlackIceTheme.PRIMARY,CARD=BlackIceTheme.SECONDARY,CYAN=BlackIceTheme.ACCENT,TEXT=BlackIceTheme.TEXT,MUTED=BlackIceTheme.MUTED;
+    ProjectSession projectSession;TextView saveState;boolean leavingAfterSave;String shownSaveFailure,shownRecoveryWarning,lastSaveLabel;
     boolean dirty,reducedMotion,favoritesOnly,mediaList,fullscreenPreview; float monitorVolume=1f; LinearLayout timelineTools; int mediaSort,customTimelineHeight; long editRevision;
     final java.util.Set<String> favoriteMedia=new java.util.HashSet<>();
     public static final String PREFS="bc1-editor";
@@ -155,7 +156,7 @@ public final class EditorActivity extends Activity {
         main.postDelayed(this,player!=null&&player.isPlaying()?33:100);
     }};
     // Retain the requested identity through configuration changes while disk loading is in flight.
-    private String openingProjectId;
+    private String openingProjectId,restoredPanel;
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);getWindow().setStatusBarColor(BG);getWindow().setNavigationBarColor(BG);
         thumbnails=new ThumbnailCache(this);previewProxy=new PreviewProxy(this);live=new com.blackice.bc1.engine.bc.LivePreview(this);addDrawer=new AddDrawer(this);mediaImportWindow=new MediaImportWindow(this);mediaImportWindow.restore(state);presets=new PresetStore(this);uiLocked=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("ui-locked",false);
@@ -169,31 +170,52 @@ public final class EditorActivity extends Activity {
         try {mode=LayoutPolicy.Preference.valueOf(getSharedPreferences(PREFS,MODE_PRIVATE).getString("mode","AUTO"));}catch(Exception ignored){}
         snapping=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("snapping",true);
         workspaceFocus=getSharedPreferences(PREFS,MODE_PRIVATE).getInt("workspace-focus",0);
-        effectCatalog.restore(state);if(state!=null){selectedMediaUri=state.getString("selected-media-uri");pendingSubtitleExport=state.getString("subtitle-export");transformPanel.linked=state.getBoolean("transform-linked",true);transformPanel.tab=state.getInt("transform-tab",0);mediaSort=state.getInt("media-sort",0);mediaList=state.getBoolean("media-list",false);favoritesOnly=state.getBoolean("media-favorites",false);customTimelineHeight=state.getInt("timeline-height",0);selected=state.getInt("selected",-1);selectedOverlay=state.getInt("selected-overlay",-1);pixelsPerSecond=state.getFloat("timeline-zoom",48);tab=state.getInt("tab",0);mediaQuery=state.getString("media-query","");try{mediaKind=MediaFilter.Kind.valueOf(state.getString("media-kind","ALL"));}catch(IllegalArgumentException ignored){}}
+        effectCatalog.restore(state);easingControls.restore(state);fillPanel.restore(state);if(state!=null){restoredPanel=state.getString("focused-panel");selectedMediaUri=state.getString("selected-media-uri");pendingSubtitleExport=state.getString("subtitle-export");transformPanel.linked=state.getBoolean("transform-linked",true);transformPanel.tab=state.getInt("transform-tab",0);mediaSort=state.getInt("media-sort",0);mediaList=state.getBoolean("media-list",false);favoritesOnly=state.getBoolean("media-favorites",false);customTimelineHeight=state.getInt("timeline-height",0);selected=state.getInt("selected",-1);selectedOverlay=state.getInt("selected-overlay",-1);pixelsPerSecond=state.getFloat("timeline-zoom",48);tab=state.getInt("tab",0);mediaQuery=state.getString("media-query","");try{mediaKind=MediaFilter.Kind.valueOf(state.getString("media-kind","ALL"));}catch(IllegalArgumentException ignored){}}
         if(state==null)tab=1;
         buildWorkspace();
         String id=state==null?getIntent().getStringExtra("project-id"):state.getString("project-id",getIntent().getStringExtra("project-id"));
         if(id==null)id=getSharedPreferences(PREFS,MODE_PRIVATE).getString("last-project",null);
         openingProjectId=id;
         final String initialId=id;
-        io.execute(()->{
-            EditProject loaded=null;String failure=null;
-            if(initialId!=null)try {loaded=store.load(initialId);}catch(Exception e){failure="Could not reopen the last project. Its file was preserved.";}
-            EditProject result=loaded;String error=failure;
-            main.post(()->{if(isDestroyed())return;loading=false;if(result!=null)project=result;
-                message=error==null?((project.clips.isEmpty()&&project.overlays.isEmpty())?"Import videos or images to begin.":"Project restored • "+project.clips.size()+" clips"):error;
-                refreshProject();showLive();
-                if(mediaImportWindow.restoreOpen)openMediaBrowser();
-                if(getIntent().getBooleanExtra("show-settings",false)){tab=4;renderInspector();}
-            });
-        });
+        loadSession(initialId);
     }
+    void loadSession(String id){loading=true;io.execute(()->{EditProject saved=null;String hash="",failure=null;RecoveryStore.Candidate candidate=null;
+        try{if(id!=null){saved=store.load(id);hash=DocumentIdentity.fingerprint(saved);}else{saved=new EditProject();saved.name="";store.save(saved);hash=DocumentIdentity.fingerprint(saved);}}catch(Exception e){failure=e.getMessage();}
+        if(id!=null)try{candidate=new RecoveryStore(this).read(id);}catch(Exception e){failure=e.getMessage();}
+        EditProject ordinary=saved;String ordinaryHash=hash,error=failure;RecoveryStore.Candidate recovery=candidate;
+        main.post(()->{if(isDestroyed())return;
+            ProjectSession retained=id==null?null:ProjectSession.ACTIVE.get(id);
+            if(retained!=null){useSession(retained.model,retained.savedHash);return;}
+            if(recovery!=null&&!recovery.fingerprint.equals(ordinaryHash)){offerRecovery(ordinary,ordinaryHash,recovery);return;}
+            if(ordinary!=null){useSession(ordinary,ordinaryHash);if(error!=null)tell(error);}
+            else{loading=false;new AlertDialog.Builder(this).setTitle("Could not open project").setMessage(error==null?"Project storage is unavailable.":error).setPositiveButton("Back to Projects",(d,w)->returnHome()).setCancelable(false).show();}
+        });});}
+    void useSession(EditProject loaded,String ordinaryHash){if(projectSession!=null)projectSession.listener=null;projectSession=ProjectSession.attach(this,loaded,ordinaryHash);project=projectSession.model;loading=false;projectSession.listener=this::saveStateChanged;saveStateChanged();refreshProject();if(restoredPanel!=null){String panel=restoredPanel;restoredPanel=null;panels.category(panel);}showLive();if(mediaImportWindow.restoreOpen)openMediaBrowser();if(getIntent().getBooleanExtra("show-settings",false)){tab=4;renderInspector();}}
+    void offerRecovery(EditProject ordinary,String ordinaryHash,RecoveryStore.Candidate candidate){
+        String text=candidate.project.name+"\n"+java.text.DateFormat.getDateTimeInstance().format(new java.util.Date(candidate.captured))+"\n\nYour previous editing session ended unexpectedly.\nRestore the last recovery checkpoint? Edits made after this checkpoint may be unavailable.";
+        if(!candidate.base.equals(ordinaryHash))text+="\n\nThe saved project also changed. Both versions will remain intact until you explicitly save or discard the recovered edits.";
+        if(ordinary==null)text+="\n\nThe ordinary saved version cannot be read. Keep saved version is unavailable.";
+        text+="\n\nKeep saved version discards these recovered edits and opens the saved project.";
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Recover project?").setMessage(text).setCancelable(false)
+            .setPositiveButton("Restore",(d,w)->{useSession(candidate.project,ordinaryHash);projectSession.restoredIdentity=candidate.identity;projectSession.edited(project,false);})
+            .setNeutralButton("Later",(d,w)->{HomeActivity.deferRecovery();returnHome();})
+            .setNegativeButton("Keep saved version",(d,w)->new AlertDialog.Builder(this).setTitle("Discard recovered edits?").setMessage("Discard these recovered edits and open the saved project.").setNegativeButton("Cancel",(x,y)->offerRecovery(ordinary,ordinaryHash,candidate)).setPositiveButton("Discard recovered edits",(x,y)->{io.execute(()->{try{EditProject validated=store.load(candidate.project.id);String current=DocumentIdentity.fingerprint(validated);new RecoveryStore(this).discard(candidate.project.id,candidate.identity);main.post(()->{if(!isDestroyed())useSession(validated,current);});}catch(Exception e){main.post(()->{tell("Recovery was retained: "+e.getMessage());offerRecovery(ordinary,ordinaryHash,candidate);});}});}).setCancelable(false).show()).create();
+        dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(ordinary!=null));dialog.show();
+    }
+    void returnHome(){startActivity(new Intent(this,HomeActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP));finish();}
+    void saveStateChanged(){if(projectSession==null||isDestroyed())return;boolean previous=dirty;dirty=projectSession.dirty();editRevision=projectSession.revision;String label=projectSession.status();if(previous!=dirty||!label.equals(lastSaveLabel)){lastSaveLabel=label;renderHeader();}if(saveState!=null&&!label.contentEquals(saveState.getText()))saveState.setText(label);
+        if(projectSession.saveFailure!=null&&!projectSession.saveFailure.equals(shownSaveFailure)){shownSaveFailure=projectSession.saveFailure;tell("Save failed: "+shownSaveFailure);if(leavingAfterSave){leavingAfterSave=false;new AlertDialog.Builder(this).setTitle("Could not save project").setMessage(shownSaveFailure+"\nYour edits remain open.").setPositiveButton("Retry",(d,w)->saveAndProjects()).setNegativeButton("Keep editing",null).show();}}
+        if(projectSession.saveFailure==null)shownSaveFailure=null;
+        if(projectSession.recoveryWarning!=null&&!projectSession.recoveryWarning.equals(shownRecoveryWarning)){shownRecoveryWarning=projectSession.recoveryWarning;tell(shownRecoveryWarning);}if(projectSession.recoveryWarning==null)shownRecoveryWarning=null;
+    }
+    TextView saveStatusView(){saveState=label(projectSession==null?"Loading…":projectSession.status(),11,MUTED,false);saveState.setGravity(Gravity.CENTER_VERTICAL);saveState.setMaxLines(2);saveState.setPadding(dp(8),0,dp(8),0);saveState.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);saveState.setLayoutParams(new LinearLayout.LayoutParams(dp(112),dp(48)));return saveState;}
+
     @Override protected void onResume(){super.onResume();workClock.resume();mediaImportWindow.resume();}
     @Override protected void onPause(){workClock.pause();super.onPause();}
     @Override protected void onStart(){super.onStart();active=true;main.post(pulse);if(!loading)showLive();}
-    @Override protected void onStop(){cancelLiveAdjust();active=false;main.removeCallbacks(pulse);main.removeCallbacks(warmPreview);saveNow();releasePreview();if(previewProxy!=null)previewProxy.cancel();if(live!=null)live.releaseDecoders();super.onStop();}
-    @Override protected void onDestroy(){if(mediaImportWindow!=null)mediaImportWindow.close();main.removeCallbacks(autosave);if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
-    @Override protected void onSaveInstanceState(Bundle state){effectCatalog.save(state);mediaImportWindow.save(state);state.putString("selected-media-uri",selectedMediaUri);state.putString("subtitle-export",pendingSubtitleExport);state.putString("project-id",loading?openingProjectId:project.id);cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());saveNow();super.onSaveInstanceState(state);}
+    @Override protected void onStop(){cancelLiveAdjust();active=false;main.removeCallbacks(pulse);main.removeCallbacks(warmPreview);if(projectSession!=null)projectSession.checkpoint();releasePreview();if(previewProxy!=null)previewProxy.cancel();if(live!=null)live.releaseDecoders();super.onStop();}
+    @Override protected void onDestroy(){if(mediaImportWindow!=null)mediaImportWindow.close();main.removeCallbacks(autosave);if(projectSession!=null){projectSession.model=project;projectSession.listener=null;}if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
+    @Override protected void onSaveInstanceState(Bundle state){if(panels.showing())state.putString("focused-panel",panels.title());easingControls.save(state);fillPanel.save(state);effectCatalog.save(state);mediaImportWindow.save(state);state.putString("selected-media-uri",selectedMediaUri);state.putString("subtitle-export",pendingSubtitleExport);state.putString("project-id",loading?openingProjectId:project.id);cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());if(projectSession!=null)projectSession.checkpoint();super.onSaveInstanceState(state);}
     @Override public void onConfigurationChanged(Configuration config){super.onConfigurationChanged(config);cancelLiveAdjust();buildWorkspace();}
     boolean exporting(){return getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getBoolean("running",false)||exportLaunching;}
     boolean editable(){if(captionApplying){tell("Saving captions…");return false;}if(uiLocked){tell("UI locked • unlock editing in Settings");return false;}if(loading||importing){tell("Wait for the current import to finish.");return false;}if(exporting()){tell("Wait for export to finish, or cancel it to continue editing.");return false;}return true;}
@@ -288,14 +310,12 @@ public final class EditorActivity extends Activity {
     void remember(){try {undo.addLast(ProjectStore.encode(project));while(undo.size()>30)undo.removeFirst();redo.clear();}catch(Exception e){tell(e.getMessage());}}
     void changed(String text) {
         CrashLogs.project(project);
-        project.validate();dirty=true;editRevision++;message=text;refreshProject();showLive();main.removeCallbacks(autosave);main.postDelayed(autosave,300);
+        project.ensureLibrary();project.validate();dirty=true;editRevision++;message=text;if(projectSession!=null)projectSession.edited(project,false);refreshProject();showLive();
     }
     void saveNow() {
-        main.removeCallbacks(autosave);if(loading||captionApplying||liveBefore!=null)return;
+        if(loading||captionApplying||liveBefore!=null||projectSession==null)return;
         if(player!=null)project.playheadMs=Math.min(project.durationMs(),Math.max(0,player.getCurrentPosition()));
-        EditProject snapshot=ProjectStore.snapshot(project);long savingRevision=editRevision;
-        io.execute(()->{try{store.save(snapshot);main.post(()->{if(isDestroyed()||!project.id.equals(snapshot.id))return;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("last-project",snapshot.id).apply();if(savingRevision==editRevision){dirty=false;renderHeader();}});}
-            catch(Exception e){main.post(()->tell("Save failed: "+e.getMessage()));}});
+        projectSession.model=project;projectSession.save(null);
     }
     void undo(boolean forward) {
         if(!editable())return;ArrayDeque<String> from=forward?redo:undo,to=forward?undo:redo;
@@ -415,22 +435,24 @@ public final class EditorActivity extends Activity {
     /** Editing tools on the left (dimmed until a layer that supports them is selected); zoom, snapping and
      * fit on the right. These are the only timeline zoom controls. */
     void renderTimelineTools(){if(timelineTools==null)return;timelineTools.removeAllViews();playheadTools.clear();EditProject.Clip c=clip();EditProject.Overlay o=overlay();boolean any=c!=null||o!=null;
-        if(any&&!wideLayout)for(String tool:new String[]{"Split","Trim","Duplicate","Transform","Animation"}){boolean supported=any&&ToolPanels.tools(c,o).stream().anyMatch(t->t.equals(tool));TextView b=headerIcon(tool,tool,v->{tab=1;panels.runTool(tool);});dim(b,supported);timelineTools.addView(b);}
-        TextView delete=headerIcon("Delete","Delete selected layer",v->deleteSelection());dim(delete,any);if(any)timelineTools.addView(delete);
+        TextView delete=headerIcon("Delete","Delete selected layer",v->deleteSelection());dim(delete,any);timelineTools.addView(delete);
+        TextView undoButton=headerIcon("Undo","Undo",v->undo(false)),redoButton=headerIcon("Redo","Redo",v->undo(true));dim(undoButton,!undo.isEmpty());dim(redoButton,!redo.isEmpty());timelineTools.addView(undoButton);timelineTools.addView(redoButton);
         timelineTools.addView(new View(this),new LinearLayout.LayoutParams(0,1,1));
-        if(wideLayout){String[] icons={"Edit","TrimStart","TrimEnd"};String[] labels={"Split at playhead","Trim Start at playhead","Trim End at playhead"};int[] operations={1,0,2};
+        {String[] icons={"TrimStart","Split","TrimEnd"};String[] labels={"Trim Start","Split","Trim End"};int[] operations={0,1,2};
             boolean valid=any&&!selectionLocked()&&!uiLocked&&(c!=null?LayerOps.canSplitOrTrim(project,selected):project.playheadMs-o.startMs>=EditProject.MIN_CLIP_MS&&o.endMs-project.playheadMs>=EditProject.MIN_CLIP_MS);
             for(int i=0;i<3;i++){final int op=operations[i];TextView b=headerIcon(icons[i],labels[i],v->panels.playheadEdit(op));dim(b,valid);playheadTools.add(b);timelineTools.addView(b);}}
         timelineTools.addView(compactButton("−","Zoom out timeline",v->zoomTimeline(1/1.5f,Float.NaN)));
-        zoomSlider=new SeekBar(this);zoomSlider.setMax(1000);zoomSlider.setContentDescription("Timeline zoom");zoomSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
-            public void onProgressChanged(SeekBar s,int p,boolean user){if(user)setTimelineZoom((float)(8*Math.pow(300,p/1000.0)));}public void onStartTrackingTouch(SeekBar s){}public void onStopTrackingTouch(SeekBar s){}});
-        timelineTools.addView(zoomSlider,new LinearLayout.LayoutParams(dp(wideLayout?140:90),dp(40)));syncZoomSlider();
+        zoomSlider=null;
+        zoomRuler=new NumberRuler(this,"Timeline zoom, 0 to 10",0,10,.1f,()->10*Math.log(pixelsPerSecond/8)/Math.log(300),n->setTimelineZoom((float)(8*Math.pow(300,n/10))),()->{},()->{},()->{});
+        timelineTools.addView(zoomRuler,new LinearLayout.LayoutParams(dp(128),dp(48)));
+        zoomNumber=label("",12,TEXT,false);zoomNumber.setGravity(Gravity.CENTER);timelineTools.addView(zoomNumber,new LinearLayout.LayoutParams(dp(40),dp(48)));syncZoomSlider();
         timelineTools.addView(compactButton("+","Zoom in timeline",v->zoomTimeline(1.5f,Float.NaN)));
         TextView snap=headerIcon("Magnet","Snapping: "+(snapping?"on":"off"),v->{snapping=!snapping;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("snapping",snapping).apply();renderTimelineTools();});snap.setSelected(snapping);snap.setCompoundDrawables(icon("Magnet",snapping?CYAN:MUTED),null,null,null);timelineTools.addView(snap);
         timelineTools.addView(headerIcon("Fit","Fit timeline",v->fitTimeline()));
         TextView markers=headerIcon("Flag","Timeline markers (maximum five)",v->LandmarkControls.add(this,project.playheadMs));LandmarkControls.dragSource(this,markers);markers.setOnLongClickListener(v->{LandmarkControls.show(this);return true;});markerCount=markers;markers.setText(project.landmarks.size()+"/5");timelineTools.addView(markers);
     }
-    void syncZoomSlider(){if(zoomSlider!=null)zoomSlider.setProgress((int)Math.round(1000*Math.log(pixelsPerSecond/8)/Math.log(300)));}
+    NumberRuler zoomRuler;TextView zoomNumber;
+    void syncZoomSlider(){if(zoomRuler!=null)zoomRuler.invalidate();if(zoomNumber!=null)zoomNumber.setText(String.format(java.util.Locale.US,"%.1f",10*Math.log(pixelsPerSecond/8)/Math.log(300)));if(zoomSlider!=null)zoomSlider.setProgress((int)Math.round(1000*Math.log(pixelsPerSecond/8)/Math.log(300)));}
     static void dim(View v,boolean enabled){v.setEnabled(enabled);v.setAlpha(enabled?1f:.38f);}
     View transport(boolean singleRow) {
         // Time on the left, playback in the centre; Undo / Redo only where the top bar has none.
@@ -448,7 +470,6 @@ public final class EditorActivity extends Activity {
         jumpEnd=transportIcon("SkipEnd","Jump to end",v->jump(true));center.addView(jumpEnd);
         controls.addView(center,new LinearLayout.LayoutParams(-2,dp(56)));
         LinearLayout end=row();end.setGravity(Gravity.CENTER_VERTICAL|Gravity.END);
-        if(!wideLayout){end.addView(transportIcon("Undo","Undo",v->undo(false)));end.addView(transportIcon("Redo","Redo",v->undo(true)));}
         end.addView(transportIcon("Fullscreen","Fullscreen preview",v->{fullscreenPreview=!fullscreenPreview;buildWorkspace();}));
         controls.addView(end,new LinearLayout.LayoutParams(0,dp(48),1));
         LinearLayout transport=column();
@@ -606,6 +627,7 @@ public final class EditorActivity extends Activity {
     void renderInspector() {
         if(inspector==null)return;sizePhoneDrawer();renderTimelineTools();if(selected>=0)selectedOverlay=-1;pruneSelection();renderHeader();updateMediaSelection();if(timeline!=null)timeline.invalidate();if(previewControls!=null)previewControls.invalidate();updateJumpLabels();inspector.removeAllViews();contextualRow=null;contextualCount=0;gridRow=null;gridCount=0;
         for(int i=0;i<navTabs.size();i++){navTabs.get(i).setTextColor(i==tab?CYAN:TEXT);navTabs.get(i).setBackground(navBackground(i==tab));navTabs.get(i).setSelected(i==tab);for(android.graphics.drawable.Drawable icon:navTabs.get(i).getCompoundDrawables())if(icon!=null)icon.setTint(i==tab?CYAN:TEXT);}
+        if(panels.showing()&&"Effects".equals(panels.title())){panels.render(inspector);return;}
         if(mobile!=null){mobile.inspectorTitle(inspector);}
         else if(!wideLayout&&tab==0){
             LinearLayout title=row();title.setGravity(Gravity.CENTER_VERTICAL);title.addView(label("ADD MEDIA",13,CYAN,true),new LinearLayout.LayoutParams(0,dp(44),1));
@@ -753,8 +775,8 @@ public final class EditorActivity extends Activity {
     /** Slider drag start: remember the project for one undo entry and switch to the live preview. */
     void beginLiveAdjust(){if(!layerEditable())return;CrashLogs.operation("Transforms");try{liveBefore=ProjectStore.encode(project);}catch(Exception e){liveBefore=null;return;}if(player!=null||previewPending)releasePreview();main.removeCallbacks(warmPreview);previewProxy.cancel();}
     /** During a drag: apply the value and redraw at once, without validation or undo. */
-    void liveAdjust(Runnable apply){if(liveBefore==null)return;try{apply.run();if(previewControls!=null)previewControls.invalidate();renderLive();}catch(RuntimeException ignored){}}
-    void cancelLiveAdjust(){transformPanel.clearGesture();String before=liveBefore;liveBefore=null;if(before==null)return;try{project=ProjectStore.decode(before);}catch(Exception e){throw new IllegalStateException(e);}renderInspector();renderLive();if(previewControls!=null)previewControls.invalidate();}
+    void liveAdjust(Runnable apply){if(liveBefore==null)return;try{apply.run();if(projectSession!=null)projectSession.edited(project,true);if(timeline!=null)timeline.invalidate();if(previewControls!=null)previewControls.invalidate();renderLive();}catch(RuntimeException ignored){}}
+    void cancelLiveAdjust(){transformPanel.clearGesture();String before=liveBefore;liveBefore=null;if(before==null)return;try{project=ProjectStore.decode(before);if(projectSession!=null)projectSession.edited(project,false);}catch(Exception e){throw new IllegalStateException(e);}renderInspector();renderLive();if(previewControls!=null)previewControls.invalidate();}
     /** Drag end: validate and record a single undo entry from the drag start. */
     void endLiveAdjust(String message,Runnable apply){
         String before=liveBefore;liveBefore=null;if(before==null)return;
@@ -765,7 +787,7 @@ public final class EditorActivity extends Activity {
     void renderHeader(){
         if(monitorInfo!=null)monitorInfo.setText(project.name+"  ·  "+project.canvasLabel()+"  ·  "+project.frameRate+" fps");if(header==null)return;if(mobile!=null){mobile.header();return;}EditProject.Clip c=clip();EditProject.Overlay o=overlay();int count=multiCount();
         String key=count>1?"multi"+count:c!=null?"clip"+selected+c.name:o!=null?"overlay"+selectedOverlay+o.label():"none"+project.name+wideLayout;
-        key+=":"+dirty+":"+tab+":"+addDrawer.category;if(key.equals(headerKey))return;headerKey=key;header.removeAllViews();Configuration cfg=getResources().getConfiguration();
+        key+=":"+(projectSession==null?"Loading":projectSession.status())+":"+dirty+":"+tab+":"+addDrawer.category;if(key.equals(headerKey))return;headerKey=key;header.removeAllViews();Configuration cfg=getResources().getConfiguration();
         if(!wideLayout&&(count>1||c!=null||o!=null)){
             header.addView(compactButton("✕","Deselect",v->deselect()),new LinearLayout.LayoutParams(dp(48),dp(48)));
             TextView name=label(count>1?count+" layers selected":(c!=null?c.name:o.label()),14,TEXT,true);name.setSingleLine(true);name.setEllipsize(android.text.TextUtils.TruncateAt.END);name.setPadding(dp(8),0,dp(4),0);
@@ -776,22 +798,22 @@ public final class EditorActivity extends Activity {
             header.addView(headerIcon("More","More actions",v->moreMenu()));
             exportButton=null;projectLabel=null;return;
         }
+        header.addView(headerIcon("Back","Back to Projects",v->saveAndProjects()));
         ImageView logo=new ImageView(this);logo.setImageDrawable(new V1Icon("Cube",BlackIceTheme.ICE));logo.setContentDescription("Black Ice cube logo");header.addView(logo,new LinearLayout.LayoutParams(dp(38),dp(38)));
         LinearLayout brand=column();brand.setPadding(dp(8),0,dp(4),0);TextView wordmark=label("BLACK ICE",wideLayout?17:14,TEXT,true);wordmark.setLetterSpacing(wideLayout?.22f:.08f);wordmark.setSingleLine(true);wordmark.setAutoSizeTextTypeUniformWithConfiguration(10,wideLayout?17:14,1,android.util.TypedValue.COMPLEX_UNIT_SP);brand.addView(wordmark);TextView sub=label("EDITOR",9,MUTED,false);sub.setLetterSpacing(.35f);brand.addView(sub);
         projectLabel=label(project.name+(dirty?" •":"")+"  ▾",10,MUTED,false);projectLabel.setMaxLines(1);projectLabel.setEllipsize(android.text.TextUtils.TruncateAt.END);brand.addView(projectLabel);brand.setOnClickListener(v->projectsMenu());brand.setContentDescription("Project menu");brand.setFocusable(true);brand.setMinimumHeight(dp(52));
         header.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
         if(wideLayout){
-            header.addView(workClockView());header.addView(headerIcon("Undo","Undo",v->undo(false)));header.addView(headerIcon("Redo","Redo",v->undo(true)));
-            View gap=new View(this);header.addView(gap,new LinearLayout.LayoutParams(dp(10),1));
-            TextView save=labelledIcon("Save","Save","Save project",v->{saveNow();tell("Saving project…");});header.addView(save);
+            header.addView(workClockView());
+            TextView save=labelledIcon("Save","Save","Save project",v->{saveNow();tell("Saving project…");});header.addView(save);header.addView(saveStatusView());
         }
         header.addView(labelledIcon("Settings","Settings","Settings",v->{tab=4;renderInspector();}));
         exportButton=button("Export",v->exportMenu());exportButton.setTextSize(14);exportButton.setTextColor(BlackIceTheme.ON_ACCENT);exportButton.setBackground(BlackIceTheme.primary(getResources().getDisplayMetrics().density));LinearLayout.LayoutParams exportLp=new LinearLayout.LayoutParams(-2,dp(48));exportLp.leftMargin=dp(8);exportButton.setPadding(dp(22),0,dp(22),0);header.addView(exportButton,exportLp);
     }
-    TextView workClockView(){TextView work=button(workClock.label==null?"◷ 00:00:00":workClock.label.getText().toString(),v->workClock.menu());work.setTextSize(11);work.setSingleLine(true);work.setPadding(dp(6),0,dp(6),0);work.setContentDescription("Project work clock");work.setLayoutParams(new LinearLayout.LayoutParams(dp(100),dp(48)));workClock.label=work;return work;}
+    TextView workClockView(){TextView work=button(workClock.label==null?"◷ 00:00:00":workClock.label.getText().toString(),v->workClock.menu());work.setTextSize(11);work.setBackgroundColor(android.graphics.Color.TRANSPARENT);work.setTypeface(android.graphics.Typeface.MONOSPACE);work.setSingleLine(true);work.setPadding(dp(6),0,dp(6),0);work.setContentDescription("Project work clock");work.setLayoutParams(new LinearLayout.LayoutParams(dp(100),dp(48)));workClock.label=work;return work;}
     /** Top-bar section tabs exist only in roomy wide windows. */
     boolean topTabs(){return wideLayout&&getResources().getConfiguration().screenWidthDp>=1100;}
-    TextView labelledIcon(String icon,String title,String description,View.OnClickListener l){TextView b=button(title,l);b.setContentDescription(description);b.setTextSize(13);b.setTypeface(Typeface.DEFAULT);b.setCompoundDrawables(icon(icon,TEXT),null,null,null);b.setCompoundDrawablePadding(dp(8));b.setPadding(dp(12),0,dp(14),0);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-2,dp(44));lp.leftMargin=dp(4);b.setLayoutParams(lp);return b;}
+    TextView labelledIcon(String icon,String title,String description,View.OnClickListener l){TextView b=button(title,l);b.setContentDescription(description);b.setTextSize(13);b.setTypeface(Typeface.DEFAULT);b.setCompoundDrawables(icon(icon,TEXT),null,null,null);b.setCompoundDrawablePadding(dp(8));b.setPadding(dp(12),0,dp(14),0);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-2,dp(BlackIceTheme.CONTROL));lp.leftMargin=dp(BlackIceTheme.SPACE);b.setLayoutParams(lp);return b;}
     android.graphics.drawable.Drawable panelBackground(){GradientDrawable d=new GradientDrawable();d.setColor(0xF0081320);d.setCornerRadius(dp(8));d.setStroke(dp(1),0xFF132A3D);return d;}
     /** Thin divider with a grip in the middle, for the resizable panel and timeline edges. */
     android.graphics.drawable.Drawable splitter(boolean vertical){return new android.graphics.drawable.Drawable(){final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -913,7 +935,7 @@ public final class EditorActivity extends Activity {
         Motion m=selectedMotion();if(m==null){tell("Select an animated layer to step between keyframes.");return;}
         long t=Keyframes.adjacent(m,panels.motionTime(),next,Keyframes.all());if(t<0){tell(next?"No later keyframe":"No earlier keyframe");return;}
         EditProject.Clip c=clip();EditProject.Overlay o=overlay();long timeline=c!=null?project.placements().get(selected).startMs+Math.round((t-c.inMs)/(double)c.speed):o.startMs+t;
-        seek(timeline);renderInspector();
+        seek(timeline);for(int p:Keyframes.all())if(Keyframes.keyAt(m,p,t,panels.tolerance())!=null){easingControls.select(p,t);break;}renderInspector();
     }
     void savePreset(String kind,int categories){
         EditProject.Clip c=clip();EditProject.Overlay o=overlay();if(c==null&&o==null)return;Attributes attributes=c!=null?Attributes.of(c,categories):Attributes.of(o,categories);
@@ -977,6 +999,7 @@ public final class EditorActivity extends Activity {
     float aspectOf(){return transformPanel.current().aspect;}
     void setAspect(float aspect){EditProject.Clip c=clip();EditProject.Overlay o=overlay();if(c!=null&&c.heightScale>=0||o!=null&&o.heightScale>=0)transformPanel.write(Motion.HEIGHT,transformPanel.current().scale*aspect);if(c!=null)c.aspect=aspect;else if(o!=null)o.aspect=aspect;}
     void setFlip(boolean horizontal){EditProject.Clip c=clip();EditProject.Overlay o=overlay();if(c!=null){if(horizontal)c.flipH=!c.flipH;else c.flipV=!c.flipV;}else if(o!=null){if(horizontal)o.flipH=!o.flipH;else o.flipV=!o.flipV;}}
+    final EasingControls easingControls=new EasingControls(this);
     final SelectionGeometry selectionGeometry=new SelectionGeometry(this);
     RectF layerBounds(EditProject.Clip c,EditProject.Overlay o){return selectionGeometry.bounds(c,o);}
     double[] layerHalf(){return layerHalf(clip(),overlay());}
@@ -1194,7 +1217,7 @@ public final class EditorActivity extends Activity {
     }
     void projectsMenu() {
         if(!editable())return;new AlertDialog.Builder(this).setTitle("Black Ice projects").setItems(new String[]{"New project","Recent projects","Rename project","Save project","Undo","Redo"},(d,index)->{
-            if(index==0)NewProjectDialog.show(this,created->{saveNow();releasePreview();project=created;undo.clear();redo.clear();selected=-1;selectedOverlay=-1;changed("New project ready");});
+            if(index==0)NewProjectDialog.show(this,created->{io.execute(()->{try{store.save(created);main.post(()->openProject(created.id));}catch(Exception error){main.post(()->tell(error.getMessage()));}});});
             if(index==1){saveNow();io.execute(()->{java.util.List<ProjectStore.Entry> recent=store.recent();main.post(()->{if(isDestroyed())return;
                 if(recent.isEmpty()){tell("No saved projects yet.");return;}
                 new AlertDialog.Builder(this).setTitle("Recent projects").setItems(recent.stream().map(e->e.name).toArray(String[]::new),(x,i)->openProject(recent.get(i).id)).show();});});}
@@ -1202,7 +1225,7 @@ public final class EditorActivity extends Activity {
             if(index==3){saveNow();tell("Saving project…");}if(index==4)undo(false);if(index==5)undo(true);
         }).show();
     }
-    void openProject(String id){loading=true;releasePreview();io.execute(()->{try{EditProject loaded=store.load(id);main.post(()->{if(isDestroyed())return;loading=false;project=loaded;undo.clear();redo.clear();selected=-1;selectedOverlay=-1;changed("Project opened");});}catch(Exception e){main.post(()->{loading=false;tell("Cannot open project: "+e.getMessage());});}});}
+    void openProject(String id){if(projectSession!=null){projectSession.model=project;projectSession.save(()->{projectSession.finish();releasePreview();undo.clear();redo.clear();selected=-1;selectedOverlay=-1;loadSession(id);});}else loadSession(id);}
     void chooseMode(){if(uiLocked){tell("Unlock to change workspace layout");return;}new AlertDialog.Builder(this).setTitle("Workspace layout").setSingleChoiceItems(new String[]{"Auto • phone / tablet / DeX","Phone portrait workspace","Wide tablet / DeX workspace"},mode.ordinal(),(d,i)->{mode=LayoutPolicy.Preference.values()[i];getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("mode",mode.name()).apply();d.dismiss();buildWorkspace();}).show();}
     void openMediaBrowser(){
         if(!editable())return;
@@ -1300,11 +1323,7 @@ public final class EditorActivity extends Activity {
         }catch(Exception e){main.post(()->{exportLaunching=false;tell("Cannot prepare export: "+e.getMessage());});}});
     }
     void saveAndProjects(){
-        if(loading||importing)return;EditProject snapshot=ProjectStore.snapshot(project);
-        io.execute(()->{try{store.save(snapshot);main.post(()->{if(isDestroyed())return;
-                getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("last-project",snapshot.id).apply();
-                startActivity(new Intent(this,HomeActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP));finish();});}
-            catch(Exception error){main.post(()->{if(!isDestroyed())new AlertDialog.Builder(this).setTitle("Could not save project").setMessage("Your edits remain open. Retry saving before leaving.").setPositiveButton("Retry",(dialog,which)->saveAndProjects()).setNegativeButton("Keep editing",null).show();});}});
+        if(loading||importing||projectSession==null)return;cancelLiveAdjust();pausePlayback();leavingAfterSave=true;projectSession.model=project;projectSession.save(()->{if(isDestroyed())return;leavingAfterSave=false;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("last-project",project.id).apply();workClock.checkpoint();projectSession.finish();returnHome();});
     }
     /** System gesture Back follows the same state hierarchy as the toolbar and keyboard. */
     @SuppressWarnings("deprecation") @Override public void onBackPressed(){
@@ -1341,7 +1360,7 @@ public final class EditorActivity extends Activity {
     void loadWaveform(EditProject.Clip c){loadWaveform(c,false);}
     /** Audio layers show real PCM waveforms; decoding runs once per source on the worker thread. */
     void loadWaveform(EditProject.Clip c,boolean quiet){if(waveforms.containsKey(c.uri)||!waveformsLoading.add(c.uri))return;if(!quiet)tell("Decoding audio waveform…");String uri=c.uri;long duration=c.sourceDurationMs;io.execute(()->{try{float[] peaks=AudioWaveform.read(this,uri,duration);main.post(()->{waveformsLoading.remove(uri);waveforms.put(uri,peaks);if(timeline!=null)timeline.invalidate();if(!quiet)tell("Waveform ready");});}catch(Exception e){main.post(()->{waveformsLoading.remove(uri);if(!quiet)tell("Waveform: "+e.getMessage());});}});}
-    void bundle(int request,Uri uri){if(!editable())return;saveNow();EditProject snapshot=ProjectStore.snapshot(project);importing=true;tell(request==BACKUP?"Saving project and media…":"Restoring project and media…");io.execute(()->{try{if(request==BACKUP){ProjectBundle.write(this,snapshot,getContentResolver().openOutputStream(uri,"wt"));main.post(()->{importing=false;tell("Project bundle saved");});}else{EditProject restored=ProjectBundle.read(this,getContentResolver().openInputStream(uri));main.post(()->{importing=false;if(isDestroyed())return;releasePreview();project=restored;undo.clear();redo.clear();selected=-1;selectedOverlay=-1;changed("Project restored as a new copy");});}}catch(Exception e){if(request==BACKUP)try{android.provider.DocumentsContract.deleteDocument(getContentResolver(),uri);}catch(Exception ignored){}main.post(()->{importing=false;tell("Bundle failed: "+e.getMessage());});}});}
+    void bundle(int request,Uri uri){if(!editable())return;saveNow();EditProject snapshot=ProjectStore.snapshot(project);importing=true;tell(request==BACKUP?"Saving project and media…":"Restoring project and media…");io.execute(()->{try{if(request==BACKUP){ProjectBundle.write(this,snapshot,getContentResolver().openOutputStream(uri,"wt"));main.post(()->{importing=false;tell("Project bundle saved");});}else{EditProject restored=ProjectBundle.read(this,getContentResolver().openInputStream(uri));main.post(()->{importing=false;if(isDestroyed())return;openProject(restored.id);});}}catch(Exception e){if(request==BACKUP)try{android.provider.DocumentsContract.deleteDocument(getContentResolver(),uri);}catch(Exception ignored){}main.post(()->{importing=false;tell("Bundle failed: "+e.getMessage());});}});}
     void chromaDialog(){EditProject.Clip c=clip();if(c==null||!editable())return;LinearLayout f=form();CheckBox enabled=new CheckBox(this);enabled.setText("Enable chroma key");enabled.setTextColor(TEXT);enabled.setChecked(c.chroma);f.addView(enabled);EditText color=field(f,"Key color (#RRGGBB)",String.format(java.util.Locale.ROOT,"#%06X",c.keyColor&0xFFFFFF)),t=field(f,"Tolerance 0–1",String.valueOf(c.keyTolerance)),soft=field(f,"Edge softness 0.001–1",String.valueOf(c.keySoftness)),spill=field(f,"Spill removal 0–1",String.valueOf(c.keySpill));dialog("Chroma key",f,()->{int rgb=Color.parseColor(color.getText().toString());float a=parseFloat(t),b=parseFloat(soft),z=parseFloat(spill);if(a<0||a>1||b<.001f||b>1||z<0||z>1)throw new IllegalArgumentException("Check key limits");remember();c.chroma=enabled.isChecked();c.keyColor=rgb;c.keyTolerance=a;c.keySoftness=b;c.keySpill=z;changed("Chroma key updated");},null);}
     void transformDialog(){EditProject.Clip c=clip();if(c==null||!editable())return;new AlertDialog.Builder(this).setTitle("Transform & motion").setItems(new String[]{"Static transform","Keyframes / curve editor"},(d,i)->{
         if(i==1){motionDialog(c.motion,Math.max(c.inMs,Math.min(c.outMs,Math.round((project.playheadMs-project.placements().get(selected).startMs)*c.speed)+c.inMs)),c.sourceDurationMs,panels.currentValues(),true);return;}
@@ -1355,7 +1374,7 @@ public final class EditorActivity extends Activity {
         EditText x1=field(f,"Curve X1 (0–1)",String.valueOf(key.x1)),y1=field(f,"Curve Y1 (0–1)",String.valueOf(key.y1)),x2=field(f,"Curve X2 (0–1)",String.valueOf(key.x2)),y2=field(f,"Curve Y2 (0–1)",String.valueOf(key.y2));
         CurveView curve=new CurveView(key,()->{x1.setText(String.valueOf(key.x1));y1.setText(String.valueOf(key.y1));x2.setText(String.valueOf(key.x2));y2.setText(String.valueOf(key.y2));});f.addView(curve,new LinearLayout.LayoutParams(-1,dp(180)));
         LinearLayout presets=row();String[] names={"Linear","Ease in","Ease out","Smooth"};float[][] points={{0,0,1,1},{.42f,0,1,1},{0,0,.58f,1},{.42f,0,.58f,1}};for(int i=0;i<names.length;i++){final int n=i;presets.addView(button(names[i],v->{float[] a=points[n];key.x1=a[0];key.y1=a[1];key.x2=a[2];key.y2=a[3];x1.setText(""+a[0]);y1.setText(""+a[1]);x2.setText(""+a[2]);y2.setText(""+a[3]);curve.invalidate();}),new LinearLayout.LayoutParams(0,dp(48),1));}f.addView(presets);f.addView(note("Drag the blue handles. This curve controls the interval after this key."));
-        dialog("Keyframe / curve",f,()->{long t=parseMs(time.getText().toString());float val=parseFloat(value);Motion.Key candidate=new Motion.Key(t,val);candidate.x1=parseFloat(x1);candidate.y1=parseFloat(y1);candidate.x2=parseFloat(x2);candidate.y2=parseFloat(y2);Motion check=motion.copy();if(existing!=null)check.curves.get(property).removeIf(k->k.timeMs==existing.timeMs);check.put(property,candidate);check.validate();if(t>limit)throw new IllegalArgumentException("Key must fit inside the source");remember();if(existing!=null)motion.curves.get(property).remove(existing);motion.put(property,candidate);changed("Keyframe saved");},existing==null?null:()->{remember();motion.curves.get(property).remove(existing);changed("Keyframe removed");});
+        dialog("Keyframe / curve",f,()->{long t=parseMs(time.getText().toString());float val=parseFloat(value);Motion.Key candidate=new Motion.Key(t,val);candidate.id=existing==null?candidate.id:existing.id;candidate.easingToNext=-1;candidate.x1=parseFloat(x1);candidate.y1=parseFloat(y1);candidate.x2=parseFloat(x2);candidate.y2=parseFloat(y2);if(existing!=null&&candidate.x1==existing.x1&&candidate.y1==existing.y1&&candidate.x2==existing.x2&&candidate.y2==existing.y2)candidate.easingToNext=existing.easingToNext;Motion check=motion.copy();if(existing!=null)check.curves.get(property).removeIf(k->k.timeMs==existing.timeMs);check.put(property,candidate);check.validate();if(t>limit)throw new IllegalArgumentException("Key must fit inside the source");remember();if(existing!=null)motion.curves.get(property).remove(existing);motion.put(property,candidate);changed("Keyframe saved");},existing==null?null:()->{remember();motion.curves.get(property).remove(existing);changed("Keyframe removed");});
     }
     final class CurveView extends View{final Motion.Key key;final Runnable update;final Paint p=new Paint(3);int handle;CurveView(Motion.Key k,Runnable u){super(EditorActivity.this);key=k;update=u;setContentDescription("Cubic Bézier curve: drag either handle");}protected void onDraw(Canvas c){float w=getWidth()-dp(24),h=getHeight()-dp(24),m=dp(12);c.drawColor(PANEL);p.setColor(MUTED);p.setStrokeWidth(dp(1));c.drawLine(m,h+m,w+m,m,p);p.setColor(CYAN);p.setStrokeWidth(dp(2));float px=m,py=h+m;for(int i=1;i<=80;i++){float x=i/80f,y=Motion.ease(x,key);c.drawLine(px,py,m+x*w,m+(1-y)*h,p);px=m+x*w;py=m+(1-y)*h;}c.drawCircle(m+key.x1*w,m+(1-key.y1)*h,dp(6),p);c.drawCircle(m+key.x2*w,m+(1-key.y2)*h,dp(6),p);}public boolean onTouchEvent(MotionEvent e){float x=Math.max(0,Math.min(1,(e.getX()-dp(12))/(getWidth()-dp(24)))),y=Math.max(0,Math.min(1,1-(e.getY()-dp(12))/(getHeight()-dp(24))));if(e.getAction()==MotionEvent.ACTION_DOWN){handle=Math.hypot(x-key.x1,y-key.y1)<Math.hypot(x-key.x2,y-key.y2)?1:2;getParent().requestDisallowInterceptTouchEvent(true);}if(handle==1){key.x1=x;key.y1=y;}else{key.x2=x;key.y2=y;}update.run();invalidate();if(e.getAction()==MotionEvent.ACTION_UP){getParent().requestDisallowInterceptTouchEvent(false);performClick();}return true;}public boolean performClick(){super.performClick();return true;}}
 
@@ -1565,7 +1584,7 @@ public final class EditorActivity extends Activity {
     LinearLayout row(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.HORIZONTAL);return l;}
     TextView label(String text,float size,int color,boolean bold){TextView v=new TextView(this);v.setText(text);v.setTextSize(size);v.setTextColor(color);if(bold)v.setTypeface(Typeface.DEFAULT,Typeface.BOLD);return v;}
     TextView note(String text){TextView v=label(text,12,MUTED,false);v.setPadding(0,dp(7),0,dp(10));return v;}
-    TextView button(String title,View.OnClickListener listener){TextView b=label(title,12,TEXT,true);b.setGravity(Gravity.CENTER);b.setPadding(dp(12),dp(6),dp(12),dp(6));b.setMinWidth(dp(48));b.setMinHeight(dp(wideLayout?36:48));b.setMaxLines(2);b.setFocusable(true);b.setContentDescription(title);b.setBackground(buttonBackground(false));b.setTooltipText(title);b.setOnClickListener(listener);b.setOnHoverListener((v,e)->{v.setAlpha(e.getAction()==MotionEvent.ACTION_HOVER_EXIT?1f:.82f);return false;});return b;}
+    TextView button(String title,View.OnClickListener listener){TextView b=label(title,12,TEXT,true);b.setGravity(Gravity.CENTER);b.setPadding(dp(12),dp(6),dp(12),dp(6));b.setMinWidth(dp(48));b.setMinHeight(dp(BlackIceTheme.CONTROL));b.setMaxLines(2);b.setFocusable(true);b.setContentDescription(title);b.setBackground(buttonBackground(false));b.setTooltipText(title);b.setOnClickListener(listener);b.setOnHoverListener((v,e)->{v.setAlpha(e.getAction()==MotionEvent.ACTION_HOVER_EXIT?1f:.82f);return false;});return b;}
     TextView iconButton(String name,View.OnClickListener action){TextView view=button(name,action);view.setTextSize(10);view.setTypeface(Typeface.DEFAULT);view.setPadding(dp(6),dp(3),dp(6),dp(3));V1Icon icon=new V1Icon(name,TEXT);icon.setBounds(0,0,dp(22),dp(22));view.setCompoundDrawables(null,icon,null,null);view.setCompoundDrawablePadding(dp(3));view.setBackground(navBackground(false));return view;}
     android.graphics.drawable.Drawable navBackground(boolean selected){return BlackIceTheme.tab(getResources().getDisplayMetrics().density,selected);}
     GradientDrawable buttonBackground(boolean selected){return BlackIceTheme.surface(getResources().getDisplayMetrics().density,selected); }

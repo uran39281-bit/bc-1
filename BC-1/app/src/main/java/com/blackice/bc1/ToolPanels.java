@@ -63,7 +63,7 @@ final class ToolPanels {
         title.addView(a.headerIcon("Duplicate","Duplicate",v->a.duplicateSelected()),new LinearLayout.LayoutParams(a.dp(48),a.dp(48)));title.addView(a.headerIcon("Delete","Delete",v->a.deleteSelection()),new LinearLayout.LayoutParams(a.dp(48),a.dp(48)));title.addView(a.headerIcon("More","More actions",v->a.moreMenu()),new LinearLayout.LayoutParams(a.dp(48),a.dp(48)));into.addView(title);
         TextView source=a.label((c!=null?c.name:o.label())+(locked()?" • Locked":""),11,EditorActivity.MUTED,false);source.setTooltipText(c!=null?c.name:o.label());source.setSingleLine(true);source.setEllipsize(android.text.TextUtils.TruncateAt.END);source.setContentDescription("Selected footage "+(c!=null?c.name:o.label()));into.addView(source);
         boolean inside=editable&&(c!=null?LayerOps.canSplitOrTrim(a.project,a.selected):a.project.playheadMs-o.startMs>=EditProject.MIN_CLIP_MS&&o.endMs-a.project.playheadMs>=EditProject.MIN_CLIP_MS),audio=editable&&c!=null&&!c.image&&Boolean.TRUE.equals(audioSources.get(c.uri));
-        String[] labels={still?"Duration":"Speed","Trim Start","Split","Trim End",c!=null&&c.unmutedVolume>=0?"Unmute":"Mute"};String[] icons={still?"Time":"Speed","TrimStart","Edit","TrimEnd","Mute"};
+        String[] labels={still?"Duration":"Speed","Trim Start","Split","Trim End",c!=null&&c.unmutedVolume>=0?"Unmute":"Mute"};String[] icons={still?"Time":"Speed","TrimStart","Split","TrimEnd","Mute"};
         int columns=a.getResources().getConfiguration().fontScale>1.25f?3:5;LinearLayout row=null;
         for(int i=0;i<5;i++){final int index=i;if(i%columns==0){row=a.row();into.addView(row);}boolean enabled=i==0?editable:i==4?audio:inside;String desc=i==0?labels[i]:i==4?(still?"Mute unavailable for pictures":audio?labels[i]:"Mute unavailable: source has no audio or is still being checked"):labels[i]+" at playhead";
             TextView b=tile(icons[i],labels[i],desc,()->{if(index==0)runTool(still?"Duration":"Speed");else if(index==4){if(audio&&a.layerEditable())a.edit(c.unmutedVolume>=0?"Clip unmuted":"Clip muted",()->ClipAudio.toggleMute(c));}else playheadEdit(index-1);},enabled);
@@ -144,7 +144,7 @@ final class ToolPanels {
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();if(!a.layerEditable())return;
         if(c!=null){if(which==1)a.splitSelected();else a.edit(which==0?"Trimmed start to playhead":"Trimmed end to playhead",()->LayerOps.trimToPlayhead(a.project,a.selected,which==0));return;}
         long t=a.project.playheadMs;
-        if(which==0)a.edit("Trimmed start to playhead",()->o.startMs=t);
+        if(which==0)a.edit("Trimmed start to playhead",()->{long offset=t-o.startMs;Keyframes.splitAt(o.motion,offset);if(o.fill!=null)o.fill.split(offset);o.startMs=t;});
         else if(which==2)a.edit("Trimmed end to playhead",()->o.endMs=t);
         else a.edit("Layer split",()->{if(!com.blackice.bc1.core.CaptionBuilder.GROUP.equals(o.group)&&a.project.regularOverlayCount()>=20)throw new IllegalArgumentException("Up to 20 text, shape and image layers.");EditProject.Overlay right=o.copy();long offset=t-o.startMs;right.startMs=t;Keyframes.splitAt(right.motion,offset);if(right.fill!=null)right.fill.split(offset);o.endMs=t;a.project.overlays.add(a.project.overlays.indexOf(o)+1,right);});
     }
@@ -215,6 +215,11 @@ final class ToolPanels {
         row.addView(exact,new LinearLayout.LayoutParams(a.dp(88),a.dp(48)));
         if(!unit.isEmpty())row.addView(a.label(unit,11,EditorActivity.MUTED,false));
         a.inspector.addView(row);
+        if(property==Motion.OPACITY&&motion!=null){
+            NumberRuler ruler=new NumberRuler(a,"Opacity ruler, 0 to 100 percent",0,100,1,()->motion.value(property,motionTime(),value*motionFactor)/motionFactor*100,n->{exact.setText(format((float)n));a.liveAdjust(()->apply.set((float)n/100));},()->{a.pausePlayback();a.beginLiveAdjust();},()->a.endLiveAdjust(title+" updated",()->{}),a::cancelLiveAdjust);
+            a.inspector.addView(ruler,new LinearLayout.LayoutParams(-1,a.dp(56)));
+            valueRefresh.add(()->{float n=motion.value(property,motionTime(),value*motionFactor)/motionFactor*100;if(!exact.hasFocus())exact.setText(format(n));ruler.invalidate();});
+        }else{
         SeekBar slider=new SeekBar(a);slider.setMax(1000);slider.setProgress(Math.round((value-min)/(max-min)*1000));slider.setContentDescription(title);
         slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
             // The preview follows the slider live (ICE Lite); one drag is one undo entry.
@@ -224,6 +229,7 @@ final class ToolPanels {
         });
         a.inspector.addView(slider,new LinearLayout.LayoutParams(-1,a.dp(44)));
         if(motion!=null)valueRefresh.add(()->{if(a.liveBefore!=null)return;float evaluated=motion.value(property,motionTime(),value*motionFactor)/motionFactor;String formatted=format(evaluated*displayFactor);if(!exact.hasFocus()&&!formatted.contentEquals(exact.getText()))exact.setText(formatted);int progress=Math.round((evaluated-min)/(max-min)*1000);if(progress!=slider.getProgress())slider.setProgress(progress);});
+        }
         LinearLayout actions=a.row();
         actions.addView(a.button("Apply",v->{try{float typed=Float.parseFloat(exact.getText().toString().trim())/displayFactor;if(!Float.isFinite(typed)||typed<min-1e-6f||typed>max+1e-6f)throw new NumberFormatException();commit(title,typed,apply);}catch(NumberFormatException e){a.tell("Enter "+format(min*displayFactor)+" to "+format(max*displayFactor)+(unit.isEmpty()?"":" "+unit)+".");}}),new LinearLayout.LayoutParams(0,a.dp(48),1));
         actions.addView(a.button("Reset",v->commit(title,defaultValue,apply)),new LinearLayout.LayoutParams(0,a.dp(48),1));
@@ -241,7 +247,7 @@ final class ToolPanels {
         d.setOnClickListener(v->{if(!a.layerEditable())return;long t=motionTime(),tol=tolerance();int currentState=Keyframes.state(motion,property,t,tol);
             a.edit(currentState==Keyframes.ON_KEY?title+" keyframe removed":title+" keyframe added",()->{
                 if(currentState==Keyframes.ON_KEY&&motion.curves.get(property).size()==1){a.setStatic(property,Keyframes.disable(motion,property,t,current));}
-                else Keyframes.toggle(motion,property,t,motion.value(property,t,current),tol);
+                else Keyframes.toggle(motion,property,t,motion.value(property,t,current),tol);a.easingControls.select(property,t);
             });});
         return d;
     }
@@ -265,10 +271,10 @@ final class ToolPanels {
     private void blendPanel(){
         LinearLayout navigation=a.row();
         for(boolean next:new boolean[]{false,true}){
-            long target=opacityNeighbor(next);TextView button=a.button(next?"Next Key  ›":"‹  Previous Key",v->{long destination=opacityNeighbor(next);if(destination>=0){a.pausePlayback();a.seek(destination);a.renderInspector();}});
+            long target=opacityNeighbor(next);TextView button=a.button(next?"Next Key  ›":"‹  Previous Key",v->{long destination=opacityNeighbor(next);if(destination>=0){a.pausePlayback();a.seek(destination);a.easingControls.select(Motion.OPACITY,motionTime());a.renderInspector();}});
             if(next)nextOpacity=button;else previousOpacity=button;EditorActivity.dim(button,target>=0);navigation.addView(button,new LinearLayout.LayoutParams(0,a.dp(48),1));
         }
-        a.inspector.addView(navigation);
+        a.inspector.addView(navigation);a.easingControls.build(a.inspector,Motion.OPACITY);
         opacityPanel();EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
         if(c!=null){a.inspector.addView(a.note("ICE Lite blend modes • Normal / Darken / Lighten / Contrast"));
             for(com.blackice.bc1.core.BlendMode mode:com.blackice.bc1.core.BlendMode.values()){a.gridAction((c.blend==mode.ordinal()?"● ":"")+mode.label,()->{if(a.layerEditable())a.edit("Blend mode updated",()->c.blend=mode.ordinal());});}a.flushGrid();
@@ -366,10 +372,9 @@ final class ToolPanels {
         valueRow("Shadow",o.shadow,0,1,0,100,"%",v->o.shadow=v,null,0,1);
     }
     private void effectsPanel(){
-        a.inspector.addView(a.label("Applied effects",15,EditorActivity.TEXT,true));EditProject.Clip c=a.clip();
-        TextView list=a.note(c!=null&&c.effect!=0?com.blackice.bc1.core.EffectCatalog.name(c.effect)+" • saved, currently bypassed":"No effects applied");list.setGravity(Gravity.CENTER_VERTICAL);a.inspector.addView(list,new LinearLayout.LayoutParams(-1,a.dp(100)));
-        TextView add=a.button("+ Add Effects",v->a.effectCatalog.open());android.graphics.drawable.GradientDrawable outline=BlackIceTheme.surface(a.getResources().getDisplayMetrics().density,false);outline.setStroke(a.dp(1),BlackIceTheme.ICE);add.setBackground(outline);add.setTextColor(BlackIceTheme.ICE);add.setContentDescription("Add Effects — open Effect Catalog");a.inspector.addView(add,new LinearLayout.LayoutParams(-1,a.dp(52)));a.inspector.addView(a.note("Browse the catalog. Effect processing is currently unavailable."));
+        TextView add=a.button("Add Effects",v->a.effectCatalog.open());add.setTextColor(BlackIceTheme.ICE);add.setContentDescription("Add Effects");a.inspector.addView(add,new LinearLayout.LayoutParams(-1,a.dp(48)));
     }
+
     private void effectsHome(){
         a.inspector.addView(a.button("Styles",v->open("Styles",this::stylesPanel)));
         a.inspector.addView(a.button("Transitions",v->open("Transitions",this::transitionsPanel)));
@@ -460,9 +465,6 @@ final class ToolPanels {
         List<String> here=new ArrayList<>();for(int p=0;p<Motion.COUNT;p++)if(Keyframes.keyAt(m,p,t,tol)!=null)here.add(Motion.PROPERTIES[p]);
         a.inspector.addView(a.label(here.isEmpty()?"No keyframe at the playhead":"Keyframes here: "+String.join(", ",here),12,EditorActivity.TEXT,true));
         if(!here.isEmpty()){
-            a.inspector.addView(a.note("Easing from this keyframe to the next"));
-            for(int i=0;i<Keyframes.EASINGS.length;i++){final int preset=i;a.gridAction(Keyframes.EASINGS[i],()->{if(a.layerEditable())a.edit("Easing updated",()->Keyframes.easeAll(m,t,tol,Keyframes.curve(preset)));});}
-            a.gridAction("Custom curve…",()->open("Custom curve",this::curvePanel));a.flushGrid();
             timeField("Move keyframes to (timeline seconds)",a.project.playheadMs,value->a.edit("Keyframes moved",()->Keyframes.moveAll(m,t,toMotion(value),tol)));
             LinearLayout row=a.row();
             row.addView(a.button("Snap to nearest marker",v->{if(!a.layerEditable())return;ArrayList<Long> snapTimes=new ArrayList<>(a.project.markers);for(EditProject.Landmark landmark:a.project.landmarks)snapTimes.add(landmark.timeMs);if(snapTimes.isEmpty()){a.tell("Add a timeline marker first.");return;}long best=snapTimes.get(0);for(long mk:snapTimes)if(Math.abs(mk-a.project.playheadMs)<Math.abs(best-a.project.playheadMs))best=mk;long target=best;a.edit("Keyframes snapped to marker",()->Keyframes.moveAll(m,t,toMotion(target),tol));a.seek(target);}),new LinearLayout.LayoutParams(0,a.dp(48),1));
@@ -472,10 +474,10 @@ final class ToolPanels {
         LinearLayout clip=a.row();clip.addView(a.button("Copy keyframes",v->a.copyKeys()),new LinearLayout.LayoutParams(0,a.dp(48),1));clip.addView(a.button("Paste at playhead",v->a.pasteKeys()),new LinearLayout.LayoutParams(0,a.dp(48),1));a.inspector.addView(clip);
         a.inspector.addView(a.note("Properties"));
         float[] current=currentValues();
-        int[] props=c!=null?new int[]{Motion.X,Motion.Y,Motion.SCALE,Motion.ROTATION,Motion.OPACITY,Motion.SKEW_X,Motion.SKEW_Y,Motion.ANCHOR_X,Motion.ANCHOR_Y,Motion.INTENSITY}:new int[]{Motion.X,Motion.Y,Motion.SCALE,Motion.ROTATION,Motion.OPACITY,Motion.SKEW_X,Motion.SKEW_Y,Motion.ANCHOR_X,Motion.ANCHOR_Y};
+        int[] props=c!=null?new int[]{Motion.X,Motion.Y,Motion.SCALE,Motion.HEIGHT,Motion.ROTATION,Motion.OPACITY,Motion.SKEW_X,Motion.SKEW_Y,Motion.ANCHOR_X,Motion.ANCHOR_Y,Motion.INTENSITY}:new int[]{Motion.X,Motion.Y,Motion.SCALE,Motion.HEIGHT,Motion.ROTATION,Motion.OPACITY,Motion.SKEW_X,Motion.SKEW_Y,Motion.ANCHOR_X,Motion.ANCHOR_Y};
         for(int p:props){LinearLayout row=a.row();row.setGravity(Gravity.CENTER_VERTICAL);row.addView(diamond(Motion.PROPERTIES[p],m,p,current[p]),new LinearLayout.LayoutParams(a.dp(48),a.dp(48)));
             int state=Keyframes.state(m,p,t,tol);row.addView(a.label(Motion.PROPERTIES[p]+"  ·  "+(state==Keyframes.STATIC?"not animated":m.curves.get(p).size()+" keyframes"),12,state==Keyframes.STATIC?EditorActivity.MUTED:EditorActivity.TEXT,false),new LinearLayout.LayoutParams(0,-2,1));
-            row.addView(a.label(format(m.value(p,t,current[p])),12,EditorActivity.TEXT,true));a.inspector.addView(row);}
+            row.addView(a.button("Easing",v->open(Motion.PROPERTIES[p]+" easing",()->{a.easingControls.build(a.inspector,p);a.inspector.addView(a.button("Custom curve…",x->open("Custom curve",()->curvePanel(p))));})));a.inspector.addView(row);}
         a.inspector.addView(a.note("Animation presets (use the layer's current values as the end state)"));
         long start=toMotion(c!=null?a.project.placements().get(a.selected).startMs:o.startMs),end=toMotion(c!=null?a.project.placements().get(a.selected).endMs:o.endMs);
         for(String preset:Keyframes.PRESETS)a.gridAction(preset,()->{if(a.layerEditable())a.edit(preset+" applied",()->Keyframes.preset(m,preset,start,end,currentValues()));});
@@ -486,13 +488,13 @@ final class ToolPanels {
     float[] currentValues(){EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
         if(c!=null)return new float[]{c.x,c.y,c.scale,c.rotation,c.opacity,c.intensity,c.skewX,c.skewY,c.anchorX,c.anchorY,c.heightScale<0?c.scale*c.aspect:c.heightScale,c.volume};
         return new float[]{o.x,o.y,o.scale,o.rotation,o.opacity,0,o.skewX,o.skewY,o.anchorX,o.anchorY,o.heightScale<0?o.scale*o.aspect:o.heightScale,0};}
-    private void curvePanel(){
-        Motion m=a.selectedMotion();if(m==null)return;long t=motionTime(),tol=tolerance();Motion.Key first=null;for(int p=0;p<Motion.COUNT&&first==null;p++)first=Keyframes.keyAt(m,p,t,tol);
-        if(first==null){a.inspector.addView(a.note("Move the playhead onto a keyframe to edit its curve."));return;}
-        Motion.Key working=first.copy();
-        a.inspector.addView(a.note("Drag the two handles. The curve shapes the interval from this keyframe to the next, for every property keyed here."));
+    private void curvePanel(int property){
+        Motion m=a.selectedMotion();if(m==null)return;List<Motion.Key> keys=m.curves.get(property);String id=a.easingControls.selected.get(a.easingControls.scope(property));Motion.Key first=null;
+        for(int i=0;i+1<keys.size();i++)if(keys.get(i).id.equals(id)){first=keys.get(i);break;}
+        if(first==null){a.inspector.addView(a.note("Select a keyframe with a next keyframe."));return;}
+        Motion.Key working=first.copy();a.inspector.addView(a.note("Custom interpolation for the selected "+Motion.PROPERTIES[property]+" interval."));
         a.inspector.addView(a.new CurveView(working,()->{}),new LinearLayout.LayoutParams(-1,a.dp(200)));
-        a.inspector.addView(a.button("Apply curve",v->{if(a.layerEditable())a.edit("Custom easing applied",()->Keyframes.easeAll(m,t,tol,new float[]{working.x1,working.y1,working.x2,working.y2}));}));
+        a.inspector.addView(a.button("Apply curve",v->{if(!a.layerEditable())return;a.edit("Custom easing applied",()->{for(Motion.Key key:m.curves.get(property))if(key.id.equals(id)){key.easingToNext=-1;key.x1=working.x1;key.y1=working.y1;key.x2=working.x2;key.y2=working.y2;break;}});}));
     }
     // ---- Markers ------------------------------------------------------------------------------------
     private void markersPanel(){

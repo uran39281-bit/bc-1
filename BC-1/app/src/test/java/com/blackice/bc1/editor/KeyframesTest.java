@@ -26,9 +26,9 @@ public class KeyframesTest {
         Motion m=new Motion();Motion.Key a=new Motion.Key(0,0);Keyframes.ease(a,0);m.put(Motion.X,a);m.put(Motion.X,new Motion.Key(1000,1));
         assertEquals("Linear is linear",.25f,m.value(Motion.X,250,0),1e-3);
     }
-    @Test public void newKeysInheritTheSurroundingEasing() {
+    @Test public void newKeysStartLinearWithoutChangingPreviousInterval() {
         Motion m=new Motion();Motion.Key a=new Motion.Key(0,0);Keyframes.ease(a,2);m.put(Motion.X,a);m.put(Motion.X,new Motion.Key(1000,1));
-        Keyframes.set(m,Motion.X,500,.4f,10);assertEquals(2,Keyframes.easingOf(m.curves.get(Motion.X).get(1)));
+        Keyframes.set(m,Motion.X,500,.4f,10);assertEquals(0,Keyframes.easingOf(m.curves.get(Motion.X).get(1)));assertEquals(2,Keyframes.easingOf(m.curves.get(Motion.X).get(0)));
     }
     @Test public void outOfRangeValuesAreRejected() {
         Motion m=new Motion();try{Keyframes.set(m,Motion.SKEW_X,0,120,10);fail();}catch(IllegalArgumentException expected){}

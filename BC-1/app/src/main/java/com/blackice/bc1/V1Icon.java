@@ -22,13 +22,17 @@ final class V1Icon extends Drawable {
             case "Help":path.addCircle(12,12,10,Path.Direction.CW);path.moveTo(9,8);path.cubicTo(9,4,17,5,15,10);path.lineTo(12,13);line(12,13,12,14);line(12,18,12,18.2f);break;
             case "Cube":path.moveTo(12,2);path.lineTo(22,7);path.lineTo(22,17);path.lineTo(12,23);path.lineTo(2,17);path.lineTo(2,7);path.close();line(2,7,12,13);line(22,7,12,13);line(12,13,12,23);line(12,2,12,13);break;
             case "Media":path.addRect(3,5,21,20,Path.Direction.CW);line(3,5,9,5);line(9,5,11,2);line(11,2,17,2);line(17,2,19,5);line(5,16,10,11);line(10,11,14,15);line(14,15,17,12);line(17,12,20,16);break;
-            case "Edit":case "Split":path.addCircle(6,17,3,Path.Direction.CW);path.addCircle(18,17,3,Path.Direction.CW);line(8,15,20,3);line(16,15,4,3);break;
+            case "Edit":path.addCircle(6,17,3,Path.Direction.CW);path.addCircle(18,17,3,Path.Direction.CW);line(8,15,20,3);line(16,15,4,3);break;
             case "Effects":path.moveTo(12,2);path.lineTo(15,9);path.lineTo(22,12);path.lineTo(15,15);path.lineTo(12,22);path.lineTo(9,15);path.lineTo(2,12);path.lineTo(9,9);path.close();break;
             case "Layers":path.moveTo(12,3);path.lineTo(22,8);path.lineTo(12,13);path.lineTo(2,8);path.close();path.moveTo(2,13);path.lineTo(12,18);path.lineTo(22,13);path.moveTo(2,18);path.lineTo(12,23);path.lineTo(22,18);break;
             case "Setup":line(3,6,21,6);line(3,12,21,12);line(3,18,21,18);path.addCircle(8,6,2,Path.Direction.CW);path.addCircle(16,12,2,Path.Direction.CW);path.addCircle(10,18,2,Path.Direction.CW);break;
             case "Time":path.addCircle(12,12,9,Path.Direction.CW);line(12,5,12,12);line(12,12,17,15);break;
-            case "TrimStart":line(8,3,8,21);line(12,6,12,18);line(12,6,21,6);line(12,18,21,18);line(2,7,4,7);line(2,12,4,12);line(2,17,4,17);break;
-            case "TrimEnd":line(16,3,16,21);line(12,6,12,18);line(3,6,12,6);line(3,18,12,18);line(20,7,22,7);line(20,12,22,12);line(20,17,22,17);break;
+            case "TrimStart":case "Split":case "TrimEnd":
+                line(12,7,12,22);path.moveTo(10,2);path.lineTo(14,2);path.lineTo(12,5);path.close();
+                for(int side=0;side<2;side++){float left=side==0?1:15,right=side==0?9:23;boolean dashed=side==0&&name.equals("TrimStart")||side==1&&name.equals("TrimEnd");
+                    if(dashed){line(left,10,left+2,10);line(right-2,10,right,10);line(left,16,left+2,16);line(right-2,16,right,16);line(left,11,left,13);line(left,15,left,16);line(right,11,right,13);line(right,15,right,16);}
+                    else path.addRoundRect(left,10,right,16,1,1,Path.Direction.CW);
+                }break;
             case "Trim":line(5,3,5,21);line(19,3,19,21);line(9,6,9,18);line(9,6,15,6);line(9,18,15,18);break;
             case "Duplicate":path.addRect(8,8,21,21,Path.Direction.CW);path.moveTo(16,4);path.lineTo(3,4);path.lineTo(3,17);break;
             case "Opacity":path.addCircle(12,12,9,Path.Direction.CW);line(12,3,12,21);for(int y=6;y<=18;y+=3)line(12,y,18,y);break;

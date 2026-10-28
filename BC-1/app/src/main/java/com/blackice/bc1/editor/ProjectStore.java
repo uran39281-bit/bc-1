@@ -11,16 +11,27 @@ import java.util.*;
 public final class ProjectStore {
     // AtomicFile has no locking of its own. openRead() may discard another instance's active
     // .new file, so every project transaction shares this process-wide, reentrant lock.
-    private static final Object FILE_LOCK = new Object();
+    static final Object FILE_LOCK = new Object();
     private final File directory, cacheDirectory;
     public ProjectStore(Context context) { cacheDirectory=context.getCacheDir(); directory=new File(context.getFilesDir(),"projects-v1"); directory.mkdirs(); }
     public void save(EditProject p) throws IOException, JSONException {
         synchronized (FILE_LOCK) {
-            String json=encode(p);File old=new File(directory,p.id+".json"),backup=new File(directory,p.id+".v1-backup");
+            if(new File(directory,p.id+".deleted").exists())throw new IOException("This project was deleted and cannot be overwritten by a pending save.");
+            File existing=new File(directory,p.id+".json");
+            if(!existing.exists()){
+                File[] records=directory.listFiles((d,n)->n.endsWith(".json"));
+                if(records==null)throw new IOException("Project storage is unavailable.");
+                if(records.length>=99)throw new IOException("Project limit reached (99). Delete a project before creating, importing or duplicating another. Existing projects are kept.");
+                if(p.name==null||p.name.isBlank()){
+                    Set<String> names=new HashSet<>();for(File record:records)try{names.add(load(record.getName().replace(".json","")).name);}catch(Exception ignored){}
+                    for(int i=1;i<=99;i++){String name=String.format(Locale.ROOT,"ICE_%02d",i);if(!names.contains(name)){p.name=name;break;}}
+                }
+            }
+            String json=encode(p);EditProject verified=decode(json);if(!p.id.equals(verified.id))throw new IOException("Project identity validation failed");File old=new File(directory,p.id+".json"),backup=new File(directory,p.id+".v1-backup");
             if(old.isFile()){byte[] bytes=new AtomicFile(old).readFully();try{int schema=new JSONObject(new String(bytes,StandardCharsets.UTF_8)).optInt("schema");backup=new File(directory,p.id+".v"+schema+"-backup");if(schema<EditProject.SCHEMA&&!backup.exists())java.nio.file.Files.write(backup.toPath(),bytes);}catch(JSONException ignored){}}
             AtomicFile file=new AtomicFile(new File(directory,p.id+".json"));
             FileOutputStream stream=null;
-            try { stream=file.startWrite(); stream.write(json.getBytes(StandardCharsets.UTF_8)); file.finishWrite(stream); }
+            try { stream=file.startWrite(); stream.write(json.getBytes(StandardCharsets.UTF_8)); stream.getFD().sync();file.finishWrite(stream); }
             catch(IOException e) { if(stream!=null) file.failWrite(stream); throw e; }
         }
     }
@@ -90,7 +101,9 @@ public final class ProjectStore {
                 byte[] hash=java.security.MessageDigest.getInstance("SHA-256").digest(encode(p).getBytes(StandardCharsets.UTF_8));
                 StringBuilder key=new StringBuilder();for(byte b:hash)key.append(String.format(Locale.ROOT,"%02x",b&255));previewKey=key.toString();
             } catch(Exception ignored) { /* A damaged project can still be deleted. */ }
-            if(!record.delete()) throw new IOException("Could not delete project.");
+            File tombstone=new File(directory,id+".deleted");if(!tombstone.createNewFile()&&!tombstone.exists())throw new IOException("Could not record deletion.");
+            if(!record.delete()){tombstone.delete();throw new IOException("Could not delete project.");}
+            File recoveryDir=new File(directory.getParentFile(),"project-recovery-v1");for(String suffix:new String[]{".current",".previous"})new AtomicFile(new File(recoveryDir,id+suffix)).delete();
             if(previewKey!=null){
                 final String key=previewKey;
                 File[] previews=new File(cacheDirectory,"bc1-preview-v11").listFiles((d,n)->
@@ -186,9 +199,9 @@ public final class ProjectStore {
             m.volume=(float)v.getDouble("volume"); m.loop=v.getBoolean("loop"); p.music=m; }
         p.validate(); return p;
     }
-    private static JSONArray motion(Motion m)throws JSONException{JSONArray all=new JSONArray();for(java.util.List<Motion.Key> curve:m.curves){JSONArray keys=new JSONArray();for(Motion.Key k:curve)keys.put(new JSONArray().put(k.timeMs).put(k.value).put(k.x1).put(k.y1).put(k.x2).put(k.y2));all.put(keys);}return all;}
-    private static Motion motion(JSONArray all)throws JSONException{Motion m=new Motion();if(all==null)return m;if(all.length()!=6&&all.length()!=10&&all.length()!=11&&all.length()!=Motion.COUNT)throw new JSONException("Invalid motion channels");for(int p=0;p<all.length();p++){JSONArray keys=all.getJSONArray(p);for(int i=0;i<keys.length();i++){JSONArray a=keys.getJSONArray(i);Motion.Key k=new Motion.Key(a.getLong(0),(float)a.getDouble(1));k.x1=(float)a.getDouble(2);k.y1=(float)a.getDouble(3);k.x2=(float)a.getDouble(4);k.y2=(float)a.getDouble(5);m.curves.get(p).add(k);}}return m;}
+    private static JSONArray motion(Motion m)throws JSONException{JSONArray all=new JSONArray();for(java.util.List<Motion.Key> curve:m.curves){JSONArray keys=new JSONArray();for(Motion.Key k:curve)keys.put(new JSONArray().put(k.timeMs).put(k.value).put(k.x1).put(k.y1).put(k.x2).put(k.y2).put(k.id).put(k.easingToNext));all.put(keys);}return all;}
+    private static Motion motion(JSONArray all)throws JSONException{Motion m=new Motion();if(all==null)return m;if(all.length()!=6&&all.length()!=10&&all.length()!=11&&all.length()!=Motion.COUNT)throw new JSONException("Invalid motion channels");for(int p=0;p<all.length();p++){JSONArray keys=all.getJSONArray(p);for(int i=0;i<keys.length();i++){JSONArray a=keys.getJSONArray(i);Motion.Key k=new Motion.Key(a.getLong(0),(float)a.getDouble(1));k.id=a.optString(6,"legacy-"+p+"-"+i+"-"+k.timeMs);k.easingToNext=a.optInt(7,-1);k.x1=(float)a.getDouble(2);k.y1=(float)a.getDouble(3);k.x2=(float)a.getDouble(4);k.y2=(float)a.getDouble(5);m.curves.get(p).add(k);}}return m;}
     public static EditProject snapshot(EditProject p) {
-        try { return decode(encode(p)); } catch(JSONException e) { throw new IllegalStateException(e); }
+        p.ensureLibrary();p.validate();return p.copy();
     }
 }

@@ -296,7 +296,7 @@ final class TimelineView extends View {
         canvas.save();canvas.clipRect(l+a.dp(3),y,r-a.dp(3),y+bar);paint.setTextSize(a.dp(11));String label=(c.track>=EditProject.AUDIO_FIRST?"♫  ":c.image?"▣  ":"")+c.name;float tx=Math.max(l,left+headerWidth())+a.dp(8),tw=paint.measureText(label);
         if(c.track<EditProject.AUDIO_FIRST){paint.setColor(0xB3070F19);canvas.drawRoundRect(tx-a.dp(4),y+bar/2-a.dp(9),tx+tw+a.dp(4),y+bar/2+a.dp(9),a.dp(4),a.dp(4),paint);}
         paint.setColor(EditorActivity.TEXT);canvas.drawText(label,tx,y+bar/2+a.dp(4),paint);canvas.restore();
-        if(selected)drawKeys(canvas,c.motion,l,y,bar,k->x(pl.startMs+Math.round((k-c.inMs)/(double)c.speed)),left,right);
+        if(selected)drawKeys(canvas,c.motion,null,l,r,y,bar,k->x(pl.startMs+Math.round((k-c.inMs)/(double)c.speed)),left,right);
         if(hidden){paint.setColor(0x99060D13);canvas.drawRoundRect(l,y,r,y+bar,radius,radius,paint);}
         if(p.tracks[c.track].locked){paint.setColor(0x33FFFFFF);paint.setStrokeWidth(a.dp(1));canvas.save();canvas.clipRect(l,y,r,y+bar);for(float xx=Math.max(l,left)-bar;xx<Math.min(r,right);xx+=a.dp(10))canvas.drawLine(xx,y+bar,xx+bar,y,paint);canvas.restore();}
         paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(a.dp(selected?2:1));paint.setColor(selected?EditorActivity.CYAN:clipEdge(c));canvas.drawRoundRect(l,y,r,y+bar,radius,radius,paint);paint.setStyle(Paint.Style.FILL);
@@ -305,9 +305,9 @@ final class TimelineView extends View {
     }
     interface KeyX{float x(long keyTime);}
     /** Diamonds at keyframe times so the clip's timing stays visible while editing animation. */
-    private void drawKeys(Canvas canvas,Motion m,float l,float y,float bar,KeyX at,float left,float right){
-        paint.setColor(0xFFFFFFFF);TreeSet<Long> times=new TreeSet<>();for(List<Motion.Key> keys:m.curves)for(Motion.Key k:keys)times.add(k.timeMs);
-        for(long t:times){float xx=at.x(t);if(xx<left||xx>right)continue;Path d=new Path();float s=a.dp(5),cy=y+a.dp(8);d.moveTo(xx,cy-s);d.lineTo(xx+s,cy);d.lineTo(xx,cy+s);d.lineTo(xx-s,cy);d.close();canvas.drawPath(d,paint);}
+    private void drawKeys(Canvas canvas,Motion m,FillStyle fill,float l,float r,float y,float bar,KeyX at,float left,float right){
+        paint.setColor(0xFFFFFFFF);TreeSet<Long> times=new TreeSet<>();for(List<Motion.Key> keys:m.curves)for(Motion.Key k:keys)times.add(k.timeMs);if(fill!=null){times.addAll(fill.structures.keySet());for(FillStyle.Track track:fill.tracks())times.addAll(track.keys.keySet());}
+        for(long t:times){float xx=at.x(t);if(xx<Math.max(l,left)||xx>Math.min(r,right))continue;Path d=new Path();float s=Math.min(a.dp(5),bar*.22f),cy=y+bar/2;d.moveTo(xx,cy-s);d.lineTo(xx+s,cy);d.lineTo(xx,cy+s);d.lineTo(xx-s,cy);d.close();canvas.drawPath(d,paint);}
     }
     private void drawOverlay(Canvas canvas,int index,float y,float bar,float left,float right){
         EditProject.Overlay o=a.project.overlays.get(index);boolean chosen=(index==a.selectedOverlay&&a.selected<0)||a.multiOverlays.contains(index);
@@ -316,8 +316,8 @@ final class TimelineView extends View {
         if(r<left||l>right)return;
         float radius=a.dp(6);int base=o.imageUri!=null?0xFF4B3591:o.shape>0?0xFF1F5A63:0xFF503079,edge=o.imageUri!=null?0xFF9A7BFF:o.shape>0?0xFF4FC3CF:0xFFB38CFF;
         paint.setColor(base);canvas.drawRoundRect(l,y,r,y+bar,radius,radius,paint);
-        canvas.save();canvas.clipRect(l+a.dp(6),y,r-a.dp(6),y+bar);paint.setColor(EditorActivity.TEXT);paint.setTextSize(a.dp(11));canvas.drawText((o.shape>0?"◆  ":o.imageUri!=null?"▣  ":"T  ")+o.label(),Math.max(l,left+headerWidth())+a.dp(9),y+bar/2+a.dp(4),paint);canvas.restore();
-        if(chosen)drawKeys(canvas,o.motion,l,y,bar,k->x(o.startMs+k),left,right);
+        canvas.save();canvas.clipRect(l+a.dp(6),y,r-a.dp(6),y+bar);paint.setColor(EditorActivity.TEXT);paint.setTextSize(a.dp(11));canvas.drawText((o.shape>0?"":o.imageUri!=null?"▣  ":"T  ")+o.label(),Math.max(l,left+headerWidth())+a.dp(9),y+bar/2+a.dp(4),paint);canvas.restore();
+        if(chosen)drawKeys(canvas,o.motion,o.fill,l,r,y,bar,k->x(o.startMs+k),left,right);
         if(o.hidden){paint.setColor(0x99060D13);canvas.drawRoundRect(l,y,r,y+bar,radius,radius,paint);}
         if(o.locked){paint.setColor(0x33FFFFFF);paint.setStrokeWidth(a.dp(1));canvas.save();canvas.clipRect(l,y,r,y+bar);for(float xx=Math.max(l,left)-bar;xx<Math.min(r,right);xx+=a.dp(10))canvas.drawLine(xx,y+bar,xx+bar,y,paint);canvas.restore();}
         paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(a.dp(chosen?2:1));paint.setColor(chosen?EditorActivity.CYAN:edge);canvas.drawRoundRect(l,y,r,y+bar,radius,radius,paint);paint.setStyle(Paint.Style.FILL);
@@ -493,7 +493,7 @@ final class TimelineView extends View {
         if(op==OP_MULTI){java.util.List<Integer> clips=a.selectedClips(),overlays=a.selectedOverlays();java.util.List<Integer> movable=new ArrayList<>();for(int i:clips)if(a.project.clips.get(i).track>0)movable.add(i);
             if(movable.size()<clips.size())a.tell("Main-sequence clips keep their order; other selected layers moved.");a.edit("Layers moved",()->LayerOps.moveMany(a.project,movable,overlays,delta));return;}
         a.edit(op==OP_MOVE?(track!=origin.clip.track?"Moved to "+a.project.tracks[track].name:"Clip moved"):op==OP_OV_MOVE?"Layer moved":"Trim applied",()->{
-            if(op>=OP_OV_START){if(op==OP_OV_START||op==OP_OV_MOVE)ov.startMs+=delta;if(op==OP_OV_END||op==OP_OV_MOVE)ov.endMs+=delta;}
+            if(op>=OP_OV_START){if(op==OP_OV_START){Keyframes.splitAt(ov.motion,delta);if(ov.fill!=null)ov.fill.split(delta);}if(op==OP_OV_START||op==OP_OV_MOVE)ov.startMs+=delta;if(op==OP_OV_END||op==OP_OV_MOVE)ov.endMs+=delta;}
             else if(op<OP_MOVE)TimelineEdits.edge(a.project,a.selected,op==OP_TRIM_START,delta);
             else a.selected=TimelineEdits.place(a.project,origin.index,track,origin.startMs+delta);
         });

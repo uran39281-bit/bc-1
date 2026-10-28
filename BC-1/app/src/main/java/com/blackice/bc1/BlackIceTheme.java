@@ -5,6 +5,7 @@ import android.graphics.drawable.*;
 
 /** Shared presentation tokens. No rendering or project state belongs in this class. */
 final class BlackIceTheme {
+    static final int SPACE=8,CONTROL=48,RADIUS=12;
     static final int BACKGROUND=0xFF07111B,PRIMARY=0xFF0C1825,SECONDARY=0xFF0C1825,
         ELEVATED=0xFF101E2C,ACCENT=0xFF48E59F,ICE=0xFF7CD5F3,
         ON_ACCENT=0xFF03130D,DISABLED=0xFF526174,TEXT=0xFFF2F6FA,MUTED=0xFF97A8BA,BORDER=0xFF213548;
