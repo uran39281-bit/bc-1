@@ -7,7 +7,7 @@ import java.util.UUID;
 /** Portable edit decision list. Times are integer milliseconds; media is never modified. */
 public final class EditProject {
     /** Schema 5: eight visual tracks (0 main, 1–7 layers) and audio on tracks 8–11 (was 4–7). */
-    public static final int SCHEMA = 10;
+    public static final int SCHEMA = 11;
     /** Visual tracks: 0 is the main sequence, 1..VISUAL_TRACKS-1 are independent video/image layers. */
     public static final int MAX_CAPTIONS=2000;
     public String appliedCaptionJobId="";
@@ -56,6 +56,13 @@ public final class EditProject {
     public long loopInMs = -1, loopOutMs = -1;
     public EditProject(){for(int t=0;t<tracks.length;t++)tracks[t]=new Track(Track.defaultName(t));}
 
+    /** Model-boundary snapshot: preserve identities, detach every mutable graph. */
+    public EditProject copy(){EditProject p=new EditProject();p.id=id;p.name=name;p.appliedCaptionJobId=appliedCaptionJobId;p.portrait=portrait;p.canvasRatio=canvasRatio;p.previewHeight=previewHeight;p.playheadMs=playheadMs;p.frameRate=frameRate;p.loopInMs=loopInMs;p.loopOutMs=loopOutMs;
+        for(int i=0;i<tracks.length;i++)p.tracks[i]=tracks[i].copy();p.markers.addAll(markers);
+        for(Clip c:clips){Clip n=c.copy();n.id=c.id;p.clips.add(n);}for(Clip c:library){Clip n=c.copy();n.id=c.id;p.library.add(n);}for(Overlay o:overlays){Overlay n=o.copy();n.id=o.id;p.overlays.add(n);}
+        for(Landmark m:landmarks){Landmark n=new Landmark();n.id=m.id;n.label=m.label;n.timeMs=m.timeMs;n.slot=m.slot;p.landmarks.add(n);}
+        if(music!=null){Music n=new Music();n.uri=music.uri;n.name=music.name;n.sourceDurationMs=music.sourceDurationMs;n.inMs=music.inMs;n.outMs=music.outMs;n.startMs=music.startMs;n.volume=music.volume;n.loop=music.loop;p.music=n;}return p;
+    }
     public static final class Track {
         public String name; public int color;
         public boolean hidden, solo, locked, muted, collapsed;

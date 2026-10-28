@@ -36,8 +36,7 @@ public final class Keyframes {
         if(m.curves.get(property).isEmpty()) return true;
         Motion.Key existing=keyAt(m,property,time,tolerance);
         if(existing!=null){existing.value=value;return false;}
-        Motion.Key key=new Motion.Key(time,value);Motion.Key before=previous(m.curves.get(property),time);
-        if(before!=null){key.x1=before.x1;key.y1=before.y1;key.x2=before.x2;key.y2=before.y2;}
+        Motion.Key key=new Motion.Key(time,value);
         m.put(property,key);return false;
     }
     private static Motion.Key previous(List<Motion.Key> keys,long time){Motion.Key found=null;for(Motion.Key k:keys)if(k.timeMs<=time)found=k;return found;}
@@ -55,8 +54,8 @@ public final class Keyframes {
         Motion.Key k=keyAt(m,property,time,tolerance);if(k==null) throw new IllegalArgumentException("No keyframe at the playhead.");
         m.curves.get(property).remove(k);
     }
-    public static void ease(Motion.Key k,int preset){float[] c=CURVES[preset];k.x1=c[0];k.y1=c[1];k.x2=c[2];k.y2=c[3];}
-    public static int easingOf(Motion.Key k){for(int i=0;i<CURVES.length;i++){float[] c=CURVES[i];if(k.x1==c[0]&&k.y1==c[1]&&k.x2==c[2]&&k.y2==c[3])return i;}return -1;}
+    public static void ease(Motion.Key k,int preset){if(preset<0||preset>=CURVES.length)throw new IllegalArgumentException("Unknown easing");k.easingToNext=preset;float[] c=CURVES[preset];k.x1=c[0];k.y1=c[1];k.x2=c[2];k.y2=c[3];}
+    public static int easingOf(Motion.Key k){if(k.easingToNext>=0&&k.easingToNext<CURVES.length){float[] c=CURVES[k.easingToNext];if(k.x1==c[0]&&k.y1==c[1]&&k.x2==c[2]&&k.y2==c[3])return k.easingToNext;}return k.x1==k.y1&&k.x2==k.y2?0:-1;}
     /** Nearest key time strictly before / after across the listed properties; -1 when none. */
     public static long adjacent(Motion m,long time,boolean next,int... properties) {
         long best=-1;
@@ -87,19 +86,13 @@ public final class Keyframes {
     public static void paste(Motion m,Clip clip,long time) {
         Motion check=m.copy();
         for(Map.Entry<Integer,List<Motion.Key>> e:clip.keys.entrySet()) for(Motion.Key k:e.getValue()){
-            Motion.Key c=k.copy();c.timeMs=time+k.timeMs;if(c.timeMs<0)continue;check.put(e.getKey(),c);}
+            Motion.Key c=k.copy();c.id=UUID.randomUUID().toString();c.timeMs=time+k.timeMs;if(c.timeMs<0)continue;check.put(e.getKey(),c);}
         check.validate();
         for(int p=0;p<Motion.COUNT;p++){m.curves.get(p).clear();m.curves.get(p).addAll(check.curves.get(p));}
     }
-    /** For the right half of a split overlay: keys move to the new local time base; the value at the
-     * cut is kept as a key at zero so the visible animation does not jump. */
-    public static void splitAt(Motion m,long offset) {
-        for(int p=0;p<Motion.COUNT;p++){List<Motion.Key> keys=m.curves.get(p);if(keys.isEmpty())continue;
-            float atCut=m.value(p,offset,0);boolean dropped=false;
-            for(Motion.Key k:keys)k.timeMs-=offset;
-            for(Iterator<Motion.Key> it=keys.iterator();it.hasNext();)if(it.next().timeMs<0){it.remove();dropped=true;}
-            if(dropped&&(keys.isEmpty()||keys.get(0).timeMs>0))m.put(p,new Motion.Key(0,atCut));}
-    }
+    /** Translate the original interval intact into the retained overlay's local time base.
+     * Negative keys are retained interval endpoints, never generated baseline keys. */
+    public static void splitAt(Motion m,long offset) {shift(m,-offset);}
     public static final String[] PRESETS={"Fade In","Fade Out","Pop In","Slide In Left","Slide In Right","Spin"};
     /** Built-in animation in the motion's time base between start and end; current values are the targets. */
     public static void preset(Motion m,String name,long start,long end,float[] current) {
@@ -132,7 +125,7 @@ public final class Keyframes {
     /** Keys at the playhead (any property) moved to a new time together. */
     public static int moveAll(Motion m,long from,long to,long tolerance){int moved=0;for(int p=0;p<Motion.COUNT;p++)if(keyAt(m,p,from,tolerance)!=null){move(m,p,from,to,tolerance);moved++;}if(moved==0)throw new IllegalArgumentException("No keyframe at the playhead.");return moved;}
     public static int deleteAll(Motion m,long time,long tolerance){int removed=0;for(int p=0;p<Motion.COUNT;p++){Motion.Key k=keyAt(m,p,time,tolerance);if(k!=null){m.curves.get(p).remove(k);removed++;}}return removed;}
-    public static int easeAll(Motion m,long time,long tolerance,float[] curve){int changed=0;for(int p=0;p<Motion.COUNT;p++){Motion.Key k=keyAt(m,p,time,tolerance);if(k!=null){k.x1=curve[0];k.y1=curve[1];k.x2=curve[2];k.y2=curve[3];changed++;}}return changed;}
+    public static int easeAll(Motion m,long time,long tolerance,float[] curve){int changed=0;for(int p=0;p<Motion.COUNT;p++){Motion.Key k=keyAt(m,p,time,tolerance);if(k!=null){k.easingToNext=-1;for(int i=0;i<CURVES.length;i++)if(java.util.Arrays.equals(curve,CURVES[i]))k.easingToNext=i;k.x1=curve[0];k.y1=curve[1];k.x2=curve[2];k.y2=curve[3];changed++;}}return changed;}
     public static float[] curve(int preset){return CURVES[preset].clone();}
     /** Shifts every key (used when an animation preset is applied at a new start). */
     public static void shift(Motion m,long delta){for(List<Motion.Key> keys:m.curves)for(Motion.Key k:keys)k.timeMs+=delta;}
