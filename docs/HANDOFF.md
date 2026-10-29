@@ -1,3 +1,7 @@
+# v1.4.6 (build 40) — effects enabled (source)
+
+Effect bypass (`ActiveFeatures`) removed; Effect Catalog applies/removes effects and the Effects panel exposes strength. Unused MainActivity removed; compact project JSON; caption-limit message; export plan computed once. See CHANGELOG-v1.4.6.md. Not yet published as a signed APK; Android CI qualification required.
+
 # Published v1.4.1-dev — Media Settings and transforms
 
 PR #7 merged; qualified source `2ab6fa383fc975992cffe8d726a0f22d6a205253`, run39718133591 passed 150 JVM /48 Android /16 export checks. Normal Preview upgrade code28 signed with the original certificate. See qa/BC-1-v1.4.1-MEDIA-TRANSFORM.md and ../v1.4.1-dev/. Preserve schema6 heightScale/11-channel compatibility. The separate `ui/media-transform` branch was an overlapping experiment and is NOT the released implementation; do not merge its conflicting 12-channel schema. Physical Samsung testing remains pending.

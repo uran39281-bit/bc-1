@@ -1,5 +1,7 @@
 # BC-1 — Black Ice editor
 
+**Next update: v1.4.6 (build 40) — effects enabled.** All 48 built-in effects render again in preview and export; the Effect Catalog applies/removes them and the Effects panel adds strength control. Plus caption-limit message, export-option and storage cleanups. Source only until the retained-key publish workflow runs. [Changelog](docs/CHANGELOG-v1.4.6.md).
+
 **Current update: v1.4.5 (build 39) — refreshed Home, timeline controls, Fit/Fill Canvas, interval easing and recovery.** Includes the reference trim icons, opacity/zoom rulers, adjacent Trash/Undo/Redo, project naming/limits, save-state feedback and recoverable private checkpoints. [Download the retained-key Preview APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.5/Black-Ice-Editor-v1.4.5-Preview-build39.apk) · [Validation, screenshots and limitations](v1.4.5/QA.md) · [PR #15](https://github.com/uran39281-bit/bc-1/pull/15). Install over **Black Ice Editor Preview**; the signed 1.4.4 upgrade preserves the tested project and media. Keep the separate Integration app and its projects. Existing effect processing remains unavailable; physical Samsung/DeX verification is pending.
 
 [**All versions and APK downloads ↓**](#all-versions--downloads)

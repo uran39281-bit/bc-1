@@ -373,6 +373,12 @@ final class ToolPanels {
     }
     private void effectsPanel(){
         TextView add=a.button("Add Effects",v->a.effectCatalog.open());add.setTextColor(BlackIceTheme.ICE);add.setContentDescription("Add Effects");a.inspector.addView(add,new LinearLayout.LayoutParams(-1,a.dp(48)));
+        // One effect per clip; preview and both export engines render it with the shared layer shader.
+        EditProject.Clip c=a.clip();if(c==null||c.effect==0||c.track>=EditProject.AUDIO_FIRST)return;
+        a.inspector.addView(a.note("Effect: "+com.blackice.bc1.core.EffectCatalog.name(c.effect)));
+        percent("Effect strength",c.intensity,.6f,v->c.intensity=v,c.motion,Motion.INTENSITY);
+        if(com.blackice.bc1.core.EffectCatalog.centered(c.effect))a.inspector.addView(a.note("50% leaves the picture unchanged; lower reduces, higher increases."));
+        a.inspector.addView(a.button("Remove effect",v->{if(a.layerEditable())a.edit("Effect removed",()->c.effect=0);}),new LinearLayout.LayoutParams(-1,a.dp(48)));
     }
 
     private void effectsHome(){
