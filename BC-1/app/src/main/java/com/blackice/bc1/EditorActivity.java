@@ -248,7 +248,7 @@ public final class EditorActivity extends Activity {
         if((project.clips.isEmpty()&&project.overlays.isEmpty())){liveView.setVisibility(View.GONE);return;}
         try{
             EditProject snapshot=comparing&&compareSnapshot!=null?ProjectStore.decode(compareSnapshot):ProjectStore.snapshot(project);
-            ActiveFeatures.prepareRender(snapshot);snapshot.playheadMs=project.playheadMs;
+            snapshot.playheadMs=project.playheadMs;
             // Only the live TextureView owns paused frames. Do not leave the inactive
             // SurfaceView's separate surface/hole covering it on device compositors.
             surface.setVisibility(View.INVISIBLE);
@@ -265,7 +265,7 @@ public final class EditorActivity extends Activity {
     static final long WARM_MS=1200;
     final Runnable warmPreview=()->{
         if(!active||loading||player!=null||previewPending||liveBefore!=null||comparing||exporting()||(project.clips.isEmpty()&&project.overlays.isEmpty()))return;
-        EditProject snapshot=ProjectStore.snapshot(project);ActiveFeatures.prepareRender(snapshot);if(!PreviewProxy.required(snapshot))return;
+        EditProject snapshot=ProjectStore.snapshot(project);if(!PreviewProxy.required(snapshot))return;
         previewProxy.prepare(snapshot,new PreviewProxy.Listener(){
             @Override public void onProgress(int percent){}
             @Override public void onReady(File file){android.util.Log.d(PREVIEW_LOG,"playback render ready");}
@@ -278,7 +278,7 @@ public final class EditorActivity extends Activity {
         long position=project.playheadMs;releasePreview();project.playheadMs=position;
         if((project.clips.isEmpty()&&project.overlays.isEmpty())){syncPosition();return;}
         try {
-            EditProject snapshot=ProjectStore.snapshot(project);if(comparing&&compareSnapshot!=null){snapshot=ProjectStore.decode(compareSnapshot);snapshot.playheadMs=project.playheadMs;}ActiveFeatures.prepareRender(snapshot);
+            EditProject snapshot=ProjectStore.snapshot(project);if(comparing&&compareSnapshot!=null){snapshot=ProjectStore.decode(compareSnapshot);snapshot.playheadMs=project.playheadMs;}
             previewHint("Preparing preview…");
             if(PreviewProxy.required(snapshot)){
                 previewPending=true;previewAutoplay=playWhenReady;
@@ -496,7 +496,6 @@ public final class EditorActivity extends Activity {
     }
     void durationDialog(){EditProject.Clip c=clip();if(c==null||!editable())return;numberDialog("Duration (seconds)",seconds(c.durationMs()),value->edit("Duration updated",()->TimelineEdits.duration(project,selected,parseMs(value))));}
     void slipDialog(){EditProject.Clip c=clip();if(c==null||c.image||!editable())return;numberDialog("Slip: source in (seconds)",seconds(c.inMs),value->edit("Source segment slipped",()->TimelineEdits.slip(project,selected,parseMs(value))));}
-    void effectsDialog(){tell("Effects — Coming Later");}
     void splitSelected(){if(clip()!=null)edit("Clip split",()->project.split(selected,project.playheadMs));}
     /** Failed/no-op commands do not consume undo or discard redo. */
     private int captionPolls;private long captionsSeen=-1;private String captionsSeenProject,captionsSeenJob;

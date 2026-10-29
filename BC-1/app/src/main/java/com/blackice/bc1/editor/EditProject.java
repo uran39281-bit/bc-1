@@ -6,12 +6,13 @@ import java.util.UUID;
 
 /** Portable edit decision list. Times are integer milliseconds; media is never modified. */
 public final class EditProject {
-    /** Schema 5: eight visual tracks (0 main, 1–7 layers) and audio on tracks 8–11 (was 4–7). */
+    /** Saved-file schema. Since schema 5: eight visual tracks (0 main, 1–7 layers) and audio on tracks 8–11 (was 4–7). */
     public static final int SCHEMA = 11;
-    /** Visual tracks: 0 is the main sequence, 1..VISUAL_TRACKS-1 are independent video/image layers. */
+    /** Generated caption overlays (group {@link com.blackice.bc1.core.CaptionBuilder#GROUP}); not counted as regular overlays. */
     public static final int MAX_CAPTIONS=2000;
     public String appliedCaptionJobId="";
     public int regularOverlayCount(){int n=0;for(Overlay o:overlays)if(!com.blackice.bc1.core.CaptionBuilder.GROUP.equals(o.group))n++;return n;}
+    /** Visual tracks: 0 is the main sequence, 1..VISUAL_TRACKS-1 are independent video/image layers. */
     public static final int VISUAL_TRACKS = 8;
     public static final int AUDIO_FIRST = 8, AUDIO_LAST = 11, TRACK_COUNT = 12;
     public static boolean audioTrack(int track) { return track >= AUDIO_FIRST; }
@@ -113,7 +114,7 @@ public final class EditProject {
         public float x=0, y=-.65f, scale=.7f, opacity=1f; public Motion motion=new Motion();
         public FillStyle fill;
         public String font="sans-serif-medium";public int color=0xFFFFFFFF,alignment=1;
-        /** 0 text/image, 1 rectangle, 2 ellipse, 3 triangle, 4 line. */
+        /** 0 text/image; 1 and above index {@link #SHAPES} (vector shapes). */
         public int shape;
         public String name, group;
         public boolean hidden, solo, locked, flipH, flipV;
@@ -205,7 +206,8 @@ public final class EditProject {
             throw new IllegalArgumentException("Invalid project identity.");
         if(library.size()>LIBRARY_LIMIT) throw new IllegalArgumentException("The media bin holds up to "+LIBRARY_LIMIT+" items.");
         for(Clip a:library) if(a.uri==null||a.name==null||a.sourceDurationMs<0) throw new IllegalArgumentException("Invalid media bin entry.");
-        if(clips.size()>100 || regularOverlayCount()>20 || overlays.size()-regularOverlayCount()>MAX_CAPTIONS) throw new IllegalArgumentException("Preview supports up to 100 clips and 20 overlays.");
+        if(clips.size()>100 || regularOverlayCount()>20) throw new IllegalArgumentException("Preview supports up to 100 clips and 20 overlays.");
+        if(overlays.size()-regularOverlayCount()>MAX_CAPTIONS) throw new IllegalArgumentException("Use at most "+MAX_CAPTIONS+" captions.");
         if(previewHeight!=360 && previewHeight!=540 && previewHeight!=1080) throw new IllegalArgumentException("Invalid preview resolution.");
         if(frameRate!=24&&frameRate!=25&&frameRate!=30&&frameRate!=50&&frameRate!=60&&frameRate!=120) throw new IllegalArgumentException("Use 24, 25, 30, 50, 60 or 120 fps.");
         for(Track t:tracks) if(t==null||t.name==null||t.name.isEmpty()||t.name.length()>60) throw new IllegalArgumentException("Every layer needs a name of up to 60 characters.");

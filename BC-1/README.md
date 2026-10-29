@@ -1,3 +1,9 @@
+# BC-1 — Black Ice editor (Android app source)
+
+Current source version: **1.4.6 (build 40)**. See the [repository README](../README.md) for releases and downloads, and [docs/CHANGELOG-v1.4.6.md](../docs/CHANGELOG-v1.4.6.md) for the latest changes. Build with `gradle -Pbc1SideBySide assembleDebug` from this folder.
+
+## Version history (older notes)
+
 ## BC-1 v1.0.2 — V1 media browser
 
 Large tablet/DeX windows now use a two-column Project Media grid, All/Video/Audio/Image filters and filename search. Filtered cards select the original clip; highlights follow other selection controls. Query/filter state survives recreation. Phone and compact-wide layouts retain their existing arrangement.

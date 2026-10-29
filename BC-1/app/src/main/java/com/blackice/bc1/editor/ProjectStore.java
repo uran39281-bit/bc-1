@@ -148,7 +148,8 @@ public final class ProjectStore {
         if(p.music!=null) { EditProject.Music m=p.music;
             j.put("music",new JSONObject().put("uri",m.uri).put("name",m.name).put("sourceDurationMs",m.sourceDurationMs)
                     .put("inMs",m.inMs).put("outMs",m.outMs).put("startMs",m.startMs).put("volume",m.volume).put("loop",m.loop)); }
-        return j.toString(2);
+        // Compact: projects with many captions stay small on disk and in undo history.
+        return j.toString();
     }
     public static EditProject decode(String json) throws JSONException {
         JSONObject j=new JSONObject(json);
