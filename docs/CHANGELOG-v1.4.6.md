@@ -25,4 +25,12 @@
 3. installs published Preview 1.4.5 build 39, saves a fixture project (with a saved effect), upgrades in place with `adb install -r` (`.github/scripts/bc1-v146-upgrade.py`) and verifies the project, media bytes and effect survive and are re-saved as compact schema-11 JSON;
 4. pushes the APK, QA and checksums to `test-apk/preview/v1.4.6`.
 
-The owner still provides, from the qualified run and the private key: `v1.4.6/release.json`, `v1.4.6/SHA256SUMS.txt` and `v1.4.6/QA.md`.
+`v1.4.6/QA.md` is committed. On the private signing machine, sign the qualified CI APK (run 40817895753, artifact 12873755526) with the retained key, then generate the manifest and checksum:
+
+```
+python .github/scripts/bc1-make-release-json.py app-debug.apk signed.apk v1.4.6/release.json \
+  --version 1.4.6 --version-code 40 --source-commit 8e611103b940d1690971292c8ecb516c56890bfd \
+  --workflow-run 40817895753 --candidate-artifact-id 12873755526 --qa-artifact-id 12874353788
+```
+
+The script refuses to write unless `apksigner` reports the retained certificate and the publish workflow's reconstruction reproduces the signed file. Put the printed checksum line in `v1.4.6/SHA256SUMS.txt`, then commit both files to `main` to start publication.
