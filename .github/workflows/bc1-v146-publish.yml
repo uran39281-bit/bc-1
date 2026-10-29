@@ -85,6 +85,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cd publish
+          python - <<'PY'
+          import json, pathlib, re
+          assert json.loads(pathlib.Path('upgrade-verification.json').read_text())['result'] == 'PASS'
+          p = pathlib.Path('QA.md')
+          note = '> **Status: upgrade verified. The retained-key signed APK is published with this record.** Signed Preview 1.4.5 build 39 was upgraded in place to 1.4.6 build 40; the fixture, edits, saved effect and original media were preserved.'
+          text = re.sub(r'^> \*\*Status:.*$', note, p.read_text(), count=1, flags=re.MULTILINE)
+          text = text.replace('Once published, install', 'Install')
+          p.write_text(text)
+          PY
           git init -q
           git checkout -q -b release
           git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"

@@ -88,8 +88,20 @@ shape["fill"]=dict(gradient=True,solid=dict(base=-1,keys=[]),angle=dict(base=0,k
 project=dict(schema=10,id=ID,name=NAME,portrait=False,previewHeight=540,playheadMs=500,frameRate=30,clips=[clip],overlays=[shape])
 path='files/projects-v1/'+ID+'.json'
 private(path,json.dumps(project,indent=2).encode())
-open_project();click('Save project');time.sleep(1)
-before=json.loads(private(path));subset(project,before)
+# Both versions have the live work clock; use the real registered Save shortcut
+# rather than requiring the editor's accessibility hierarchy to become idle.
+open_project(verify_title=False)
+adb('shell','input','keycombination','113','47')
+for _ in range(40):
+    before_bytes=private(path)
+    before=json.loads(before_bytes)
+    if before.get('schema')==11:break
+    time.sleep(.25)
+else:raise AssertionError('1.4.5 Ctrl+S did not persist schema 11')
+expected=dict(project,schema=11)
+subset(expected,before)
+assert b'\n  ' in before_bytes,'Fixture must exercise the 1.4.5 pretty-printed format'
+print('1.4.5 saved fixture verified; upgrading in place',flush=True)
 adb('shell','am','force-stop',PKG)
 print(adb('install','-r',str(NEW)).decode(),flush=True)
 package=adb('shell','dumpsys','package',PKG).decode();assert 'versionCode=40' in package and 'versionName=1.4.6' in package
@@ -100,10 +112,13 @@ open_project(verify_title=False)
 print('Opened upgraded editor; saving through Ctrl+S',flush=True)
 adb('shell','input','keycombination','113','47')
 for _ in range(40):
-    after=json.loads(private(path))
-    if after.get('schema')==11:break
+    after_bytes=private(path)
+    after=json.loads(after_bytes)
+    # Schema 11 is already present before upgrade. Await the compact rewrite,
+    # which proves this version's asynchronous save actually completed.
+    if after.get('schema')==11 and b'\n  ' not in after_bytes:break
     time.sleep(.25)
-else:raise AssertionError('Ctrl+S did not persist the upgraded project schema')
+else:raise AssertionError('1.4.6 Ctrl+S did not persist compact schema-11 JSON')
 expected=dict(project,schema=11);subset(expected,after)
 assert b'\n  ' not in private(path),'1.4.6 writes compact project JSON'
 assert after['clips'][0]['effect']==12,'Saved effect must survive the upgrade'

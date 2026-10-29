@@ -2,7 +2,7 @@
 
 Version **1.4.6**, build **40**, package **com.blackice.bc1.preview**. Android 8.0/API 26 or newer; ARM64 and x86-64 included.
 
-> **Status: qualified source only. The APK is not signed or published yet.** No `release.json` or `SHA256SUMS.txt` exists for 1.4.6, and there is nothing to download. The qualified CI APK must be signed with the retained Preview key in the owner's signing environment, then pass the 1.4.5 → 1.4.6 upgrade gate before publication. This record will be updated with the published APK and its checksum at that point.
+> **Status: signed with the retained Preview key; upgrade verification and publication pending.** The signed payload is identical to the qualified CI candidate. Publication is blocked until the signed 1.4.5 → 1.4.6 upgrade gate passes.
 
 [Source PR #16](https://github.com/uran39281-bit/bc-1/pull/16) · [Changelog](../docs/CHANGELOG-v1.4.6.md) · After publication: `test-apk/preview/v1.4.6/Black-Ice-Editor-v1.4.6-Preview-build40.apk`
 
@@ -35,15 +35,22 @@ Qualified source: `8e611103b940d1690971292c8ecb516c56890bfd`.
 
 | Check | Result |
 | --- | --- |
-| Unit tests, lint, app and instrumentation APK build | Passed |
+| JVM unit tests | 227 passed |
+| Android lint | 0 errors, 98 warnings |
+| App and instrumentation APK build | Passed |
 | Android instrumentation, API 35 emulator | 90 passed (attempt 2) |
-| Independent FFmpeg export checks | Passed |
+| Independent FFmpeg export checks | 30 passed |
+| Retained certificate, APK signature, 16 KiB ZIP alignment | Passed |
+| Signed APK versus qualified candidate | Identical non-signature payloads |
+| Release manifest reconstructed through the publication restore script | Byte-for-byte identical signed APK |
 
 Attempt 1 of the GPU job failed one timing-based input test, `InstantFillTest.toolbarMarkerDragCreatesOnceAndCancelLeavesProjectUntouched`, which injects a real drag immediately after a window resize. It passed on the previous run with identical app code and on the single re-run. It is recorded here rather than treated as fixed.
 
 New `EffectsRenderTest` (JVM) covers effect persistence through render snapshots and save/load, and the caption-limit message. Existing `LivePreviewTest` and `BcCoreExportTest` render effects through the live preview and ICE Lite export, and now exercise the same path the app uses.
 
-Publication is gated (not yet run): the gate installs signed Preview 1.4.5 build 39, saves a fixture project with a saved effect, installs this APK with `adb install -r`, and verifies the project, original media bytes, trim, transforms, motion keys, shapes and the effect value survive and are re-saved as compact schema-11 JSON.
+Publication is gated: the gate installs signed Preview 1.4.5 build 39, saves a fixture project with a saved effect, installs this APK with `adb install -r`, and verifies the project, original media bytes, trim, transforms, motion keys, shapes and the effect value survive and are re-saved as compact schema-11 JSON.
+
+The upgrade harness uses the registered Ctrl+S shortcut in both versions because the live work clock can prevent the CLI UI inspector from reaching global idleness. It awaits the 1.4.5 schema-11 save, verifies its pretty-printed format, then awaits the 1.4.6 compact rewrite before comparing data. Schema 11 alone is not used as evidence of the second save. These are harness corrections; the qualified app and APK remain unchanged.
 
 ## Remaining limits
 
@@ -56,6 +63,8 @@ Publication is gated (not yet run): the gate installs signed Preview 1.4.5 build
 
 Certificate SHA-256: `3c578586198b9ebadd9496d38e25851ec0e90d918684dc4994e03d1d7f29a29d`.
 
-APK SHA-256: not yet available. The APK has not been signed. `SHA256SUMS.txt` and `release.json` will be produced by `.github/scripts/bc1-make-release-json.py` in the signing environment and committed only with the real signed APK's data.
+APK SHA-256: `b3413e7a4840fb14c45e1b2e3c6e3533bada85c5262149cc2e1276c32d98bf3f`.
+
+[SHA256SUMS.txt](SHA256SUMS.txt) and [release.json](release.json) were generated against the real retained-key signed APK.
 
 Only public ZIP/signature metadata is committed. The private signing key and credentials are never included in the repository or APK delivery.
