@@ -2,9 +2,20 @@
 
 Version **1.4.6**, build **40**, package **com.blackice.bc1.preview**. Android 8.0/API 26 or newer; ARM64 and x86-64 included.
 
-[Preview APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.6/Black-Ice-Editor-v1.4.6-Preview-build40.apk) · [SHA-256](SHA256SUMS.txt) · [Source PR #16](https://github.com/uran39281-bit/bc-1/pull/16) · [Changelog](../docs/CHANGELOG-v1.4.6.md)
+> **Status: qualified source only. The APK is not signed or published yet.** No `release.json` or `SHA256SUMS.txt` exists for 1.4.6, and there is nothing to download. The qualified CI APK must be signed with the retained Preview key in the owner's signing environment, then pass the 1.4.5 → 1.4.6 upgrade gate before publication. This record will be updated with the published APK and its checksum at that point.
 
-Install over **Black Ice Editor Preview** 1.4.5. The original Preview signing certificate is retained. No uninstall or data clearing is required. The Integration app remains separate.
+[Source PR #16](https://github.com/uran39281-bit/bc-1/pull/16) · [Changelog](../docs/CHANGELOG-v1.4.6.md) · After publication: `test-apk/preview/v1.4.6/Black-Ice-Editor-v1.4.6-Preview-build40.apk`
+
+## Exact build to sign
+
+| Item | Value |
+| --- | --- |
+| Qualified source commit | `8e611103b940d1690971292c8ecb516c56890bfd` |
+| CI run | [40817895753](https://github.com/uran39281-bit/bc-1/actions/runs/40817895753) (attempt 2 passed) |
+| CI APK artifact | `Black-Ice-Editor-v1.4.6-ci-candidate`, ID `12873755526` (`app-debug.apk`; expires 2026-11-28) |
+| QA reports artifact | `BC-1-GPU-test-reports`, ID `12874353788` (passing attempt; not `12873714011`) |
+
+Once published, install over **Black Ice Editor Preview** 1.4.5. The original Preview signing certificate is retained. No uninstall or data clearing is required. The Integration app remains separate.
 
 ## Implemented
 
@@ -32,7 +43,7 @@ Attempt 1 of the GPU job failed one timing-based input test, `InstantFillTest.to
 
 New `EffectsRenderTest` (JVM) covers effect persistence through render snapshots and save/load, and the caption-limit message. Existing `LivePreviewTest` and `BcCoreExportTest` render effects through the live preview and ICE Lite export, and now exercise the same path the app uses.
 
-The publication gate installs signed Preview 1.4.5 build 39, saves a fixture project with a saved effect, installs this APK with `adb install -r`, and verifies the project, original media bytes, trim, transforms, motion keys, shapes and the effect value survive and are re-saved as compact schema-11 JSON.
+Publication is gated (not yet run): the gate installs signed Preview 1.4.5 build 39, saves a fixture project with a saved effect, installs this APK with `adb install -r`, and verifies the project, original media bytes, trim, transforms, motion keys, shapes and the effect value survive and are re-saved as compact schema-11 JSON.
 
 ## Remaining limits
 
@@ -45,6 +56,6 @@ The publication gate installs signed Preview 1.4.5 build 39, saves a fixture pro
 
 Certificate SHA-256: `3c578586198b9ebadd9496d38e25851ec0e90d918684dc4994e03d1d7f29a29d`.
 
-APK SHA-256: see [SHA256SUMS.txt](SHA256SUMS.txt), produced with `release.json` by `.github/scripts/bc1-make-release-json.py` on the private signing machine.
+APK SHA-256: not yet available. The APK has not been signed. `SHA256SUMS.txt` and `release.json` will be produced by `.github/scripts/bc1-make-release-json.py` in the signing environment and committed only with the real signed APK's data.
 
 Only public ZIP/signature metadata is committed. The private signing key and credentials are never included in the repository or APK delivery.
