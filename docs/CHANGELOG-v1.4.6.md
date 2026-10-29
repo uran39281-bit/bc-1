@@ -18,6 +18,10 @@
 - `BC-1/.github/workflows/build-android.yml` is inert (GitHub only runs root workflows) and is left for the owner to delete.
 - No signed APK is published by this change; publication still goes through the retained-key publish workflow.
 
+## Published release
+
+Retained-key Preview 1.4.6 build 40 is published. [Download APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.6/Black-Ice-Editor-v1.4.6-Preview-build40.apk) · [QA and upgrade evidence](../v1.4.6/QA.md). The release uses the exact qualified CI payload and passed the 1.4.5 upgrade gate in [run 40824053276](https://github.com/uran39281-bit/bc-1/actions/runs/40824053276).
+
 ## Publishing 1.4.6
 `.github/workflows/bc1-v146-publish.yml` mirrors the 1.4.5 publication gate. It runs when `v1.4.6/release.json` lands on `main` (or on manual dispatch) and:
 1. requires the named `bc-1-android.yml` run to have passed on `source_commit`, with its `Black-Ice-Editor-v1.4.6-ci-candidate` and `BC-1-GPU-test-reports` artifacts still available;

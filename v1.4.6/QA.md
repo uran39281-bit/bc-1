@@ -2,11 +2,11 @@
 
 Version **1.4.6**, build **40**, package **com.blackice.bc1.preview**. Android 8.0/API 26 or newer; ARM64 and x86-64 included.
 
-> **Status: signed with the retained Preview key; upgrade verification and publication pending.** The signed payload is identical to the qualified CI candidate. Publication is blocked until the signed 1.4.5 → 1.4.6 upgrade gate passes.
+> **Status: signed, upgrade verified and published.** Preview 1.4.5 build 39 upgraded in place to 1.4.6 build 40, preserving the fixture project, saved effect, edits and original media. [Publication run 40824053276](https://github.com/uran39281-bit/bc-1/actions/runs/40824053276) passed.
 
-[Source PR #16](https://github.com/uran39281-bit/bc-1/pull/16) · [Changelog](../docs/CHANGELOG-v1.4.6.md) · After publication: `test-apk/preview/v1.4.6/Black-Ice-Editor-v1.4.6-Preview-build40.apk`
+[Source PR #16](https://github.com/uran39281-bit/bc-1/pull/16) · [Changelog](../docs/CHANGELOG-v1.4.6.md) · [Download APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.6/Black-Ice-Editor-v1.4.6-Preview-build40.apk)
 
-## Exact build to sign
+## Qualified build
 
 | Item | Value |
 | --- | --- |
@@ -15,7 +15,7 @@ Version **1.4.6**, build **40**, package **com.blackice.bc1.preview**. Android 8
 | CI APK artifact | `Black-Ice-Editor-v1.4.6-ci-candidate`, ID `12873755526` (`app-debug.apk`; expires 2026-11-28) |
 | QA reports artifact | `BC-1-GPU-test-reports`, ID `12874353788` (passing attempt; not `12873714011`) |
 
-Once published, install over **Black Ice Editor Preview** 1.4.5. The original Preview signing certificate is retained. No uninstall or data clearing is required. The Integration app remains separate.
+Install over **Black Ice Editor Preview** 1.4.5. The original Preview signing certificate is retained. No uninstall or data clearing is required. The Integration app remains separate.
 
 ## Implemented
 
@@ -48,9 +48,17 @@ Attempt 1 of the GPU job failed one timing-based input test, `InstantFillTest.to
 
 New `EffectsRenderTest` (JVM) covers effect persistence through render snapshots and save/load, and the caption-limit message. Existing `LivePreviewTest` and `BcCoreExportTest` render effects through the live preview and ICE Lite export, and now exercise the same path the app uses.
 
-Publication is gated: the gate installs signed Preview 1.4.5 build 39, saves a fixture project with a saved effect, installs this APK with `adb install -r`, and verifies the project, original media bytes, trim, transforms, motion keys, shapes and the effect value survive and are re-saved as compact schema-11 JSON.
+The publication gate passed: it installed signed Preview 1.4.5 build 39, saved a fixture project with a saved effect, installed this APK with `adb install -r`, and verified the project, original media bytes, trim, transforms, motion keys, shapes and the effect value survive and are re-saved as compact schema-11 JSON.
 
 The upgrade harness uses the registered Ctrl+S shortcut in both versions because the live work clock can prevent the CLI UI inspector from reaching global idleness. It awaits the 1.4.5 schema-11 save, verifies its pretty-printed format, then awaits the 1.4.6 compact rewrite before comparing data. Schema 11 alone is not used as evidence of the second save. These are harness corrections; the qualified app and APK remain unchanged.
+
+## Release evidence and screenshots
+
+[Upgrade verification](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.6/upgrade-verification.json) · [Post-upgrade screenshot](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.6/upgrade-after.png)
+
+[Landscape Effect Catalog](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.6/screenshots/v144-wide-effect-catalog.png) · [Portrait Effect Catalog](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.6/screenshots/v144-phone-effect-catalog.png)
+
+These are actual captures from the qualified 1.4.6 test run. The filenames and the fixture project name “1.4.4 · Workspace” are retained test identifiers, not the installed app version.
 
 ## Remaining limits
 
