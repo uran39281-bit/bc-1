@@ -17,3 +17,12 @@
 - `WorkbenchActivity` is kept: CI capture scripts and `WorkspaceTest` still launch it.
 - `BC-1/.github/workflows/build-android.yml` is inert (GitHub only runs root workflows) and is left for the owner to delete.
 - No signed APK is published by this change; publication still goes through the retained-key publish workflow.
+
+## Publishing 1.4.6
+`.github/workflows/bc1-v146-publish.yml` mirrors the 1.4.5 publication gate. It runs when `v1.4.6/release.json` lands on `main` (or on manual dispatch) and:
+1. requires the named `bc-1-android.yml` run to have passed on `source_commit`, with its `Black-Ice-Editor-v1.4.6-ci-candidate` and `BC-1-GPU-test-reports` artifacts still available;
+2. restores the offline-signed APK from the CI APK plus the public segments in `release.json` (no key in CI) and checks the retained certificate `3c578586…a29d` and 16 KB alignment;
+3. installs published Preview 1.4.5 build 39, saves a fixture project (with a saved effect), upgrades in place with `adb install -r` (`.github/scripts/bc1-v146-upgrade.py`) and verifies the project, media bytes and effect survive and are re-saved as compact schema-11 JSON;
+4. pushes the APK, QA and checksums to `test-apk/preview/v1.4.6`.
+
+The owner still provides, from the qualified run and the private key: `v1.4.6/release.json`, `v1.4.6/SHA256SUMS.txt` and `v1.4.6/QA.md`.
