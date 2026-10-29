@@ -1,0 +1,17 @@
+{
+  "result": "PASS",
+  "from_version": "1.4.5 (39)",
+  "to_version": "1.4.6 (40)",
+  "package": "com.blackice.bc1.preview",
+  "project_id": "v146-upgrade-fixture",
+  "source_sha256": "246c8cfa22a569e9750f7c1af62cdd61b5555607ac86507a89d4e712ad1976a4",
+  "verified": [
+    "Install -r accepted original Preview signing lineage",
+    "Project opens before and after upgrade; Ctrl+S persists schema 11",
+    "Source URI and original image bytes retained",
+    "Trim, opacity, rotation, scale, position and motion keyframes retained",
+    "Shape, timing, opacity and legacy linear gradient/color keys retained",
+    "Canvas and frame rate unchanged",
+    "Saved clip effect retained (now rendered) and project rewritten as compact JSON"
+  ]
+}
