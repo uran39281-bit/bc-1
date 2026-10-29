@@ -1,6 +1,8 @@
-# v1.4.6 (build 40) — effects enabled (source)
+# Published v1.4.6 (build 40) — effects enabled
 
-Effect bypass (`ActiveFeatures`) removed; Effect Catalog applies/removes effects and the Effects panel exposes strength. Unused MainActivity removed; compact project JSON; caption-limit message; export plan computed once. See CHANGELOG-v1.4.6.md. Not yet published as a signed APK; Android CI qualification required.
+Qualified source `8e611103b940d1690971292c8ecb516c56890bfd`, CI run 40817895753 (90 Android tests passed on attempt 2; one timing-based marker-drag test failed on attempt 1 and passed on re-run). Signed with the retained Preview key (certificate `3c578586…a29d`), APK SHA-256 `b3413e7a…bf3f`. Publication run 40824053276 passed the signed 1.4.5 build 39 → 1.4.6 build 40 in-place upgrade gate and published to `test-apk/preview/v1.4.6`. See v1.4.6/QA.md and CHANGELOG-v1.4.6.md.
+
+Effect bypass (`ActiveFeatures`) removed; the Effect Catalog applies/removes effects and the Effects panel exposes strength. Projects are written as compact JSON. One effect per clip; effect stacking, effects on text/shape/image layers and physical Samsung/DeX testing remain open. `BC-1/.github/workflows/build-android.yml` is inert and not removed. Signing stays in the owner's signing environment; never generate or publish signing material.
 
 # Published v1.4.1-dev — Media Settings and transforms
 
