@@ -2,9 +2,9 @@
 
 Version **1.4.7**, build **41**, package **com.blackice.bc1.preview**.
 
-> **Status: source qualified and retained-key signed. Publication and the upgrade gate are pending.** The retained-key upgrade gate must pass before delivery.
+> **Status: upgrade verified. The retained-key signed APK is published with this record.** Signed Preview 1.4.6 build 40 was upgraded in place to 1.4.7 build 41; the fixture, edits, saved effect, custom and legacy easing curves and original media were preserved.
 
-[Source PR #19](https://github.com/uran39281-bit/bc-1/pull/19) · [Changelog](../docs/CHANGELOG-v1.4.7.md)
+[Source PR #19](https://github.com/uran39281-bit/bc-1/pull/19) · [Changelog](../docs/CHANGELOG-v1.4.7.md) · [Download APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.7/Black-Ice-Editor-v1.4.7-Preview-build41.apk)
 
 ## Source and qualification
 
@@ -32,9 +32,9 @@ The new regression drives the Height diamond on static and animated legacy-scale
 
 ## Upgrade and integrity
 
-Once published, install over **Black Ice Editor Preview** 1.4.6 without uninstalling or clearing app data. The separate Integration app is not replaced.
+Install over **Black Ice Editor Preview** 1.4.6 without uninstalling or clearing app data. The separate Integration app is not replaced.
 
-The publication workflow installs signed Preview 1.4.6 build 40, saves a fixture, installs this APK with `adb install -r`, and verifies original media, transforms, trims, shapes, effect values, custom cubic handles, legacy easing and key IDs before publication. This is pending until recorded below.
+The publication workflow installs signed Preview 1.4.6 build 40, saves a fixture, installs this APK with `adb install -r`, and verifies original media, transforms, trims, shapes, effect values, custom cubic handles, legacy easing and key IDs before publication. [Publication run 41163504778](https://github.com/uran39281-bit/bc-1/actions/runs/41163504778) passed. [Upgrade evidence](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.7/upgrade-verification.json) confirms the fixture and original media survived.
 
 Expected retained Preview certificate SHA-256: `3c578586198b9ebadd9496d38e25851ec0e90d918684dc4994e03d1d7f29a29d`.
 
