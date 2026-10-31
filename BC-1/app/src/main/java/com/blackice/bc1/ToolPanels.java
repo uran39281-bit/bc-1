@@ -19,12 +19,13 @@ final class ToolPanels {
     private Panel current;
     private String owner="";
     private final List<Runnable> valueRefresh=new ArrayList<>();
-    private TextView previousOpacity,nextOpacity;
-    void refresh(){if(!showing())return;for(Runnable update:valueRefresh)update.run();if(previousOpacity!=null)EditorActivity.dim(previousOpacity,opacityNeighbor(false)>=0);if(nextOpacity!=null)EditorActivity.dim(nextOpacity,opacityNeighbor(true)>=0);}
+    void refresh(){if(!showing())return;for(Runnable update:valueRefresh)update.run();a.transformPanel.menus.refresh();}
     private static final class Panel{final String title;final Runnable build;Panel(String t,Runnable b){title=t;build=b;}}
     ToolPanels(EditorActivity activity){a=activity;}
 
     private String selectionKey(){return a.selected+":"+a.selectedOverlay+":"+a.tab;}
+    /** Move & Transform, Blending & Opacity and Effects draw their own Back and title row. */
+    static boolean drawsOwnHeader(String title){return "Move & Transform".equals(title)||"Blending & Opacity".equals(title)||"Effects".equals(title);}
     /** Opens a focused panel; the previous one is kept for Back. */
     void open(String title,Runnable build){if(current!=null)stack.push(current);current=new Panel(title,build);owner=selectionKey();a.renderInspector();}
     void back(){current=stack.isEmpty()?null:stack.pop();a.renderInspector();}
@@ -34,9 +35,9 @@ final class ToolPanels {
 
     /** Renders the open panel, or the contextual tool grid for the current selection. */
     void render(LinearLayout into) {
-        valueRefresh.clear();previousOpacity=null;nextOpacity=null;
+        valueRefresh.clear();
         if(current!=null&&!owner.equals(selectionKey()))reset();
-        if(current!=null){header(into,current.title);current.build.run();return;}
+        if(current!=null){if(!drawsOwnHeader(current.title))header(into,current.title);current.build.run();return;}
         if(a.tab==2){effectsHome();return;}
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
         if(a.multiCount()>1){multiTools();return;}
@@ -156,7 +157,7 @@ final class ToolPanels {
             case "Duplicate":a.duplicateSelected();return;
             case "Transform":category("Move & Transform");return;
             case "Effects":category("Effects");return;
-            case "Opacity":open("Opacity",()->opacityPanel());return;
+            case "Opacity":category("Blending & Opacity");return;
             case "Noise reduction":AudioToolsPanel.noise(a);return;
             case "Equalizer":AudioToolsPanel.eq(a);return;
             case "Loudness normalization":AudioToolsPanel.normalize(a);return;
@@ -182,8 +183,8 @@ final class ToolPanels {
             case "Move & Transform":open(name,()->a.transformPanel.build(a.inspector));return;
             case "Color & Fill":open(name,this::colorPanel);return;
             case "Border & Shadow":open(name,this::borderPanel);return;
-            case "Blending & Opacity":open(name,this::blendPanel);return;
-            case "Effects":open(name,this::effectsPanel);return;
+            case "Blending & Opacity":open(name,()->a.transformPanel.menus.mount(a.inspector,com.blackice.bc1.menu.MenuScreenFactory.Menu.BLENDING));return;
+            case "Effects":open(name,()->a.transformPanel.menus.mount(a.inspector,com.blackice.bc1.menu.MenuScreenFactory.Menu.EFFECTS));return;
             case "Presets":open(name,this::presetsPanel);return;
         }
     }
@@ -253,33 +254,6 @@ final class ToolPanels {
     }
 
     // ---- Panels ----------------------------------------------------------------------------------
-    private void opacityPanel(){
-        EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
-        if(c!=null)percent("Opacity",c.opacity,1,v->c.opacity=v,c.motion,Motion.OPACITY);else percent("Opacity",o.opacity,1,v->o.opacity=v,o.motion,Motion.OPACITY);
-        a.inspector.addView(a.note("0% is fully transparent. Lower layers show through transparent regions."));
-    }
-    private long opacityNeighbor(boolean next){
-        EditProject.Clip clip=a.clip();EditProject.Overlay overlay=a.overlay();Motion motion=clip!=null?clip.motion:overlay.motion;
-        long best=-1,now=a.project.playheadMs;
-        for(Motion.Key key:motion.curves.get(Motion.OPACITY)){
-            if(clip!=null&&(key.timeMs<clip.inMs||key.timeMs>clip.outMs)||overlay!=null&&(key.timeMs<0||key.timeMs>overlay.endMs-overlay.startMs))continue;
-            long time=clip!=null?a.project.placements().get(a.selected).startMs+Math.round((key.timeMs-clip.inMs)/(double)clip.speed):overlay.startMs+key.timeMs;
-            if(time<0||time>a.project.durationMs())continue;
-            if(next?time>now&&(best<0||time<best):time<now&&(best<0||time>best))best=time;
-        }return best;
-    }
-    private void blendPanel(){
-        LinearLayout navigation=a.row();
-        for(boolean next:new boolean[]{false,true}){
-            long target=opacityNeighbor(next);TextView button=a.button(next?"Next Key  ›":"‹  Previous Key",v->{long destination=opacityNeighbor(next);if(destination>=0){a.pausePlayback();a.seek(destination);a.easingControls.select(Motion.OPACITY,motionTime());a.renderInspector();}});
-            if(next)nextOpacity=button;else previousOpacity=button;EditorActivity.dim(button,target>=0);navigation.addView(button,new LinearLayout.LayoutParams(0,a.dp(48),1));
-        }
-        a.inspector.addView(navigation);a.easingControls.build(a.inspector,Motion.OPACITY);
-        opacityPanel();EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
-        if(c!=null){a.inspector.addView(a.note("ICE Lite blend modes • Normal / Darken / Lighten / Contrast"));
-            for(com.blackice.bc1.core.BlendMode mode:com.blackice.bc1.core.BlendMode.values()){a.gridAction((c.blend==mode.ordinal()?"● ":"")+mode.label,()->{if(a.layerEditable())a.edit("Blend mode updated",()->c.blend=mode.ordinal());});}a.flushGrid();
-        }else{for(int i=0;i<EditProject.BLENDS.length;i++){final int mode=i;a.gridAction((o.blend==i?"● ":"")+EditProject.BLENDS[i],()->{if(a.layerEditable())a.edit("Blend mode updated",()->o.blend=mode);});}a.flushGrid();}
-    }
     private void durationPanel(){
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
         long start=c!=null?a.project.placements().get(a.selected).startMs:o.startMs,end=c!=null?a.project.placements().get(a.selected).endMs:o.endMs;
@@ -371,14 +345,9 @@ final class ToolPanels {
         swatches("Border color",o.borderColor,PALETTE,value->o.borderColor=value);
         valueRow("Shadow",o.shadow,0,1,0,100,"%",v->o.shadow=v,null,0,1);
     }
-    private void effectsPanel(){
+    /** Styles keeps a shortcut to the catalog; applying and tuning an effect happen in the Effects menu. */
+    private void addEffectsButton(){
         TextView add=a.button("Add Effects",v->a.effectCatalog.open());add.setTextColor(BlackIceTheme.ICE);add.setContentDescription("Add Effects");a.inspector.addView(add,new LinearLayout.LayoutParams(-1,a.dp(48)));
-        // One effect per clip; preview and both export engines render it with the shared layer shader.
-        EditProject.Clip c=a.clip();if(c==null||c.effect==0||c.track>=EditProject.AUDIO_FIRST)return;
-        a.inspector.addView(a.note("Effect: "+com.blackice.bc1.core.EffectCatalog.name(c.effect)));
-        percent("Effect strength",c.intensity,.6f,v->c.intensity=v,c.motion,Motion.INTENSITY);
-        if(com.blackice.bc1.core.EffectCatalog.centered(c.effect))a.inspector.addView(a.note("50% leaves the picture unchanged; lower reduces, higher increases."));
-        a.inspector.addView(a.button("Remove effect",v->{if(a.layerEditable())a.edit("Effect removed",()->c.effect=0);}),new LinearLayout.LayoutParams(-1,a.dp(48)));
     }
 
     private void effectsHome(){
@@ -391,7 +360,7 @@ final class ToolPanels {
         if(a.overlay()!=null){a.inspector.addView(a.button("Color & Fill",v->category("Color & Fill")));a.inspector.addView(a.button("Border & Shadow",v->category("Border & Shadow")));}
         a.inspector.addView(a.button("Blending & Opacity",v->category("Blending & Opacity")));
         a.inspector.addView(a.button("Saved presets",v->category("Presets")));
-        effectsPanel();
+        addEffectsButton();
     }
     private void transitionsPanel(){
         EditProject.Clip c=a.clip();
