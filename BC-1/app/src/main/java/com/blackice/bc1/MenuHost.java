@@ -199,7 +199,9 @@ final class MenuHost implements MenuScreenFactory.Host {
 
     @Override public void toggleKey(Property p) {
         if (!present()) return;
-        final int track = track(p);
+        // Writes separate legacy uniform scale first: target the requested
+        // property, not the Width track that Height previously read through.
+        final int track = id(p);
         a.transformPanel.commit(title(p) + " keyframe", () -> {
             if (track == Motion.SCALE || track == Motion.HEIGHT) a.transformPanel.separate();
             Motion m = motion();

@@ -98,6 +98,57 @@ public class MenuUpdateTest {
         }finally{h.shell("wm size "+size);h.shell("wm density "+density);}
     }
 
+    @Test public void heightKeyOnLegacyScaleNeverEditsWidth()throws Exception{
+        new Workspace144Test().fixture();
+        try(ActivityScenario<EditorActivity> scene=ActivityScenario.launch(EditorActivity.class)){h.waitLoaded(scene);
+            scene.onActivity(a->{
+                for(boolean overlay:new boolean[]{false,true}){
+                    a.panels.reset();if(overlay)a.selectOverlay(0);else a.selectClip(0,false);
+                    a.edit("Legacy scale fixture",()->{
+                        if(overlay){a.overlay().scale=1;a.overlay().aspect=2;a.overlay().heightScale=-1;a.overlay().motion=new Motion();}
+                        else{a.clip().scale=1;a.clip().aspect=2;a.clip().heightScale=-1;a.clip().motion=new Motion();}
+                    });
+                    a.seek(0);a.transformPanel.tab=2;a.panels.category("Move & Transform");
+                    View height=heightKey(a.inspector);
+                    // Drive the same diamond control used by touch and keyboard.
+                    assertNotNull(height);assertTrue(height.isEnabled());height.performClick();
+                    Motion m=a.selectedMotion();
+                    assertTrue("Height must not create a Width key",m.curves.get(Motion.SCALE).isEmpty());
+                    assertEquals(1,m.curves.get(Motion.HEIGHT).size());
+                    assertEquals(2,m.curves.get(Motion.HEIGHT).get(0).value,0);
+                    a.undo(false);if(overlay)a.selectOverlay(0);else a.selectClip(0,false);
+                    assertEquals(-1,overlay?a.overlay().heightScale:a.clip().heightScale,0);
+                    assertFalse("Undo restores static legacy scale",a.selectedMotion().animated());
+                    a.edit("Animated legacy scale",()->{
+                        a.selectedMotion().put(Motion.SCALE,new Motion.Key(0,1));
+                        a.selectedMotion().put(Motion.SCALE,new Motion.Key(2000,2));
+                    });
+                    a.seek(0);a.transformPanel.tab=2;a.panels.category("Move & Transform");
+                    height=heightKey(a.inspector);
+                    assertNotNull(height);height.performClick();m=a.selectedMotion();
+                    assertEquals("Removing a Height key preserves both Width keys",2,m.curves.get(Motion.SCALE).size());
+                    assertEquals(1,m.curves.get(Motion.SCALE).get(0).value,0);
+                    assertEquals(1,m.curves.get(Motion.HEIGHT).size());
+                    assertEquals(2000,m.curves.get(Motion.HEIGHT).get(0).timeMs);
+                    assertEquals(4,m.curves.get(Motion.HEIGHT).get(0).value,0);
+                    a.undo(false);if(overlay)a.selectOverlay(0);else a.selectClip(0,false);
+                    assertEquals(-1,overlay?a.overlay().heightScale:a.clip().heightScale,0);
+                    assertTrue(a.selectedMotion().curves.get(Motion.HEIGHT).isEmpty());
+                    assertEquals(2,a.selectedMotion().curves.get(Motion.SCALE).size());
+                }
+            });
+        }
+    }
+
+    private static View heightKey(View v){
+        CharSequence description=v.getContentDescription();
+        if(description!=null&&description.toString().startsWith("Height keyframe:"))return v;
+        if(v instanceof ViewGroup)for(int i=0;i<((ViewGroup)v).getChildCount();i++){
+            View found=heightKey(((ViewGroup)v).getChildAt(i));if(found!=null)return found;
+        }
+        return null;
+    }
+
     private static View find(View v,Class<?> type){if(type.isInstance(v))return v;if(v instanceof ViewGroup)for(int i=0;i<((ViewGroup)v).getChildCount();i++){View found=find(((ViewGroup)v).getChildAt(i),type);if(found!=null)return found;}return null;}
     private static void send(View v,long down,long time,int action,float x,float y){MotionEvent e=MotionEvent.obtain(down,time,action,x,y,0);try{v.dispatchTouchEvent(e);}finally{e.recycle();}}
 }
