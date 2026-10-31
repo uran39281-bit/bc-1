@@ -36,7 +36,7 @@ jobs:
         run: gradle --no-daemon -Pbc1SideBySide testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
       - uses: actions/upload-artifact@v4
         with:
-          name: Black-Ice-Editor-v1.4.6-ci-candidate
+          name: Black-Ice-Editor-v1.4.7-ci-candidate
           path: BC-1/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
       - uses: actions/upload-artifact@v4

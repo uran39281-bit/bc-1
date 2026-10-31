@@ -1,3 +1,7 @@
+# v1.4.7 (build 41) — menu update and Easing Curve Editor (source, unsigned)
+
+Implements the Black Ice Menu Update kit. Reference components are in `com.blackice.bc1.menu`; `MenuHost` adapts them to the real model/undo/preview and `MenuPanels` mounts them (Position, Rotation, Scale via `TransformPanel.build`; Blending & Opacity and Effects via `ToolPanels.category`). Pure curve logic is `editor/CurveEdits` (JVM-tested). Legacy presets are never rewritten until the person edits that interval; custom edits write one key's x1..y2 with `easingToNext=-1`. Rulers now follow the finger. See CHANGELOG-v1.4.7.md and v1.4.7/QA.md for the exact build to sign. Not signed or published: do not add `v1.4.7/release.json` or checksums until a real retained-key signed APK exists, then the publish workflow runs the 1.4.6 → 1.4.7 upgrade gate. Signing stays in the owner's signing environment.
+
 # Published v1.4.6 (build 40) — effects enabled
 
 Qualified source `8e611103b940d1690971292c8ecb516c56890bfd`, CI run 40817895753 (90 Android tests passed on attempt 2; one timing-based marker-drag test failed on attempt 1 and passed on re-run). Signed with the retained Preview key (certificate `3c578586…a29d`), APK SHA-256 `b3413e7a…bf3f`. Publication run 40824053276 passed the signed 1.4.5 build 39 → 1.4.6 build 40 in-place upgrade gate and published to `test-apk/preview/v1.4.6`. See v1.4.6/QA.md and CHANGELOG-v1.4.6.md.
