@@ -410,8 +410,8 @@ final class MenuHost implements MenuScreenFactory.Host {
     // ---- Effects ---------------------------------------------------------------------------------
     @Override public boolean hasSelectedEffect() { return present() && visualClip() && clip().effect != 0; }
     @Override public String effectTitle() { return hasSelectedEffect() ? EffectCatalog.name(clip().effect) : ""; }
-    /** Stays available for any unlocked selection; the catalog itself explains when a layer cannot take effects. */
-    @Override public boolean canAddEffects() { return unlocked(); }
+    /** Opens the catalog, which itself explains when nothing selected can take effects, so only a busy or locked editor disables it. */
+    @Override public boolean canAddEffects() { return !a.loading && !a.importing && !a.captionApplying && !a.uiLocked; }
     @Override public void addEffects() { a.effectCatalog.open(); }
 
     /** Removes only the effect and its strength animation; one undo restores both exactly. */
