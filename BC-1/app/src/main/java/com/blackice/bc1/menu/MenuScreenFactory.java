@@ -66,6 +66,8 @@ public final class MenuScreenFactory {
  /** Graph selection survives inspector rebuilds that follow every committed edit. */
  /** Test and preview hook: lay the menus out as if the panel were this many dp wide. */
  public void overrideWidthDp(int dp){widthOverride=dp;}
+ /** Re-lays the current menu out when the panel width crossed the compact threshold; a no-op otherwise. */
+ public void relayoutIfNeeded(){if(body==null||editActive)return;int w=widthOverride>0?widthOverride:host.panelWidthDp();if((w<460)!=compact)show(current);}
  public int graphSelection(){return curveProperty.ordinal();}
  public void restoreGraphSelection(int ordinal){Property[] all=Property.values();if(ordinal>=0&&ordinal<all.length)curveProperty=all[ordinal];}
  public void show(Menu menu){if(body==null)throw new IllegalStateException("Call create before show");current=menu;host.menuChanged(menu);widthDp=widthOverride>0?widthOverride:host.panelWidthDp();compact=widthDp<460;readers.clear();body.removeAllViews();

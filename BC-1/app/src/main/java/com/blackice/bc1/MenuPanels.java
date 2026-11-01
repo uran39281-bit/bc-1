@@ -30,6 +30,9 @@ final class MenuPanels {
         if (body != null && body.isAttachedToWindow()) factory.refresh();
     }
 
+    /** The panel grew or shrank; re-lay the menu out in place if that crosses the compact threshold. */
+    void relayout() { if (body != null && body.isAttachedToWindow()) factory.relayoutIfNeeded(); }
+
     void showGraph(MenuScreenFactory.Property property) { factory.restoreGraphSelection(property.ordinal()); }
     int graphSelection() { return factory.graphSelection(); }
     void restoreGraphSelection(int ordinal) { factory.restoreGraphSelection(ordinal); }
