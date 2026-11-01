@@ -25,4 +25,4 @@ Follow-up to 1.4.7 after device testing on Samsung DeX showed the redesigned men
 ## Publishing 1.4.8
 `.github/workflows/bc1-v148-publish.yml` mirrors the 1.4.7 gate: it runs when `v1.4.8/release.json` lands on `main`, restores the retained-key signed APK from the qualified CI APK, installs published Preview 1.4.7 build 41, upgrades in place and verifies the project, media and every easing interval are unchanged (`.github/scripts/bc1-v148-upgrade.py`), then publishes to `test-apk/preview/v1.4.8`.
 
-The signed APK, `v1.4.8/release.json`, `v1.4.8/SHA256SUMS.txt` and `v1.4.8/QA.md` do not exist yet and are not committed as placeholders.
+Published from source `2cbf66a82d3535eaf9feabb454008fc0877711cb`, [CI run 41265528019](https://github.com/uran39281-bit/bc-1/actions/runs/41265528019): 253 unit tests, 95 Android tests and 30 export checks passed; lint 0 errors/107 warnings. [Publication run 41270861726](https://github.com/uran39281-bit/bc-1/actions/runs/41270861726) passed the retained-key 1.4.7 → 1.4.8 upgrade. See [QA and screenshots](../v1.4.8/QA.md).

@@ -2,7 +2,7 @@
 
 Version **1.4.8**, build **42**, package **com.blackice.bc1.preview**.
 
-> **Status: source qualified and retained-key signed; publication and the upgrade gate are pending.**
+> **Status: upgrade verified. The retained-key signed APK is published with this record.** Signed Preview 1.4.7 build 41 was upgraded in place to 1.4.8 build 42; the fixture, edits, saved effect, custom and legacy easing curves and original media were preserved.
 
 ## Qualified build
 
@@ -29,9 +29,9 @@ Menu styling preserves dark outlined cards and mint selected states. Compact key
 
 ## Installation and upgrade
 
-Once published, install over **Black Ice Editor Preview 1.4.7** without uninstalling or clearing data. The separate Integration app remains separate.
+Install over **Black Ice Editor Preview 1.4.7** without uninstalling or clearing data. The separate Integration app remains separate.
 
-The publication workflow must first install signed 1.4.7 build 41, save a fixture, install this APK with `adb install -r` and verify its original media, trims, transforms, saved effect, shapes, key IDs and custom/legacy easing survive. Until that gate passes the APK is not published.
+The publication workflow must first install signed 1.4.7 build 41, save a fixture, install this APK with `adb install -r` and verify its original media, trims, transforms, saved effect, shapes, key IDs and custom/legacy easing survive. [Publication run 41270861726](https://github.com/uran39281-bit/bc-1/actions/runs/41270861726) passed. [Upgrade evidence](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.8/upgrade-verification.json) records the preserved project and original media.
 
 ## Screenshots
 
@@ -45,10 +45,10 @@ Actual captures come from this qualified 1.4.8 run. `v147-` filenames and the �
 
 ## Limits and integrity
 
-Physical Samsung/DeX testing of this signed APK remains pending. Lint warnings remain. One effect per clip; no effect stacking. Cubic handles remain bounded to 0–1.
+The portrait capture still shows header/status-bar crowding. Physical Samsung/DeX testing of this signed APK remains pending. Lint warnings remain. One effect per clip; no effect stacking. Cubic handles remain bounded to 0–1.
 
 APK SHA-256: `e090cc77c79b28cf680048e54c8696facce67783187bbffae7256938ed4f9fb3`.
 
 Certificate SHA-256: `3c578586198b9ebadd9496d38e25851ec0e90d918684dc4994e03d1d7f29a29d`.
 
-[Changelog](../docs/CHANGELOG-v1.4.8.md) · [Checksums](SHA256SUMS.txt)
+[Download APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.4.8/Black-Ice-Editor-v1.4.8-Preview-build42.apk) · [Changelog](../docs/CHANGELOG-v1.4.8.md) · [Checksums](SHA256SUMS.txt)
