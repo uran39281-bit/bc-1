@@ -434,6 +434,17 @@ final class MenuHost implements MenuScreenFactory.Host {
     @Override public void export() { a.exportMenu(); }
     @Override public void reportInputError(String message) { a.tell(message); }
 
+    /** Rough width of the panel the menu lives in, so narrow inspectors (DeX, phones) get the compact layout. */
+    @Override public int panelWidthDp() {
+        android.content.res.Configuration c = a.getResources().getConfiguration();
+        int screen = c.screenWidthDp;
+        if (a.mobile != null) {
+            boolean landscape = screen > c.screenHeightDp;
+            return Math.max(240, (landscape ? Math.min(320, screen / 2) : screen) - 24);
+        }
+        return Math.max(240, Math.min(a.inspectorWidth, screen < 1100 ? 216 : 360) - 16);
+    }
+
     @Override public void menuChanged(MenuScreenFactory.Menu menu) {
         switch (menu) {
             case POSITION: a.transformPanel.tab = 0; break;

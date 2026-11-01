@@ -19,6 +19,12 @@ final class MenuPanels {
         into.addView(body, new LinearLayout.LayoutParams(-1, -2));
     }
 
+    /** Mounts the menu as if the panel were this wide; used to render every layout for review. */
+    void mountAt(LinearLayout into, MenuScreenFactory.Menu menu, int widthDp) {
+        factory.overrideWidthDp(widthDp);
+        try { mount(into, menu); } finally { factory.overrideWidthDp(0); }
+    }
+
     /** Called on playhead, selection and live-gesture changes; updates readouts without rebuilding views. */
     void refresh() {
         if (body != null && body.isAttachedToWindow()) factory.refresh();
