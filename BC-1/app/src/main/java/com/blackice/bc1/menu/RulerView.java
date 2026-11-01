@@ -15,7 +15,7 @@ public final class RulerView extends View {
  @Override protected void onMeasure(int w,int h){setMeasuredDimension(resolveSize(dp(320),w),resolveSize(dp(64),h));}
  @Override protected void onDraw(Canvas c){super.onDraw(c);double value=binding.value();if(!Double.isFinite(value))return;float spacing=dp(14),mid=getWidth()/2f,bottom=getHeight()-dp(3);long center=(long)Math.floor(value/step);int radius=(int)(getWidth()/spacing/2)+3;
   p.setTextSize(dp(10)*getResources().getConfiguration().fontScale);p.setTextAlign(Paint.Align.CENTER);p.setStyle(Paint.Style.FILL);p.setStrokeWidth(dp(1));
-  for(long index=center-radius;index<=center+radius;index++){double n=index*step;if(n<min-1e-8||n>max+1e-8)continue;float x=mid+(float)((n-value)/step)*spacing;boolean major=Math.floorMod(index,5)==0; p.setColor(MenuPalette.MUTED);c.drawLine(x,bottom-dp(major?24:13),x,bottom,p);if(major){String s=Math.abs(n-Math.rint(n))<1e-6?String.format(Locale.US,"%.0f",n):String.format(Locale.US,"%.1f",n);c.drawText(s,x,dp(13),p);}}
+  for(long index=center-radius;index<=center+radius;index++){double n=index*step;if(n<min-1e-8||n>max+1e-8)continue;float x=mid+(float)((n-value)/step)*spacing;boolean major=Math.floorMod(index,5)==0; p.setColor(MenuPalette.MUTED);c.drawLine(x,bottom-dp(major?24:13),x,bottom,p);if(major){String s=Math.abs(n-Math.rint(n))<1e-6?String.format(Locale.US,"%.0f",n):String.format(Locale.US,"%.1f",n);float half=p.measureText(s)/2;if(x-half>=dp(2)&&x+half<=getWidth()-dp(2))c.drawText(s,x,dp(13),p);}}
   p.setColor(MenuPalette.GREEN);p.setStrokeWidth(dp(3));c.drawLine(mid,bottom-dp(32),mid,bottom,p);c.drawCircle(mid,bottom-dp(32),dp(3),p);
  }
  private void value(double v){binding.preview(bounded(v));invalidate();}

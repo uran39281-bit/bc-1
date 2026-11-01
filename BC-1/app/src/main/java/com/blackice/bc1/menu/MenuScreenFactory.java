@@ -50,7 +50,9 @@ public final class MenuScreenFactory {
   /** Approximate width of the panel in dp, so narrow inspectors can use a compact layout. */
   default int panelWidthDp(){return 450;}
  }
- private final Context context;private final Host host;private int widthDp=450,widthOverride;private boolean compact;private final ArrayList<Runnable> readers=new ArrayList<>();
+ /** Panels narrower than this (phones, the DeX column) use smaller type and a two-row key navigation. */
+ public static final int COMPACT_BELOW_DP=420;
+ private final Context context;private final Host host;private int widthDp=450,widthOverride;private boolean compact;private float buttonSp=15;private final ArrayList<Runnable> readers=new ArrayList<>();
  private final ArrayList<Runnable> dialogReaders=new ArrayList<>();
  private LinearLayout body;private ScrollView scroll;private boolean includeChrome=true;private boolean editActive;private Menu current=Menu.POSITION;private Property curveProperty=Property.X;
  public MenuScreenFactory(Context context,Host host){this.context=context;this.host=host;}
@@ -67,10 +69,10 @@ public final class MenuScreenFactory {
  /** Test and preview hook: lay the menus out as if the panel were this many dp wide. */
  public void overrideWidthDp(int dp){widthOverride=dp;}
  /** Re-lays the current menu out when the panel width crossed the compact threshold; a no-op otherwise. */
- public void relayoutIfNeeded(){if(body==null||editActive)return;int w=widthOverride>0?widthOverride:host.panelWidthDp();if((w<460)!=compact)show(current);}
+ public void relayoutIfNeeded(){if(body==null||editActive)return;int w=widthOverride>0?widthOverride:host.panelWidthDp();if((w<COMPACT_BELOW_DP)!=compact)show(current);}
  public int graphSelection(){return curveProperty.ordinal();}
  public void restoreGraphSelection(int ordinal){Property[] all=Property.values();if(ordinal>=0&&ordinal<all.length)curveProperty=all[ordinal];}
- public void show(Menu menu){if(body==null)throw new IllegalStateException("Call create before show");current=menu;host.menuChanged(menu);widthDp=widthOverride>0?widthOverride:host.panelWidthDp();compact=widthDp<460;readers.clear();body.removeAllViews();
+ public void show(Menu menu){if(body==null)throw new IllegalStateException("Call create before show");current=menu;host.menuChanged(menu);widthDp=widthOverride>0?widthOverride:host.panelWidthDp();compact=widthDp<COMPACT_BELOW_DP;buttonSp=widthDp<480?13:15;readers.clear();body.removeAllViews();
   if(includeChrome){LinearLayout top=row();Button settings=button("Settings",false,host::settings),export=button("Export",false,host::export);export.setBackground(MenuPalette.export(context));export.setTextColor(MenuPalette.BACKGROUND);leftIcon(settings,MenuIconDrawable.Kind.SETTINGS,MenuPalette.TEXT);weighted(top,settings);weighted(top,export);add(body,top,0);}
   LinearLayout title=row();Button back=button("Back",false,host::back);leftIcon(back,MenuIconDrawable.Kind.BACK,MenuPalette.TEXT);title.addView(back,new LinearLayout.LayoutParams(dp(compact?84:90),dp(48)));TextView heading=text(menu==Menu.BLENDING?"Blending & Opacity":menu==Menu.EFFECTS?"Effects":"Move & Transform",compact?18:20,MenuPalette.GREEN,true);LinearLayout.LayoutParams hp=new LinearLayout.LayoutParams(0,-2,1);hp.leftMargin=dp(compact?8:12);title.addView(heading,hp);add(body,title,8);
   if(menu==Menu.POSITION||menu==Menu.ROTATION||menu==Menu.SCALE){LinearLayout tabs=row();for(Menu m:new Menu[]{Menu.POSITION,Menu.ROTATION,Menu.SCALE}){Button b=button(title(m),m==menu,()->{curveProperty=m==Menu.ROTATION?Property.ROTATION:m==Menu.SCALE?Property.WIDTH:Property.X;show(m);});LinearLayout column=column();column.addView(b,new LinearLayout.LayoutParams(-1,controlHeight()));View underline=new View(context);underline.setBackgroundColor(m==menu?MenuPalette.GREEN:0);column.addView(underline,new LinearLayout.LayoutParams(-1,dp(3)));LinearLayout.LayoutParams tab=new LinearLayout.LayoutParams(0,-2,1);if(tabs.getChildCount()>0)tab.leftMargin=dp(8);tabs.addView(column,tab);}add(body,tabs,8);}
@@ -87,7 +89,7 @@ public final class MenuScreenFactory {
  private LinearLayout column(){LinearLayout v=new LinearLayout(context);v.setOrientation(LinearLayout.VERTICAL);return v;}
  private LinearLayout row(){LinearLayout v=new LinearLayout(context);v.setOrientation(LinearLayout.HORIZONTAL);v.setGravity(Gravity.CENTER_VERTICAL);return v;}
  private TextView text(String label,int sp,int color,boolean bold){TextView t=new TextView(context);t.setText(label);t.setTextSize(sp);t.setTextColor(color);if(bold)t.setTypeface(Typeface.DEFAULT_BOLD);return t;}
- private Button button(String label,boolean selected,Runnable action){Button b=new Button(context);b.setAllCaps(false);b.setBackgroundTintList(null);b.setStateListAnimator(null);b.setElevation(0);b.setText(label);b.setTextSize(compact?13:15);b.setTypeface(Typeface.DEFAULT_BOLD);b.setTextColor(selected?MenuPalette.GREEN:MenuPalette.TEXT);b.setMinHeight(controlHeight());b.setMinimumHeight(controlHeight());b.setPadding(dp(compact?6:8),dp(5),dp(compact?6:8),dp(5));b.setBackground(MenuPalette.surface(context,selected));b.setContentDescription(label);b.setOnClickListener(v->action.run());return b;}
+ private Button button(String label,boolean selected,Runnable action){Button b=new Button(context);b.setAllCaps(false);b.setBackgroundTintList(null);b.setStateListAnimator(null);b.setElevation(0);b.setText(label);b.setTextSize(buttonSp);b.setTypeface(Typeface.DEFAULT_BOLD);b.setTextColor(selected?MenuPalette.GREEN:MenuPalette.TEXT);b.setMinHeight(controlHeight());b.setMinimumHeight(controlHeight());b.setPadding(dp(compact?6:8),dp(5),dp(compact?6:8),dp(5));b.setBackground(MenuPalette.surface(context,selected));b.setContentDescription(label);b.setOnClickListener(v->action.run());return b;}
  /** Protect owned live transactions against host validation/storage/model exceptions. */
  private void beginEditSafe(String label){if(editActive)finishEditSafe(false);editActive=true;try{host.beginEdit(label);}catch(RuntimeException ex){abortEdit("Edit could not be started.");}}
  private void beginCurveEditSafe(Property p,String label){if(editActive)finishEditSafe(false);editActive=true;try{host.beginCurveEdit(p,label);}catch(RuntimeException ex){abortEdit("Edit could not be started.");}}
