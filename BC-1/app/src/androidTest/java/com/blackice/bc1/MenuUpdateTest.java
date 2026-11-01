@@ -140,6 +140,43 @@ public class MenuUpdateTest {
         }
     }
 
+    /** Renders every menu at the panel widths real devices use, for side-by-side review against the references. */
+    @Test public void rendersEveryMenuAtEachPanelWidth()throws Exception{
+        new Workspace144Test().fixture();
+        try(ActivityScenario<EditorActivity> scene=ActivityScenario.launch(EditorActivity.class)){h.waitLoaded(scene);
+            scene.onActivity(a->{
+                a.selectClip(0,false);a.seek(1000);
+                a.edit("Review fixture",()->{EditProject.Clip c=a.clip();c.effect=2;c.intensity=.5f;
+                    int[] animated={Motion.X,Motion.Y,Motion.SCALE,Motion.HEIGHT,Motion.ROTATION,Motion.OPACITY,Motion.INTENSITY};
+                    for(int property:animated){boolean size=property==Motion.SCALE||property==Motion.HEIGHT;
+                        c.motion.put(property,new Motion.Key(0,size?1:property==Motion.OPACITY||property==Motion.INTENSITY?.2f:0));
+                        c.motion.put(property,new Motion.Key(2000,size?1.5f:property==Motion.ROTATION?90:property==Motion.OPACITY||property==Motion.INTENSITY?.8f:.4f));}
+                    com.blackice.bc1.editor.CurveEdits.write(c.motion.curves.get(Motion.X).get(0),new com.blackice.bc1.menu.CubicBezier(.25,.1,.75,.9));
+                    com.blackice.bc1.editor.CurveEdits.write(c.motion.curves.get(Motion.ROTATION).get(0),new com.blackice.bc1.menu.CubicBezier(.4,.0,.6,1));});
+                for(int property:new int[]{Motion.X,Motion.Y,Motion.SCALE,Motion.HEIGHT,Motion.ROTATION,Motion.OPACITY,Motion.INTENSITY})a.easingControls.select(property,0);
+                String[] names={"position","rotation","scale","blending","effects"};
+                com.blackice.bc1.menu.MenuScreenFactory.Menu[] menus=com.blackice.bc1.menu.MenuScreenFactory.Menu.values();
+                for(int width:new int[]{300,360,450})for(int i=0;i<menus.length;i++){
+                    LinearLayout box=new LinearLayout(a);box.setOrientation(LinearLayout.VERTICAL);
+                    a.transformPanel.menus.mountAt(box,menus[i],width);
+                    int px=com.blackice.bc1.menu.MenuPalette.dp(a,width);
+                    box.measure(View.MeasureSpec.makeMeasureSpec(px,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(0,View.MeasureSpec.UNSPECIFIED));
+                    box.layout(0,0,px,box.getMeasuredHeight());
+                    android.graphics.Bitmap bitmap=android.graphics.Bitmap.createBitmap(px,Math.max(1,box.getMeasuredHeight()),android.graphics.Bitmap.Config.ARGB_8888);
+                    android.graphics.Canvas canvas=new android.graphics.Canvas(bitmap);canvas.drawColor(com.blackice.bc1.menu.MenuPalette.BACKGROUND);box.draw(canvas);
+                    assertTrue(names[i]+" at "+width+"dp has content",box.getMeasuredHeight()>dpOf(a,200));
+                    try{java.io.File qa=new java.io.File(h.inst.getTargetContext().getFilesDir(),"qa");qa.mkdirs();
+                        try(java.io.OutputStream out=new java.io.FileOutputStream(new java.io.File(qa,"v147-panel-"+names[i]+"-"+width+".png"))){bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,out);}
+                    }catch(java.io.IOException e){throw new RuntimeException(e);}
+                    bitmap.recycle();
+                }
+                a.panels.reset();a.renderInspector();
+            });
+        }
+    }
+
+    private static int dpOf(EditorActivity a,int dp){return com.blackice.bc1.menu.MenuPalette.dp(a,dp);}
+
     private static View heightKey(View v){
         CharSequence description=v.getContentDescription();
         if(description!=null&&description.toString().startsWith("Height keyframe:"))return v;

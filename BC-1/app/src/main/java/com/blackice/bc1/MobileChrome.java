@@ -69,6 +69,8 @@ final class MobileChrome {
         boolean visible=!dismissed&&(a.tab!=1||a.clip()!=null||a.overlay()!=null||a.multiCount()>1);int h=stage.getHeight();if(h<=0)h=dp(a.getResources().getConfiguration().screenHeightDp-150);
         boolean landscape=stage.getWidth()>h;boolean footage=visible&&a.panels.footage();handle.setVisibility(footage?View.GONE:View.VISIBLE);
         int preview=Math.min(dp(a.workspaceFocus==2?320:a.workspaceFocus==1?130:250),Math.max(dp(100),(int)(h*(a.workspaceFocus==2?.50f:a.workspaceFocus==1?.23f:.40f))));int height=Math.min(Math.max(dp(210),(int)(h*sheetFraction)),Math.max(dp(160),h-dp(220)));
+        // The transform, blending and effects menus are tall (value cards plus a graph): give them more of the screen.
+        if(visible&&!landscape&&a.panels.showing()&&ToolPanels.drawsOwnHeader(a.panels.title()))height=Math.min(Math.max(height,(int)(h*.62f)),Math.max(dp(160),h-dp(220)));
         if(footage&&!landscape){
             if(a.workspaceFocus==2)height=Math.max(dp(160),(int)(h*.32f));
             height=Math.min(height,Math.max(dp(160),h-dp(338)));
