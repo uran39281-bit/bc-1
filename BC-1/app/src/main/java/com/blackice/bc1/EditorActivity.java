@@ -580,7 +580,7 @@ public final class EditorActivity extends Activity {
     void edit(String message,Runnable operation){
         if(!editable())return;pausePlayback();CrashLogs.operation(message);String before;try{before=ProjectStore.encode(project);}catch(Exception e){tell(e.getMessage());return;}
         int selection=selected;
-        try{operation.run();project.validate();if(!before.equals(ProjectStore.encode(project))){pushUndo(before);changed(message);}}
+        try{operation.run();ParentTransforms.releaseOrphans(project,before);project.validate();if(!before.equals(ProjectStore.encode(project))){pushUndo(before);changed(message);}}
         catch(Exception e){CrashLogs.record("Edit rejected",e);try{project=ProjectStore.decode(before);selected=selection;refreshProject();}catch(Exception impossible){throw new IllegalStateException(impossible);}tell(e.getMessage());}
     }
     void pushUndo(String snapshot){undo.addLast(snapshot);while(undo.size()>30)undo.removeFirst();redo.clear();}
@@ -1219,7 +1219,7 @@ public final class EditorActivity extends Activity {
             float xx=parseFloat(x),yy=parseFloat(y),ss=parseFloat(scale),aa=parseFloat(opacity);String title=text==null?o.text:text.getText().toString();
             if(s<0||e<=s||Math.abs(xx)>1||Math.abs(yy)>1||ss<.1f||ss>2||aa<0||aa>1||title.length()>200)throw new IllegalArgumentException("Check the time range and position / size limits.");
             remember();o.startMs=s;o.endMs=e;o.x=xx;o.y=yy;o.scale=ss;o.opacity=aa;o.text=title;if(existing==null)project.overlays.add(o);changed("Overlay saved");
-        },existing==null?null:()->{remember();project.overlays.remove(o);changed("Overlay removed");});
+        },existing==null?null:()->{remember();new ParentTransforms(project).detachChildrenOf(java.util.Collections.singleton(o.id),project.playheadMs);project.overlays.remove(o);changed("Overlay removed");});
     }
     void musicDialog() {
         EditProject.Music m=project.music;LinearLayout form=form();form.addView(note(m.name));

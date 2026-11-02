@@ -3,7 +3,7 @@ import android.view.*;
 import android.widget.*;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import com.blackice.bc1.editor.EditProject;
+import com.blackice.bc1.editor.*;
 import java.util.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -127,6 +127,53 @@ public class LayerToolsTest {
                 assertTrue("The asset stays while history can redo it",new java.io.File(android.net.Uri.parse(uri[1]).getPath()).isFile());
                 scene.onActivity(a->{a.undo(true);assertEquals("Redo restores it",3,a.project.overlays.size());assertEquals(uri[1],a.project.overlays.get(2).imageUri);});
                 h.capture("v150-screenshot-result");
+            }
+        }finally{h.shell("wm size "+size);h.shell("wm density "+density);}
+    }
+
+    @Test public void jointMovementKeepsPoseSurvivesDeleteUndoAndRejectsCycles()throws Exception{
+        String size=h.override(h.shell("wm size")),density=h.override(h.shell("wm density"));
+        try{new Workspace144Test().fixture();
+            h.shell("wm size 1920x900");h.shell("wm density 160");
+            try(ActivityScenario<EditorActivity> scene=ActivityScenario.launch(EditorActivity.class)){h.waitLoaded(scene);Thread.sleep(700);
+                final String[] ids=new String[2];final double[][] before=new double[1][];
+                scene.onActivity(a->{
+                    a.edit("Second shape",()->{EditProject.Overlay other=new EditProject.Overlay();other.endMs=5000;other.x=.4f;other.y=-.2f;other.rotation=30;other.scale=1.4f;other.text="Parent";other.shape=1;a.project.overlays.add(other);});
+                    a.seek(1000);ids[0]=a.project.overlays.get(0).id;ids[1]=a.project.overlays.get(1).id;
+                    a.selectOverlay(0);a.panels.reset();a.renderInspector();a.layerTools.open();a.layerTools.select(3);
+                    assertNotNull("Parent & Child",WorkspaceV2Test.text(a.inspector,"Parent & Child"));
+                    assertNotNull(WorkspaceV2Test.startsWith(a.inspector,"Current Parent: None"));
+                    before[0]=TransformMath.forward(new ParentTransforms(a.project).effective(a.project.overlays.get(0),1000),a.project.canvasAspect(),.1,.1);
+                });
+                final int[] undo=new int[1];
+                scene.onActivity(a->{undo[0]=a.undo.size();a.layerTools.pick(ids[1]);a.layerTools.applyParent(ids[0]);});
+                Thread.sleep(300);
+                scene.onActivity(a->{
+                    EditProject.Overlay child=a.project.overlays.get(0);assertEquals(ids[1],child.parentId);assertEquals("One undo step",undo[0]+1,a.undo.size());
+                    double[] after=TransformMath.forward(new ParentTransforms(a.project).effective(child,1000),a.project.canvasAspect(),.1,.1);
+                    assertEquals("Attaching does not move the child",before[0][0],after[0],1e-3);assertEquals(before[0][1],after[1],1e-3);
+                    assertNotNull(WorkspaceV2Test.startsWith(a.inspector,"Current Parent: Shape"));
+                    // A parent edit moves the child; the parent's own values are what changed.
+                    a.edit("Move parent",()->a.project.overlays.get(1).x+=.2f);
+                    double[] moved=TransformMath.forward(new ParentTransforms(a.project).effective(a.project.overlays.get(0),1000),a.project.canvasAspect(),.1,.1);
+                    assertNotEquals("The child follows",after[0],moved[0],1e-3);
+                    // A loop is refused before anything changes.
+                    int count=a.undo.size();a.selectOverlay(1);a.layerTools.pick(ids[0]);a.layerTools.applyParent(ids[1]);
+                    assertNull("Cycle rejected",a.project.overlays.get(1).parentId);assertEquals("No history entry for a refused change",count,a.undo.size());
+                });
+                scene.onActivity(a->{
+                    // Deleting the parent releases the child where it is, in the same undo step.
+                    EditProject project=a.project;double[] worldBefore=TransformMath.forward(new ParentTransforms(project).effective(project.overlays.get(0),1000),project.canvasAspect(),.1,.1);
+                    a.selectOverlay(1);int count=a.undo.size();a.deleteSelection();
+                    assertEquals(1,a.project.overlays.size());assertNull("No dangling parent",a.project.overlays.get(0).parentId);assertEquals(count+1,a.undo.size());
+                    double[] worldAfter=TransformMath.forward(new ParentTransforms(a.project).effective(a.project.overlays.get(0),1000),a.project.canvasAspect(),.1,.1);
+                    assertEquals("The child stays put",worldBefore[0],worldAfter[0],1e-3);assertEquals(worldBefore[1],worldAfter[1],1e-3);
+                    a.undo(false);assertEquals("Undo restores the parent and the link",2,a.project.overlays.size());assertEquals(ids[1],a.project.overlays.get(0).parentId);
+                    try{EditProject back=ProjectStore.decode(ProjectStore.encode(a.project));assertEquals("Survives save and reopen",ids[1],back.overlays.get(0).parentId);}catch(Exception e){throw new AssertionError(e);}
+                    a.selectOverlay(0);a.layerTools.removeParent(ids[0]);assertNull(a.project.overlays.get(0).parentId);
+                    assertNull("No render error with relationships",a.live.lastError());
+                });
+                h.capture("v150-joint-movement");
             }
         }finally{h.shell("wm size "+size);h.shell("wm density "+density);}
     }

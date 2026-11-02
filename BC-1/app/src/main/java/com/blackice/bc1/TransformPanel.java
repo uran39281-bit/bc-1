@@ -19,6 +19,19 @@ final class TransformPanel {
     /** The five menus (position, rotation, scale, blending and effects) mounted into the inspector. */
     final MenuPanels menus;
     TransformPanel(EditorActivity activity){a=activity;menus=new MenuPanels(activity);}
+    /** Joint Movement: the selected layer has a parent or a retained attachment offset. */
+    boolean hasJoint(){Object layer=jointLayer();return layer!=null&&ParentTransforms.linked(layer);}
+    private Object jointLayer(){EditProject.Clip c=a.clip();return c!=null?c:a.overlay();}
+    /** The pose that is drawn: current() composed with its parents. Handles and hit testing use this. */
+    TransformMath.Transform world(){
+        Object layer=jointLayer();if(layer==null||!ParentTransforms.linked(layer))return current();
+        return new ParentTransforms(a.project).effective(layer,a.project.playheadMs);
+    }
+    /** The authored transform that makes the layer appear at {@code wantedWorld}, given its parents right now. */
+    TransformMath.Transform toLocal(TransformMath.Transform wantedWorld){
+        Object layer=jointLayer();if(layer==null||!ParentTransforms.linked(layer))return wantedWorld;
+        return new ParentTransforms(a.project).toLocal(layer,wantedWorld,a.project.playheadMs);
+    }
     TransformMath.Transform current(){EditProject.Clip c=a.clip();return c!=null?TransformMath.of(c,a.panels.motionTime()):TransformMath.of(a.overlay(),a.panels.motionTime());}
     private Motion motion(){return a.selectedMotion();}
     void write(int property,float value){

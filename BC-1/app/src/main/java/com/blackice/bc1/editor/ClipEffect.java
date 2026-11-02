@@ -14,20 +14,24 @@ public final class ClipEffect implements GlEffect {
     private final EditProject.Placement placement;
     private final EditProject.Clip previous;
     private final boolean top,visible;
+    private ParentTransforms parents;
+    /** Joint Movement: set by the composition builder when the project has links, so this layer's pose includes its parents. */
+    public ClipEffect parents(ParentTransforms parents){this.parents=parents;return this;}
     public ClipEffect(EditProject.Placement placement,EditProject.Clip previous){this(placement,previous,placement.index%2==0);}
     public ClipEffect(EditProject.Placement placement,EditProject.Clip previous,boolean top){this(placement,previous,top,true);}
     /** Hidden layers keep their decoder slot and timing but contribute no pixels. */
     public ClipEffect(EditProject.Placement placement,EditProject.Clip previous,boolean top,boolean visible){this.placement=placement;this.previous=previous;this.top=top;this.visible=visible;}
     @Override public GlShaderProgram toGlShaderProgram(Context context,boolean useHdr) throws VideoFrameProcessingException {
-        return new Program(context,placement,previous,top,visible,useHdr);
+        return new Program(context,placement,previous,top,visible,useHdr,parents);
     }
     private static final class Program extends BaseGlShaderProgram {
         private final GlProgram program;
         private final EditProject.Placement p;
         private final EditProject.Clip previous;
         private final boolean top,visible;
-        Program(Context context,EditProject.Placement p,EditProject.Clip previous,boolean top,boolean visible,boolean hdr) throws VideoFrameProcessingException {
-            super(hdr,1); this.p=p; this.previous=previous;this.top=top;this.visible=visible;
+        private final ParentTransforms parents;
+        Program(Context context,EditProject.Placement p,EditProject.Clip previous,boolean top,boolean visible,boolean hdr,ParentTransforms parents) throws VideoFrameProcessingException {
+            super(hdr,1); this.parents=parents; this.p=p; this.previous=previous;this.top=top;this.visible=visible;
             try {
                 String vertex,fragment;
                 try(java.io.InputStream in=context.getAssets().open("shaders/video.vert")) { vertex=readShader(in); }
@@ -53,7 +57,7 @@ public final class ClipEffect implements GlEffect {
             try {
                 program.use(); program.setSamplerTexIdUniform("uInput",tex,0);
                 long sourceTime=Math.round(Math.max(0,timeMs-p.startMs)*c.speed)+c.inMs;
-                TransformMath.Transform t=TransformMath.of(c,sourceTime);
+                TransformMath.Transform t=parents!=null&&ParentTransforms.linked(c)?parents.effective(c,timeMs):TransformMath.of(c,sourceTime);
                 program.setFloatsUniform("uTransform",new float[]{t.x,t.y,t.scale,(float)Math.toRadians(t.rotation%360)});
                 program.setFloatsUniform("uShape",new float[]{t.flipH?-1:1,t.aspect*(t.flipV?-1:1),(float)Math.tan(Math.toRadians(t.skewX)),(float)Math.tan(Math.toRadians(t.skewY))});
                 program.setFloatsUniform("uAnchor",new float[]{t.anchorX,t.anchorY});

@@ -39,19 +39,19 @@ public final class LayerCapture {
         if ((long) spec.width * spec.height > MAX_PIXELS) throw new IllegalArgumentException("The canvas is too large to capture.");
         RenderPlan plan = new RenderPlan(project, true);
         long time = Math.max(0, Math.min(timeMs, Math.max(0, project.durationMs() - 1)));
-        for (EditProject.Overlay o : plan.overlaysAt(time)) if (o.id.equals(layerId)) return renderOverlay(context, spec, o, time);
+        for (EditProject.Overlay o : plan.overlaysAt(time)) if (o.id.equals(layerId)) return renderOverlay(context, spec, o, time, plan.overlayPose(o, time));
         for (RenderPlan.LayerDraw d : plan.layersAt(time)) if (d.clip.id.equals(layerId)) return renderClip(context, spec, d);
         throw new Unavailable("The selected layer is not visible at the playhead.");
     }
 
-    private static Bitmap renderOverlay(Context context, OutputSpec spec, EditProject.Overlay source, long time) throws Exception {
+    private static Bitmap renderOverlay(Context context, OutputSpec spec, EditProject.Overlay source, long time, com.blackice.bc1.editor.TransformMath.Transform world) throws Exception {
         EditProject.Overlay layer = source.copy();
         layer.blend = 0; // the blend belongs to compositing with other layers, not to this layer's own pixels
         OverlayPainter painter = new OverlayPainter(context);
         Bitmap bitmap = Bitmap.createBitmap(spec.width, spec.height, Bitmap.Config.ARGB_8888);
         try {
             bitmap.eraseColor(Color.TRANSPARENT);
-            painter.draw(new Canvas(bitmap), spec.width, spec.height, layer, Math.max(0, time - source.startMs));
+            painter.draw(new Canvas(bitmap), spec.width, spec.height, layer, Math.max(0, time - source.startMs), world);
             return bitmap;
         } catch (Exception | Error failure) {
             bitmap.recycle();

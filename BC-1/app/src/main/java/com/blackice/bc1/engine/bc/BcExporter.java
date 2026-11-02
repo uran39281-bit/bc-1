@@ -218,7 +218,7 @@ public final class BcExporter {
                 compositor.endLayers();
                 if (overlays != null) {
                     List<EditProject.Overlay> active = renderPlan.overlaysAt(timeMs);
-                    if (!active.isEmpty()) compositor.drawOverlay(overlays.texture(active, timeMs));
+                    if (!active.isEmpty()) compositor.drawOverlay(overlays.texture(active, timeMs, renderPlan));
                 }
                 egl.setPresentationTime(timeUs * 1000);
                 egl.swap();

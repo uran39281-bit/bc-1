@@ -39,7 +39,7 @@ final class PreviewEditor extends View {
             paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(a.dp(1));paint.setColor(0x6640BFFF);canvas.drawRect(surface().getLeft(),surface().getTop(),surface().getRight(),surface().getBottom(),paint);paint.setStyle(Paint.Style.FILL);}
         if(a.compareSnapshot!=null&&a.comparing){paint.setColor(0xCC08131F);canvas.drawRoundRect(a.dp(6),a.dp(6),a.dp(96),a.dp(34),a.dp(6),a.dp(6),paint);paint.setColor(EditorActivity.TEXT);paint.setTextSize(a.dp(12));canvas.drawText("Before",a.dp(14),a.dp(25),paint);}
         if(!available())return;
-        TransformMath.Transform t=gesture!=NONE&&live!=null?live:a.transformPanel.current();
+        TransformMath.Transform t=gesture!=NONE&&live!=null?live:a.transformPanel.world();
         if(gesture==NONE&&!Float.isNaN(a.previewMoveX)){t=t.copy();t.x=a.previewMoveX;t.y=a.previewMoveY;}
         drawMotionPath(canvas);
         float[] c=corners(t);paint.setColor(EditorActivity.CYAN);paint.setStrokeWidth(a.dp(1.5f));paint.setStyle(Paint.Style.STROKE);
@@ -76,7 +76,7 @@ final class PreviewEditor extends View {
             if(a.previewZoom!=1||a.previewPanX!=0||a.previewPanY!=0){if(downX>getWidth()-a.dp(90)&&downY<a.dp(40)){a.resetPreviewView();return true;}}
             getParent().requestDisallowInterceptTouchEvent(true);
             boolean editable=available()&&!a.uiLocked&&!a.loading&&!a.importing&&!a.exporting()&&!a.selectionLocked();
-            if(editable){a.pausePlayback();base=a.transformPanel.current();live=base.copy();gesture=hitHandle(e.getX(),e.getY());
+            if(editable){a.pausePlayback();base=a.transformPanel.world();live=base.copy();gesture=hitHandle(e.getX(),e.getY());
                 if(gesture==NONE&&TransformMath.contains(corners(base),e.getX(),e.getY()))gesture=MOVE;}
             if(gesture==NONE){navZoomStart=a.previewZoom;navPanX=a.previewPanX;navPanY=a.previewPanY;gesture=PAN;}
             if(gesture!=PAN&&gesture!=KEY){a.beginLiveAdjust();float[] anchor=anchorPoint(base);lastRotationPointer=(float)Math.toDegrees(Math.atan2(downY-anchor[1],downX-anchor[0]));}span=0;return true;
@@ -140,10 +140,22 @@ final class PreviewEditor extends View {
         invalidate();performClick();
     }
     private void applyLive(TransformMath.Transform result){
+        if(a.transformPanel.hasJoint()){applyLiveJoint(result);return;}
         if(result.x!=base.x)a.transformPanel.write(Motion.X,result.x);
         if(result.y!=base.y)a.transformPanel.write(Motion.Y,result.y);
         if(result.scale!=base.scale||result.aspect!=base.aspect)a.transformPanel.writeDimensions(result.scale,result.scale*result.aspect,a.transformPanel.linked);
         if(result.rotation!=base.rotation)a.transformPanel.write(Motion.ROTATION,result.rotation);
+    }
+    /** The gesture works on the drawn (world) pose; write back the authored values that produce it under the parent. */
+    private void applyLiveJoint(TransformMath.Transform result){
+        boolean moved=result.x!=base.x||result.y!=base.y,resized=result.scale!=base.scale||result.aspect!=base.aspect,turned=result.rotation!=base.rotation;
+        if(!moved&&!resized&&!turned)return;
+        TransformMath.Transform local=a.transformPanel.toLocal(result),own=a.transformPanel.current();
+        if(Math.abs(local.x-own.x)>1e-5f)a.transformPanel.write(Motion.X,local.x);
+        if(Math.abs(local.y-own.y)>1e-5f)a.transformPanel.write(Motion.Y,local.y);
+        if(Math.abs(local.scale-own.scale)>1e-5f||Math.abs(local.aspect-own.aspect)>1e-5f)a.transformPanel.writeDimensions(local.scale,local.scale*local.aspect,a.transformPanel.linked);
+        if(Math.abs(local.rotation-own.rotation)>1e-4f)a.transformPanel.write(Motion.ROTATION,local.rotation);
+        if(Math.abs(local.skewX-own.skewX)>1e-4f)a.transformPanel.write(Motion.SKEW_X,local.skewX);
     }
     private Motion.Key keyWithValue(Motion m,int property,long t,float value){Motion.Key existing=Keyframes.keyAt(m,property,t,0);Motion.Key k=existing!=null?existing.copy():new Motion.Key(t,value);k.value=value;return k;}
     private void moveGroupMembers(float dx,float dy){
@@ -154,11 +166,13 @@ final class PreviewEditor extends View {
     /** Visual layers active at the playhead whose transformed bounds contain the point, topmost first. */
     List<int[]> layersAt(float x,float y){
         List<int[]> hits=new ArrayList<>();long now=a.project.playheadMs;double A=sw()/(double)sh();
-        for(int i=a.project.overlays.size()-1;i>=0;i--){EditProject.Overlay o=a.project.overlays.get(i);if(o.hidden||now<o.startMs||now>=o.endMs)continue;if(contains(TransformMath.of(o,now-o.startMs),a.layerBounds(null,o),x,y))hits.add(new int[]{1,i});}
+        for(int i=a.project.overlays.size()-1;i>=0;i--){EditProject.Overlay o=a.project.overlays.get(i);if(o.hidden||now<o.startMs||now>=o.endMs)continue;if(contains(pose(o,TransformMath.of(o,now-o.startMs),now),a.layerBounds(null,o),x,y))hits.add(new int[]{1,i});}
         List<EditProject.Placement> ps=a.project.placements();
-        for(int track=EditProject.LAST_LAYER;track>=0;track--)for(EditProject.Placement p:ps)if(p.clip.track==track&&!a.project.tracks[track].hidden&&now>=p.startMs&&now<p.endMs){EditProject.Clip c=p.clip;long source=c.inMs+Math.round((now-p.startMs)*c.speed);if(contains(TransformMath.of(c,source),a.layerBounds(c,null),x,y))hits.add(new int[]{0,p.index});}
+        for(int track=EditProject.LAST_LAYER;track>=0;track--)for(EditProject.Placement p:ps)if(p.clip.track==track&&!a.project.tracks[track].hidden&&now>=p.startMs&&now<p.endMs){EditProject.Clip c=p.clip;long source=c.inMs+Math.round((now-p.startMs)*c.speed);if(contains(pose(c,TransformMath.of(c,source),now),a.layerBounds(c,null),x,y))hits.add(new int[]{0,p.index});}
         return hits;
     }
+    /** Hit testing sees the drawn pose, so a child under a transformed parent is picked where it appears. */
+    private TransformMath.Transform pose(Object layer,TransformMath.Transform own,long now){return ParentTransforms.linked(layer)?new ParentTransforms(a.project).effective(layer,now):own;}
     private boolean contains(TransformMath.Transform t,RectF bounds,float x,float y){float[] c=LayerGeometry.corners(t,a.previewAspect(),sw(),sh(),bounds);for(int i=0;i<4;i++){c[i*2]+=surface().getLeft();c[i*2+1]+=surface().getTop();}return TransformMath.contains(c,x,y);}
     /** Tap selects the topmost layer under the finger (the current one when it is still under it). */
     private void tapSelect(float x,float y){List<int[]> hits=layersAt(x,y);if(hits.isEmpty()){if(a.clip()!=null||a.overlay()!=null)a.deselect();return;}

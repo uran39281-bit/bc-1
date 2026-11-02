@@ -3,6 +3,7 @@ package com.blackice.bc1.core;
 import com.blackice.bc1.editor.EditProject;
 import com.blackice.bc1.editor.LayerOps;
 import com.blackice.bc1.editor.Motion;
+import com.blackice.bc1.editor.ParentTransforms;
 import com.blackice.bc1.editor.TransformMath;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,11 +32,11 @@ public final class RenderPlan {
         /** {@link BlendMode} id over the layers below. */
         public final int blend;
 
-        LayerDraw(EditProject.Placement p, long sourceTimeMs, Transition t, boolean top) {
+        LayerDraw(EditProject.Placement p, long sourceTimeMs, Transition t, boolean top, TransformMath.Transform world) {
             EditProject.Clip c = p.clip;
             clip = c; placementIndex = p.index; track = c.track; startMs = p.startMs; endMs = p.endMs;
             this.sourceTimeMs = sourceTimeMs; this.top = top;
-            transform = TransformMath.of(c, sourceTimeMs);
+            transform = world != null ? world : TransformMath.of(c, sourceTimeMs);
             effect = c.effect;
             intensity = c.motion.value(Motion.INTENSITY, sourceTimeMs, c.intensity);
             opacity = c.motion.value(Motion.OPACITY, sourceTimeMs, c.opacity);
@@ -58,6 +59,8 @@ public final class RenderPlan {
     private final List<EditProject.Placement> placements;
     /** Placement index → previous main-lane clip (null when none or not on the main lane). */
     private final EditProject.Clip[] previous;
+    /** Joint Movement resolver; null when no layer has a parent or attachment offset, so unlinked projects render exactly as before. */
+    private final ParentTransforms parents;
     /** Placement index → main-lane ordinal (0 for layer clips). */
     private final int[] ordinal;
     /** Visual placements in drawing order, bottom first. */
@@ -67,6 +70,7 @@ public final class RenderPlan {
         project.validate();
         this.project = project; this.preview = preview;
         placements = project.placements();
+        parents = anyLinks(project) ? new ParentTransforms(project) : null;
         previous = new EditProject.Clip[placements.size()];
         ordinal = new int[placements.size()];
         EditProject.Clip last = null; int count = 0;
@@ -85,6 +89,20 @@ public final class RenderPlan {
     }
 
     public EditProject project() { return project; }
+
+    /** The Joint Movement resolver, or null when the project has no links. */
+    public ParentTransforms parents() { return parents; }
+
+    /** The pose an overlay is drawn at, or null to use its own transform. */
+    public TransformMath.Transform overlayPose(EditProject.Overlay o, long timeMs) {
+        return parents != null && ParentTransforms.linked(o) ? parents.effective(o, timeMs) : null;
+    }
+
+    private static boolean anyLinks(EditProject project) {
+        for (EditProject.Clip c : project.clips) if (ParentTransforms.linked(c)) return true;
+        for (EditProject.Overlay o : project.overlays) if (ParentTransforms.linked(o)) return true;
+        return false;
+    }
     public List<EditProject.Placement> placements() { return placements; }
 
     /** Stacking group of a clip: groups draw in ascending order. */
@@ -105,7 +123,8 @@ public final class RenderPlan {
             boolean top = p.clip.track != 0 || ordinal[p.index] % 2 == 0;
             int group = groupOf(p.clip.track, top);
             if (group < fromGroup || group >= toGroup) continue;
-            result.add(new LayerDraw(p, sourceTime(p, timeMs), transition(p, previous[p.index], timeMs), top));
+            result.add(new LayerDraw(p, sourceTime(p, timeMs), transition(p, previous[p.index], timeMs), top,
+                    parents != null && ParentTransforms.linked(p.clip) ? parents.effective(p.clip, timeMs) : null));
         }
         return result;
     }

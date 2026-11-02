@@ -4,6 +4,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.*;
 import com.blackice.bc1.editor.*;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -154,17 +155,108 @@ final class LayerToolsPanel {
 
     // ---- Joint Movement ---------------------------------------------------------------------------------
 
+    /** The parent the person has picked in the list but not applied yet (stable layer id, never an index). */
+    private String chosenParent;
+    private String chosenFor;
+
+    private String describe(Object layer, Object... all) {
+        EditProject.Clip c = layer instanceof EditProject.Clip ? (EditProject.Clip) layer : null;
+        EditProject.Overlay o = c == null ? (EditProject.Overlay) layer : null;
+        String name = c != null ? c.name : o.label();
+        String kind = ToolPanels.kind(c, o);
+        // Duplicate names stay distinguishable: add the layer's time range and, if still ambiguous, its position.
+        long start = c != null ? startOf(c) : o.startMs;
+        return kind + " • " + name + " • " + EditorActivity.clockShort(start);
+    }
+
+    private long startOf(EditProject.Clip c) {
+        for (EditProject.Placement p : a.project.placements()) if (p.clip == c) return p.startMs;
+        return c.startMs;
+    }
+
     private void jointMovement(LinearLayout into) {
         into.addView(heading("Joint Movement"));
         into.addView(a.label("Parent & Child", 12, EditorActivity.MUTED, false));
-        String name = selectedName();
-        if (name == null) { unavailable(into, "Select a layer."); return; }
-        into.addView(a.label("Child: " + name, 14, EditorActivity.TEXT, false));
-        into.addView(a.label("Parent: None", 14, EditorActivity.TEXT, false));
-        TextView set = a.button("Set Parent", v -> { });
-        EditorActivity.dim(set, false);
-        into.addView(set, new LinearLayout.LayoutParams(-1, a.dp(44)));
-        unavailable(into, "Parenting needs a composed parent transform in preview, selection and both export engines, which this build does not have yet, so the action stays disabled.");
+        EditProject.Clip c = a.clip();
+        EditProject.Overlay o = a.overlay();
+        Object child = c != null ? c : o;
+        if (child == null) { unavailable(into, "Select a layer."); return; }
+        if (c != null && c.track >= EditProject.AUDIO_FIRST || o != null && o.visualizerClipId != null) { unavailable(into, "Joint Movement applies to visual layers only."); return; }
+        String childId = ParentTransforms.idOf(child);
+        if (!childId.equals(chosenFor)) { chosenFor = childId; chosenParent = null; }
+        ParentTransforms links = new ParentTransforms(a.project);
+        Object parent = links.find(ParentTransforms.parentOf(child));
+        into.addView(a.label("Child: " + (c != null ? c.name : o.label()), 14, EditorActivity.TEXT, false));
+        into.addView(a.label("Current Parent: " + (parent == null ? "None" : describe(parent)), 14, EditorActivity.TEXT, false));
+        Object picked = links.find(chosenParent);
+        List<Object> candidates = links.parentCandidates(childId);
+        TextView choose = a.button(picked == null ? "Choose parent layer" : describe(picked), v -> chooseParent(candidates));
+        choose.setContentDescription("Parent layer: " + (picked == null ? "none chosen" : describe(picked)));
+        EditorActivity.dim(choose, !candidates.isEmpty() && !a.selectionLocked() && !a.uiLocked);
+        into.addView(choose, new LinearLayout.LayoutParams(-1, a.dp(44)));
+        LinearLayout actions = a.row();
+        TextView set = a.button("Set Parent", v -> applyParent(childId));
+        TextView remove = a.button("Remove Parent", v -> removeParent(childId));
+        boolean editable = !a.selectionLocked() && !a.uiLocked;
+        EditorActivity.dim(set, editable && picked != null && !ParentTransforms.idOf(picked).equals(ParentTransforms.parentOf(child)));
+        EditorActivity.dim(remove, editable && parent != null);
+        LinearLayout.LayoutParams half = new LinearLayout.LayoutParams(0, a.dp(44), 1);
+        half.rightMargin = a.dp(8);
+        actions.addView(set, half);
+        actions.addView(remove, new LinearLayout.LayoutParams(0, a.dp(44), 1));
+        into.addView(actions);
+        into.addView(a.note("The child follows its parent's position, rotation and scale while staying independently editable. Opacity, effects, speed, duration and visibility are not inherited. Attaching or removing keeps the child exactly where it is now."));
+        if (candidates.isEmpty()) unavailable(into, "There is no other visual layer to use as a parent.");
+    }
+
+    /** Picks the parent in the list (what tapping a list row does). */
+    void pick(String parentId) { chosenParent = parentId; a.renderInspector(); }
+
+    private void chooseParent(List<Object> candidates) {
+        if (candidates.isEmpty()) return;
+        String[] names = new String[candidates.size()];
+        for (int i = 0; i < names.length; i++) names[i] = describe(candidates.get(i)) + (isDuplicateLabel(candidates, i) ? "  (#" + (i + 1) + ")" : "");
+        new android.app.AlertDialog.Builder(a).setTitle("Parent layer").setItems(names, (d, which) -> {
+            chosenParent = ParentTransforms.idOf(candidates.get(which));
+            a.renderInspector();
+        }).setNegativeButton("Cancel", null).show();
+    }
+
+    private boolean isDuplicateLabel(List<Object> all, int index) {
+        String label = describe(all.get(index));
+        for (int i = 0; i < all.size(); i++) if (i != index && describe(all.get(i)).equals(label)) return true;
+        return false;
+    }
+
+    /** Re-checks identity, lock state and validity at the moment of the click; the whole change is one undo step. */
+    void applyParent(String childId) {
+        String parentId = chosenParent;
+        if (parentId == null || !a.layerEditable()) return;
+        a.edit("Parent set", () -> {
+            ParentTransforms links = new ParentTransforms(a.project);
+            Object child = links.find(childId);
+            if (child == null || !childId.equals(selectedId())) throw new IllegalArgumentException("The selected layer changed.");
+            links.attach(child, parentId, a.project.playheadMs);
+        });
+        chosenParent = null;
+        a.renderInspector();
+    }
+
+    void removeParent(String childId) {
+        if (!a.layerEditable()) return;
+        a.edit("Parent removed", () -> {
+            ParentTransforms links = new ParentTransforms(a.project);
+            Object child = links.find(childId);
+            if (child == null || !childId.equals(selectedId())) throw new IllegalArgumentException("The selected layer changed.");
+            links.detach(child, a.project.playheadMs);
+        });
+        a.renderInspector();
+    }
+
+    private String selectedId() {
+        EditProject.Clip c = a.clip();
+        EditProject.Overlay o = a.overlay();
+        return c != null ? c.id : o != null ? o.id : null;
     }
 
     // ---- Copy All ---------------------------------------------------------------------------------------
