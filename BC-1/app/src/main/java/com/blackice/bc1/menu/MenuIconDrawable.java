@@ -4,7 +4,7 @@ import android.graphics.*;
 import android.graphics.drawable.Drawable;
 /** Small scalable path icons. Replace with equivalent existing V1Icon assets on integration. */
 public final class MenuIconDrawable extends Drawable {
- public enum Kind {BACK,NEXT,SETTINGS,ADD,DIAMOND,LINK,EXPAND,RESET,TRASH,CURVE,SPARKLE,DOUBLE_BACK,DOUBLE_NEXT,INFO}
+ public enum Kind {BACK,NEXT,SETTINGS,ADD,DIAMOND,LINK,EXPAND,RESET,TRASH,CURVE,SPARKLE,DOUBLE_BACK,DOUBLE_NEXT,INFO,TOGGLE}
  private final Kind kind;private final Paint paint=new Paint(3);private final int size;private int color,alpha=255;private boolean filled,dot;
  public MenuIconDrawable(Context c,Kind kind,int color){this.kind=kind;this.color=color;size=MenuPalette.dp(c,24);}
  public void mark(int color,boolean filled,boolean dot){this.color=color;this.filled=filled;this.dot=dot;invalidateSelf();}
@@ -24,6 +24,7 @@ public final class MenuIconDrawable extends Drawable {
    case DOUBLE_BACK:p.moveTo(11,5);p.lineTo(4,12);p.lineTo(11,19);p.moveTo(20,5);p.lineTo(13,12);p.lineTo(20,19);c.drawPath(p,paint);break;
    case DOUBLE_NEXT:p.moveTo(4,5);p.lineTo(11,12);p.lineTo(4,19);p.moveTo(13,5);p.lineTo(20,12);p.lineTo(13,19);c.drawPath(p,paint);break;
    case INFO:c.drawCircle(12,12,9,paint);c.drawLine(12,11,12,17,paint);paint.setStyle(Paint.Style.FILL);c.drawCircle(12,7.6f,1.2f,paint);break;
+   case TOGGLE:c.drawRoundRect(new RectF(1,6,23,18),6,6,paint);paint.setStyle(Paint.Style.FILL);c.drawCircle(16.5f,12,3.4f,paint);break;
    case CURVE:p.moveTo(3,20);p.cubicTo(13,20,9,4,21,4);c.drawPath(p,paint);paint.setStyle(Paint.Style.FILL);c.drawCircle(3,20,2,paint);c.drawCircle(21,4,2,paint);break;
   }c.restoreToCount(save);
  }

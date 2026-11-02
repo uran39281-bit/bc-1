@@ -116,8 +116,6 @@ public final class EditorActivity extends Activity {
     static final int AUDIO_LAYER=110,BACKUP=111,RESTORE=112;
     final java.util.Map<String,float[]> waveforms=new java.util.HashMap<>();
     int inspectorWidth=300;
-    /** Wide layout: the two side panels and their resting widths, so the one being worked in can grow into the preview's black bars. */
-    ScrollView toolsPane,libraryPane;int toolsBasePx,libraryBasePx;TextView compareButton,viewOptionsButton;
     TextView markerCount;
     TextView status,time,play,projectLabel,exportButton,emptyPreview,monitorInfo;
     MobileChrome mobile;
@@ -361,7 +359,7 @@ public final class EditorActivity extends Activity {
         int layerScroll=timelineScroll!=null&&timelineScroll.getParent() instanceof ScrollView?((ScrollView)timelineScroll.getParent()).getScrollY():0;
         Configuration c=getResources().getConfiguration();android.view.Display display=getWindowManager().getDefaultDisplay();
         boolean wide=LayoutPolicy.resolve(mode,c.screenWidthDp,c.screenHeightDp,c.smallestScreenWidthDp,display!=null&&display.getDisplayId()!=0)==LayoutPolicy.Workspace.WIDE;
-        toolsPane=null;libraryPane=null;mobile=null;phonePreview=null;phoneTransport=null;phoneTimelineTools=null;phoneTimelineArea=null;phoneDrawer=null;navTabs.clear();mediaFilterButtons.clear();mediaBrowser=null;mediaGrid=null;mediaCount=null;previewScrubber=null;scrubbing=false;LinearLayout root=column();root.setBackground(BlackIceTheme.backdrop());
+        mobile=null;phonePreview=null;phoneTransport=null;phoneTimelineTools=null;phoneTimelineArea=null;phoneDrawer=null;navTabs.clear();mediaFilterButtons.clear();mediaBrowser=null;mediaGrid=null;mediaCount=null;previewScrubber=null;scrubbing=false;LinearLayout root=column();root.setBackground(BlackIceTheme.backdrop());
         wideLayout=wide;reducedMotion=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("reduced-motion",false);favoriteMedia.clear();favoriteMedia.addAll(getSharedPreferences(PREFS,MODE_PRIVATE).getStringSet("favorite-media",java.util.Collections.emptySet()));header=row();header.setPadding(dp(10),0,dp(8),0);header.setGravity(Gravity.CENTER_VERTICAL);header.setBackground(BlackIceTheme.backdrop());headerKey="";
         root.addView(header,new LinearLayout.LayoutParams(-1,dp(wide?56:Math.max(64,Math.min(88,64*c.fontScale)))));renderHeader();
         if(fullscreenPreview){root.addView(buildMonitor(),new LinearLayout.LayoutParams(-1,0,1));root.addView(transport(true));root.addView(button("Exit fullscreen",v->{fullscreenPreview=false;buildWorkspace();}));inspector=column();}
@@ -372,13 +370,13 @@ public final class EditorActivity extends Activity {
                 String[] names=NAV;
                 for(int i=0;i<names.length;i++){final int index=i;TextView b=iconButton(names[i],v->{tab=index;renderInspector();});navTabs.add(b);rail.addView(b,new LinearLayout.LayoutParams(-1,dp(c.screenHeightDp<550?52:64)));}
                 ScrollView railScroll=new ScrollView(this);railScroll.setFillViewport(false);railScroll.addView(rail);body.addView(railScroll,new LinearLayout.LayoutParams(dp(56),-1));}
-            {int width=Math.min(300,Math.max(196,Math.round(c.screenWidthDp*.20f)));mediaGridColumns=width>=240?2:1;mediaColumns=mediaList?1:mediaGridColumns;ScrollView library=new ScrollView(this);mediaBrowser=column();mediaBrowser.setPadding(dp(8),dp(6),dp(8),dp(6));library.addView(mediaBrowser);library.setBackground(panelBackground());LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(width),-1);lp.setMargins(0,0,dp(3),0);libraryPane=library;libraryBasePx=lp.width;body.addView(library,lp);renderMediaBrowser();}
+            {int width=Math.min(300,Math.max(196,Math.round(c.screenWidthDp*.20f)));mediaGridColumns=width>=240?2:1;mediaColumns=mediaList?1:mediaGridColumns;ScrollView library=new ScrollView(this);mediaBrowser=column();mediaBrowser.setPadding(dp(8),dp(6),dp(8),dp(6));library.addView(mediaBrowser);library.setBackground(panelBackground());LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(width),-1);lp.setMargins(0,0,dp(3),0);body.addView(library,lp);renderMediaBrowser();}
             LinearLayout center=column();center.setPadding(0,0,0,0);body.addView(center,new LinearLayout.LayoutParams(0,-1,1));
             center.addView(buildMonitor(),new LinearLayout.LayoutParams(-1,0,1));center.addView(transport(c.screenHeightDp<550));
             ScrollView tools=new ScrollView(this);tools.setFillViewport(false);inspector=column();inspector.setPadding(dp(10),dp(10),dp(10),dp(12));tools.addView(inspector);tools.setBackground(panelBackground());
             View divider=new View(this);divider.setBackground(splitter(true));divider.setContentDescription("Drag to resize tool panel");body.addView(divider,new LinearLayout.LayoutParams(dp(8),-1));
-            LinearLayout.LayoutParams toolsLp=new LinearLayout.LayoutParams(dp(Math.min(inspectorWidth,c.screenWidthDp<1100?216:360)),-1);toolsLp.setMargins(0,0,0,0);toolsPane=tools;toolsBasePx=toolsLp.width;body.addView(tools,toolsLp);
-            divider.setOnTouchListener(new View.OnTouchListener(){float down;int initial;public boolean onTouch(View v,MotionEvent e){if(uiLocked)return true;if(e.getAction()==MotionEvent.ACTION_DOWN){down=e.getRawX();initial=tools.getWidth();return true;}if(e.getAction()==MotionEvent.ACTION_MOVE){int width=Math.max(dp(180),Math.min(body.getWidth()/2,initial+(int)((getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("panel-left",false)?-1:1)*(down-e.getRawX()))));tools.getLayoutParams().width=width;toolsBasePx=width;tools.requestLayout();inspectorWidth=Math.round(width/getResources().getDisplayMetrics().density);return true;}if(e.getAction()==MotionEvent.ACTION_UP)getSharedPreferences(PREFS,MODE_PRIVATE).edit().putInt("panel-width",inspectorWidth).apply();return true;}});
+            LinearLayout.LayoutParams toolsLp=new LinearLayout.LayoutParams(dp(Math.min(inspectorWidth,c.screenWidthDp<1100?216:360)),-1);toolsLp.setMargins(0,0,0,0);body.addView(tools,toolsLp);
+            divider.setOnTouchListener(new View.OnTouchListener(){float down;int initial;public boolean onTouch(View v,MotionEvent e){if(uiLocked)return true;if(e.getAction()==MotionEvent.ACTION_DOWN){down=e.getRawX();initial=tools.getWidth();return true;}if(e.getAction()==MotionEvent.ACTION_MOVE){int width=Math.max(dp(180),Math.min(body.getWidth()/2,initial+(int)((getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("panel-left",false)?-1:1)*(down-e.getRawX()))));tools.getLayoutParams().width=width;tools.requestLayout();inspectorWidth=Math.round(width/getResources().getDisplayMetrics().density);return true;}if(e.getAction()==MotionEvent.ACTION_UP)getSharedPreferences(PREFS,MODE_PRIVATE).edit().putInt("panel-width",inspectorWidth).apply();return true;}});
             if(getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("panel-left",false)){body.removeView(tools);body.removeView(divider);body.addView(tools,1);body.addView(divider,2);}
             body.setOnDragListener((v,event)->{if(uiLocked||event.getLocalState()!=tools)return false;if(event.getAction()==android.view.DragEvent.ACTION_DROP){boolean left=event.getX()<body.getWidth()/2f;body.removeView(tools);body.removeView(divider);if(left){body.addView(tools,1);body.addView(divider,2);}else{body.addView(divider);body.addView(tools);}getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("panel-left",left).apply();return true;}return true;});
             final View timelineArea=buildTimeline();
@@ -398,40 +396,6 @@ public final class EditorActivity extends Activity {
         root.setOnApplyWindowInsetsListener((v,insets)->{v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets.consumeSystemWindowInsets();});
         setContentView(root);root.requestApplyInsets();if(timelineScroll!=null)timelineScroll.post(()->timeline.syncScroll());if(layerScroll>0&&timelineScroll!=null)timelineScroll.post(()->{if(timelineScroll.getParent() instanceof ScrollView)((ScrollView)timelineScroll.getParent()).scrollTo(0,layerScroll);});if(player!=null)player.setVideoSurfaceView(surface);renderInspector();syncPosition();if(previewPending)previewHint("Preparing preview…\nTap to cancel");mediaImportWindow.reposition();effectCatalog.mount();
     }
-    /**
-     * Wide layout. The preview fits a fixed-aspect picture inside a wider box, which leaves black bars. The panel
-     * being worked in (a focused tool menu, or the effect catalog) grows into those bars, so the picture itself
-     * never shrinks; leaving the panel returns it to its resting width.
-     */
-    void balanceWindows(){
-        if(!wideLayout||fullscreenPreview||monitor==null||toolsPane==null||libraryPane==null)return;
-        int h=monitor.getHeight(),w=monitor.getWidth();if(h<=0||w<=0)return;
-        android.view.ViewGroup.LayoutParams tools=toolsPane.getLayoutParams(),library=libraryPane.getLayoutParams();
-        // The picture, with a margin so its selection handles are never clipped by a panel.
-        int needed=Math.round(h*project.canvasAspect())+dp(32);
-        int spare=w+(tools.width-toolsBasePx)+(library.width-libraryBasePx)-needed;
-        boolean toolsActive=panels.showing()&&(clip()!=null||overlay()!=null),libraryActive=effectCatalog.showing;
-        int wantTools=toolsBasePx,wantLibrary=libraryBasePx;
-        if(spare>0){
-            int toolsRoom=toolsActive?Math.max(0,dp(520)-toolsBasePx):0,libraryRoom=libraryActive?Math.max(0,dp(420)-libraryBasePx):0;
-            int toolsGrant=Math.min(toolsRoom,toolsActive&&libraryActive?spare/2:spare);
-            wantTools+=toolsGrant;wantLibrary+=Math.min(libraryRoom,spare-toolsGrant);
-        }
-        animateWidth(toolsPane,wantTools,true);animateWidth(libraryPane,wantLibrary,false);
-    }
-    private void animateWidth(View pane,int target,boolean tools){
-        android.view.ViewGroup.LayoutParams lp=pane.getLayoutParams();
-        Object running=pane.getTag(R_ANIMATED_TO);if(running instanceof Integer&&(Integer)running==target)return;
-        if(Math.abs(lp.width-target)<2){pane.setTag(R_ANIMATED_TO,null);return;}
-        Object previous=pane.getTag(R_ANIMATION);if(previous instanceof android.animation.ValueAnimator)((android.animation.ValueAnimator)previous).cancel();
-        Runnable finished=()->{pane.setTag(R_ANIMATED_TO,null);pane.setTag(R_ANIMATION,null);if(tools)transformPanel.menus.relayout();};
-        if(reducedMotion||!android.animation.ValueAnimator.areAnimatorsEnabled()){lp.width=target;pane.requestLayout();finished.run();return;}
-        android.animation.ValueAnimator animator=android.animation.ValueAnimator.ofInt(lp.width,target).setDuration(180);
-        animator.addUpdateListener(a->{lp.width=(Integer)a.getAnimatedValue();pane.requestLayout();});
-        animator.addListener(new android.animation.AnimatorListenerAdapter(){boolean cancelled;@Override public void onAnimationCancel(android.animation.Animator a){cancelled=true;}@Override public void onAnimationEnd(android.animation.Animator a){if(!cancelled)finished.run();}});
-        pane.setTag(R_ANIMATED_TO,target);pane.setTag(R_ANIMATION,animator);animator.start();
-    }
-    private static final int R_ANIMATED_TO=0x7f0b7d01,R_ANIMATION=0x7f0b7d02;
     View buildMonitor() {
         if(surface==null){surface=new SurfaceView(this);surface.setContentDescription("Video project preview");}
         if(surface.getParent()!=null)((android.view.ViewGroup)surface.getParent()).removeView(surface);
@@ -448,14 +412,14 @@ public final class EditorActivity extends Activity {
             }
             @Override protected void onLayout(boolean changed,int l,int t,int r,int b){super.onLayout(changed,l,t,r,b);if(previewControls!=null)previewControls.invalidate();}
         };
-        monitor.setBackgroundColor(0xFF02060C);monitor.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{if(b-t!=ob-ot||r-l!=or-ol)monitor.post(this::balanceWindows);});monitor.addView(surface,new FrameLayout.LayoutParams(-1,-1));monitor.addView(liveView,new FrameLayout.LayoutParams(-1,-1));
+        monitor.setBackgroundColor(0xFF02060C);monitor.addView(surface,new FrameLayout.LayoutParams(-1,-1));monitor.addView(liveView,new FrameLayout.LayoutParams(-1,-1));
         emptyPreview=label("START YOUR FIRST CUT\n\n+ Import video or images",14,CYAN,true);emptyPreview.setGravity(Gravity.CENTER);emptyPreview.setContentDescription("Import video or images");emptyPreview.setFocusable(true);emptyPreview.setBackgroundColor(Color.BLACK);emptyPreview.setOnClickListener(v->{if((project.clips.isEmpty()&&project.overlays.isEmpty())){openMediaBrowser();}else if(previewPending){releasePreview();previewHint("Preview cancelled • tap to prepare");}else showLive();});emptyPreview.setVisibility((project.clips.isEmpty()&&project.overlays.isEmpty())?View.VISIBLE:View.GONE);monitor.addView(emptyPreview,new FrameLayout.LayoutParams(-1,-1));
         previewControls=new PreviewEditor(this);monitor.addView(previewControls,new FrameLayout.LayoutParams(-1,-1));
         TextView compare=button("Compare",null);compare.setTextSize(10);compare.setContentDescription("Hold to compare with the layer before the current adjustments");compare.setTooltipText(compare.getContentDescription());
         compare.setOnTouchListener((v,e)->{if(e.getActionMasked()==MotionEvent.ACTION_DOWN)compare(true);else if(e.getActionMasked()==MotionEvent.ACTION_UP||e.getActionMasked()==MotionEvent.ACTION_CANCEL)compare(false);return true;});
-        compareButton=compare;if(wideLayout&&fullscreenPreview)monitor.addView(compare,new FrameLayout.LayoutParams(-2,dp(40),Gravity.BOTTOM|Gravity.END));
+        if(wideLayout)monitor.addView(compare,new FrameLayout.LayoutParams(-2,dp(40),Gravity.BOTTOM|Gravity.END));
         TextView info=monitorInfo=label(project.name+"  ·  "+project.ratioName()+"  ·  "+project.frameRate+" fps",11,0xFFC9D6E3,false);info.setPadding(dp(10),dp(6),dp(8),0);info.setShadowLayer(dp(3),0,0,0xCC000000);info.setSingleLine(true);info.setEllipsize(android.text.TextUtils.TruncateAt.END);if(wideLayout)monitor.addView(info,new FrameLayout.LayoutParams(-2,dp(28),Gravity.TOP|Gravity.START));
-        TextView viewOptions=button("Fit ▾",v->previewOptions());viewOptions.setTextSize(11);viewOptions.setContentDescription("Preview scaling, volume and fullscreen");FrameLayout.LayoutParams viewLp=new FrameLayout.LayoutParams(dp(68),dp(34),Gravity.TOP|Gravity.END);viewLp.setMargins(0,dp(8),dp(8),0);viewOptionsButton=viewOptions;if(fullscreenPreview)monitor.addView(viewOptions,viewLp);
+        TextView viewOptions=button("Fit ▾",v->previewOptions());viewOptions.setTextSize(11);viewOptions.setContentDescription("Preview scaling, volume and fullscreen");FrameLayout.LayoutParams viewLp=new FrameLayout.LayoutParams(dp(68),dp(34),Gravity.TOP|Gravity.END);viewLp.setMargins(0,dp(8),dp(8),0);if(wideLayout||fullscreenPreview)monitor.addView(viewOptions,viewLp);
 
         return monitor;
     }
@@ -506,7 +470,6 @@ public final class EditorActivity extends Activity {
         jumpEnd=transportIcon("SkipEnd","Jump to end",v->jump(true));center.addView(jumpEnd);
         controls.addView(center,new LinearLayout.LayoutParams(-2,dp(56)));
         LinearLayout end=row();end.setGravity(Gravity.CENTER_VERTICAL|Gravity.END);
-        if(wideLayout&&!fullscreenPreview&&compareButton!=null&&viewOptionsButton!=null){if(compareButton.getParent()!=null)((ViewGroup)compareButton.getParent()).removeView(compareButton);if(viewOptionsButton.getParent()!=null)((ViewGroup)viewOptionsButton.getParent()).removeView(viewOptionsButton);LinearLayout.LayoutParams compareLp=new LinearLayout.LayoutParams(-2,dp(40));compareLp.rightMargin=dp(6);end.addView(compareButton,compareLp);LinearLayout.LayoutParams viewLp=new LinearLayout.LayoutParams(dp(68),dp(40));viewLp.rightMargin=dp(6);end.addView(viewOptionsButton,viewLp);}
         end.addView(transportIcon("Fullscreen","Fullscreen preview",v->{fullscreenPreview=!fullscreenPreview;buildWorkspace();}));
         controls.addView(end,new LinearLayout.LayoutParams(0,dp(48),1));
         LinearLayout transport=column();
@@ -663,7 +626,7 @@ public final class EditorActivity extends Activity {
     void renderInspector() {
         if(inspector==null)return;sizePhoneDrawer();renderTimelineTools();if(selected>=0)selectedOverlay=-1;pruneSelection();renderHeader();updateMediaSelection();if(timeline!=null)timeline.invalidate();if(previewControls!=null)previewControls.invalidate();updateJumpLabels();inspector.removeAllViews();contextualRow=null;contextualCount=0;gridRow=null;gridCount=0;
         for(int i=0;i<navTabs.size();i++){navTabs.get(i).setTextColor(i==tab?CYAN:TEXT);navTabs.get(i).setBackground(navBackground(i==tab));navTabs.get(i).setSelected(i==tab);for(android.graphics.drawable.Drawable icon:navTabs.get(i).getCompoundDrawables())if(icon!=null)icon.setTint(i==tab?CYAN:TEXT);}
-        if(panels.showing()&&"Effects".equals(panels.title())){panels.render(inspector);balanceWindows();return;}
+        if(panels.showing()&&"Effects".equals(panels.title())){panels.render(inspector);return;}
         if(mobile!=null){mobile.inspectorTitle(inspector);}
         else if(!wideLayout&&tab==0){
             LinearLayout title=row();title.setGravity(Gravity.CENTER_VERTICAL);title.addView(label("ADD MEDIA",13,CYAN,true),new LinearLayout.LayoutParams(0,dp(44),1));
@@ -681,7 +644,6 @@ public final class EditorActivity extends Activity {
         else if(tab==1||tab==2)panels.render(inspector);
         else if(tab==3)layersPanel();
         else settingsPanel();
-        balanceWindows();
     }
     /** Project settings open on demand from the top bar instead of occupying a permanent tab. */
     void projectSettingsDialog(){
@@ -1455,7 +1417,6 @@ public final class EditorActivity extends Activity {
             public void afterTextChanged(android.text.Editable value){}
         });
         renderMediaGrid();
-        balanceWindows();
     }
     final Runnable mediaRefresh=()->renderMediaGrid();
     int mediaGridColumns=3;

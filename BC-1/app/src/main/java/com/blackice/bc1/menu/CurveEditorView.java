@@ -24,8 +24,8 @@ public final class CurveEditorView extends View {
   CubicBezier b=model.curve();if(b==null)b=CubicBezier.LINEAR;int save=c.save();c.clipRect(plot);p.setStyle(Paint.Style.STROKE);p.setColor(MenuPalette.CYAN);p.setStrokeWidth(dp(1));p.setPathEffect(new DashPathEffect(new float[]{dp(4),dp(3)},0));
   c.drawLine(px(0),py(0),px(b.x1),py(b.y1),p);c.drawLine(px(1),py(1),px(b.x2),py(b.y2),p);p.setPathEffect(null);
   Path path=new Path();path.moveTo(px(0),py(0));for(int i=1;i<=160;i++){double t=i/160d;path.lineTo(px(t),py(model.progressAt(t)));}
-  p.setColor(model.editable()?MenuPalette.GREEN:MenuPalette.MUTED);p.setStrokeWidth(dp(2.5f));c.drawPath(path,p);c.restoreToCount(save);
-  dot(c,px(0),py(0),MenuPalette.GREEN,5);dot(c,px(1),py(1),MenuPalette.GREEN,5);dot(c,px(b.x1),py(b.y1),MenuPalette.CYAN,handle==1&&isFocused()?6:5);dot(c,px(b.x2),py(b.y2),MenuPalette.CYAN,handle==2&&isFocused()?6:5);
+  p.setColor(model.editable()?MenuPalette.ACCENT:MenuPalette.MUTED);p.setStrokeWidth(dp(2.5f));c.drawPath(path,p);c.restoreToCount(save);
+  dot(c,px(0),py(0),MenuPalette.ACCENT,5);dot(c,px(1),py(1),MenuPalette.ACCENT,5);dot(c,px(b.x1),py(b.y1),MenuPalette.CYAN,handle==1&&isFocused()?6:5);dot(c,px(b.x2),py(b.y2),MenuPalette.CYAN,handle==2&&isFocused()?6:5);
   if(!model.editable()){p.setStyle(Paint.Style.FILL);p.setColor(0xc003131e);c.drawRect(plot,p);p.setColor(MenuPalette.MUTED);p.setTextSize(dp(12));p.setTextAlign(Paint.Align.CENTER);c.drawText(model.intervalLabel(),plot.centerX(),plot.centerY(),p);}
  }
  private void dot(Canvas c,float x,float y,int color,float r){p.setStyle(Paint.Style.FILL);p.setColor(color);c.drawCircle(x,y,dp(r),p);p.setColor(MenuPalette.TEXT);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(1));c.drawCircle(x,y,dp(r),p);}

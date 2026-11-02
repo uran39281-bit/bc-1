@@ -442,9 +442,7 @@ final class MenuHost implements MenuScreenFactory.Host {
             boolean landscape = screen > c.screenHeightDp;
             return Math.max(240, (landscape ? Math.min(320, screen / 2) : screen) - 24);
         }
-        float density = a.getResources().getDisplayMetrics().density;
-        int live = a.toolsPane != null && a.toolsPane.getLayoutParams().width > 0 ? Math.round(a.toolsPane.getLayoutParams().width / density) : Math.min(a.inspectorWidth, screen < 1100 ? 216 : 360);
-        return Math.max(240, live - 16);
+        return Math.max(240, Math.min(a.inspectorWidth, screen < 1100 ? 216 : 360) - 16);
     }
 
     @Override public void menuChanged(MenuScreenFactory.Menu menu) {
