@@ -143,11 +143,13 @@ final class LayerToolsPanel {
     private void screenshot(LinearLayout into) {
         into.addView(heading("Screenshot"));
         into.addView(a.label("Capture time " + EditorActivity.clock(a.project.playheadMs), 14, EditorActivity.TEXT, false));
-        TextView action = a.button("Take Screenshot", v -> { });
-        EditorActivity.dim(action, false);
+        String reason = a.screenshotTool.unavailableReason();
+        TextView action = a.button("Take Screenshot", v -> a.screenshotTool.start());
+        action.setContentDescription("Take Screenshot");
+        EditorActivity.dim(action, reason == null);
         into.addView(action, new LinearLayout.LayoutParams(-1, a.dp(44)));
         into.addView(a.note("Capture the selected layer at the playhead as a new image layer."));
-        unavailable(into, "Isolated single-layer rendering with transparency is not wired into this build yet, so the action stays disabled.");
+        if (reason != null) unavailable(into, reason);
     }
 
     // ---- Joint Movement ---------------------------------------------------------------------------------

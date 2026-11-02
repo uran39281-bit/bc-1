@@ -3,6 +3,7 @@ import android.view.*;
 import android.widget.*;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import com.blackice.bc1.editor.EditProject;
 import java.util.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -82,6 +83,50 @@ public class LayerToolsTest {
                     long playhead=a.project.playheadMs;a.fitTimeline();assertTrue(a.pixelsPerSecond>=8&&a.pixelsPerSecond<=2400);assertEquals(playhead,a.project.playheadMs);
                 });
                 h.capture("v150-toolbar-touch");
+            }
+        }finally{h.shell("wm size "+size);h.shell("wm density "+density);}
+    }
+
+    private static void waitForCapture(ActivityScenario<EditorActivity> scene)throws Exception{
+        boolean[] running={true};
+        for(int i=0;i<300&&running[0];i++){scene.onActivity(a->running[0]=a.screenshotTool.running());if(running[0])Thread.sleep(100);}
+        assertFalse("Capture finished",running[0]);Thread.sleep(300);
+    }
+
+    @Test public void screenshotCapturesOnlyTheSelectedLayerAsATransparentNewImageLayer()throws Exception{
+        String size=h.override(h.shell("wm size")),density=h.override(h.shell("wm density"));
+        try{new Workspace144Test().fixture();
+            h.shell("wm size 1920x900");h.shell("wm density 160");
+            try(ActivityScenario<EditorActivity> scene=ActivityScenario.launch(EditorActivity.class)){h.waitLoaded(scene);Thread.sleep(700);
+                final String[] uri=new String[2];final float[] original=new float[3];final int[] undo=new int[1];
+                for(int pass=0;pass<2;pass++){
+                    final int which=pass;
+                    scene.onActivity(a->{if(which==0)a.selectOverlay(0);else a.selectClip(0,false);a.seek(1500);a.panels.reset();a.renderInspector();
+                        EditProject.Overlay shape=a.project.overlays.get(0);original[0]=shape.x;original[1]=shape.y;original[2]=shape.scale;undo[0]=a.undo.size();
+                        assertNull("Screenshot is available for a visible layer at the playhead",a.screenshotTool.unavailableReason());a.screenshotTool.start();});
+                    waitForCapture(scene);
+                    scene.onActivity(a->{
+                        assertEquals("One new image layer",2+which,a.project.overlays.size());
+                        EditProject.Overlay added=a.project.overlays.get(a.project.overlays.size()-1);
+                        assertEquals("The new layer is selected",a.project.overlays.size()-1,a.selectedOverlay);assertEquals(-1,a.selected);
+                        assertNotNull(added.imageUri);assertEquals(1500,added.startMs);assertEquals("Neutral full-canvas transform",0f,added.x,0);assertEquals(0f,added.y,0);assertEquals(1f,added.opacity,0);
+                        assertEquals(ScreenshotTool.FULL_CANVAS_SCALE,added.scale,.0001f);assertTrue("No motion tracks copied",!added.motion.animated());
+                        assertEquals("One undo step",undo[0]+1,a.undo.size());
+                        EditProject.Overlay shape=a.project.overlays.get(0);assertEquals("The original layer is unchanged",original[0],shape.x,0);assertEquals(original[1],shape.y,0);assertEquals(original[2],shape.scale,0);
+                        uri[which]=added.imageUri;
+                    });
+                    java.io.File file=new java.io.File(android.net.Uri.parse(uri[which]).getPath());assertTrue("PNG saved in managed storage",file.isFile()&&file.length()>0);
+                    android.graphics.Bitmap png=android.graphics.BitmapFactory.decodeFile(file.getPath());assertNotNull(png);
+                    final int[] canvas=new int[2];scene.onActivity(a->{int[] c=a.project.canvasSize(ScreenshotTool.SHORT_EDGE);canvas[0]=c[0];canvas[1]=c[1];});
+                    assertEquals("Canvas resolution, not preview pixels",canvas[0],png.getWidth());assertEquals(canvas[1],png.getHeight());
+                    assertTrue("The layer's own pixels are present",android.graphics.Color.alpha(png.getPixel(png.getWidth()/2,png.getHeight()/2))>0);
+                    if(which==0)assertEquals("Everything else is transparent",0,android.graphics.Color.alpha(png.getPixel(2,2)));
+                    png.recycle();
+                }
+                scene.onActivity(a->{a.undo(false);assertEquals("Undo removes the new layer",2,a.project.overlays.size());});
+                assertTrue("The asset stays while history can redo it",new java.io.File(android.net.Uri.parse(uri[1]).getPath()).isFile());
+                scene.onActivity(a->{a.undo(true);assertEquals("Redo restores it",3,a.project.overlays.size());assertEquals(uri[1],a.project.overlays.get(2).imageUri);});
+                h.capture("v150-screenshot-result");
             }
         }finally{h.shell("wm size "+size);h.shell("wm density "+density);}
     }

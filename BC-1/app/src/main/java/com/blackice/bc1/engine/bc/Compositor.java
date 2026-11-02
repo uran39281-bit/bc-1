@@ -263,7 +263,27 @@ final class Compositor {
         } else {
             bindOutput();
         }
-        clear(0, 0, 0, 1);
+        clear(0, 0, 0, transparentBackground ? 0 : 1);
+    }
+
+    /** Layer capture: frames start fully transparent instead of opaque black. */
+    void setTransparentBackground(boolean on) { transparentBackground = on; }
+    private boolean transparentBackground;
+
+    /** The frame composed since {@link #beginPreviewFrame}, top row first, as premultiplied ARGB. */
+    android.graphics.Bitmap readPreview() {
+        if (previewOutput == null) throw new IllegalStateException("No frame has been composed");
+        previewOutput.bind();
+        java.nio.ByteBuffer pixels = java.nio.ByteBuffer.allocateDirect(width * height * 4).order(java.nio.ByteOrder.nativeOrder());
+        GLES30.glReadPixels(0, 0, width, height, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, pixels);
+        GlKit.check("read pixels");
+        android.graphics.Bitmap raw = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888);
+        raw.copyPixelsFromBuffer(pixels);
+        android.graphics.Matrix flip = new android.graphics.Matrix();
+        flip.setScale(1, -1, width / 2f, height / 2f);
+        android.graphics.Bitmap upright = android.graphics.Bitmap.createBitmap(raw, 0, 0, width, height, flip, false);
+        if (upright != raw) raw.recycle();
+        return upright;
     }
 
     /** Finishes the layer stack: overlays and the encoder then see the composed frame. */
