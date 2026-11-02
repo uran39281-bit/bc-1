@@ -36,8 +36,10 @@ public final class ReverseOps {
         c.reverseBaseMs = base; c.reverseSpanMs = span;
         c.uri = derivativeUri;
         c.name = (c.name == null ? "Clip" : c.name) + " (reversed)";
-        c.sourceDurationMs = derivativeMs;
-        c.inMs = 0; c.outMs = Math.min(derivativeMs, span);
+        // The file reports a duration up to one frame short of the range it holds (the last frame's own length);
+        // the clip keeps the full range so Restore Forward returns to exactly the original trim.
+        c.sourceDurationMs = Math.max(derivativeMs, span);
+        c.inMs = 0; c.outMs = span;
         c.reversed = true;
     }
 

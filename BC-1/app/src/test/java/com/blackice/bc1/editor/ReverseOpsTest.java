@@ -35,6 +35,14 @@ public class ReverseOpsTest {
         assertNull(c.forwardUri);
     }
 
+    @Test public void aDerivativeReportedOneFrameShortStillRestoresTheExactOriginalRange() {
+        EditProject.Clip c = clip(); long duration = c.durationMs();
+        ReverseOps.reverse(c, "file:///reversed.mp4", 3967);
+        assertEquals("The clip keeps the whole trimmed range", 4000, c.outMs); assertEquals(duration, c.durationMs());
+        ReverseOps.restore(c);
+        assertEquals(2000, c.inMs); assertEquals(6000, c.outMs);
+    }
+
     @Test public void trimmingTheReversedClipMapsBackToTheMirroredForwardRange() {
         EditProject.Clip c = clip();
         ReverseOps.reverse(c, "file:///reversed.mp4", 4000);
