@@ -77,6 +77,8 @@ public final class EditProject {
         public String id = UUID.randomUUID().toString(), uri, name;
         /** Joint Movement: stable id of the visual parent layer, and the 2D attachment offset {a,b,c,d,tx,ty}; see ParentTransforms. */
         public String parentId; public float[] attach;
+        /** Reverse: while reversed, uri/in/out point into a derived reversed file and the forward source is kept here; see ReverseOps. */
+        public boolean reversed; public String forwardUri, forwardName; public long forwardSourceDurationMs, reverseBaseMs, reverseSpanMs;
         public boolean image, audioOnly;
         public int track; public long startMs,fadeInMs,fadeOutMs;
         /** Main sequence only: empty time before this clip. A gap also suppresses the transition into it. */
@@ -106,7 +108,7 @@ public final class EditProject {
             c.sourceDurationMs=sourceDurationMs; c.inMs=inMs; c.outMs=outMs;
             c.effect=effect; c.transition=transition; c.easing=easing; c.blend=blend;
             c.intensity=intensity; c.opacity=opacity; c.volume=volume;c.unmutedVolume=unmutedVolume; c.transitionMs=transitionMs;c.speed=speed;
-            c.parentId=parentId;c.attach=attach==null?null:attach.clone();return c;
+            c.parentId=parentId;c.attach=attach==null?null:attach.clone();c.reversed=reversed;c.forwardUri=forwardUri;c.forwardName=forwardName;c.forwardSourceDurationMs=forwardSourceDurationMs;c.reverseBaseMs=reverseBaseMs;c.reverseSpanMs=reverseSpanMs;return c;
         }
     }
     public static final class Overlay {

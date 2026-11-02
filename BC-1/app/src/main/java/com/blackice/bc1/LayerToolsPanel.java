@@ -127,16 +127,42 @@ final class LayerToolsPanel {
 
     // ---- Reverse ----------------------------------------------------------------------------------------
 
+    private ProgressBar progressBar;
+    private TextView progressText;
+
+    /** Updates the running Reverse progress without rebuilding the panel. */
+    void showProgress() {
+        if (progressBar != null && progressBar.isAttachedToWindow()) progressBar.setProgress(a.reverseTool.progress());
+        if (progressText != null && progressText.isAttachedToWindow()) progressText.setText("Reversing… " + a.reverseTool.progress() + "%");
+    }
+
     private void reverse(LinearLayout into) {
+        progressBar = null; progressText = null;
         into.addView(heading("Reverse"));
         EditProject.Clip c = a.clip();
         if (c == null) { unavailable(into, a.overlay() != null ? "Reverse is available for video footage only." : "Select a layer."); return; }
-        if (c.image || c.track >= EditProject.AUDIO_FIRST) { unavailable(into, "Reverse is available for video footage only."); return; }
-        into.addView(a.label("Direction: Forward", 14, EditorActivity.TEXT, false));
-        TextView action = a.button("Reverse Footage", v -> { });
-        EditorActivity.dim(action, false);
+        String unsupported = ReverseOps.unsupported(c);
+        if (unsupported != null) { unavailable(into, unsupported); return; }
+        into.addView(a.label("Direction: " + (c.reversed ? "Reversed" : "Forward"), 14, EditorActivity.TEXT, false));
+        if (a.reverseTool.running()) {
+            progressText = a.label("Reversing… " + a.reverseTool.progress() + "%", 13, EditorActivity.TEXT, false);
+            into.addView(progressText);
+            progressBar = new ProgressBar(a, null, android.R.attr.progressBarStyleHorizontal);
+            progressBar.setMax(100); progressBar.setProgress(a.reverseTool.progress());
+            progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(EditorActivity.CYAN));
+            into.addView(progressBar, new LinearLayout.LayoutParams(-1, a.dp(12)));
+            TextView cancel = a.button("Cancel", v -> a.reverseTool.cancel());
+            cancel.setContentDescription("Cancel reversing");
+            into.addView(cancel, new LinearLayout.LayoutParams(-1, a.dp(44)));
+            return;
+        }
+        String reason = c.reversed ? null : a.reverseTool.unavailableReason();
+        TextView action = a.button(c.reversed ? "Restore Forward" : "Reverse Footage", v -> { if (c.reversed) a.reverseTool.restore(); else a.reverseTool.start(); });
+        EditorActivity.dim(action, reason == null && !a.selectionLocked() && !a.uiLocked);
         into.addView(action, new LinearLayout.LayoutParams(-1, a.dp(44)));
-        unavailable(into, "Reversing footage needs a reversed-frame and reversed-audio pipeline that this build's engines do not have yet, so the action stays disabled instead of faking the result.");
+        into.addView(a.note(c.reversed ? "Restore Forward returns to the original footage and the same part of it. Nothing is re-encoded."
+                : "Plays the trimmed footage backwards, picture and sound together. Position, rotation and other animation keep their own timing; the original file is never changed."));
+        if (reason != null) unavailable(into, reason);
     }
 
     // ---- Screenshot -------------------------------------------------------------------------------------

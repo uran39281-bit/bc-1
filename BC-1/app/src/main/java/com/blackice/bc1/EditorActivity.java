@@ -47,6 +47,7 @@ public final class EditorActivity extends Activity {
     Attributes copiedAttributes;
     final LayerToolsPanel layerTools=new LayerToolsPanel(this);
     final ScreenshotTool screenshotTool=new ScreenshotTool(this);
+    final ReverseTool reverseTool=new ReverseTool(this);
     Keyframes.Clip copiedKeys;
     float previewMoveX=Float.NaN,previewMoveY=Float.NaN,previewZoom=1,previewPanX,previewPanY;
     String compareSnapshot;

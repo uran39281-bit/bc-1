@@ -36,7 +36,7 @@ public class LayerToolsTest {
                 });
                 h.capture("v150-layer-tools-copy-all");
                 scene.onActivity(a->{
-                    a.layerTools.select(1);assertNotNull(WorkspaceV2Test.startsWith(a.inspector,"Reversing footage needs"));
+                    a.layerTools.select(1);assertNotNull("Pictures cannot be reversed",WorkspaceV2Test.startsWith(a.inspector,"Reverse is available for video footage only"));
                     a.layerTools.select(2);assertNotNull(WorkspaceV2Test.startsWith(a.inspector,"Capture the selected layer at the playhead"));
                     a.layerTools.select(3);assertNotNull(WorkspaceV2Test.text(a.inspector,"Parent & Child"));
                     a.layerTools.select(4);
@@ -174,6 +174,45 @@ public class LayerToolsTest {
                     assertNull("No render error with relationships",a.live.lastError());
                 });
                 h.capture("v150-joint-movement");
+            }
+        }finally{h.shell("wm size "+size);h.shell("wm density "+density);}
+    }
+
+    private static double luma(android.graphics.Bitmap b){long sum=0;int n=0;for(int y=b.getHeight()/4;y<b.getHeight()*3/4;y+=8)for(int x=b.getWidth()/4;x<b.getWidth()*3/4;x+=8){int c=b.getPixel(x,y);sum+=(299*android.graphics.Color.red(c)+587*android.graphics.Color.green(c)+114*android.graphics.Color.blue(c))/1000;n++;}return sum/(double)n;}
+    private static double lumaAt(java.io.File video,long ms){try(android.media.MediaMetadataRetriever r=new android.media.MediaMetadataRetriever()){r.setDataSource(video.getPath());android.graphics.Bitmap b=r.getFrameAtTime(ms*1000,android.media.MediaMetadataRetriever.OPTION_CLOSEST);assertNotNull("Frame at "+ms,b);return luma(b);}catch(java.io.IOException e){throw new AssertionError(e);}}
+
+    @Test public void reverseFootageEndToEndKeepsTimingAndRestoresTheOriginal()throws Exception{
+        String size=h.override(h.shell("wm size")),density=h.override(h.shell("wm density"));
+        try{
+            android.content.Context context=h.inst.getTargetContext();
+            java.io.File source=new java.io.File(context.getFilesDir(),"numbered.mp4");
+            try(java.io.InputStream in=h.inst.getContext().getAssets().open("numbered.mp4");java.io.OutputStream out=new java.io.FileOutputStream(source)){byte[] bytes=new byte[8192];int n;while((n=in.read(bytes))!=-1)out.write(bytes,0,n);}
+            EditProject project=new EditProject();project.name="Reverse";EditProject.Clip clip=new MediaImporter(context).importClip(android.net.Uri.fromFile(source),false);project.clips.add(clip);project.library.add(clip.copy());
+            final String forwardUri=clip.uri;final long duration=project.clips.get(0).durationMs();
+            new ProjectStore(context).save(project);context.getSharedPreferences(EditorActivity.PREFS,0).edit().putString("last-project",project.id).putString("mode","AUTO").putBoolean("ui-locked",false).putInt("panel-width",360).putInt("timeline-height",0).commit();
+            h.shell("wm size 1920x900");h.shell("wm density 160");
+            try(ActivityScenario<EditorActivity> scene=ActivityScenario.launch(EditorActivity.class)){h.waitLoaded(scene);Thread.sleep(800);
+                final int[] undo=new int[1];
+                scene.onActivity(a->{a.selectClip(0,false);a.panels.reset();a.renderInspector();a.layerTools.open();a.layerTools.select(1);
+                    assertNotNull("Direction readout",WorkspaceV2Test.text(a.inspector,"Direction: Forward"));assertNotNull(WorkspaceV2Test.text(a.inspector,"Reverse Footage"));
+                    undo[0]=a.undo.size();assertNull(a.reverseTool.unavailableReason());a.reverseTool.start();assertTrue("Runs in the background",a.reverseTool.running());});
+                boolean[] running={true};for(int i=0;i<600&&running[0];i++){scene.onActivity(a->running[0]=a.reverseTool.running());if(running[0])Thread.sleep(200);}
+                assertFalse("Reverse finished",running[0]);Thread.sleep(500);
+                final String[] reversedUri=new String[1];
+                scene.onActivity(a->{
+                    EditProject.Clip c=a.project.clips.get(0);assertTrue("Clip is reversed",c.reversed);assertEquals("One undo step",undo[0]+1,a.undo.size());
+                    assertEquals("Timeline duration unchanged",duration,c.durationMs(),40);assertEquals(forwardUri,c.forwardUri);assertTrue(c.uri.contains("/reversed/"));
+                    reversedUri[0]=c.uri;assertNotNull(WorkspaceV2Test.text(a.inspector,"Direction: Reversed"));assertNotNull(WorkspaceV2Test.text(a.inspector,"Restore Forward"));
+                });
+                java.io.File reversed=new java.io.File(android.net.Uri.parse(reversedUri[0]).getPath());assertTrue(reversed.isFile());
+                double first=lumaAt(reversed,60),middle=lumaAt(reversed,1000),last=lumaAt(reversed,1900);
+                assertTrue("Starts on the original last frame (bright): "+first,first>200);assertTrue("Ends on the original first frame (dark): "+last,last<45);assertTrue("In order: "+first+" > "+middle+" > "+last,first>middle+40&&middle>last+40);
+                java.io.File qa=new java.io.File(context.getFilesDir(),"qa");qa.mkdirs();java.nio.file.Files.copy(reversed.toPath(),new java.io.File(qa,"v150-reversed.mp4").toPath(),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                h.capture("v150-reverse-tab");
+                scene.onActivity(a->{a.reverseTool.restore();});
+                scene.onActivity(a->{EditProject.Clip c=a.project.clips.get(0);assertFalse(c.reversed);assertEquals(forwardUri,c.uri);assertEquals(0,c.inMs);assertEquals("Restores the same original range",2000,c.outMs,60);assertEquals(duration,c.durationMs(),60);
+                    a.undo(false);assertTrue("Undo of the restore brings the reversed state back",a.project.clips.get(0).reversed);a.undo(false);assertFalse("Undo of the reverse brings the forward clip back",a.project.clips.get(0).reversed);assertEquals(forwardUri,a.project.clips.get(0).uri);
+                    a.undo(true);a.undo(true);});
             }
         }finally{h.shell("wm size "+size);h.shell("wm density "+density);}
     }
