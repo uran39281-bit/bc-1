@@ -45,6 +45,7 @@ public final class EditorActivity extends Activity {
     String headerKey="";
     int gridCount;
     Attributes copiedAttributes;
+    final LayerToolsPanel layerTools=new LayerToolsPanel(this);
     Keyframes.Clip copiedKeys;
     float previewMoveX=Float.NaN,previewMoveY=Float.NaN,previewZoom=1,previewPanX,previewPanY;
     String compareSnapshot;
@@ -428,31 +429,46 @@ public final class EditorActivity extends Activity {
         else if(i==3){LinearLayout f=form();SeekBar volume=new SeekBar(this);volume.setMax(100);volume.setProgress(Math.round(monitorVolume*100));volume.setContentDescription("Preview volume");f.addView(volume);new AlertDialog.Builder(this).setTitle("Preview volume (export unchanged)").setView(f).setPositiveButton("Apply",(x,w)->{monitorVolume=volume.getProgress()/100f;if(player!=null)player.setVolume(monitorVolume);}).setNegativeButton("Cancel",null).show();}
         else {fullscreenPreview=true;buildWorkspace();}
     }).show();}
-    SeekBar zoomSlider;
     final ArrayList<TextView> playheadTools=new ArrayList<>();
     void updatePlayheadTools(){EditProject.Clip c=clip();EditProject.Overlay o=overlay();boolean valid=(c!=null||o!=null)&&!selectionLocked()&&!uiLocked&&(c!=null?LayerOps.canSplitOrTrim(project,selected):project.playheadMs-o.startMs>=EditProject.MIN_CLIP_MS&&o.endMs-project.playheadMs>=EditProject.MIN_CLIP_MS);for(TextView tool:playheadTools)dim(tool,valid);}
     View buildTimelineTools(){HorizontalScrollView scroll=new HorizontalScrollView(this);scroll.setHorizontalScrollBarEnabled(false);scroll.setFillViewport(true);timelineTools=row();timelineTools.setGravity(Gravity.CENTER_VERTICAL);timelineTools.setPadding(dp(8),dp(2),dp(8),dp(2));scroll.addView(timelineTools);scroll.setBackgroundColor(0xFF07101A);renderTimelineTools();return scroll;}
-    /** Editing tools on the left (dimmed until a layer that supports them is selected); zoom, snapping and
-     * fit on the right. These are the only timeline zoom controls. */
+    /** Mouse/DeX layouts use small 32 dp buttons with 18 dp icons; touch layouts keep 48 dp targets. Tests may force either. */
+    Boolean forcePointerToolbar;
+    boolean pointerToolbar(){
+        if(forcePointerToolbar!=null)return forcePointerToolbar;
+        if(!wideLayout)return false;
+        android.view.Display display=getWindowManager().getDefaultDisplay();if(display!=null&&display.getDisplayId()!=0)return true;
+        for(int id:android.view.InputDevice.getDeviceIds()){android.view.InputDevice device=android.view.InputDevice.getDevice(id);if(device!=null&&!device.isVirtual()&&(device.getSources()&(android.view.InputDevice.SOURCE_MOUSE|android.view.InputDevice.SOURCE_TOUCHPAD))!=0)return true;}
+        return false;
+    }
+    /** Shared toolbar tokens (dp). Visible gaps are measured between button containers. */
+    static final int TOOLBAR_BUTTON=32,TOOLBAR_ICON=18,TOOLBAR_GAP=8,TOOLBAR_GROUP_GAP=16,TOUCH_TARGET=48;
+    /** One toolbar button: artwork unchanged, only its size and padding follow the layout mode. */
+    private TextView toolbarButton(String icon,String description,View.OnClickListener l,boolean pointer){
+        TextView b=headerIcon(icon,description,l);
+        if(pointer){V1Icon art=new V1Icon(icon,TEXT);art.setBounds(0,0,dp(TOOLBAR_ICON),dp(TOOLBAR_ICON));b.setCompoundDrawables(art,null,null,null);b.setPadding(dp((TOOLBAR_BUTTON-TOOLBAR_ICON)/2f),0,dp((TOOLBAR_BUTTON-TOOLBAR_ICON)/2f),0);b.setMinWidth(dp(TOOLBAR_BUTTON));b.setMinHeight(dp(TOOLBAR_BUTTON));b.setTextSize(11);}
+        return b;
+    }
+    private void toolbarAdd(TextView button,boolean pointer,boolean firstInGroup,boolean first){
+        int height=pointer?dp(TOOLBAR_BUTTON):dp(TOUCH_TARGET);
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(pointer&&button.getText().length()==0?dp(TOOLBAR_BUTTON):-2,height);
+        lp.gravity=Gravity.CENTER_VERTICAL;
+        if(!first)lp.leftMargin=pointer?dp(firstInGroup?TOOLBAR_GROUP_GAP:TOOLBAR_GAP):dp(firstInGroup?8:0);
+        timelineTools.addView(button,lp);
+    }
+    /** Groups, left to right: Trash/Undo/Redo, Trim Start/Split/Trim End, then snapping/fit/markers. There is no timeline zoom control here. */
     void renderTimelineTools(){if(timelineTools==null)return;timelineTools.removeAllViews();playheadTools.clear();EditProject.Clip c=clip();EditProject.Overlay o=overlay();boolean any=c!=null||o!=null;
-        TextView delete=headerIcon("Delete","Delete selected layer",v->deleteSelection());dim(delete,any);timelineTools.addView(delete);
-        TextView undoButton=headerIcon("Undo","Undo",v->undo(false)),redoButton=headerIcon("Redo","Redo",v->undo(true));dim(undoButton,!undo.isEmpty());dim(redoButton,!redo.isEmpty());timelineTools.addView(undoButton);timelineTools.addView(redoButton);
-        timelineTools.addView(new View(this),new LinearLayout.LayoutParams(0,1,1));
+        boolean pointer=pointerToolbar();timelineTools.setGravity(Gravity.CENTER_VERTICAL);timelineTools.setPadding(dp(8),dp(pointer?2:2),dp(8),dp(2));
+        TextView delete=toolbarButton("Delete","Delete selected layer",v->deleteSelection(),pointer);dim(delete,any);toolbarAdd(delete,pointer,false,true);
+        TextView undoButton=toolbarButton("Undo","Undo",v->undo(false),pointer),redoButton=toolbarButton("Redo","Redo",v->undo(true),pointer);dim(undoButton,!undo.isEmpty());dim(redoButton,!redo.isEmpty());toolbarAdd(undoButton,pointer,false,false);toolbarAdd(redoButton,pointer,false,false);
         {String[] icons={"TrimStart","Split","TrimEnd"};String[] labels={"Trim Start","Split","Trim End"};int[] operations={0,1,2};
             boolean valid=any&&!selectionLocked()&&!uiLocked&&(c!=null?LayerOps.canSplitOrTrim(project,selected):project.playheadMs-o.startMs>=EditProject.MIN_CLIP_MS&&o.endMs-project.playheadMs>=EditProject.MIN_CLIP_MS);
-            for(int i=0;i<3;i++){final int op=operations[i];TextView b=headerIcon(icons[i],labels[i],v->panels.playheadEdit(op));dim(b,valid);playheadTools.add(b);timelineTools.addView(b);}}
-        timelineTools.addView(compactButton("−","Zoom out timeline",v->zoomTimeline(1/1.5f,Float.NaN)));
-        zoomSlider=null;
-        zoomRuler=new NumberRuler(this,"Timeline zoom, 0 to 10",0,10,.1f,()->10*Math.log(pixelsPerSecond/8)/Math.log(300),n->setTimelineZoom((float)(8*Math.pow(300,n/10))),()->{},()->{},()->{});
-        timelineTools.addView(zoomRuler,new LinearLayout.LayoutParams(dp(128),dp(48)));
-        zoomNumber=label("",12,TEXT,false);zoomNumber.setGravity(Gravity.CENTER);timelineTools.addView(zoomNumber,new LinearLayout.LayoutParams(dp(40),dp(48)));syncZoomSlider();
-        timelineTools.addView(compactButton("+","Zoom in timeline",v->zoomTimeline(1.5f,Float.NaN)));
-        TextView snap=headerIcon("Magnet","Snapping: "+(snapping?"on":"off"),v->{snapping=!snapping;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("snapping",snapping).apply();renderTimelineTools();});snap.setSelected(snapping);snap.setCompoundDrawables(icon("Magnet",snapping?CYAN:MUTED),null,null,null);timelineTools.addView(snap);
-        timelineTools.addView(headerIcon("Fit","Fit timeline",v->fitTimeline()));
-        TextView markers=headerIcon("Flag","Timeline markers (maximum five)",v->LandmarkControls.add(this,project.playheadMs));LandmarkControls.dragSource(this,markers);markers.setOnLongClickListener(v->{LandmarkControls.show(this);return true;});markerCount=markers;markers.setText(project.landmarks.size()+"/5");timelineTools.addView(markers);
+            for(int i=0;i<3;i++){final int op=operations[i];TextView b=toolbarButton(icons[i],labels[i],v->panels.playheadEdit(op),pointer);dim(b,valid);playheadTools.add(b);toolbarAdd(b,pointer,i==0,false);}}
+        TextView snap=toolbarButton("Magnet","Snapping: "+(snapping?"on":"off"),v->{snapping=!snapping;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("snapping",snapping).apply();renderTimelineTools();},pointer);snap.setSelected(snapping);
+        {V1Icon art=new V1Icon("Magnet",snapping?CYAN:MUTED);art.setBounds(0,0,dp(pointer?TOOLBAR_ICON:22),dp(pointer?TOOLBAR_ICON:22));snap.setCompoundDrawables(art,null,null,null);}toolbarAdd(snap,pointer,true,false);
+        toolbarAdd(toolbarButton("Fit","Fit timeline",v->fitTimeline(),pointer),pointer,false,false);
+        TextView markers=toolbarButton("Flag","Timeline markers (maximum five)",v->LandmarkControls.add(this,project.playheadMs),pointer);LandmarkControls.dragSource(this,markers);markers.setOnLongClickListener(v->{LandmarkControls.show(this);return true;});markerCount=markers;markers.setText(project.landmarks.size()+"/5");toolbarAdd(markers,pointer,false,false);
     }
-    NumberRuler zoomRuler;TextView zoomNumber;
-    void syncZoomSlider(){if(zoomRuler!=null)zoomRuler.invalidate();if(zoomNumber!=null)zoomNumber.setText(String.format(java.util.Locale.US,"%.1f",10*Math.log(pixelsPerSecond/8)/Math.log(300)));if(zoomSlider!=null)zoomSlider.setProgress((int)Math.round(1000*Math.log(pixelsPerSecond/8)/Math.log(300)));}
     static void dim(View v,boolean enabled){v.setEnabled(enabled);v.setAlpha(enabled?1f:.38f);}
     View transport(boolean singleRow) {
         // Time on the left, playback in the centre; Undo / Redo only where the top bar has none.
@@ -576,7 +592,7 @@ public final class EditorActivity extends Activity {
      * playhead when NaN) stays in place. */
     void zoomTimeline(float factor,float anchor){
         if(timeline==null||!Float.isFinite(factor)||factor<=0)return;float before=timeline.timelineScale();pixelsPerSecond=Math.max(8,Math.min(2400,pixelsPerSecond*factor));
-        timeline.zoomAround(before,anchor);syncZoomSlider();
+        timeline.zoomAround(before,anchor);
     }
     void setTimelineZoom(float value){zoomTimeline(value/pixelsPerSecond,Float.NaN);}
     /** Fit a time range while retaining the centered playhead and current preview frame. */
@@ -585,7 +601,7 @@ public final class EditorActivity extends Activity {
         float right=Math.max(dp(8),timeline.viewport()-timeline.pad()-dp(24));
         float before=Math.max(0,project.playheadMs-start)/1000f,after=Math.max(0,end-project.playheadMs)/1000f;
         float scale=Math.min(before>0?left/before:Float.POSITIVE_INFINITY,after>0?right/after:Float.POSITIVE_INFINITY);
-        pixelsPerSecond=Math.max(8,Math.min(2400,scale/dp(1)));timeline.requestLayout();timeline.reveal(start);syncZoomSlider();
+        pixelsPerSecond=Math.max(8,Math.min(2400,scale/dp(1)));timeline.requestLayout();timeline.reveal(start);
     }
     void fitTimeline(){if(timeline!=null&&project.durationMs()>0)fitTimelineRange(0,project.durationMs());}
     /** Zoom to Selection: frames the selected layers. */
