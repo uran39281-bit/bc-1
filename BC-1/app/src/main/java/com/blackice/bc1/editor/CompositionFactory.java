@@ -58,6 +58,7 @@ public final class CompositionFactory {
         int[] size=project.canvasSize(shortEdge);
         int w=size[0],h=size[1];
         List<EditProject.Placement> placements=project.placements(); long duration=project.durationMs();
+        ParentTransforms links=null;for(EditProject.Clip c:project.clips)if(ParentTransforms.linked(c))links=new ParentTransforms(project);for(EditProject.Overlay o:project.overlays)if(ParentTransforms.linked(o))links=new ParentTransforms(project);
         List<EditedMediaItemSequence> sequences=new ArrayList<>();
         List<List<EditProject.Placement>> videoInputs=new ArrayList<>();
         // Input zero is topmost. Explicit layers sit above the two alternating base streams.
@@ -84,7 +85,7 @@ public final class CompositionFactory {
                 EditProject.Clip previous=null;int ordinal=0;
                 if(c.track==0)for(EditProject.Placement candidate:placements){if(candidate.index==p.index)break;if(candidate.clip.track==0){previous=candidate.clip;ordinal++;}}
                 boolean renders=LayerOps.renders(project,c,preview);
-                List<Effect> effects=new ArrayList<>();if(!audioOnly){effects.add(Presentation.createForWidthAndHeight(w,h,Presentation.LAYOUT_SCALE_TO_FIT));effects.add(new ClipEffect(p,previous,ordinal%2==0,renders));if(frameDrop)effects.add(FrameDropEffect.createDefaultFrameDropEffect(project.frameRate));}
+                List<Effect> effects=new ArrayList<>();if(!audioOnly){effects.add(Presentation.createForWidthAndHeight(w,h,Presentation.LAYOUT_SCALE_TO_FIT));effects.add(new ClipEffect(p,previous,ordinal%2==0,renders).parents(links));if(frameDrop)effects.add(FrameDropEffect.createDefaultFrameDropEffect(project.frameRate));}
                 // Audio tracks honour mute; a hidden picture keeps its own sound (mute it with volume).
                 float volume=audioOnly&&!renders?-1:c.volume;
                 // Pictures carry no sound, so their (silent) audio path is left untouched.
@@ -118,7 +119,7 @@ public final class CompositionFactory {
         }
         List<Effect> finalEffects=new ArrayList<>();
         List<EditProject.Overlay> overlays=new ArrayList<>();for(EditProject.Overlay o:project.overlays)if(LayerOps.renders(project,o,preview))overlays.add(o);
-        if(!overlays.isEmpty()) finalEffects.add(new OverlayEffect(ImmutableList.of(new ProjectOverlay(context,overlays))));
+        if(!overlays.isEmpty()) finalEffects.add(new OverlayEffect(ImmutableList.of(new ProjectOverlay(context,overlays,links))));
         finalEffects.add(Presentation.createForWidthAndHeight(w,h,Presentation.LAYOUT_SCALE_TO_FIT));
         if(frameDrop)finalEffects.add(FrameDropEffect.createDefaultFrameDropEffect(project.frameRate));
         Composition.Builder composition=new Composition.Builder(sequences)
@@ -176,20 +177,21 @@ public final class CompositionFactory {
         private Bitmap bitmap;
         private int[] straightPixels;
         private int width,height,activeMask=-1;
-        ProjectOverlay(Context context,List<EditProject.Overlay> overlays) { painter=new OverlayPainter(context);this.overlays=overlays; }
+        private final ParentTransforms parents;
+        ProjectOverlay(Context context,List<EditProject.Overlay> overlays,ParentTransforms parents) { painter=new OverlayPainter(context);this.overlays=overlays;this.parents=parents; }
         @Override public void configure(Size size) {super.configure(size);width=size.getWidth();height=size.getHeight();}
         @Override public Bitmap getBitmap(long timeUs) throws VideoFrameProcessingException {
             int mask=0; for(int i=0;i<overlays.size();i++) {EditProject.Overlay o=overlays.get(i); if(timeUs/1000>=o.startMs && timeUs/1000<o.endMs) mask|=1<<i;}
             if(bitmap==null || bitmap.getWidth()!=width || bitmap.getHeight()!=height) {
                 if(bitmap!=null) bitmap.recycle(); bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);straightPixels=new int[width*height];activeMask=-1;
             }
-            boolean animated=false;for(EditProject.Overlay o:overlays)animated|=(o.motion.animated()||o.fill!=null&&o.fill.animated());
+            boolean animated=false;for(EditProject.Overlay o:overlays)animated|=(o.motion.animated()||o.fill!=null&&o.fill.animated()||parents!=null&&ParentTransforms.linked(o));
             if(activeMask==mask&&!animated) return bitmap;
             bitmap.setPremultiplied(true);bitmap.eraseColor(Color.TRANSPARENT); Canvas canvas=new Canvas(bitmap);
             try {
                 for(int i=0;i<overlays.size();i++) if((mask&(1<<i))!=0) {
                     EditProject.Overlay o=overlays.get(i);long local=Math.max(0,timeUs/1000-o.startMs);
-                    painter.draw(canvas,width,height,o,local);
+                    painter.draw(canvas,width,height,o,local,parents!=null&&ParentTransforms.linked(o)?parents.effective(o,timeUs/1000):null);
                 }
             } catch(java.io.IOException e) {throw new VideoFrameProcessingException(e);}
             // Canvas stores premultiplied RGB; Media3 OverlayEffect multiplies sampled RGB by

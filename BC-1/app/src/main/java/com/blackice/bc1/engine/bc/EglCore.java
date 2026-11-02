@@ -16,6 +16,32 @@ final class EglCore implements AutoCloseable {
     private EGLSurface surface = EGL14.EGL_NO_SURFACE;
     private EGLConfig config;
 
+    /** A context on a tiny pbuffer, for rendering into framebuffers and reading the pixels back (no window). */
+    static EglCore offscreen() { return new EglCore(); }
+
+    private EglCore() {
+        display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
+        if (display == EGL14.EGL_NO_DISPLAY) throw new IllegalStateException("No EGL display");
+        int[] version = new int[2];
+        if (!EGL14.eglInitialize(display, version, 0, version, 1)) throw new IllegalStateException("EGL initialisation failed");
+        int[] attributes = {
+                EGL14.EGL_RED_SIZE, 8, EGL14.EGL_GREEN_SIZE, 8, EGL14.EGL_BLUE_SIZE, 8, EGL14.EGL_ALPHA_SIZE, 8,
+                EGL14.EGL_RENDERABLE_TYPE, EGLExt.EGL_OPENGL_ES3_BIT_KHR,
+                EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT,
+                EGL14.EGL_NONE};
+        EGLConfig[] configs = new EGLConfig[1];
+        int[] count = new int[1];
+        if (!EGL14.eglChooseConfig(display, attributes, 0, configs, 0, 1, count, 0) || count[0] < 1)
+            throw new IllegalStateException("No offscreen GLES 3 EGL config");
+        context = EGL14.eglCreateContext(display, configs[0], EGL14.EGL_NO_CONTEXT,
+                new int[]{EGL14.EGL_CONTEXT_CLIENT_VERSION, 3, EGL14.EGL_NONE}, 0);
+        check("eglCreateContext");
+        config = configs[0];
+        surface = EGL14.eglCreatePbufferSurface(display, configs[0], new int[]{EGL14.EGL_WIDTH, 1, EGL14.EGL_HEIGHT, 1, EGL14.EGL_NONE}, 0);
+        check("eglCreatePbufferSurface");
+        if (!EGL14.eglMakeCurrent(display, surface, surface, context)) throw new IllegalStateException("eglMakeCurrent failed");
+    }
+
     EglCore(Surface window) {
         display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
         if (display == EGL14.EGL_NO_DISPLAY) throw new IllegalStateException("No EGL display");

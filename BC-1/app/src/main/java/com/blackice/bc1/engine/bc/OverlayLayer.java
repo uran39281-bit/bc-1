@@ -22,13 +22,15 @@ final class OverlayLayer {
         texture = GlKit.texture2d();
         GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, bitmap, 0);
     }
-    int texture(List<EditProject.Overlay> active, long timeMs) throws Exception {
+    int texture(List<EditProject.Overlay> active, long timeMs) throws Exception { return texture(active, timeMs, null); }
+    /** {@code plan} supplies Joint Movement poses; a linked layer repaints every frame because its parent may be animated. */
+    int texture(List<EditProject.Overlay> active, long timeMs, com.blackice.bc1.core.RenderPlan plan) throws Exception {
         boolean animated = false;
-        for (EditProject.Overlay o : active) animated |= (o.motion.animated()||o.fill!=null&&o.fill.animated());
+        for (EditProject.Overlay o : active) animated |= (o.motion.animated()||o.fill!=null&&o.fill.animated()||plan != null && plan.overlayPose(o, timeMs) != null);
         if (animated || !active.equals(shown)) {
             bitmap.eraseColor(Color.TRANSPARENT);
             Canvas canvas = new Canvas(bitmap);
-            for (EditProject.Overlay o : active) painter.draw(canvas, bitmap.getWidth(), bitmap.getHeight(), o, Math.max(0, timeMs - o.startMs));
+            for (EditProject.Overlay o : active) painter.draw(canvas, bitmap.getWidth(), bitmap.getHeight(), o, Math.max(0, timeMs - o.startMs), plan == null ? null : plan.overlayPose(o, timeMs));
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture);
             GLUtils.texSubImage2D(GLES30.GL_TEXTURE_2D, 0, 0, 0, bitmap);
             shown = active;

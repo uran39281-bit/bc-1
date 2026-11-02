@@ -158,3 +158,12 @@ for engine in ice media3; do
  ffmpeg -v error -xerror -i "BC-1/app/build/reports/androidTests/qa/v145-framing-${engine}.mp4" -f null -
  echo "Independent recovered framing/easing decode passed: ${engine}"
 done
+
+# Reverse: frames run backwards (checked in the instrumentation test) and the 0.2 s tone that opens the source must
+# now close the reversed file.
+REVERSED_MP4="BC-1/app/build/reports/androidTests/qa/v150-reversed.mp4"
+ffmpeg -v error -xerror -i "$REVERSED_MP4" -f null -
+head_db=$(ffmpeg -hide_banner -ss 0 -t 0.3 -i "$REVERSED_MP4" -vn -af volumedetect -f null - 2>&1 | sed -n 's/.*max_volume: \(-\?[0-9.]*\) dB.*/\1/p' | tail -1)
+tail_db=$(ffmpeg -hide_banner -ss 1.7 -t 0.3 -i "$REVERSED_MP4" -vn -af volumedetect -f null - 2>&1 | sed -n 's/.*max_volume: \(-\?[0-9.]*\) dB.*/\1/p' | tail -1)
+echo "reversed audio: first 0.3 s max ${head_db} dB, last 0.3 s max ${tail_db} dB"
+python3 -c "import sys; h=float('${head_db:--91}'); t=float('${tail_db:--91}'); sys.exit(0 if t > h + 20 else 1)" || { echo "Reversed audio is not reversed"; exit 1; }

@@ -255,7 +255,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
         GLES30.glFinish();
         long tDraw = System.nanoTime();
         List<EditProject.Overlay> active = plan.overlaysAt(time);
-        if (!active.isEmpty()) compositor.drawOverlay(overlays.texture(active, time));
+        if (!active.isEmpty()) compositor.drawOverlay(overlays.texture(active, time, plan));
         int[] displaySize=egl.windowSize();
         compositor.presentPreview(displaySize[0],displaySize[1]);
         egl.swap();

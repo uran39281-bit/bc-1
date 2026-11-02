@@ -75,6 +75,10 @@ public final class EditProject {
     public static final class Clip {
         public com.blackice.bc1.audio.AudioSettings audio=new com.blackice.bc1.audio.AudioSettings();
         public String id = UUID.randomUUID().toString(), uri, name;
+        /** Joint Movement: stable id of the visual parent layer, and the 2D attachment offset {a,b,c,d,tx,ty}; see ParentTransforms. */
+        public String parentId; public float[] attach;
+        /** Reverse: while reversed, uri/in/out point into a derived reversed file and the forward source is kept here; see ReverseOps. */
+        public boolean reversed; public String forwardUri, forwardName; public long forwardSourceDurationMs, reverseBaseMs, reverseSpanMs;
         public boolean image, audioOnly;
         public int track; public long startMs,fadeInMs,fadeOutMs;
         /** Main sequence only: empty time before this clip. A gap also suppresses the transition into it. */
@@ -104,12 +108,14 @@ public final class EditProject {
             c.sourceDurationMs=sourceDurationMs; c.inMs=inMs; c.outMs=outMs;
             c.effect=effect; c.transition=transition; c.easing=easing; c.blend=blend;
             c.intensity=intensity; c.opacity=opacity; c.volume=volume;c.unmutedVolume=unmutedVolume; c.transitionMs=transitionMs;c.speed=speed;
-            return c;
+            c.parentId=parentId;c.attach=attach==null?null:attach.clone();c.reversed=reversed;c.forwardUri=forwardUri;c.forwardName=forwardName;c.forwardSourceDurationMs=forwardSourceDurationMs;c.reverseBaseMs=reverseBaseMs;c.reverseSpanMs=reverseSpanMs;return c;
         }
     }
     public static final class Overlay {
         public String visualizerClipId;public int visualizerStyle;
         public String id = UUID.randomUUID().toString(), text = "BLACK ICE", imageUri;
+        /** Joint Movement: stable id of the visual parent layer, and the 2D attachment offset {a,b,c,d,tx,ty}; see ParentTransforms. */
+        public String parentId; public float[] attach;
         public long startMs, endMs = 3000;
         public float x=0, y=-.65f, scale=.7f, opacity=1f; public Motion motion=new Motion();
         public FillStyle fill;
@@ -121,7 +127,7 @@ public final class EditProject {
         public float heightScale=-1;
         public float rotation, aspect=1, skewX, skewY, anchorX, anchorY, borderWidth, shadow;
         public int borderColor=0xFF000000, blend;
-        public Overlay copy(){Overlay o=new Overlay();o.visualizerClipId=visualizerClipId;o.visualizerStyle=visualizerStyle;o.text=text;o.imageUri=imageUri;o.startMs=startMs;o.endMs=endMs;o.x=x;o.y=y;o.scale=scale;o.opacity=opacity;o.motion=motion.copy();o.font=font;o.color=color;o.fill=fill==null?null:fill.copy();o.alignment=alignment;o.shape=shape;o.name=name;o.group=group;o.hidden=hidden;o.solo=solo;o.locked=locked;o.flipH=flipH;o.flipV=flipV;o.rotation=rotation;o.heightScale=heightScale;o.aspect=aspect;o.skewX=skewX;o.skewY=skewY;o.anchorX=anchorX;o.anchorY=anchorY;o.borderWidth=borderWidth;o.shadow=shadow;o.borderColor=borderColor;o.blend=blend;return o;}
+        public Overlay copy(){Overlay o=new Overlay();o.visualizerClipId=visualizerClipId;o.visualizerStyle=visualizerStyle;o.text=text;o.imageUri=imageUri;o.startMs=startMs;o.endMs=endMs;o.x=x;o.y=y;o.scale=scale;o.opacity=opacity;o.motion=motion.copy();o.font=font;o.color=color;o.fill=fill==null?null:fill.copy();o.alignment=alignment;o.shape=shape;o.name=name;o.group=group;o.hidden=hidden;o.solo=solo;o.locked=locked;o.flipH=flipH;o.flipV=flipV;o.rotation=rotation;o.heightScale=heightScale;o.aspect=aspect;o.skewX=skewX;o.skewY=skewY;o.anchorX=anchorX;o.anchorY=anchorY;o.borderWidth=borderWidth;o.shadow=shadow;o.borderColor=borderColor;o.blend=blend;o.parentId=parentId;o.attach=attach==null?null:attach.clone();return o;}
         public String label(){if(visualizerClipId!=null)return "Audio visualizer (disabled)";if(name!=null&&!name.isEmpty())return name;if(imageUri!=null)return "Image";if(shape>0)return SHAPES[shape];return text;}
     }
     public static final String[] SHAPES={"Text","Square","Circle","Triangle","Line","Cross","Arc","Speech bubble","Pie","Hexagon","Flower","Diagonal arrow","Trapezoid","Half moon","Rectangle","Star","Thick line","Polygon","Decorative rectangle","Oval","Diamond","Octagon","Rhombus","Heart","Half circle","Arrow","Three-leaf clover","Monkey head"};
@@ -212,6 +218,7 @@ public final class EditProject {
         if(frameRate!=24&&frameRate!=25&&frameRate!=30&&frameRate!=50&&frameRate!=60&&frameRate!=120) throw new IllegalArgumentException("Use 24, 25, 30, 50, 60 or 120 fps.");
         for(Track t:tracks) if(t==null||t.name==null||t.name.isEmpty()||t.name.length()>60) throw new IllegalArgumentException("Every layer needs a name of up to 60 characters.");
         if(landmarks.size()>5)throw new IllegalArgumentException("Five markers maximum.");
+        ParentTransforms.check(this);
         java.util.HashSet<Integer> slots=new java.util.HashSet<>();
         for(Landmark m:landmarks)if(m.timeMs<0||m.slot<0||m.slot>=5||!slots.add(m.slot)||m.label==null||m.label.length()>80)throw new IllegalArgumentException("Invalid landmark.");
         if(markers.size()>500) throw new IllegalArgumentException("Use at most 500 markers.");

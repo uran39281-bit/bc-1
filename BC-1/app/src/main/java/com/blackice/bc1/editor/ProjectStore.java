@@ -125,7 +125,7 @@ public final class ProjectStore {
         j.put("tracks",tracks); JSONArray markers=new JSONArray(); for(long m:p.markers) markers.put(m); j.put("markers",markers);
         JSONArray landmarks=new JSONArray();for(EditProject.Landmark m:p.landmarks)landmarks.put(new JSONObject().put("id",m.id).put("label",m.label).put("time",m.timeMs).put("slot",m.slot));j.put("landmarks",landmarks);
         JSONArray clips=new JSONArray();
-        for(EditProject.Clip c:p.clips) clips.put(new JSONObject().put("id",c.id).put("uri",c.uri).put("name",c.name)
+        for(EditProject.Clip c:p.clips) clips.put(link(new JSONObject().put("id",c.id).put("uri",c.uri).put("name",c.name)
                 .put("audio",c.audio.json()).put("audioOnly",c.audioOnly).put("image",c.image).put("sourceDurationMs",c.sourceDurationMs).put("inMs",c.inMs).put("outMs",c.outMs)
                 .put("effect",c.effect).put("intensity",c.intensity).put("opacity",c.opacity).put("volume",c.volume).put("unmutedVolume",c.unmutedVolume).put("speed",c.speed)
                 .put("track",c.track).put("startMs",c.startMs).put("gapMs",c.gapMs).put("fadeInMs",c.fadeInMs).put("fadeOutMs",c.fadeOutMs)
@@ -133,17 +133,17 @@ public final class ProjectStore {
                 .put("chroma",c.chroma).put("keyColor",c.keyColor).put("keyTolerance",c.keyTolerance).put("keySoftness",c.keySoftness).put("keySpill",c.keySpill)
                 .put("transition",c.transition).put("transitionMs",c.transitionMs).put("easing",c.easing).put("blend",c.blend)
                 .put("heightScale",c.heightScale).put("aspect",c.aspect).put("skewX",c.skewX).put("skewY",c.skewY).put("anchorX",c.anchorX).put("anchorY",c.anchorY)
-                .put("flipH",c.flipH).put("flipV",c.flipV).put("width",c.width).put("height",c.height).put("group",c.group));
+                .put("flipH",c.flipH).put("flipV",c.flipV).put("width",c.width).put("height",c.height).put("group",c.group),c.parentId,c.attach).put("reversed",c.reversed?true:null).put("forwardUri",c.reversed?c.forwardUri:null).put("forwardName",c.reversed?c.forwardName:null).put("forwardSourceDurationMs",c.reversed?c.forwardSourceDurationMs:null).put("reverseBaseMs",c.reversed?c.reverseBaseMs:null).put("reverseSpanMs",c.reversed?c.reverseSpanMs:null));
         j.put("clips",clips); JSONArray library=new JSONArray();
         for(EditProject.Clip a:p.library) library.put(new JSONObject().put("id",a.id).put("uri",a.uri).put("name",a.name).put("image",a.image).put("audioOnly",a.audioOnly)
                 .put("sourceDurationMs",a.sourceDurationMs).put("inMs",a.inMs).put("outMs",a.outMs).put("width",a.width).put("height",a.height));
         j.put("library",library); JSONArray overlays=new JSONArray();
-        for(EditProject.Overlay o:p.overlays) overlays.put(new JSONObject().put("id",o.id).put("text",o.text)
+        for(EditProject.Overlay o:p.overlays) overlays.put(link(new JSONObject().put("id",o.id).put("text",o.text)
                 .put("visualizerClipId",o.visualizerClipId).put("visualizerStyle",o.visualizerStyle).put("motion",motion(o.motion)).put("imageUri",o.imageUri).put("startMs",o.startMs).put("endMs",o.endMs)
                 .put("x",o.x).put("y",o.y).put("scale",o.scale).put("opacity",o.opacity).put("font",o.font).put("color",o.color).put("fill",o.fill==null?null:o.fill.json()).put("alignment",o.alignment)
                 .put("shape",o.shape).put("name",o.name).put("group",o.group).put("hidden",o.hidden).put("solo",o.solo).put("locked",o.locked)
                 .put("flipH",o.flipH).put("flipV",o.flipV).put("rotation",o.rotation).put("heightScale",o.heightScale).put("aspect",o.aspect).put("skewX",o.skewX).put("skewY",o.skewY)
-                .put("anchorX",o.anchorX).put("anchorY",o.anchorY).put("borderWidth",o.borderWidth).put("shadow",o.shadow).put("borderColor",o.borderColor).put("blend",o.blend));
+                .put("anchorX",o.anchorX).put("anchorY",o.anchorY).put("borderWidth",o.borderWidth).put("shadow",o.shadow).put("borderColor",o.borderColor).put("blend",o.blend),o.parentId,o.attach));
         j.put("overlays",overlays);
         if(p.music!=null) { EditProject.Music m=p.music;
             j.put("music",new JSONObject().put("uri",m.uri).put("name",m.name).put("sourceDurationMs",m.sourceDurationMs)
@@ -176,7 +176,7 @@ public final class ProjectStore {
             c.effect=v.getInt("effect"); c.intensity=(float)v.getDouble("intensity"); c.opacity=(float)v.getDouble("opacity");
             c.volume=(float)v.getDouble("volume");c.unmutedVolume=(float)v.optDouble("unmutedVolume",-1);c.speed=(float)v.optDouble("speed",1); c.transition=v.getInt("transition"); c.transitionMs=v.getLong("transitionMs"); c.easing=v.getInt("easing");c.blend=v.optInt("blend",0);
             c.heightScale=(float)v.optDouble("heightScale",-1); c.aspect=(float)v.optDouble("aspect",1); c.skewX=(float)v.optDouble("skewX",0); c.skewY=(float)v.optDouble("skewY",0); c.anchorX=(float)v.optDouble("anchorX",0); c.anchorY=(float)v.optDouble("anchorY",0);
-            c.flipH=v.optBoolean("flipH"); c.flipV=v.optBoolean("flipV"); c.width=v.optInt("width",0); c.height=v.optInt("height",0); c.group=v.isNull("group")?null:v.optString("group",null); p.clips.add(c); }
+            c.flipH=v.optBoolean("flipH"); c.flipV=v.optBoolean("flipV"); c.width=v.optInt("width",0); c.height=v.optInt("height",0); c.group=v.isNull("group")?null:v.optString("group",null);c.parentId=v.isNull("parentId")?null:v.optString("parentId",null);c.attach=attach(v.optJSONArray("attach"));c.reversed=v.optBoolean("reversed")&&v.has("forwardUri");if(c.reversed){c.forwardUri=v.optString("forwardUri",null);c.forwardName=v.optString("forwardName",c.name);c.forwardSourceDurationMs=v.optLong("forwardSourceDurationMs",c.sourceDurationMs);c.reverseBaseMs=v.optLong("reverseBaseMs",0);c.reverseSpanMs=v.optLong("reverseSpanMs",c.outMs-c.inMs);} p.clips.add(c); }
         // The media bin is optional: older files rebuild it from their timeline sources.
         JSONArray library=j.optJSONArray("library");
         if(library!=null) for(int i=0;i<library.length();i++) { JSONObject v=library.getJSONObject(i); EditProject.Clip a=new EditProject.Clip();
@@ -193,15 +193,26 @@ public final class ProjectStore {
             o.hidden=v.optBoolean("hidden"); o.solo=v.optBoolean("solo"); o.locked=v.optBoolean("locked"); o.flipH=v.optBoolean("flipH"); o.flipV=v.optBoolean("flipV");
             o.rotation=(float)v.optDouble("rotation",0); o.heightScale=(float)v.optDouble("heightScale",-1); o.aspect=(float)v.optDouble("aspect",1); o.skewX=(float)v.optDouble("skewX",0); o.skewY=(float)v.optDouble("skewY",0);
             o.anchorX=(float)v.optDouble("anchorX",0); o.anchorY=(float)v.optDouble("anchorY",0); o.borderWidth=(float)v.optDouble("borderWidth",0); o.shadow=(float)v.optDouble("shadow",0);
-            o.borderColor=v.optInt("borderColor",0xFF000000); o.blend=v.optInt("blend",0); p.overlays.add(o); }
+            o.borderColor=v.optInt("borderColor",0xFF000000); o.blend=v.optInt("blend",0);o.parentId=v.isNull("parentId")?null:v.optString("parentId",null);o.attach=attach(v.optJSONArray("attach")); p.overlays.add(o); }
         if(j.has("music")) { JSONObject v=j.getJSONObject("music"); EditProject.Music m=new EditProject.Music();
             m.uri=v.getString("uri"); m.name=v.getString("name"); m.sourceDurationMs=v.getLong("sourceDurationMs");
             m.inMs=v.getLong("inMs"); m.outMs=v.getLong("outMs"); m.startMs=v.getLong("startMs");
             m.volume=(float)v.getDouble("volume"); m.loop=v.getBoolean("loop"); p.music=m; }
-        p.validate(); return p;
+        ParentTransforms.sanitize(p); p.validate(); return p;
     }
     private static JSONArray motion(Motion m)throws JSONException{JSONArray all=new JSONArray();for(java.util.List<Motion.Key> curve:m.curves){JSONArray keys=new JSONArray();for(Motion.Key k:curve)keys.put(new JSONArray().put(k.timeMs).put(k.value).put(k.x1).put(k.y1).put(k.x2).put(k.y2).put(k.id).put(k.easingToNext));all.put(keys);}return all;}
     private static Motion motion(JSONArray all)throws JSONException{Motion m=new Motion();if(all==null)return m;if(all.length()!=6&&all.length()!=10&&all.length()!=11&&all.length()!=Motion.COUNT)throw new JSONException("Invalid motion channels");for(int p=0;p<all.length();p++){JSONArray keys=all.getJSONArray(p);for(int i=0;i<keys.length();i++){JSONArray a=keys.getJSONArray(i);Motion.Key k=new Motion.Key(a.getLong(0),(float)a.getDouble(1));k.id=a.optString(6,"legacy-"+p+"-"+i+"-"+k.timeMs);k.easingToNext=a.optInt(7,-1);k.x1=(float)a.getDouble(2);k.y1=(float)a.getDouble(3);k.x2=(float)a.getDouble(4);k.y2=(float)a.getDouble(5);m.curves.get(p).add(k);}}return m;}
+    /** Optional Joint Movement fields: omitted entirely for layers that have no relationship, so old projects are byte-identical. */
+    private static JSONObject link(JSONObject layer,String parentId,float[] attach)throws JSONException{
+        if(parentId!=null)layer.put("parentId",parentId);
+        if(attach!=null){JSONArray values=new JSONArray();for(float v:attach)values.put((double)v);layer.put("attach",values);}
+        return layer;
+    }
+    private static float[] attach(JSONArray values){
+        if(values==null||values.length()!=6)return null;
+        float[] out=new float[6];for(int i=0;i<6;i++)out[i]=(float)values.optDouble(i,Double.NaN);
+        return out;
+    }
     public static EditProject snapshot(EditProject p) {
         p.ensureLibrary();p.validate();return p.copy();
     }

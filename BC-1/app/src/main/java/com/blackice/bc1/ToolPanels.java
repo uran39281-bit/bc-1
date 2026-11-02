@@ -25,7 +25,7 @@ final class ToolPanels {
 
     private String selectionKey(){return a.selected+":"+a.selectedOverlay+":"+a.tab;}
     /** Move & Transform, Blending & Opacity and Effects draw their own Back and title row. */
-    static boolean drawsOwnHeader(String title){return "Move & Transform".equals(title)||"Blending & Opacity".equals(title)||"Effects".equals(title);}
+    static boolean drawsOwnHeader(String title){return "Move & Transform".equals(title)||"Blending & Opacity".equals(title)||"Effects".equals(title)||LayerToolsPanel.TITLE.equals(title);}
     /** Opens a focused panel; the previous one is kept for Back. */
     void open(String title,Runnable build){if(current!=null)stack.push(current);current=new Panel(title,build);owner=selectionKey();a.renderInspector();}
     void back(){current=stack.isEmpty()?null:stack.pop();a.renderInspector();}
@@ -86,6 +86,10 @@ final class ToolPanels {
         String[] names={"Move & Transform","Blending & Opacity","Effects",shape?"Shape & Style":"Audio"};
         String[] icons={"Transform","Blending & Opacity","Effects",shape?"Shapes":"Volume"};
         for(int row=0;row<2;row++){LinearLayout line=a.row();into.addView(line);for(int col=0;col<2;col++){int index=row*2+col;MediaTile tile=new MediaTile(a,names[index],icons[index]);tile.setOnClickListener(v->{if(index==3){if(shape)open("Shape & Style",this::shapePanel);else open("Audio",this::audioPanel);}else category(names[index]);});tile.setContentDescription("Media Settings: "+names[index]);tile.setTooltipText(names[index]);EditorActivity.dim(tile,editable&&(index==3||visual));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,-2,1);lp.setMargins(a.dp(3),a.dp(5),a.dp(3),a.dp(5));line.addView(tile,lp);}}
+        LinearLayout layerRow=a.row();into.addView(layerRow);
+        MediaTile layerTools=new MediaTile(a,LayerToolsPanel.TITLE,"Layers");layerTools.setOnClickListener(v->a.layerTools.open());layerTools.setContentDescription("Media Settings: "+LayerToolsPanel.TITLE);layerTools.setTooltipText(LayerToolsPanel.TITLE);EditorActivity.dim(layerTools,editable);
+        LinearLayout.LayoutParams layerLp=new LinearLayout.LayoutParams(0,-2,1);layerLp.setMargins(a.dp(3),a.dp(5),a.dp(3),a.dp(5));layerRow.addView(layerTools,layerLp);
+        View filler=new View(a);LinearLayout.LayoutParams fillerLp=new LinearLayout.LayoutParams(0,1,1);fillerLp.setMargins(a.dp(3),a.dp(5),a.dp(3),a.dp(5));layerRow.addView(filler,fillerLp);
     }
 
     private void audioPanel(){
@@ -180,6 +184,7 @@ final class ToolPanels {
     }
     void category(String name){
         switch(name){
+            case "Layer Tools":a.layerTools.open();return;
             case "Move & Transform":open(name,()->a.transformPanel.build(a.inspector));return;
             case "Color & Fill":open(name,this::colorPanel);return;
             case "Border & Shadow":open(name,this::borderPanel);return;
@@ -289,12 +294,13 @@ final class ToolPanels {
         for(int i=0;i<4;i++){final long delta=deltas[i];TextView b=a.button(names[i],v->{if(a.layerEditable())a.edit("Source segment slipped",()->TimelineEdits.slip(a.project,a.selected,c.inMs+Math.round(delta*c.speed)));});b.setTextSize(11);row.addView(b,new LinearLayout.LayoutParams(0,a.dp(48),1));}
         a.inspector.addView(row);
     }
-    private void speedPanel(){
+    private void speedPanel(){speedControls();a.inspector.addView(a.note("Speed changes timing explicitly, so the clip may extend past its earlier length. Audio and video stay synchronized."));}
+    /** The rate ruler and quick rates, shared by the Speed tool and Layer Tools → Speed. */
+    void speedControls(){
         EditProject.Clip c=a.clip();if(c==null)return;
         valueRow("Speed",c.speed,.25f,4,1,1,"×",v->TimelineEdits.speed(a.project,a.selected,Math.round(v*100)/100f),null,0,1);
         LinearLayout row=a.row();for(float s:new float[]{.5f,1,1.5f,2}){TextView b=a.button(trimZero(s)+"×",v->commit("Speed",s,x->TimelineEdits.speed(a.project,a.selected,x)));row.addView(b,new LinearLayout.LayoutParams(0,a.dp(48),1));}
         a.inspector.addView(row);
-        a.inspector.addView(a.note("Speed changes timing explicitly, so the clip may extend past its earlier length. Audio and video stay synchronized."));
     }
     private void fadePanel(boolean in){
         EditProject.Clip c=a.clip();if(c==null)return;long max=c.durationMs();
