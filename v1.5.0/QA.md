@@ -2,7 +2,7 @@
 
 Version **1.5.0**, build **44**, package **com.blackice.bc1.preview**.
 
-> **Status: source qualified and retained-key signed; publication and the upgrade gate are pending.**
+> **Status: upgrade verified. The retained-key signed APK is published with this record.** Signed Preview 1.4.9 build 43 was upgraded in place to 1.5.0 build 44; the fixture, edits, saved effect, custom and legacy easing curves and original media were preserved.
 
 ## Qualified source and checks
 
@@ -40,9 +40,9 @@ The earlier LayerTools reverse-restore and four-versus-five Media Settings card 
 
 ## Installation and upgrade gate
 
-Once published, install over **Black Ice Editor Preview 1.4.9** without uninstalling or clearing data. The separate Integration app remains separate.
+Install over **Black Ice Editor Preview 1.4.9** without uninstalling or clearing data. The separate Integration app remains separate.
 
-The publication workflow first installs retained-key 1.4.9 build 43, saves a fixture and installs this signed 1.5.0 build 44 APK with `adb install -r`. It must preserve original media bytes, trims, transforms, effects, shapes, and custom/legacy easing keys. Publication is pending until the upgrade result is recorded.
+The publication workflow first installs retained-key 1.4.9 build 43, saves a fixture and installs this signed 1.5.0 build 44 APK with `adb install -r`. It must preserve original media bytes, trims, transforms, effects, shapes, and custom/legacy easing keys. [Publication run 41452462412](https://github.com/uran39281-bit/bc-1/actions/runs/41452462412) passed. [Upgrade evidence](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.5.0/upgrade-verification.json) confirms the fixture and original media were preserved.
 
 ## Actual screenshots
 
@@ -57,10 +57,12 @@ Captures are from the passing 1.5.0 CI attempt. `v147-` filenames and the “1.4
 
 ## Limits and integrity
 
+Reverse is limited to 3,600 frames per operation (about two minutes at 30 fps). A reversed clip's own keys before its trimmed start are dropped. Splitting a parent leaves children following the left half; duplicating a parent does not duplicate its children. The upgrade fixture proves older projects survive but does not exercise every newly introduced relationship/reverse combination.
+
 Physical Samsung/DeX performance and a full accessibility audit remain pending. Screenshot review is not pixel-perfect certification. New 9:16 canvas creation remains paused, while existing projects remain supported. One effect per clip; no effect stacking. The first-attempt failures and lint warnings above remain recorded limitations.
 
 APK SHA-256: `f1f1552c2e9fd1b9a06a3c61dbd7b887a2e9e7cf976543d8f84e95023c5c7436`.
 
 Certificate SHA-256: `3c578586198b9ebadd9496d38e25851ec0e90d918684dc4994e03d1d7f29a29d`.
 
-[Checksums](SHA256SUMS.txt) · [Changelog](../docs/CHANGELOG-v1.5.0.md)
+[Download APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.5.0/Black-Ice-Editor-v1.5.0-Preview-build44.apk) · [Checksums](SHA256SUMS.txt) · [Changelog](../docs/CHANGELOG-v1.5.0.md)
