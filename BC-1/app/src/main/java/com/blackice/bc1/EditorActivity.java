@@ -1371,6 +1371,11 @@ public final class EditorActivity extends Activity {
         if(key==KeyEvent.KEYCODE_BACK&&fullscreenPreview){fullscreenPreview=false;buildWorkspace();return true;}
         if(key==KeyEvent.KEYCODE_BACK&&panels.showing()){panels.back();return true;}
         if(key==KeyEvent.KEYCODE_BACK&&(clip()!=null||overlay()!=null)){deselect();return true;}
+        // Inspector rebuilds can replace the focused View during key dispatch. Route the focused
+        // trackpad's arrows before global frame-stepping shortcuts, including the fallback path.
+        if(getCurrentFocus() instanceof com.blackice.bc1.menu.PositionTrackpadView&&
+                (key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT||key==KeyEvent.KEYCODE_DPAD_UP||key==KeyEvent.KEYCODE_DPAD_DOWN))
+            return ((com.blackice.bc1.menu.PositionTrackpadView)getCurrentFocus()).onKeyDown(key,event);
         if(getCurrentFocus() instanceof EditText)return super.onKeyDown(key,event);
         if(Shortcuts.dispatch(this,event))return true;
         return super.onKeyDown(key,event);

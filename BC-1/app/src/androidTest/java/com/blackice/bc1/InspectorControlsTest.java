@@ -41,11 +41,11 @@ public class InspectorControlsTest {
 
  @Test public void sliderAndTrackpadKeyboardUseTheRealPositionAndRespectLocks()throws Exception{
   clearPreference();try{new Workspace144Test().fixture();try(ActivityScenario<EditorActivity> scene=ActivityScenario.launch(EditorActivity.class)){h.waitLoaded(scene);
-   scene.onActivity(a->{open(a,false);float beforeX=x(a),beforeY=y(a);int undo=a.undo.size();PositionTrackpadView pad=pad(a);assertTrue("Trackpad accepts keyboard focus in touch mode",pad.requestFocus());
+   scene.onActivity(a->{open(a,false);float beforeX=x(a),beforeY=y(a);int undo=a.undo.size();long playhead=a.project.playheadMs;PositionTrackpadView pad=pad(a);assertTrue("Trackpad accepts keyboard focus in touch mode",pad.requestFocus());
     a.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_DPAD_RIGHT));
     assertTrue("Trackpad keeps keyboard focus after commit",pad(a).hasFocus());
     a.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_DPAD_RIGHT));
-    assertEquals(beforeX+4f/a.exportSize()[0],x(a),1e-6);assertEquals(beforeY,y(a),0);assertEquals(undo+2,a.undo.size());a.undo(false);a.undo(false);
+    assertEquals("Arrow keys never seek the timeline while the trackpad is focused",playhead,a.project.playheadMs);assertEquals(beforeX+4f/a.exportSize()[0],x(a),1e-6);assertEquals(beforeY,y(a),0);assertEquals(undo+2,a.undo.size());a.undo(false);a.undo(false);
     mode(a,"Slider");SeekBar slider=(SeekBar)WorkspaceV2Test.described(a.inspector,"X slider");assertNotNull(slider);slider.layout(0,0,a.dp(280),a.dp(48));long t=android.os.SystemClock.uptimeMillis();int n=a.undo.size();
     send(slider,t,MotionEvent.ACTION_DOWN,a.dp(140),a.dp(24));send(slider,t,MotionEvent.ACTION_MOVE,a.dp(200),a.dp(24));assertTrue("Slider previews position",Math.abs(x(a)-beforeX)>.001);send(slider,t,MotionEvent.ACTION_CANCEL,a.dp(200),a.dp(24));assertEquals(beforeX,x(a),1e-6);assertEquals(n,a.undo.size());
     slider=(SeekBar)WorkspaceV2Test.described(a.inspector,"Y slider");slider.onKeyDown(KeyEvent.KEYCODE_DPAD_RIGHT,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_DPAD_RIGHT));assertNotEquals(beforeY,y(a),1e-6);assertEquals(beforeX,x(a),1e-6);assertEquals(n+1,a.undo.size());a.undo(false);
