@@ -58,6 +58,7 @@ public final class MenuScreenFactory {
  public static final int COMPACT_BELOW_DP=420;
  private final Context context;private final Host host;private int widthDp=450,widthOverride;private boolean compact;private float buttonSp=15;private final ArrayList<Runnable> readers=new ArrayList<>();
  private final ArrayList<Runnable> dialogReaders=new ArrayList<>();
+ private PositionTrackpadView positionPad;
  private LinearLayout body;private ScrollView scroll;private boolean includeChrome=true;private boolean editActive;private Menu current=Menu.POSITION;private Property curveProperty=Property.X;
  public MenuScreenFactory(Context context,Host host){this.context=context;this.host=host;}
  private int dp(float n){return MenuPalette.dp(context,n);}
@@ -107,12 +108,13 @@ public final class MenuScreenFactory {
     public double x(){return host.value(Property.X);}public double y(){return host.value(Property.Y);}
     public void begin(){body.clearFocus();beginEditSafe("Position updated");}
     public void preview(double x,double y){previewValueSafe(Property.X,Math.max(host.minimum(Property.X),Math.min(host.maximum(Property.X),x)));previewValueSafe(Property.Y,Math.max(host.minimum(Property.Y),Math.min(host.maximum(Property.Y),y)));refresh();}
-    public void commit(){finishEditSafe(true);refresh();}public void cancel(){finishEditSafe(false);refresh();}
+    public void commit(){finishEditSafe(true);restoreTrackpadFocus();refresh();}public void cancel(){finishEditSafe(false);restoreTrackpadFocus();refresh();}
    });
-   add(body,pad,8);readers.add(()->{pad.setEnabled(host.editable(Property.X)&&host.editable(Property.Y));pad.invalidate();});
+   positionPad=pad;add(body,pad,8);readers.add(()->{pad.setEnabled(host.editable(Property.X)&&host.editable(Property.Y));pad.invalidate();});
    add(body,text("Drag to move · Arrow keys: 1 px · Shift: 10 px",12,MenuPalette.MUTED,false),6);
   }
  }
+ private void restoreTrackpadFocus(){if(current==Menu.POSITION&&positionControl()==PositionControl.TRACKPAD&&positionPad!=null&&positionPad.isAttachedToWindow())positionPad.requestFocus();}
  private static String unitWord(String unit){String u=unit.trim();return u.equals("px")?"pixels":u.equals("°")?"degrees":u.equals("%")?"percent":u;}
  private String title(Menu m){return m==Menu.POSITION?"Position":m==Menu.ROTATION?"Rotation":"Scale";}
  private LinearLayout column(){LinearLayout v=new LinearLayout(context);v.setOrientation(LinearLayout.VERTICAL);return v;}
