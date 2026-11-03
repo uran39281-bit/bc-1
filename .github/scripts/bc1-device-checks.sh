@@ -13,6 +13,16 @@ adb logcat -c
 adb logcat -v threadtime > BC-1/app/build/reports/androidTests/logcat.txt 2>&1 &
 bc1_logcat_pid=$!
 trap 'kill "$bc1_logcat_pid" 2>/dev/null || true; wait "$bc1_logcat_pid" 2>/dev/null || true' EXIT
+# Fail quickly on the new inspector gestures before spending the full export-suite budget.
+# This supplements, rather than replaces, the full instrumentation run below.
+adb shell am instrument -w -r -e class com.blackice.bc1.InspectorControlsTest com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee BC-1/app/build/reports/androidTests/inspector-preflight.txt
+if rg 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' BC-1/app/build/reports/androidTests/inspector-preflight.txt; then
+  adb exec-out run-as com.blackice.bc1.preview tar -C files/qa -cf - . > BC-1/app/build/reports/androidTests/qa.tar || true
+  mkdir -p BC-1/app/build/reports/androidTests/qa
+  tar -xf BC-1/app/build/reports/androidTests/qa.tar -C BC-1/app/build/reports/androidTests/qa || true
+  exit 1
+fi
+rg '^OK \([0-9]+ tests?\)' BC-1/app/build/reports/androidTests/inspector-preflight.txt
 adb shell am instrument -w -r com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee BC-1/app/build/reports/androidTests/instrumentation.txt
 kill "$bc1_logcat_pid" 2>/dev/null || true
 wait "$bc1_logcat_pid" 2>/dev/null || true

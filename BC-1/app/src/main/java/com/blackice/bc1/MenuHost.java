@@ -435,6 +435,8 @@ final class MenuHost implements MenuScreenFactory.Host {
     @Override public void reportInputError(String message) { a.tell(message); }
 
     /** Rough width of the panel the menu lives in, so narrow inspectors (DeX, phones) get the compact layout. */
+    @Override public boolean compactControls() { return a.wideLayout; }
+    @Override public double positionSliderSpan(Property property) { int[] size=a.exportSize();return property==Property.Y?size[1]:size[0]; }
     @Override public int panelWidthDp() {
         android.content.res.Configuration c = a.getResources().getConfiguration();
         int screen = c.screenWidthDp;
