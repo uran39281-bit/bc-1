@@ -1,0 +1,493 @@
+11-03 03:34:02.565  4219  4234 I TestRunner: started: sliderAndTrackpadKeyboardUseTheRealPositionAndRespectLocks(com.blackice.bc1.InspectorControlsTest)
+11-03 03:34:02.566  4219  4219 W MessageQueue: Handler (android.os.Handler) {cd27355} sending message to a Handler on a dead thread
+11-03 03:34:02.566  4219  4219 W MessageQueue: java.lang.IllegalStateException: Handler (android.os.Handler) {cd27355} sending message to a Handler on a dead thread
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.os.MessageQueue.enqueueMessage(MessageQueue.java:600)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.os.Handler.enqueueMessage(Handler.java:787)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.os.Handler.sendMessageAtTime(Handler.java:736)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.os.Handler.sendMessageDelayed(Handler.java:706)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.os.Handler.post(Handler.java:436)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at com.blackice.bc1.engine.bc.LivePreview.onSurfaceTextureDestroyed(LivePreview.java:109)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.TextureView.releaseSurfaceTexture(TextureView.java:341)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.TextureView.onDetachedFromWindowInternal(TextureView.java:312)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.View.dispatchDetachedFromWindow(View.java:22923)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:3957)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:3957)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:3957)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:3957)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:3957)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:3957)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:3957)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:3957)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.ViewRootImpl.dispatchDetachedFromWindow(ViewRootImpl.java:6363)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.ViewRootImpl.doDie(ViewRootImpl.java:9848)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.ViewRootImpl.die(ViewRootImpl.java:9822)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.WindowManagerGlobal.removeViewLocked(WindowManagerGlobal.java:543)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.WindowManagerGlobal.removeView(WindowManagerGlobal.java:484)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.view.WindowManagerImpl.removeViewImmediate(WindowManagerImpl.java:216)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.app.ActivityThread.handleDestroyActivity(ActivityThread.java:6020)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.app.servertransaction.DestroyActivityItem.execute(DestroyActivityItem.java:46)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.app.servertransaction.ActivityTransactionItem.execute(ActivityTransactionItem.java:60)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.app.servertransaction.TransactionExecutor.executeLifecycleItem(TransactionExecutor.java:225)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:107)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:81)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2636)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.os.Handler.dispatchMessage(Handler.java:107)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.os.Looper.loopOnce(Looper.java:232)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.os.Looper.loop(Looper.java:317)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at android.app.ActivityThread.main(ActivityThread.java:8705)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at java.lang.reflect.Method.invoke(Native Method)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+11-03 03:34:02.566  4219  4219 W MessageQueue: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)
+11-03 03:34:02.576  1161  1161 D SearchTargetUtil: query= size=15
+11-03 03:34:02.576  1161  1161 D SearchTargetUtil: layoutType=short_icon_row resultType=131072 packageName=com.google.android.googlequicksearchbox extras=Bundle{suggestion_type=33,suggest_truncate_start=false,is_answer=false,is_entity=false,is_personal=false,suggest_raw_text=michael letasky montana elk poaching,input_query=android.app.search.Query@e32d0e4,group_id=web413855,response_id=64bc15e7-35e4-48c8-94cc-24a81cf160ea,support_query_builder=false,} searchAction=michael letasky montana elk poaching searchActionExtras=Bundle{learn_more_url=https://support.google.com/websearch/answer/106230?hl=106230,suggestion_action_text=Report this,should_start_for_result=true,allow_pinning=true,skip_logging_in_target_handler=true,suggestion_action_rpc=2,}ParentID: null targetID: 5703a136-d3d8-4b9e-8c32-70fb2efefc4b
+11-03 03:34:02.576  1161  1161 D SearchTargetUtil: layoutType=short_icon_row resultType=131072 packageName=com.google.android.googlequicksearchbox extras=Bundle{suggestion_type=33,suggest_truncate_start=false,is_answer=false,is_entity=false,is_personal=false,suggest_raw_text=conor mcgregor last dance octagon,input_query=android.app.search.Query@e32d0e4,group_id=web413855,response_id=64bc15e7-35e4-48c8-94cc-24a81cf160ea,support_query_builder=false,} searchAction=conor mcgregor last dance octagon searchActionExtras=Bundle{learn_more_url=https://support.google.com/websearch/answer/106230?hl=106230,suggestion_action_text=Report this,should_start_for_result=true,allow_pinning=true,skip_logging_in_target_handler=true,suggestion_action_rpc=2,}ParentID: null targetID: 0018781e-d995-4560-a691-868ed25693b7
+11-03 03:34:02.576  1161  1161 D SearchTargetUtil: layoutType=short_icon_row resultType=131072 packageName=com.google.android.googlequicksearchbox extras=Bundle{suggestion_type=33,suggest_truncate_start=false,is_answer=false,is_entity=false,is_personal=false,suggest_raw_text=crypto exchange binance hacked,input_query=android.app.search.Query@e32d0e4,group_id=web413855,response_id=64bc15e7-35e4-48c8-94cc-24a81cf160ea,support_query_builder=false,} searchAction=crypto exchange binance hacked searchActionExtras=Bundle{learn_more_url=https://support.google.com/websearch/answer/106230?hl=106230,suggestion_action_text=Report this,should_start_for_result=true,allow_pinning=true,skip_logging_in_target_handler=true,suggestion_action_rpc=2,}ParentID: null targetID: 6311416b-fc72-4fe0-82e9-f82a661c900c
+11-03 03:34:02.576  1161  1161 D SearchTargetUtil: layoutType=short_icon_row resultType=131072 packageName=com.google.android.googlequicksearchbox extras=Bundle{suggestion_type=33,suggest_truncate_start=false,is_answer=false,is_entity=false,is_personal=false,suggest_raw_text=target pokemon cards lottery,input_query=android.app.search.Query@e32d0e4,group_id=web413855,response_id=64bc15e7-35e4-48c8-94cc-24a81cf160ea,support_query_builder=false,} searchAction=target pokemon cards lottery searchActionExtras=Bundle{learn_more_url=https://support.google.com/websearch/answer/106230?hl=106230,suggestion_action_text=Report this,should_start_for_result=true,allow_pinning=true,skip_logging_in_target_handler=true,suggestion_action_rpc=2,}ParentID: null targetID: 5a294017-e55a-40ea-b7d4-5b55a001ec6a
+11-03 03:34:02.576  1161  1161 D SearchTargetUtil: layoutType=short_icon_row resultType=131072 packageName=com.google.android.googlequicksearchbox extras=Bundle{suggestion_type=33,suggest_truncate_start=false,is_answer=false,is_entity=false,is_personal=false,suggest_raw_text=lymphatic drainage daily habits,input_query=android.app.search.Query@e32d0e4,group_id=web413855,response_id=64bc15e7-35e4-48c8-94cc-24a81cf160ea,support_query_builder=false,} searchAction=lymphatic drainage daily habits searchActionExtras=Bundle{learn_more_url=https://support.google.com/websearch/answer/106230?hl=106230,suggestion_action_text=Report this,should_start_for_result=true,allow_pinning=true,skip_logging_in_target_handler=true,suggestion_action_rpc=2,}ParentID: null targetID: a64575db-223c-4570-960d-92aec516a46f
+11-03 03:34:02.576  1161  1161 D SearchTargetUtil: layoutType=short_icon_row resultType=131072 packageName=com.google.android.googlequicksearchbox extras=Bundle{suggestion_type=33,suggest_truncate_start=false,is_answer=false,is_entity=false,is_personal=false,suggest_raw_text=nyt strands hints,input_query=android.app.search.Query@e32d0e4,group_id=web413855,response_id=64bc15e7-35e4-48c8-94cc-24a81cf160ea,support_query_builder=false,} searchAction=nyt strands hints searchActionExtras=Bundle{learn_more_url=https://support.google.com/websearch/answer/106230?hl=106230,suggestion_action_text=Report this,should_start_for_result=true,allow_pinning=true,skip_logging_in_target_handler=true,suggestion_action_rpc=2,}ParentID: null targetID: d8f49e2a-1d27-43b8-94cb-aeaa773dad37
+11-03 03:34:02.576  1161  1161 D SearchTargetUtil: layoutType=extra_tall_icon_row resultType=131072 packageName=com.google.android.googlequicksearchbox extras=Bundle{bitmap_url=data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAGAAYAMBIgACEQEDEQH/xAAbAAACAwEBAQAAAAAAAAAAAAAEBQADBgIBB//EADUQAAIBAwMCBAQFAQkAAAAAAAECAwAEEQUSITFBBhNRYSIycaEUQoGRsXIjJDNSU4LB0fD/xAAaAQACAwEBAAAAAAAAAAAAAAAFBgIDBAEA/8QAKhEAAgIBAwMDAwUBAAAAAAAAAQIAAwQREiEFQVETIjFxgbEyYZGhwQb/2gAMAwEAAhEDEQA/AF2KgFe1KcIJkqV7VtvAZ2A/L/NZ8nJrx03PL6KHvbaspA3HAq8Wx253YPptptbWAAGFGO3FXtaHHwr2pYyOs3u3sOgh6rptKD3cmZ94wo+bn3FVb8HDjaftT+ayyMFftSW8tihOeldxur3q3uOokbunUsPaNDOKlDRzeVJ5Uh4Pyk/xRNNFF6XpvSALqmqba08qVKlXSqe1OK9qV6engQyOqD8x5+lPbK3KjAAx3NJrcHzwa0tmV2kZGTSj1e0vkEdhGXp1YSgHzC4IMLnIxV6ooHzL9a5USFfhC596uiVicOo/ShIEIExfcxHHDDHbHFI9UjO046noK1N5A234Rk4zis9eI+cMvA6V4jQyOuomTvVz8J7CiLCYzWwLHLKdrVzqK7QzHg+lD6O2Gnj+jCj3RrSLNvYwP1JAU3eIyNeV6a8pmgOdipUrqNC77R1wTz7DNRdwilj8CTRS7BR8mdxHaQaJgu7yRvLtAq4HVjwaEuYmgdF/1ADg9vbirXj1BrlIrMRQoRy8rZ/YDr+9JOVattpcd4101muoIe0JhGsQT+Ze3pMXoBgCtLaX2IwzncwGOKw8unX8bj8XqEDTkgRpCnLHJ9Bnpj16VqNIhe2gMU2Hkx1xWZiRLEGvaXazq0iWwS3wJ34X2rL3Fj4lG+WS6hEZ6Bz0+1XXTTT30gilMbp0OMkfQUFcJeOpNtr8RGBmKSIE55z3z1/Wuq2okXWJru8ujMYbpRuH5hXukPi8dT3U13Lb3flPLeKj9hIucH+KAtZGjuDKhO4KcADqa34Vy1PvPaYcmtnXb5mkqU48M6MdQtrm91DeLazj3SrCPikfsi/+70dcaLbXvh641OxsrmwntCTLBMzMrp1yCQD0/g00jLrOn76f3ARqYEgzOURYc3Sr03Kw+xobNdQzCGeOUnCqwyR6d6lkoXpdR3Bncdttqt4IjPW4v79bBcbduB9BTaPTorm3XzzwRyCetLNWURTWzZyec88dqtl1Ly4MDnI4z0+v0pCJ10jj5hlpb2NrKyWVoik8FwMFjRsNu8kjYXBxggmkKahZvYlTK275vMRsH6ik89/qVsGW21NbnccL54GeuMDaKl6ZMiXUCOLqPydQmdWX5Qee+KLtEsNTxJ5aRT+uPm7f8VgLj8XNP52pXcmN2CICVA9scU5stShhjhSHcpUZXnIIPvXSmkgtisY48RW6rFg84rJaHbxyarPG/QI22n+sXxmtA/JDL1rOaQmbic5IbZkEdutSr4VpXd+tZ9L8FXM194S1u3092S+WUsnlttbO1cYPuVIrMb9YvYrp7q7vfIgQmYzyPtB6BSD3JIGKU+HNfvrCcX1kUgkdQrIq/C6gYGQfpTbWfEmp64qpfTL5SHIijXaufX3NNmPS9YA0GnH4i1darsT9YNXMgBRh6ivc1zk0TmaXpqh1HyoZYwssSkF8/P05+1D6/MyaVKA+xsbcj07/AMUDNG9tN5ykEZoi7kF/atER8TLxn1pQ6nhjHtDIPaYzYeQb6iCeRL/D+kXUMNqrXMZicDdvh3MPdTkce1bCHSFWMsNX8txkgG22jOT70i0SQXdgI5BtaP4CB+UijHfU4l/syjr2yG/7rBu55mxVG3gyrXdGaJXaLVZJmHRjGAvSsPJYzuxmjuNxR9oZU2rz/NanUINQvFIuZkC91RTk/qSaR6mwg8i3iAbnketeB54ldoAWG6kwNvFaxPuCD4nPG71NZmW+ktnmEGPiG3ce30/ejtQv2jTylYNI3Bal1rai4chidq9feiHTcX1WJYcTFn3+mo0PMY2ChII1HTaKYx0FGAh2jgDpRcRFNCxdhtdOjpD57I4i5w+04OBkgepx2HNU3SzQ38ltuGIpHQkD5tpIz9q0egs2qeHdQ0ZVMl1at+OsR1JZfnQe7KWA/qNBruuJu2UjU+T8RmT/AJy2ur1sg6DjUD507n7feCax4fe01SLS3uA3nbGjmQDDIRkkA59CPvQmtaWmnSJHbghdvc5+5rQ2Nwl/4Ws7tG3zaHKsbEH/ABLVsGNvcAYXJ/ysamsxJffGgzG6/AaD5mTZcQzHUSzEoFDNXpyDMxpzsJkCMqMzZYk43fWtEb9YkZZsgDjpWZurOWNiv7E96WX9xer8Ekko425HPFZgQZr2+JotSvk2h0lGNv361kL6+RpGeNTuyed2Rn2oaVnb53Zh71Sqs74AqwaCUsh11aFaPp8mq6nFbqTukYAEepNPrzS44/EeoaVo0UkqwFiMsCcKql+fYnHrxR3gOBbB77WriMmDT7dn/qc/Ko9zz+uKu8Pwyad4X1nX7tgbzUGNlbP03MxJmdf9279Y610ZT0cqeJlfFGU5UjwB9Sf8GszAYNgg8GioTQLQtG4MZIA7dqetphgt9PlEyt+PiDwLtxubdtZM9MhiB75Hfii+J1Sq/hvaZl6j0O/DIK+5T/Pn8T//2Q==,suggestion_type=33,suggest_truncate_start=false,is_answer=false,is_entity=true,is_personal=false,suggest_raw_text=michael wilbon espn,input_query=android.app.search.Query@e32d0e4,group_id=web413855,response_id=64bc15e7-35e4-48c8-94cc-24a81cf160ea,support_query_builder=false,} searchAction=michael wilbon espn searchActionExtras=Bundle{learn_more_url=https://support.google.com/websearch/answer/106230?hl=106230,suggestion_action_text=Report this,should_start_for_result=true,allow_pinning=true,skip_logging_in_target_handler=true,suggestion_action_rpc=2,}ParentID: null targetID: d0789154-2949-4ce3-a962-4a954422aa79
+11-03 03:34:02.576  1161  1161 D SearchTargetUtil: layoutType=short_icon_row resultType=131072 packageName=com.google.android.googlequicksearchbox extras=Bundle{suggestion_type=33,suggest_truncate_start=false,is_answer=false,is_entity=false,is_personal=false,suggest_raw_text=crows gathering in trees meaning,input_query=android.app.search.Query@e32d0e4,group_id=web413855,response_id=64bc15e7-35e4-48c8-94cc-24a81cf160ea,support_query_builder=false,} searchAction=crows gathering in trees meaning searchActionExtras=Bundle{learn_more_url=https://support.google.com/websearch/answer/106230?hl=106230,suggestion_action_text=Report this,should_start_for_result=true,allow_pinning=true,skip_logging_in_target_handler=true,suggestion_action_rpc=2,}ParentID: null targetID: 48de0df8-f86b-4644-bea3-cc284e0facd5
+11-03 03:34:02.576  1161  1161 D SearchTargetUtil: layoutType=short_icon_row resultType=131072 packageName=com.google.android.googlequicksearchbox extras=Bundle{suggestion_type=33,suggest_truncate_start=false,is_answer=false,is_entity=false,is_personal=false,suggest_raw_text=today wordle hints,input_query=android.app.search.Query@e32d0e4,group_id=web413855,response_id=64bc15e7-35e4-48c8-94cc-24a81cf160ea,support_query_builder=false,} searchAction=today wordle hints searchActionExtras=Bundle{learn_more_url=https://support.google.com/websearch/answer/106230?hl=106230,suggestion_action_text=Report this,should_start_for_result=true,allow_pinning=true,skip_logging_in_target_handler=true,suggestion_action_rpc=2,}ParentID: null targetID: 271bf1d3-7e77-492b-879b-c5d3de1feaa8
+11-03 03:34:02.576  1161  1161 D SearchTargetUtil: layoutType=short_icon_row resultType=131072 packageName=com.google.android.googlequicksearchbox extras=Bundle{suggestion_type=33,suggest_truncate_start=false,is_answer=false,is_entity=false,is_personal=false,suggest_raw_text=social security payments,input_query=android.app.search.Query@e32d0e4,group_id=web413855,response_id=64bc15e7-35e4-48c8-94cc-24a81cf160ea,support_query_builder=false,} searchAction=social security payments searchActionExtras=Bundle{learn_more_url=https://support.google.com/websearch/answer/106230?hl=106230,suggestion_action_text=Report this,should_start_for_result=true,allow_pinning=true,skip_logging_in_target_handler=true,suggestion_action_rpc=2,}ParentID: null targetID: 548d4095-5699-41fd-b7d4-8793be9d82af
+11-03 03:34:02.576  1161  1161 D SearchTargetUtil: layoutType=short_icon_row resultType=131072 packageName=com.google.android.googlequicksearchbox extras=Bundle{suggestion_type=33,suggest_truncate_start=false,is_answer=false,is_entity=false,is_personal=false,suggest_raw_text=nyt connections hints,input_query=android.app.search.Query@e32d0e4,group_id=web413855,response_id=64bc15e7-35e4-48c8-94cc-24a81cf160ea,support_query_builder=false,} searchAction=nyt connections hints searchActionExtras=Bundle{learn_more_url=https://support.google.com/websearch/answer/106230?hl=106230,suggestion_action_text=Report this,should_start_for_result=true,allow_pinning=true,skip_logging_in_target_handler=true,suggestion_action_rpc=2,}ParentID: null targetID: b98797f4-67e2-47e2-99b3-9a48bdaec26e
+11-03 03:34:02.576  1161  1161 D SearchTargetUtil: layoutType=short_icon_row resultType=131072 packageName=com.google.android.googlequicksearchbox extras=Bundle{suggestion_type=33,suggest_truncate_start=false,is_answer=false,is_entity=false,is_personal=false,suggest_raw_text=angel reese atlanta dream wnba finals,input_query=android.app.search.Query@e32d0e4,group_id=web413855,response_id=64bc15e7-35e4-48c8-94cc-24a81cf160ea,support_query_builder=false,} searchAction=angel reese atlanta dream wnba finals searchActionExtras=Bundle{learn_more_url=https://support.google.com/websearch/answer/106230?hl=106230,suggestion_action_text=Report this,should_start_for_result=true,allow_pinning=true,skip_logging_in_target_handler=true,suggestion_action_rpc=2,}ParentID: null targetID: 331dc131-8512-4dd6-97f9-79e6eea656ff
+11-03 03:34:02.576  1161  1161 D SearchTargetUtil: layoutType=short_icon_row resultType=131072 packageName=com.google.android.googlequicksearchbox extras=Bundle{suggestion_type=33,suggest_truncate_start=false,is_answer=false,is_entity=false,is_personal=false,suggest_raw_text=social security benefit cuts 2032,input_query=android.app.search.Query@e32d0e4,group_id=web413855,response_id=64bc15e7-35e4-48c8-94cc-24a81cf160ea,support_query_builder=false,} searchAction=social security benefit cuts 2032 searchActionExtras=Bundle{learn_more_url=https://support.google.com/websearch/answer/106230?hl=106230,suggestion_action_text=Report this,should_start_for_result=true,allow_pinning=true,skip_logging_in_target_handler=true,suggestion_action_rpc=2,}ParentID: null targetID: ad9f2e22-0c0d-4786-9afd-693bc9f4d87a
+11-03 03:34:02.576  1161  1161 D SearchTargetUtil: layoutType=short_icon_row resultType=131072 packageName=com.google.android.googlequicksearchbox extras=Bundle{suggestion_type=33,suggest_truncate_start=false,is_answer=false,is_entity=false,is_personal=false,suggest_raw_text=things guests notice in bathroom,input_query=android.app.search.Query@e32d0e4,group_id=web413855,response_id=64bc15e7-35e4-48c8-94cc-24a81cf160ea,support_query_builder=false,} searchAction=things guests notice in bathroom searchActionExtras=Bundle{learn_more_url=https://support.google.com/websearch/answer/106230?hl=106230,suggestion_action_text=Report this,should_start_for_result=true,allow_pinning=true,skip_logging_in_target_handler=true,suggestion_action_rpc=2,}ParentID: null targetID: 938f22f6-8915-4877-bb10-d903ea4cc57f
+11-03 03:34:02.576  1161  1161 D SearchTargetUtil: layoutType=short_icon_row resultType=131072 packageName=com.google.android.googlequicksearchbox extras=Bundle{suggestion_type=33,suggest_truncate_start=false,is_answer=false,is_entity=false,is_personal=false,suggest_raw_text=nintendo switch pro controller zelda,input_query=android.app.search.Query@e32d0e4,group_id=web413855,response_id=64bc15e7-35e4-48c8-94cc-24a81cf160ea,support_query_builder=false,} searchAction=nintendo switch pro controller zelda searchActionExtras=Bundle{learn_more_url=https://support.google.com/websearch/answer/106230?hl=106230,suggestion_action_text=Report this,should_start_for_result=true,allow_pinning=true,skip_logging_in_target_handler=true,suggestion_action_rpc=2,}ParentID: null targetID: 212fc0c3-aae6-4092-96db-dee0a1103c59
+11-03 03:34:02.580   910   955 V WindowManagerShell: Transition animation finished (aborted=false), notifying core (#111) android.os.BinderProxy@8b1dd36@0
+11-03 03:34:02.581  4832  4832 D VRI[InstrumentationActivityInvoker$EmptyActivity]: visibilityChanged oldVisibility=true newVisibility=false
+11-03 03:34:02.583   910   955 V WindowManagerShell: Track 0 became idle
+11-03 03:34:02.583   910   955 V WindowManagerShell: All active transition animations finished
+11-03 03:34:02.583   553   576 V WindowManager: Finish Transition (#111): created at 11-03 03:34:02.136 collect-started=0.041ms request-sent=0.093ms started=13.472ms ready=30.392ms sent=70.325ms finished=444.586ms
+11-03 03:34:02.584   553   645 W InputManager-JNI: Input channel object '6de7381 com.blackice.bc1.preview/com.blackice.bc1.EditorActivity (client)' was disposed without first being removed with the input manager!
+11-03 03:34:02.595   553  1187 W UserManagerService: Requested status bar icon for non-badged user 0
+11-03 03:34:02.603   553  2236 W UserManagerService: Requested status bar icon for non-badged user 0
+11-03 03:34:02.607  4219  4234 W Settings: Setting always_finish_activities has moved from android.provider.Settings.System to android.provider.Settings.Global, returning read-only value.
+11-03 03:34:02.609  1161  1161 I TopTaskTracker: onTaskRemoved: taskId=34
+11-03 03:34:02.609  4832  4832 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda11@6ac18c5
+11-03 03:34:02.609   553  2236 D CoreBackPreview: Window{4e32302 u0 com.blackice.bc1.preview.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity}: Setting back callback null
+11-03 03:34:02.609  1161  1161 I TopTaskTracker: onTaskRemoved: taskId=34
+11-03 03:34:02.611   553  2236 W InputManager-JNI: Input channel object '4e32302 com.blackice.bc1.preview.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity (client)' was disposed without first being removed with the input manager!
+11-03 03:34:02.613   553   645 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_OVERRIDE
+11-03 03:34:02.613   553   645 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE
+11-03 03:34:02.613   553   645 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_ORIENTATION_OVERRIDE
+11-03 03:34:02.614   553   645 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10209, packageName = null, attributionTag = null, token = android.os.Binder@76312d6, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+11-03 03:34:02.614   553   645 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_RESIZEABLE_ACTIVITY_OVERRIDES
+11-03 03:34:02.614   553   645 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE
+11-03 03:34:02.616   553   645 V SplashScreenExceptionList: SplashScreen checking exception for package com.blackice.bc1.preview (target sdk:35) -> false
+11-03 03:34:02.618   553   645 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10008000 cmp=com.blackice.bc1.preview/com.blackice.bc1.EditorActivity} with LAUNCH_SINGLE_TOP from uid 10209 (BAL_ALLOW_PERMISSION) result code=0
+11-03 03:34:02.624  1161  1161 W SplitSelectStateCtor: Missing session instanceIds
+11-03 03:34:02.624   910  1011 D SplashScreenView: Build android.window.SplashScreenView{e87be41 V.E...... ......ID 0,0-0,0}
+11-03 03:34:02.624   910  1011 D SplashScreenView: Icon: view: null drawable: null size: 0
+11-03 03:34:02.624   910  1011 D SplashScreenView: Branding: view: android.view.View{309ffe6 G.ED..... ......I. 0,0-0,0 #1020503 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+11-03 03:34:02.625  1161  1161 D StatsLog: LAUNCHER_SPLIT_SELECTION_EXIT_INTERRUPTED
+11-03 03:34:02.625   910   955 V WindowManagerShell: Transition requested (#112): android.os.BinderProxy@91e3927 TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=36 displayId=0 isRunning=true baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10008000 cmp=com.blackice.bc1.preview/com.blackice.bc1.EditorActivity } baseActivity=ComponentInfo{com.blackice.bc1.preview/com.blackice.bc1.EditorActivity} topActivity=ComponentInfo{com.blackice.bc1.preview/com.blackice.bc1.EditorActivity} origActivity=null realActivity=ComponentInfo{com.blackice.bc1.preview/com.blackice.bc1.EditorActivity} numActivities=1 lastActiveTime=414309 supportsMultiWindow=true resizeMode=2 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@27267d4} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=ActivityInfo{850fd7d com.blackice.bc1.EditorActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= falseisLetterboxEducationEnabled= true isLetterboxDoubleTapEnabled= false topActivityEligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=320 topActivityLetterboxHeight=640 isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false cameraCompatTaskInfo=CameraCompatTaskInfo { cameraCompatControlState=hidden freeformCameraCompatMode=inactive}}}, pipTask = null, remoteTransition = null, displayChange = null, flags = 0, debugId = 112 }
+11-03 03:34:02.626   910   955 D WindowManagerShell: setLauncherKeepClearAreaHeight: visible=false, height=175
+11-03 03:34:02.629   482  2588 W IPCThreadState: Sending oneway calls to frozen process.
+11-03 03:34:02.630   553   645 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ENABLE_FAKE_FOCUS
+11-03 03:34:02.634  1161  1161 I TopTaskTracker: onTaskMovedToFront: (moved taskInfo to front) taskId=36, baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10008000 cmp=com.blackice.bc1.preview/com.blackice.bc1.EditorActivity }
+11-03 03:34:02.635  1161  1161 I TopTaskTracker: onTaskRemoved: taskId=35
+11-03 03:34:02.635  1161  1161 I TopTaskTracker: onTaskRemoved: taskId=35
+11-03 03:34:02.635   427   427 I BpBinder: onLastStrongRef automatically unlinking death recipients: 
+11-03 03:34:02.641  4219  4219 D LifecycleMonitor: Lifecycle status change: com.blackice.bc1.EditorActivity@7c323c in: PRE_ON_CREATE
+11-03 03:34:02.641  4219  4219 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+11-03 03:34:02.642   553   645 D CoreBackPreview: Window{735424b u0 Splash Screen com.blackice.bc1.preview}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@afa1ae6, mPriority=0, mIsAnimationCallback=false}
+11-03 03:34:02.657   553   576 V WindowManager: Sent Transition (#112) createdAt=11-03 03:34:02.614 via request=TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=36 displayId=0 isRunning=true baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10008000 cmp=com.blackice.bc1.preview/com.blackice.bc1.EditorActivity } baseActivity=ComponentInfo{com.blackice.bc1.preview/com.blackice.bc1.EditorActivity} topActivity=ComponentInfo{com.blackice.bc1.preview/com.blackice.bc1.EditorActivity} origActivity=null realActivity=ComponentInfo{com.blackice.bc1.preview/com.blackice.bc1.EditorActivity} numActivities=1 lastActiveTime=414309 supportsMultiWindow=true resizeMode=2 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{RemoteToken{7e8147d Task{ffe2bd3 #36 type=standard A=10209:com.blackice.bc1.preview}}} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=ActivityInfo{9bcff72 com.blackice.bc1.EditorActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= falseisLetterboxEducationEnabled= true isLetterboxDoubleTapEnabled= false topActivityEligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=320 topActivityLetterboxHeight=640 isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false cameraCompatTaskInfo=CameraCompatTaskInfo { cameraCompatControlState=hidden freeformCameraCompatMode=inactive}}}, pipTask = null, remoteTransition = null, displayChange = null, flags = 0, debugId = 112 }
+11-03 03:34:02.657   553   576 V WindowManager:     startWCT=WindowContainerTransaction { changes = {} hops = [] errorCallbackToken=null taskFragmentOrganizer=null }
+11-03 03:34:02.657   553   576 V WindowManager:     info={id=112 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[
+11-03 03:34:02.657   553   576 V WindowManager:         {WCT{RemoteToken{7e8147d Task{ffe2bd3 #36 type=standard A=10209:com.blackice.bc1.preview}}} m=OPEN f=NONE leash=Surface(name=Task=36)/@0x493b827 sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0 taskParent=-1},
+11-03 03:34:02.657   553   576 V WindowManager:         {WCT{RemoteToken{824235f Task{95340af #1 type=home}}} m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0xdeab505 sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0 taskParent=-1}
+11-03 03:34:02.657   553   576 V WindowManager:     ]}
+11-03 03:34:02.658   910  1352 V WindowManagerShell: onTransitionReady(transaction=2375116918102)
+11-03 03:34:02.659   910   955 V WindowManagerShell: onTransitionReady (#112) android.os.BinderProxy@91e3927: {id=112 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{WCT{android.window.IWindowContainerToken$Stub$Proxy@d71ba17} m=OPEN f=NONE leash=Surface(name=Task=36)/@0xdf2053b sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0 taskParent=-1},{WCT{android.window.IWindowContainerToken$Stub$Proxy@4e96e04} m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0x4466458 sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0 taskParent=-1}]}
+11-03 03:34:02.660   910   955 V WindowManagerShell: Playing animation for (#112) android.os.BinderProxy@91e3927@0
+11-03 03:34:02.660   910   955 V WindowManagerShell:  try handler com.android.wm.shell.transition.DefaultMixedHandler@c84cef6
+11-03 03:34:02.660   910   955 V WindowManagerShell:  try handler com.android.wm.shell.keyguard.KeyguardTransitionHandler@3df42f7
+11-03 03:34:02.660   910   955 V WindowManagerShell:  try handler com.android.wm.shell.pip.PipTransition@e80f564
+11-03 03:34:02.660   910   955 V WindowManagerShell:  try handler com.android.wm.shell.activityembedding.ActivityEmbeddingController@70523cd
+11-03 03:34:02.660   910   955 V WindowManagerShell:  try handler com.android.wm.shell.recents.RecentsTransitionHandler@ba6e482
+11-03 03:34:02.660   910   955 V ShellRecents: RecentsTransitionHandler.startAnimation: no controller found
+11-03 03:34:02.660   910   955 V WindowManagerShell:  try handler com.android.wm.shell.splitscreen.StageCoordinator@e3b1793
+11-03 03:34:02.660   910   955 V WindowManagerShell:  try handler com.android.wm.shell.transition.RemoteTransitionHandler@f0a03d0
+11-03 03:34:02.660   910   955 V WindowManagerShell: Transition doesn't have explicit remote, search filters for match for {id=112 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{WCT{android.window.IWindowContainerToken$Stub$Proxy@d71ba17} m=OPEN f=NONE leash=Surface(name=Task=36)/@0xdf2053b sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0 taskParent=-1},{WCT{android.window.IWindowContainerToken$Stub$Proxy@4e96e04} m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0x4466458 sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0 taskParent=-1}]}
+11-03 03:34:02.660   910   955 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x0 checks=[{atype=undefined independent=true modes=[OPEN,TO_FRONT] flags=IN_TASK_WITH_EMBEDDED_ACTIVITY mustBeTask=false order=ANY topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} launchCookie=null},{atype=undefined independent=true modes=[CLOSE,TO_BACK] flags=IN_TASK_WITH_EMBEDDED_ACTIVITY mustBeTask=false order=ANY topActivity=null launchCookie=null}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@ce1c106, appThread = android.app.IApplicationThread$Stub$Proxy@59333c7, debugName = OverlaySwipeBack }}
+11-03 03:34:02.660   910   955 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x0 checks=[{atype=dream independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null},{atype=home independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@c5dddf4, appThread = android.app.IApplicationThread$Stub$Proxy@c50091d, debugName = LauncherToDream }}
+11-03 03:34:02.660   910   955 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x100 checks=[{atype=home independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=TOP topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} launchCookie=null},{atype=standard independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@a48e792, appThread = android.app.IApplicationThread$Stub$Proxy@4854563, debugName = QuickstepLaunchHome }}
+11-03 03:34:02.660   910   955 V WindowManagerShell:  Delegate animation for (#112) to null
+11-03 03:34:02.660   910   955 V WindowManagerShell:  try handler com.android.wm.shell.transition.DefaultTransitionHandler@32be60b
+11-03 03:34:02.660   910   955 V WindowManagerShell: start default transition animation, info = {id=112 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{WCT{android.window.IWindowContainerToken$Stub$Proxy@d71ba17} m=OPEN f=NONE leash=Surface(name=Task=36)/@0xdf2053b sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0 taskParent=-1},{WCT{android.window.IWindowContainerToken$Stub$Proxy@4e96e04} m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0x4466458 sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0 taskParent=-1}]}
+11-03 03:34:02.660   910   955 V WindowManagerShell: loadAnimation: anim=android.view.animation.AnimationSet@a509e22 animAttr=0x13 type=OPEN isEntrance=false
+11-03 03:34:02.660   910   955 V WindowManagerShell: loadAnimation: anim=android.view.animation.AnimationSet@4fe7a6e animAttr=0x12 type=OPEN isEntrance=true
+11-03 03:34:02.663   910   955 V WindowManagerShell:  animated by com.android.wm.shell.transition.DefaultTransitionHandler@32be60b
+11-03 03:34:02.663   553   645 W UserManagerService: Requested status bar icon for non-badged user 0
+11-03 03:34:02.667  4219  4219 D LifecycleMonitor: Lifecycle status change: com.blackice.bc1.EditorActivity@7c323c in: CREATED
+11-03 03:34:02.667  4219  4219 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.blackice.bc1.EditorActivity@7c323c
+11-03 03:34:02.669  4219  4219 D LifecycleMonitor: Lifecycle status change: com.blackice.bc1.EditorActivity@7c323c in: STARTED
+11-03 03:34:02.669  4219  4219 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.blackice.bc1.EditorActivity@7c323c
+11-03 03:34:02.670   910   955 V WindowManagerShell: Transition animation finished (aborted=false), notifying core (#112) android.os.BinderProxy@91e3927@0
+11-03 03:34:02.672   910   955 V WindowManagerShell: Track 0 became idle
+11-03 03:34:02.672   910   955 V WindowManagerShell: All active transition animations finished
+11-03 03:34:02.673   553   645 W UserManagerService: Requested status bar icon for non-badged user 0
+11-03 03:34:02.675   553   576 V WindowManager: Finish Transition (#112): created at 11-03 03:34:02.614 collect-started=0.023ms request-sent=3.197ms started=11.619ms ready=30.539ms sent=41.393ms finished=56.526ms
+11-03 03:34:02.675   553  2236 W UserManagerService: Requested status bar icon for non-badged user 0
+11-03 03:34:02.676  4219  4219 D LifecycleMonitor: Lifecycle status change: com.blackice.bc1.EditorActivity@7c323c in: RESUMED
+11-03 03:34:02.677  4219  4219 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.blackice.bc1.EditorActivity@7c323c
+11-03 03:34:02.681   553  2236 W UserManagerService: Requested status bar icon for non-badged user 0
+11-03 03:34:02.686   553  1508 D CoreBackPreview: Window{e2f7040 u0 com.blackice.bc1.preview/com.blackice.bc1.EditorActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@43d851f, mPriority=0, mIsAnimationCallback=false}
+11-03 03:34:02.695  1161  1161 D VRI[NexusLauncherActivity]: visibilityChanged oldVisibility=true newVisibility=false
+11-03 03:34:02.696  4219  4219 W View    : requestLayout() improperly called by android.widget.LinearLayout{8a9e888 V.E...... ......ID 0,0-320,464} during layout: running second layout pass
+11-03 03:34:02.696  4219  4219 W View    : requestLayout() improperly called by android.widget.LinearLayout{a3d3c2b V.E...... ......ID 8,0-312,304} during layout: running second layout pass
+11-03 03:34:02.696  4219  4219 W View    : requestLayout() improperly called by android.widget.ScrollView{1c525c9 VFED.V... ......ID 8,304-312,396} during layout: running second layout pass
+11-03 03:34:02.696  4219  4219 W View    : requestLayout() improperly called by com.blackice.bc1.EditorActivity$8{1eedc7a V.E...... ......ID 0,0-304,196} during layout: running second layout pass
+11-03 03:34:02.696  4219  4219 W View    : requestLayout() improperly called by android.widget.TextView{d153f5d V.ED..... ......ID 0,148-105,196} during layout: running second layout pass
+11-03 03:34:02.702  1161  1161 D NexusLauncherModelDelegate: notifySmartspaceEvent: SmartspaceTargetEvent{mSmartspaceTarget=null, mSmartspaceActionId='null', mEventType=7}
+11-03 03:34:02.748  4219  6936 D BC1Live : frame at 0 waits for a surface
+11-03 03:34:02.751  4219  6936 D BC1Live : surface attached
+11-03 03:34:02.755   553   576 W ziparchive: Unable to open '/data/app/~~6ebLUdjelTf5tpoRHBZ1Zg==/com.blackice.bc1.preview-TL4o2o4knhcML9zbEQwpmg==/base.dm': No such file or directory
+11-03 03:34:02.756   553   576 I ActivityTaskManager: Displayed com.blackice.bc1.preview/com.blackice.bc1.EditorActivity for user 0: +139ms
+11-03 03:34:02.770   910  1010 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda11@8782d40
+11-03 03:34:02.771   553  1508 D CoreBackPreview: Window{735424b u0 Splash Screen com.blackice.bc1.preview EXITING}: Setting back callback null
+11-03 03:34:02.772   553  1508 W InputManager-JNI: Input channel object '735424b Splash Screen com.blackice.bc1.preview (client)' was disposed without first being removed with the input manager!
+11-03 03:34:02.778   482  2588 W IPCThreadState: Sending oneway calls to frozen process.
+11-03 03:34:02.797   553  6938 W HWUI    : Failed to initialize 101010-2 format, error = EGL_SUCCESS
+11-03 03:34:02.824   553   679 I ImeTracker: com.blackice.bc1.preview:b41e6b61: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+11-03 03:34:02.826   553   679 I ImeTracker: com.blackice.bc1.preview:b41e6b61: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-03 03:34:02.827  1161  1161 D BaseDepthController: setSurface:
+11-03 03:34:02.827  1161  1161 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+11-03 03:34:02.827  1161  1161 D BaseDepthController: 	mSurface: null
+11-03 03:34:02.827  1361  1361 I GoogleInputMethodService: GoogleInputMethodService.onFinishInput():3157 
+11-03 03:34:02.828  1161  1161 D BaseDepthController: mSurface is null and mCurrentBlur is: 0
+11-03 03:34:02.829  1361  1361 I GoogleInputMethodService: GoogleInputMethodService.updateDeviceLockedStatus():2248 repeatCheckTimes = 0, locked = false
+11-03 03:34:02.830  1161  1161 D StateManager: goToState - fromState: Normal, toState: Normal, partial trace:
+11-03 03:34:02.830  1161  1161 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(go/retraceme 31f9979659277bb965985aff1272c33e3c3c9e755b77166d20a2465454178f2c:4)
+11-03 03:34:02.830  1161  1161 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(go/retraceme 31f9979659277bb965985aff1272c33e3c3c9e755b77166d20a2465454178f2c:1)
+11-03 03:34:02.830  1161  1161 D StateManager: 	at com.android.launcher3.statemanager.StatefulActivity.onStop(go/retraceme 31f9979659277bb965985aff1272c33e3c3c9e755b77166d20a2465454178f2c:34)
+11-03 03:34:02.831  1361  1361 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1986 onStartInput(EditorInfo{EditorInfo{packageName=com.blackice.bc1.preview, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=0, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, false)
+11-03 03:34:02.832  1361  1361 I GoogleInputMethodService: GoogleInputMethodService.updateDeviceLockedStatus():2248 repeatCheckTimes = 1, locked = false
+11-03 03:34:02.832  1361  1361 I AndroidIME: InputBundleManager.loadActiveInputBundleId():450 loadActiveInputBundleId: und-Latn-x-password, password
+11-03 03:34:02.833   553  1716 W PackageConfigPersister: App-specific configuration not found for packageName: com.blackice.bc1.preview and userId: 0
+11-03 03:34:02.834  1161  1161 D StatsLog: LAUNCHER_ONSTOP
+11-03 03:34:02.840   553  1716 I AppWidgetServiceImpl: setAppWidgetHidden() 0
+11-03 03:34:02.840  1161  1161 D StatsLog: LAUNCHER_GOOGLE_SEARCH_RESTORE_LIST_SIZE_AFTER_ACTIVITY_RESTART
+11-03 03:34:02.844  1161  1921 D OneSearchSuggestProvider: Shut down the binder channel
+11-03 03:34:02.847  1161  1194 I IPCThreadState: oneway function results for code 2 on binder at 0x78829f457d30 will be dropped but finished with status UNKNOWN_TRANSACTION
+11-03 03:34:02.893  4219  4219 D AutofillManager: Fill dialog is enabled:false, hints=[password, passwordAuto, creditCardNumber, creditCardSecurityCode, creditCardExpirationDate]
+11-03 03:34:02.954   423  1580 D audioserver: logFgsApiBegin: FGS Logger Transaction failed, -129
+11-03 03:34:02.955   553   645 W AS.PlaybackActivityMon: No piid assigned for invalid/internal port id 18
+11-03 03:34:02.997   423   524 D AudioFlinger: mixer(0x74de8fb6a8e0) throttle end: throttle time(34)
+11-03 03:34:03.008  1161  1658 D EGL_emulation: app_time_stats: avg=30.46ms min=0.89ms max=344.30ms count=24
+11-03 03:34:03.064  4219  6936 D BC1Live : layer program 0 compiled in 57 ms
+11-03 03:34:03.144   553   553 W AccessibilityManagerService:  wait for adding window timeout: 90
+11-03 03:34:03.164   423   524 D audioserver: logFgsApiEnd: FGS Logger Transaction failed, -129
+11-03 03:34:03.168   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:03.168   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:03.271   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:03.271   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:03.379   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:03.379   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:03.483   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:03.484   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:03.591   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:03.591   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:03.699   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:03.699   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:03.803   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:03.803   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:03.907   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:03.907   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:04.011   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:04.011   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:04.115   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:04.115   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:04.171  1739  1739 I wpa_supplicant: wlan0: CTRL-EVENT-BEACON-LOSS 
+11-03 03:34:04.223   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:04.223   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:04.327   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:04.327   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:04.431   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:04.431   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:04.539   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:04.539   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:04.586  1161  1644 D SharedPreferencesImpl: Time required to fsync /data/user/0/com.google.android.apps.nexuslauncher/shared_prefs/com.android.launcher3.prefs.xml: [<1: 0, <2: 9, <4: 16, <8: 15, <16: 10, <32: 3, <64: 3, <128: 4, <256: 1, <512: 0, <1024: 0, <2048: 3, <4096: 0, <8192: 0, <16384: 0, >=16384: 0]
+11-03 03:34:04.676   356   356 I netd    : tetherGetStats() -> {[]} <0.25ms>
+11-03 03:34:04.739   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:04.739   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:04.843   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:04.843   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:04.947   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:04.947   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:05.051   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:05.051   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:05.155   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:05.155   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:05.259   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:05.259   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:05.363   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:05.363   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:05.467   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:05.467   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:05.571   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:05.571   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:05.585   553  2654 E TaskPersister: File error accessing recents directory (directory doesn't exist?).
+11-03 03:34:05.675   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:05.675   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:05.779   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:05.779   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:05.883   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:05.883   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:05.987   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:05.987   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:06.041   365  1548 D android.hardware.audio@7.1-impl.ranchu: threadLoop: entering standby, frames: 3417408
+11-03 03:34:06.091   365  6940 W android.hardware.audio@7.1-impl.ranchu: pcmWrite:259 pcm_writei failed with 'cannot read/write stream data: I/O error' (-1)
+11-03 03:34:06.091   365  6940 E android.hardware.audio@7.1-impl.ranchu: pcmWrite:260 failure: -1
+11-03 03:34:06.335  1161  1161 I Choreographer: Skipped 195 frames!  The application may be doing too much work on its main thread.
+11-03 03:34:06.342  1161  1658 D EGL_emulation: app_time_stats: avg=7.83ms min=1.48ms max=15.56ms count=5
+11-03 03:34:06.358   553   830 W IPCThreadState: Sending oneway calls to frozen process.
+11-03 03:34:06.358   553   830 W IPCThreadState: Sending oneway calls to frozen process.
+11-03 03:34:06.361  4219  4219 I TransformerInternal: Init 2ab686c [AndroidXMedia3/1.11.1] [emu64xa, sdk_gphone64_x86_64, Google, 35]
+11-03 03:34:06.367  3465  3569 I BugleRcsEngine: Connected state: [1], networkType: [WIFI] [CONTEXT thread_id=60 ]
+11-03 03:34:06.367  3465  3639 I BugleRcsEngine: handleMessage processing message:[NOTIFY_UPTIME_IGNORE_STATE_CHANGED] with [non-null]:RcsEngineImpl reference [CONTEXT log_prefix="RcsEngineImpl[DUAL_REG]:[e1c36c6c-0a49]>Handler" thread_id=71 ]
+11-03 03:34:06.369   553  1508 D OomAdjuster: Not killing cached processes
+11-03 03:34:06.371  3465  3639 I BugleRcsEngine: No RCS Configuration was found in Bugle for simID: redacted-pii:sim_id[chars:20,last3:897] [CONTEXT log_prefix="ProvisioningEngineDataRetriever" thread_id=71 ]
+11-03 03:34:06.425  1279  1835 I ChimeraSrvcProxy: NullBinder for android.net.action.RECOMMEND_NETWORKS triggering remote TransactionTooLargeException due to Service without Chimera impl
+11-03 03:34:06.426  1279  1835 W .gms.persistent: Large reply transaction of 1056768 bytes, interface descriptor , code 1
+11-03 03:34:06.516  4219  6936 D BC1Live : slow frame: setup 23 ms, open+prepare 18 ms, latch 0 ms, draw 3469 ms, swap 181 ms
+11-03 03:34:06.516  4219  6936 D BC1Live : frame 1 at 0 ms took 3692 ms, 1 sources open
+11-03 03:34:06.517  4219  4747 D EGL_emulation: app_time_stats: avg=100.48ms min=10.68ms max=233.13ms count=5
+11-03 03:34:06.541  1161  1587 I HWUI    : Davey! duration=3444ms; Flags=0, FrameTimelineVsyncId=38076, IntendedVsync=414777133498, Vsync=418027133368, InputEventId=0, HandleInputStart=418028294634, AnimationStart=418028294995, PerformTraversalsStart=418028429486, DrawStart=418028461015, FrameDeadline=418060466700, FrameInterval=418028183286, FrameStartTime=16666666, SyncQueued=418028523021, SyncStart=418035012076, IssueDrawCommandsStart=418035029108, SwapBuffers=418035591108, FrameCompleted=418228148034, DequeueBufferDuration=191962906, QueueBufferDuration=196527, GpuCompleted=418206933132, SwapBuffersCompleted=418228148034, DisplayPresentTime=0, CommandSubmissionCompleted=418035591108, 
+11-03 03:34:06.585  4219  6945 E EGL_emulation: eglQueryContext 32c0  EGL_BAD_ATTRIBUTE
+11-03 03:34:06.585  4219  6945 E EGL_emulation: tid 6945: eglQueryContext(2161): error 0x3004 (EGL_BAD_ATTRIBUTE)
+11-03 03:34:06.589  4219  6946 D CCodec  : allocate(c2.android.aac.encoder)
+11-03 03:34:06.589  4219  6946 I CCodec  : setting up 'default' as default (vendor) store
+11-03 03:34:06.591  4219  4244 D BufferPoolAccessor2.0: Destruction - bufferpool2 0x78813f4a6878 cached: 0/0M, 0/0% in use; allocs: 8, 38% recycled; transfers: 14, 64% unfetched
+11-03 03:34:06.591  4219  6946 I CCodec  : Created component [c2.android.aac.encoder]
+11-03 03:34:06.592  4219  6946 D CCodecConfig: read media type: audio/mp4a-latm
+11-03 03:34:06.594  4219  6946 D ReflectedParamUpdater: extent() != 1 for single value type: algo.buffers.max-count.values
+11-03 03:34:06.596  4219  6946 D ReflectedParamUpdater: extent() != 1 for single value type: output.subscribed-indices.values
+11-03 03:34:06.597  4219  6946 D ReflectedParamUpdater: extent() != 1 for single value type: input.buffers.allocator-ids.values
+11-03 03:34:06.597  4219  6946 D ReflectedParamUpdater: extent() != 1 for single value type: output.buffers.allocator-ids.values
+11-03 03:34:06.598  4219  6946 D ReflectedParamUpdater: extent() != 1 for single value type: algo.buffers.allocator-ids.values
+11-03 03:34:06.598  4219  6946 D ReflectedParamUpdater: extent() != 1 for single value type: output.buffers.pool-ids.values
+11-03 03:34:06.598  4219  6946 D ReflectedParamUpdater: extent() != 1 for single value type: algo.buffers.pool-ids.values
+11-03 03:34:06.600  4219  6946 I CCodecConfig: query failed after returning 10 values (BAD_INDEX)
+11-03 03:34:06.600  4219  6946 D CCodecConfig: c2 config diff is Dict {
+11-03 03:34:06.600  4219  6946 D CCodecConfig:   c2::u32 coded.bitrate.value = 64000
+11-03 03:34:06.600  4219  6946 D CCodecConfig:   c2::u32 coded.pl.level = 0
+11-03 03:34:06.600  4219  6946 D CCodecConfig:   c2::u32 coded.pl.profile = 8192
+11-03 03:34:06.600  4219  6946 D CCodecConfig:   c2::u32 coding.aac-sbr-mode.value = 3
+11-03 03:34:06.600  4219  6946 D CCodecConfig:   c2::u32 input.buffers.max-size.value = 2048
+11-03 03:34:06.600  4219  6946 D CCodecConfig:   c2::u32 input.delay.value = 0
+11-03 03:34:06.600  4219  6946 D CCodecConfig:   string input.media-type.value = "audio/raw"
+11-03 03:34:06.600  4219  6946 D CCodecConfig:   c2::u32 output.large-frame.max-size = 0
+11-03 03:34:06.600  4219  6946 D CCodecConfig:   c2::u32 output.large-frame.threshold-size = 0
+11-03 03:34:06.600  4219  6946 D CCodecConfig:   string output.media-type.value = "audio/mp4a-latm"
+11-03 03:34:06.600  4219  6946 D CCodecConfig:   c2::u32 raw.channel-count.value = 1
+11-03 03:34:06.600  4219  6946 D CCodecConfig:   c2::u32 raw.sample-rate.value = 44100
+11-03 03:34:06.600  4219  6946 D CCodecConfig: }
+11-03 03:34:06.624  4219  6944 D MediaCodec: shapeMediaFormat: deltas(0): AMessage(what = 0x00000000) = {
+11-03 03:34:06.624  4219  6944 D MediaCodec:   }
+11-03 03:34:06.624  4219  6946 D CCodec  : [c2.android.aac.encoder] buffers are bound to CCodec for this session
+11-03 03:34:06.624  4219  6946 D CCodecConfig: no c2 equivalents for log-session-id
+11-03 03:34:06.624  4219  6946 D CCodecConfig: no c2 equivalents for exo-pixel-width-height-ratio-float
+11-03 03:34:06.624  4219  6946 D CCodecConfig: no c2 equivalents for is-forced-subtitle
+11-03 03:34:06.624  4219  6946 D CCodecConfig: no c2 equivalents for exo-pcm-encoding-int
+11-03 03:34:06.625  4219  6946 D CCodecConfig: no c2 equivalents for encoder-delay
+11-03 03:34:06.625  4219  6946 D CCodecConfig: no c2 equivalents for is-autoselect
+11-03 03:34:06.625  4219  6946 D CCodecConfig: no c2 equivalents for is-default
+11-03 03:34:06.625  4219  6946 D CCodecConfig: no c2 equivalents for encoder-padding
+11-03 03:34:06.625  4219  6946 D CCodecConfig: no c2 equivalents for flags
+11-03 03:34:06.625  4219  6946 D CCodecConfig: no c2 equivalents for encoder
+11-03 03:34:06.626  4219  6946 D CCodecConfig: c2 config diff is   c2::u32 coded.bitrate.value = 131072
+11-03 03:34:06.626  4219  6946 D CCodecConfig:   c2::u32 raw.channel-count.value = 2
+11-03 03:34:06.627  4219  6946 W Codec2Client: query -- param skipped: index = 1107298332.
+11-03 03:34:06.627  4219  6946 D CCodec  : encoding statistics level = 0
+11-03 03:34:06.627  4219  6946 D CCodec  : setup formats input: AMessage(what = 0x00000000) = {
+11-03 03:34:06.627  4219  6946 D CCodec  :   int32_t sample-rate = 44100
+11-03 03:34:06.627  4219  6946 D CCodec  :   int32_t channel-count = 2
+11-03 03:34:06.627  4219  6946 D CCodec  :   int32_t max-input-size = 4096
+11-03 03:34:06.627  4219  6946 D CCodec  :   string mime = "audio/raw"
+11-03 03:34:06.627  4219  6946 D CCodec  :   int32_t channel-mask = 12
+11-03 03:34:06.627  4219  6946 D CCodec  :   int32_t android._config-pcm-encoding = 2
+11-03 03:34:06.627  4219  6946 D CCodec  : }
+11-03 03:34:06.627  4219  6946 D CCodec  : setup formats output: AMessage(what = 0x00000000) = {
+11-03 03:34:06.627  4219  6946 D CCodec  :   int32_t sample-rate = 44100
+11-03 03:34:06.627  4219  6946 D CCodec  :   int32_t bitrate = 131072
+11-03 03:34:06.627  4219  6946 D CCodec  :   int32_t buffer-batch-max-output-size = 0
+11-03 03:34:06.627  4219  6946 D CCodec  :   int32_t buffer-batch-threshold-output-size = 0
+11-03 03:34:06.627  4219  6946 D CCodec  :   int32_t channel-count = 2
+11-03 03:34:06.627  4219  6946 D CCodec  :   int32_t level = 0
+11-03 03:34:06.627  4219  6946 D CCodec  :   int32_t max-bitrate = 131072
+11-03 03:34:06.627  4219  6946 D CCodec  :   string mime = "audio/mp4a-latm"
+11-03 03:34:06.627  4219  6946 D CCodec  :   int32_t profile = 2
+11-03 03:34:06.627  4219  6946 D CCodec  : }
+11-03 03:34:06.627  4219  6946 I CCodecConfig: query failed after returning 10 values (BAD_INDEX)
+11-03 03:34:06.628  4219  6946 D CCodecConfig: c2 config diff is   c2::u32 input.buffers.max-size.value = 4096
+11-03 03:34:06.630  4219  6946 W Codec2Client: query -- param skipped: index = 1342179345.
+11-03 03:34:06.630  4219  6946 W Codec2Client: query -- param skipped: index = 2415921170.
+11-03 03:34:06.631  4219  6946 W Codec2Client: query -- param skipped: index = 3254792206.
+11-03 03:34:06.631  4219  6946 W Codec2Client: query -- param skipped: index = 3254792194.
+11-03 03:34:06.631   498  4609 D BufferPoolAccessor2.0: Destruction - bufferpool2 0x702cfc99cb88 cached: 0/0M, 0/0% in use; allocs: 7, 57% recycled; transfers: 7, 57% unfetched
+11-03 03:34:06.632  4219  6946 D CCodecBufferChannel: [c2.android.aac.encoder#889] Created input block pool with allocatorID 16 => poolID 49 - OK (0)
+11-03 03:34:06.633  4219  6946 I CCodecBufferChannel: [c2.android.aac.encoder#889] Created output block pool with allocatorID 16 => poolID 113 - OK
+11-03 03:34:06.633  4219  6946 D CCodecBufferChannel: [c2.android.aac.encoder#889] Configured output block pool ids 113 => OK
+11-03 03:34:06.633   498   958 E Codec2-ComponentInterface: We have a failed config
+11-03 03:34:06.634   498  6947 D SimpleC2Component: Using output block pool with poolID 113 => got 113 - 0
+11-03 03:34:06.643   553  1187 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_OVERRIDE
+11-03 03:34:06.645   553  1187 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE
+11-03 03:34:06.645   553  1187 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_ORIENTATION_OVERRIDE
+11-03 03:34:06.645   553  1187 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10210, packageName = null, attributionTag = null, token = android.os.Binder@76312d6, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+11-03 03:34:06.645   553  1187 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_RESIZEABLE_ACTIVITY_OVERRIDES
+11-03 03:34:06.645   553  1187 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE
+11-03 03:34:06.655   553  1187 V SplashScreenExceptionList: SplashScreen checking exception for package com.blackice.bc1.preview.test (target sdk:35) -> false
+11-03 03:34:06.657   553  1187 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 cmp=com.blackice.bc1.preview.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity} with LAUNCH_MULTIPLE from uid 10209 (BAL_ALLOW_VISIBLE_WINDOW) result code=0
+11-03 03:34:06.658   910  1011 D SplashScreenView: Build android.window.SplashScreenView{43efe5d V.E...... ......ID 0,0-0,0}
+11-03 03:34:06.658   910  1011 D SplashScreenView: Icon: view: null drawable: null size: 0
+11-03 03:34:06.658   910  1011 D SplashScreenView: Branding: view: android.view.View{940d3d2 G.ED..... ......I. 0,0-0,0 #1020503 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+11-03 03:34:06.658  1161  1161 I TopTaskTracker: onTaskMovedToFront: (moved taskInfo to front) taskId=37, baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 cmp=com.blackice.bc1.preview.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity }
+11-03 03:34:06.660   910   955 V WindowManagerShell: Transition requested (#113): android.os.BinderProxy@7905ca3 TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=37 displayId=0 isRunning=true baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 cmp=com.blackice.bc1.preview.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity } baseActivity=ComponentInfo{com.blackice.bc1.preview.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity} topActivity=ComponentInfo{com.blackice.bc1.preview.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity} origActivity=null realActivity=ComponentInfo{com.blackice.bc1.preview.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity} numActivities=1 lastActiveTime=418348 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@dc34ba0} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=ActivityInfo{af22359 androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= falseisLetterboxEducationEnabled= true isLetterboxDoubleTapEnabled= false topActivityEligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=320 topActivityLetterboxHeight=640 isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false cameraCompatTaskInfo=CameraCompatTaskInfo { cameraCompatControlState=hidden freeformCameraCompatMode=inactive}}}, pipTask = null, remoteTransition = null, displayChange = null, flags = 0, debugId = 113 }
+11-03 03:34:06.661  4219  4219 D LifecycleMonitor: Lifecycle status change: com.blackice.bc1.EditorActivity@7c323c in: PAUSED
+11-03 03:34:06.662  4219  4219 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.blackice.bc1.EditorActivity@7c323c
+11-03 03:34:06.664   482  2588 W IPCThreadState: Sending oneway calls to frozen process.
+11-03 03:34:06.668   427   427 I BpBinder: onLastStrongRef automatically unlinking death recipients: 
+11-03 03:34:06.672   553  1187 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ENABLE_FAKE_FOCUS
+11-03 03:34:06.675   553  1508 D CoreBackPreview: Window{f02e082 u0 Splash Screen com.blackice.bc1.preview.test}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@665bc9, mPriority=0, mIsAnimationCallback=false}
+11-03 03:34:06.677   356   356 I netd    : tetherGetStats() -> {[]} <0.31ms>
+11-03 03:34:06.686   910  2196 V WindowManagerShell: onTransitionReady(transaction=2375116918145)
+11-03 03:34:06.686   910   955 V WindowManagerShell: onTransitionReady (#113) android.os.BinderProxy@7905ca3: {id=113 t=OPEN f=0x0 trk=0 opt={t=CUSTOM enterResId=0 exitResId=0} r=[0@Point(0, 0)] c=[{WCT{android.window.IWindowContainerToken$Stub$Proxy@341d582} m=OPEN f=NONE leash=Surface(name=Task=37)/@0xa260ff7 sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0 taskParent=-1},{WCT{android.window.IWindowContainerToken$Stub$Proxy@6a1b493} m=TO_BACK f=NONE leash=Surface(name=Task=36)/@0xb1c3e64 sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0 taskParent=-1}]}
+11-03 03:34:06.687   910   955 V WindowManagerShell: Playing animation for (#113) android.os.BinderProxy@7905ca3@0
+11-03 03:34:06.687   910   955 V WindowManagerShell:  try handler com.android.wm.shell.transition.DefaultMixedHandler@c84cef6
+11-03 03:34:06.687   910   955 V WindowManagerShell:  try handler com.android.wm.shell.keyguard.KeyguardTransitionHandler@3df42f7
+11-03 03:34:06.687   910   955 V WindowManagerShell:  try handler com.android.wm.shell.pip.PipTransition@e80f564
+11-03 03:34:06.687   910   955 V WindowManagerShell:  try handler com.android.wm.shell.activityembedding.ActivityEmbeddingController@70523cd
+11-03 03:34:06.687   910   955 V WindowManagerShell:  try handler com.android.wm.shell.recents.RecentsTransitionHandler@ba6e482
+11-03 03:34:06.687   910   955 V ShellRecents: RecentsTransitionHandler.startAnimation: no controller found
+11-03 03:34:06.687   910   955 V WindowManagerShell:  try handler com.android.wm.shell.splitscreen.StageCoordinator@e3b1793
+11-03 03:34:06.687   910   955 V WindowManagerShell:  try handler com.android.wm.shell.transition.RemoteTransitionHandler@f0a03d0
+11-03 03:34:06.687   910   955 V WindowManagerShell: Transition doesn't have explicit remote, search filters for match for {id=113 t=OPEN f=0x0 trk=0 opt={t=CUSTOM enterResId=0 exitResId=0} r=[0@Point(0, 0)] c=[{WCT{android.window.IWindowContainerToken$Stub$Proxy@341d582} m=OPEN f=NONE leash=Surface(name=Task=37)/@0xa260ff7 sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0 taskParent=-1},{WCT{android.window.IWindowContainerToken$Stub$Proxy@6a1b493} m=TO_BACK f=NONE leash=Surface(name=Task=36)/@0xb1c3e64 sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0 taskParent=-1}]}
+11-03 03:34:06.687   910   955 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x0 checks=[{atype=undefined independent=true modes=[OPEN,TO_FRONT] flags=IN_TASK_WITH_EMBEDDED_ACTIVITY mustBeTask=false order=ANY topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} launchCookie=null},{atype=undefined independent=true modes=[CLOSE,TO_BACK] flags=IN_TASK_WITH_EMBEDDED_ACTIVITY mustBeTask=false order=ANY topActivity=null launchCookie=null}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@ce1c106, appThread = android.app.IApplicationThread$Stub$Proxy@59333c7, debugName = OverlaySwipeBack }}
+11-03 03:34:06.687   910   955 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x0 checks=[{atype=dream independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null},{atype=home independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@c5dddf4, appThread = android.app.IApplicationThread$Stub$Proxy@c50091d, debugName = LauncherToDream }}
+11-03 03:34:06.687   910   955 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x100 checks=[{atype=home independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=TOP topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} launchCookie=null},{atype=standard independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@a48e792, appThread = android.app.IApplicationThread$Stub$Proxy@4854563, debugName = QuickstepLaunchHome }}
+11-03 03:34:06.687   910   955 V WindowManagerShell:  Delegate animation for (#113) to null
+11-03 03:34:06.687   910   955 V WindowManagerShell:  try handler com.android.wm.shell.transition.DefaultTransitionHandler@32be60b
+11-03 03:34:06.687   910   955 V WindowManagerShell: start default transition animation, info = {id=113 t=OPEN f=0x0 trk=0 opt={t=CUSTOM enterResId=0 exitResId=0} r=[0@Point(0, 0)] c=[{WCT{android.window.IWindowContainerToken$Stub$Proxy@341d582} m=OPEN f=NONE leash=Surface(name=Task=37)/@0xa260ff7 sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0 taskParent=-1},{WCT{android.window.IWindowContainerToken$Stub$Proxy@6a1b493} m=TO_BACK f=NONE leash=Surface(name=Task=36)/@0xb1c3e64 sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0 taskParent=-1}]}
+11-03 03:34:06.691   910   955 V WindowManagerShell: loadAnimation: anim=android.view.animation.AnimationSet@3bbc7ce animAttr=0x9 type=OPEN isEntrance=false
+11-03 03:34:06.692   910   955 V WindowManagerShell: loadAnimation: anim=android.view.animation.AnimationSet@e6ef5fc animAttr=0x8 type=OPEN isEntrance=true
+11-03 03:34:06.693   910   955 V WindowManagerShell:  animated by com.android.wm.shell.transition.DefaultTransitionHandler@32be60b
+11-03 03:34:06.694   553   576 V WindowManager: Sent Transition (#113) createdAt=11-03 03:34:06.646 via request=TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=37 displayId=0 isRunning=true baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 cmp=com.blackice.bc1.preview.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity } baseActivity=ComponentInfo{com.blackice.bc1.preview.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity} topActivity=ComponentInfo{com.blackice.bc1.preview.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity} origActivity=null realActivity=ComponentInfo{com.blackice.bc1.preview.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity} numActivities=1 lastActiveTime=418348 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{RemoteToken{7c8bb01 Task{8d90af6 #37 type=standard A=10210:com.blackice.bc1.preview.test}}} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=ActivityInfo{d381da6 androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= falseisLetterboxEducationEnabled= true isLetterboxDoubleTapEnabled= false topActivityEligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=320 topActivityLetterboxHeight=640 isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false cameraCompatTaskInfo=CameraCompatTaskInfo { cameraCompatControlState=hidden freeformCameraCompatMode=inactive}}}, pipTask = null, remoteTransition = null, displayChange = null, flags = 0, debugId = 113 }
+11-03 03:34:06.694   553   576 V WindowManager:     startWCT=WindowContainerTransaction { changes = {} hops = [] errorCallbackToken=null taskFragmentOrganizer=null }
+11-03 03:34:06.694   553   576 V WindowManager:     info={id=113 t=OPEN f=0x0 trk=0 opt={t=CUSTOM enterResId=0 exitResId=0} r=[0@Point(0, 0)] c=[
+11-03 03:34:06.694   553   576 V WindowManager:         {WCT{RemoteToken{7c8bb01 Task{8d90af6 #37 type=standard A=10210:com.blackice.bc1.preview.test}}} m=OPEN f=NONE leash=Surface(name=Task=37)/@0xa9bb20b sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0 taskParent=-1},
+11-03 03:34:06.694   553   576 V WindowManager:         {WCT{RemoteToken{7e8147d Task{ffe2bd3 #36 type=standard A=10209:com.blackice.bc1.preview}}} m=TO_BACK f=NONE leash=Surface(name=Task=36)/@0x493b827 sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0 taskParent=-1}
+11-03 03:34:06.694   553   576 V WindowManager:     ]}
+11-03 03:34:06.698   553  2236 W UserManagerService: Requested status bar icon for non-badged user 0
+11-03 03:34:06.706   910   955 V WindowManagerShell: Transition animation finished (aborted=false), notifying core (#113) android.os.BinderProxy@7905ca3@0
+11-03 03:34:06.707   553  1508 D CoreBackPreview: Window{c21b94 u0 com.blackice.bc1.preview.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@7c0c939, mPriority=0, mIsAnimationCallback=false}
+11-03 03:34:06.708   553   576 V WindowManager: Finish Transition (#113): created at 11-03 03:34:06.646 collect-started=0.033ms request-sent=10.101ms started=14.415ms ready=27.084ms sent=39.94ms finished=62.133ms
+11-03 03:34:06.711   553  1508 W UserManagerService: Requested status bar icon for non-badged user 0
+11-03 03:34:06.712   910   955 V WindowManagerShell: Track 0 became idle
+11-03 03:34:06.712   910   955 V WindowManagerShell: All active transition animations finished
+11-03 03:34:06.714   553  2236 W UserManagerService: Requested status bar icon for non-badged user 0
+11-03 03:34:06.714  4219  4219 D VRI[EditorActivity]: visibilityChanged oldVisibility=true newVisibility=false
+11-03 03:34:06.715  4832  4858 I EGL_emulation: Opening libGLESv1_CM_emulation.so
+11-03 03:34:06.716  4832  4858 I EGL_emulation: Opening libGLESv2_emulation.so
+11-03 03:34:06.730   910  1037 D EGL_emulation: app_time_stats: avg=631.43ms min=2.55ms max=3718.54ms count=7
+11-03 03:34:06.732  4832  4858 W HWUI    : Failed to initialize 101010-2 format, error = EGL_SUCCESS
+11-03 03:34:06.845   553   576 W ziparchive: Unable to open '/data/app/~~_YbcI_jaa1UJ9tOCI9Y3hA==/com.blackice.bc1.preview.test-LtL80FbWtY4Lo_QorCFPEQ==/base.dm': No such file or directory
+11-03 03:34:06.848   910   955 V WindowManagerShell: Transition requested (#114): android.os.BinderProxy@77eef3d TransitionRequestInfo { type = CLOSE, triggerTask = TaskInfo{userId=0 taskId=37 displayId=0 isRunning=false baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 cmp=com.blackice.bc1.preview.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity } baseActivity=null topActivity=null origActivity=null realActivity=ComponentInfo{com.blackice.bc1.preview.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity} numActivities=0 lastActiveTime=418364 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@41ea332} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=null launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=true isVisible=true isVisibleRequested=true isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= falseisLetterboxEducationEnabled= false isLetterboxDoubleTapEnabled= false topActivityEligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false cameraCompatTaskInfo=CameraCompatTaskInfo { cameraCompatControlState=hidden freeformCameraCompatMode=inactive}}}, pipTask = null, remoteTransition = null, displayChange = null, flags = 0, debugId = 114 }
+11-03 03:34:06.849  1161  1161 I TopTaskTracker: onTaskMovedToFront: (moved taskInfo to front) taskId=7, baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=com.google.android.apps.nexuslauncher/.NexusLauncherActivity }
+11-03 03:34:06.851   427   427 I BpBinder: onLastStrongRef automatically unlinking death recipients: 
+11-03 03:34:06.855   553   576 I ActivityTaskManager: Displayed com.blackice.bc1.preview.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity for user 0: +203ms
+11-03 03:34:06.858   482  2588 W IPCThreadState: Sending oneway calls to frozen process.
+11-03 03:34:06.865   553  1187 I AppWidgetServiceImpl: startListening() 0
+11-03 03:34:06.867  4219  6942 I TransformerInternal: Release 2ab686c [AndroidXMedia3/1.11.1] [emu64xa, sdk_gphone64_x86_64, Google, 35] [media3.common, media3.transformer, media3.datasource, media3.decoder, media3.effect, media3.exoplayer, media3.extractor]
+11-03 03:34:06.873   910   955 D WindowManagerShell: setLauncherKeepClearAreaHeight: visible=true, height=175
+11-03 03:34:06.874   910  1010 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda11@8a181cc
+11-03 03:34:06.875  1161  1161 D StatsLog: LAUNCHER_ONRESUME
+11-03 03:34:06.876  1161  1161 D NexusLauncherModelDelegate: notifySmartspaceEvent: SmartspaceTargetEvent{mSmartspaceTarget=null, mSmartspaceActionId='null', mEventType=6}
+11-03 03:34:06.877   553   645 D CoreBackPreview: Window{f02e082 u0 Splash Screen com.blackice.bc1.preview.test EXITING}: Setting back callback null
+11-03 03:34:06.878   553   645 W InputManager-JNI: Input channel object 'f02e082 Splash Screen com.blackice.bc1.preview.test (client)' was disposed without first being removed with the input manager!
+11-03 03:34:06.883  1161  1207 D QuickstepModelDelegate: notifyAppTargetEvent action=1 launchLocation=workspace/0/[-1,-1]/[1,1]
+11-03 03:34:06.883   553  1546 W AppSearchIcing: icing-search-engine.cc:321: Error: 5, Message: Document (com.google.android.googlequicksearchbox$OneSearchZeroStateGoogleSuggestions/default, zp) not found.
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: AppSearch 0-state cache not available, fallback to AGA
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: java.util.concurrent.CompletionException: java.util.NoSuchElementException: No value present
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	at java.util.concurrent.CompletableFuture.encodeThrowable(CompletableFuture.java:308)
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	at java.util.concurrent.CompletableFuture.completeThrowable(CompletableFuture.java:323)
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	at java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:684)
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	at java.util.concurrent.CompletableFuture.postComplete(CompletableFuture.java:486)
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	at java.util.concurrent.CompletableFuture.completeExceptionally(CompletableFuture.java:2138)
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	at com.google.android.apps.nexuslauncher.allapps.E0.onResult(go/retraceme 31f9979659277bb965985aff1272c33e3c3c9e755b77166d20a2465454178f2c:67)
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	at android.app.appsearch.SearchSessionUtil$1.lambda$onResult$0(go/retraceme 64eee9e9f568ff45978879ad2ff83146f2618ee8a88278736fbdf5fae931976e:144)
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	at android.app.appsearch.SearchSessionUtil$1.$r8$lambda$CEk3q8sDAQVhU3rQwVueB8FAj_M(go/retraceme 64eee9e9f568ff45978879ad2ff83146f2618ee8a88278736fbdf5fae931976e:1)
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	at android.app.appsearch.SearchSessionUtil$1$$ExternalSyntheticLambda0.run(go/retraceme 64eee9e9f568ff45978879ad2ff83146f2618ee8a88278736fbdf5fae931976e:22)
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	at android.os.Handler.handleCallback(Handler.java:959)
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	at android.os.Handler.dispatchMessage(Handler.java:100)
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	at android.os.Looper.loopOnce(Looper.java:232)
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	at android.os.Looper.loop(Looper.java:317)
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: Caused by: java.util.NoSuchElementException: No value present
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	at java.util.Optional.get(Optional.java:143)
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	at com.google.android.apps.nexuslauncher.allapps.E0.onResult(go/retraceme 31f9979659277bb965985aff1272c33e3c3c9e755b77166d20a2465454178f2c:28)
+11-03 03:34:06.885  1161  1921 D OneSearchSuggestProvider: 	... 8 more
+11-03 03:34:06.886  1161  1921 D OneSearchSuggestProvider: Created the binder channel successfully for end point service =com.google.android.apps.search.googleapp.search.suggest.plugins.onesearch.server.OneSearchSuggestService , mChannel=i1{delegate=f{logId=73, target=directaddress:///AndroidComponentAddress%5BIntent%20%7B%20act=grpc.io.action.BIND%20cmp=com.google.android.googlequicksearchbox/com.google.android.apps.search.googleapp.search.suggest.plugins.onesearch.server.OneSearchSuggestService%20%7D%5D}} , mOneSearchConnection=l2.Z@8296d0a
+11-03 03:34:06.896  1161  1161 D BaseDepthController: setSurface:
+11-03 03:34:06.896  1161  1161 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+11-03 03:34:06.896  1161  1161 D BaseDepthController: 	mSurface: Surface(name=com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity)/@0x7f661ef
+11-03 03:34:06.901  4219  6946 D CCodecBufferChannel: [c2.android.aac.encoder#889] MediaCodec discarded an unknown buffer
+11-03 03:34:06.901  4219  6946 D CCodecBufferChannel: [c2.android.aac.encoder#889] MediaCodec discarded an unknown buffer
+11-03 03:34:06.901  4219  6946 D CCodecBufferChannel: [c2.android.aac.encoder#889] MediaCodec discarded an unknown buffer
+11-03 03:34:06.901  4219  6946 D CCodecBufferChannel: [c2.android.aac.encoder#889] MediaCodec discarded an unknown buffer
+11-03 03:34:06.905  4219  6946 I hw-BpHwBinder: onLastStrongRef automatically unlinking death recipients
+11-03 03:34:06.906   498   958 I hw-BpHwBinder: onLastStrongRef automatically unlinking death recipients
+11-03 03:34:06.906   498   958 I hw-BpHwBinder: onLastStrongRef automatically unlinking death recipients
+11-03 03:34:06.906   498   958 D BufferPoolAccessor2.0: Destruction - bufferpool2 0x702cfc99f528 cached: 0/0M, 0/0% in use; allocs: 0, 0% recycled; transfers: 0, 0% unfetched
+11-03 03:34:06.907   553  1508 V MediaMetricsManagerService: Releasing sessionId ZMCsXRqIOHS9O92F for userId 0 [NOP]
+11-03 03:34:06.908  4219  4219 D LifecycleMonitor: Lifecycle status change: com.blackice.bc1.EditorActivity@7c323c in: STOPPED
+11-03 03:34:06.909  4219  4219 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.blackice.bc1.EditorActivity@7c323c
+11-03 03:34:06.915  4219  4219 D LifecycleMonitor: Lifecycle status change: com.blackice.bc1.EditorActivity@7c323c in: DESTROYED
+11-03 03:34:06.915  4219  4219 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+11-03 03:34:06.915  4219  4219 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda11@d4ea26c
+11-03 03:34:06.915   553  1187 D CoreBackPreview: Window{e2f7040 u0 com.blackice.bc1.preview/com.blackice.bc1.EditorActivity}: Setting back callback null
+11-03 03:34:06.917  4219  4219 W MessageQueue: Handler (android.os.Handler) {f0bf6d2} sending message to a Handler on a dead thread
+11-03 03:34:06.917  4219  4219 W MessageQueue: java.lang.IllegalStateException: Handler (android.os.Handler) {f0bf6d2} sending message to a Handler on a dead thread
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.os.MessageQueue.enqueueMessage(MessageQueue.java:600)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.os.Handler.enqueueMessage(Handler.java:787)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.os.Handler.sendMessageAtTime(Handler.java:736)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.os.Handler.sendMessageDelayed(Handler.java:706)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.os.Handler.post(Handler.java:436)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at com.blackice.bc1.engine.bc.LivePreview.onSurfaceTextureDestroyed(LivePreview.java:109)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.TextureView.releaseSurfaceTexture(TextureView.java:341)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.TextureView.onDetachedFromWindowInternal(TextureView.java:312)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.View.dispatchDetachedFromWindow(View.java:22923)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:3957)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:3957)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:3957)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:3957)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:3957)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:3957)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:3957)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.ViewGroup.dispatchDetachedFromWindow(ViewGroup.java:3957)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.ViewRootImpl.dispatchDetachedFromWindow(ViewRootImpl.java:6363)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.ViewRootImpl.doDie(ViewRootImpl.java:9848)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.ViewRootImpl.die(ViewRootImpl.java:9822)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.WindowManagerGlobal.removeViewLocked(WindowManagerGlobal.java:543)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.WindowManagerGlobal.removeView(WindowManagerGlobal.java:484)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.view.WindowManagerImpl.removeViewImmediate(WindowManagerImpl.java:216)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.app.ActivityThread.handleDestroyActivity(ActivityThread.java:6020)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.app.servertransaction.DestroyActivityItem.execute(DestroyActivityItem.java:46)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.app.servertransaction.ActivityTransactionItem.execute(ActivityTransactionItem.java:60)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.app.servertransaction.TransactionExecutor.executeLifecycleItem(TransactionExecutor.java:225)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:107)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:81)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2636)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.os.Handler.dispatchMessage(Handler.java:107)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.os.Looper.loopOnce(Looper.java:232)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.os.Looper.loop(Looper.java:317)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at android.app.ActivityThread.main(ActivityThread.java:8705)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at java.lang.reflect.Method.invoke(Native Method)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+11-03 03:34:06.917  4219  4219 W MessageQueue: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)
+11-03 03:34:06.922  4219  4234 E TestRunner: failed: sliderAndTrackpadKeyboardUseTheRealPositionAndRespectLocks(com.blackice.bc1.InspectorControlsTest)
+11-03 03:34:06.923  4219  4234 E TestRunner: ----- begin exception -----
+11-03 03:34:06.923  4219  4234 E TestRunner: java.lang.AssertionError: Trackpad keeps keyboard focus after commit
+11-03 03:34:06.923  4219  4234 E TestRunner: ----- end exception -----
+11-03 03:34:06.924  4219  4234 I TestRunner: finished: sliderAndTrackpadKeyboardUseTheRealPositionAndRespectLocks(com.blackice.bc1.InspectorControlsTest)
