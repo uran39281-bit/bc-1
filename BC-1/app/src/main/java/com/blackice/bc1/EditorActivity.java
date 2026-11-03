@@ -641,7 +641,19 @@ public final class EditorActivity extends Activity {
         phoneTimelineTools.setVisibility(browse?View.GONE:View.VISIBLE);
         if(emptyPreview!=null&&(project.clips.isEmpty()&&project.overlays.isEmpty()))emptyPreview.setText(browse?"+ Import video or images":"START YOUR FIRST CUT\n\n+ Import video or images");
     }
+    private String inspectorScrollOwner="";
     void renderInspector() {
+        if(inspector==null)return;
+        ScrollView scroller=inspector.getParent() instanceof ScrollView?(ScrollView)inspector.getParent():null;
+        String owner=selected+":"+selectedOverlay+":"+tab+":"+panels.title()+":"+transformPanel.tab;
+        int previousScroll=scroller!=null&&owner.equals(inspectorScrollOwner)?scroller.getScrollY():0;
+        inspectorScrollOwner=owner;
+        try{renderInspectorContents();}finally{
+            com.blackice.bc1.menu.InspectorStyle.apply(inspector,wideLayout);
+            if(scroller!=null&&!LayerToolsPanel.TITLE.equals(panels.title())){LinearLayout rendered=inspector;scroller.post(()->{if(inspector==rendered&&owner.equals(inspectorScrollOwner))scroller.scrollTo(0,previousScroll);});}
+        }
+    }
+    private void renderInspectorContents() {
         if(inspector==null)return;sizePhoneDrawer();renderTimelineTools();if(selected>=0)selectedOverlay=-1;pruneSelection();renderHeader();updateMediaSelection();if(timeline!=null)timeline.invalidate();if(previewControls!=null)previewControls.invalidate();updateJumpLabels();inspector.removeAllViews();contextualRow=null;contextualCount=0;gridRow=null;gridCount=0;
         for(int i=0;i<navTabs.size();i++){navTabs.get(i).setTextColor(i==tab?CYAN:TEXT);navTabs.get(i).setBackground(navBackground(i==tab));navTabs.get(i).setSelected(i==tab);for(android.graphics.drawable.Drawable icon:navTabs.get(i).getCompoundDrawables())if(icon!=null)icon.setTint(i==tab?CYAN:TEXT);}
         if(panels.showing()&&"Effects".equals(panels.title())){panels.render(inspector);return;}
