@@ -78,6 +78,10 @@ public final class EditProject {
         /** Joint Movement: stable id of the visual parent layer, and the 2D attachment offset {a,b,c,d,tx,ty}; see ParentTransforms. */
         public String parentId; public float[] attach;
         /** Reverse: while reversed, uri/in/out point into a derived reversed file and the forward source is kept here; see ReverseOps. */
+        /** Effect controls (0..1) for the effect id in fxEffect; ignored when the clip's effect has changed since (defaults apply). */
+        public float[] fx; public int fxEffect;
+        /** The four values the shader reads for this clip's current effect. */
+        public float[] effectParams(){return com.blackice.bc1.core.EffectCatalog.resolve(effect,fxEffect==effect?fx:null);}
         public boolean reversed; public String forwardUri, forwardName; public long forwardSourceDurationMs, reverseBaseMs, reverseSpanMs;
         public boolean image, audioOnly;
         public int track; public long startMs,fadeInMs,fadeOutMs;
@@ -108,7 +112,7 @@ public final class EditProject {
             c.sourceDurationMs=sourceDurationMs; c.inMs=inMs; c.outMs=outMs;
             c.effect=effect; c.transition=transition; c.easing=easing; c.blend=blend;
             c.intensity=intensity; c.opacity=opacity; c.volume=volume;c.unmutedVolume=unmutedVolume; c.transitionMs=transitionMs;c.speed=speed;
-            c.parentId=parentId;c.attach=attach==null?null:attach.clone();c.reversed=reversed;c.forwardUri=forwardUri;c.forwardName=forwardName;c.forwardSourceDurationMs=forwardSourceDurationMs;c.reverseBaseMs=reverseBaseMs;c.reverseSpanMs=reverseSpanMs;return c;
+            c.parentId=parentId;c.attach=attach==null?null:attach.clone();c.fx=fx==null?null:fx.clone();c.fxEffect=fxEffect;c.reversed=reversed;c.forwardUri=forwardUri;c.forwardName=forwardName;c.forwardSourceDurationMs=forwardSourceDurationMs;c.reverseBaseMs=reverseBaseMs;c.reverseSpanMs=reverseSpanMs;return c;
         }
     }
     public static final class Overlay {

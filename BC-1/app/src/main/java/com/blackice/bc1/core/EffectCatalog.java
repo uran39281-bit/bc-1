@@ -6,7 +6,8 @@ import java.util.List;
 /**
  * Every clip effect the layer shader (assets/shaders/video.frag) implements, by stored id. Ids 0-11 are
  * the original BC-1 effects; 12+ are the Black Ice effect set, written for BC-1. Append only: ids are
- * saved in projects. Each effect has one control, the clip's animatable intensity (0..1).
+ * saved in projects. Every effect has its animatable strength (0..1); most also have up to four named controls,
+ * stored per clip, whose defaults reproduce the effect's original look exactly.
  */
 public final class EffectCatalog {
     public static final String[] NAMES = {
@@ -41,7 +42,71 @@ public final class EffectCatalog {
     /** Effects whose intensity is neutral at 50% (lower reduces, higher increases). */
     private static final int[] CENTERED = {9, 10, 17, 18, 19};
 
+    /** Maximum named controls per effect (the shader reads them as one vec4). */
+    public static final int MAX_PARAMS = 4;
+
+    /** A named control: its label, default (0..1) and whether the label is shown as an angle (value x 360°). */
+    public static final class Param {
+        public final String name; public final float def; public final boolean angle;
+        Param(String name, float def, boolean angle) { this.name = name; this.def = def; this.angle = angle; }
+    }
+
+    private static final Param[][] PARAMS = new Param[NAMES.length][];
+    private static Param p(String name, float def) { return new Param(name, def, false); }
+    private static Param angle(String name, float def) { return new Param(name, def, true); }
+    static {
+        for (int id = 0; id < PARAMS.length; id++) PARAMS[id] = new Param[0];
+        PARAMS[1] = new Param[]{p("Radius", .5f)};
+        PARAMS[2] = new Param[]{p("Radius", .5f), p("Threshold", .32f)};
+        PARAMS[3] = new Param[]{p("Softness", .5f)};
+        PARAMS[4] = new Param[]{p("Contrast", 0f)};
+        PARAMS[6] = new Param[]{p("Size", .5f), p("Softness", .5f)};
+        PARAMS[7] = new Param[]{p("Radius", .5f)};
+        PARAMS[8] = new Param[]{p("Cell size", .5f)};
+        PARAMS[11] = new Param[]{p("Tint", .5f)};
+        PARAMS[12] = new Param[]{p("Radius", .5f)};
+        PARAMS[13] = new Param[]{angle("Angle", 0f), p("Length", .5f)};
+        PARAMS[14] = new Param[]{p("Center X", .5f), p("Center Y", .5f)};
+        PARAMS[15] = new Param[]{p("Center X", .5f), p("Center Y", .5f)};
+        PARAMS[16] = new Param[]{p("Radius", .5f)};
+        PARAMS[20] = new Param[]{p("White point", .5f)};
+        PARAMS[28] = new Param[]{p("Position X", 0f), p("Position Y", 1f), p("Size", .5f)};
+        PARAMS[29] = new Param[]{p("Radius", .5f), p("Center X", .5f), p("Center Y", .5f)};
+        PARAMS[30] = new Param[]{p("Radius", .5f), p("Center X", .5f), p("Center Y", .5f)};
+        PARAMS[31] = new Param[]{p("Radius", .5f), p("Center X", .5f), p("Center Y", .5f)};
+        PARAMS[32] = new Param[]{p("Frequency", .5f), p("Speed", .5f)};
+        PARAMS[33] = new Param[]{p("Frequency", .5f), p("Speed", .5f)};
+        PARAMS[34] = new Param[]{p("Curvature", .5f), p("Center X", .5f), p("Center Y", .5f)};
+        PARAMS[35] = new Param[]{p("Mirror line", .5f)};
+        PARAMS[36] = new Param[]{angle("Rotation", 0f), p("Center X", .5f), p("Center Y", .5f)};
+        PARAMS[37] = new Param[]{p("Speed", .5f)};
+        PARAMS[39] = new Param[]{p("Thickness", .5f)};
+        PARAMS[40] = new Param[]{p("Depth", .5f), angle("Light angle", .125f)};
+        PARAMS[41] = new Param[]{p("Softness", .5f)};
+        PARAMS[42] = new Param[]{p("Grain size", .5f), p("Speed", .5f)};
+        PARAMS[43] = new Param[]{p("Line density", .5f)};
+        PARAMS[44] = new Param[]{p("Speed", .5f), p("Blocks", .5f)};
+        PARAMS[45] = new Param[]{p("Wobble", .5f), p("Noise", .5f)};
+        PARAMS[46] = new Param[]{angle("Angle", 0f)};
+        PARAMS[47] = new Param[]{angle("Dot angle", .125f), p("Dot size", .5f)};
+    }
+
     private EffectCatalog() {}
+
+    /** The named controls of an effect (none for effects that are fully described by their strength). */
+    public static Param[] params(int id) { return valid(id) ? PARAMS[id] : PARAMS[0]; }
+    public static int paramCount(int id) { return params(id).length; }
+    /** The four values the shader reads: stored values where this clip has them for this effect, else the defaults. */
+    public static float[] resolve(int id, float[] stored) {
+        float[] out = new float[MAX_PARAMS];
+        Param[] defs = params(id);
+        for (int i = 0; i < MAX_PARAMS; i++) {
+            float v = i < defs.length ? defs[i].def : 0f;
+            if (stored != null && i < stored.length && i < defs.length && Float.isFinite(stored[i])) v = Math.max(0f, Math.min(1f, stored[i]));
+            out[i] = v;
+        }
+        return out;
+    }
 
     public static int count() { return NAMES.length; }
     public static boolean valid(int id) { return id >= 0 && id < NAMES.length; }
