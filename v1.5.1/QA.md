@@ -1,6 +1,6 @@
 # Black Ice Editor Preview 1.5.1 — build 45
 
-> **Status: qualified and signed locally; publication awaits the retained-key 1.5.0 → 1.5.1 upgrade gate.**
+> **Status: upgrade verified. The retained-key signed APK is published with this record.** Signed Preview 1.5.0 build 44 was upgraded in place to 1.5.1 build 45; the fixture, edits, saved effect, custom and legacy easing curves and original media were preserved.
 
 ## Changes
 
@@ -48,7 +48,11 @@ The first full emulator run on `5f92f9d` passed 102/103 tests and exposed missin
 
 Publication is gated on upgrading retained-key signed Preview **1.5.0 build 44** in place with `adb install -r`, without uninstalling or clearing data. The gate verifies the fixture can open/save before and after, retaining media bytes/URI, trims, transforms, keys, custom and legacy easing, shape fill animation, canvas/frame rate and a saved effect.
 
-Once published, install this APK as an update to the retained-key Preview app. Do not uninstall the existing app to work around a signature mismatch.
+Install this APK as an update to the retained-key Preview app. Do not uninstall the existing app to work around a signature mismatch.
+
+## Published upgrade evidence
+
+[Publish/upgrade run 41568636856](https://github.com/uran39281-bit/bc-1/actions/runs/41568636856) passed. [Machine-readable verification](upgrade-verification.json) records the retained media and edits. Upgrade evidence artifact: `13200481476` (SHA-256 `e1ee00513ec491fdecb58b386d6ac91095f01a0faf5642f1ce473ee30203419d`).
 
 ## Remaining limitations
 
