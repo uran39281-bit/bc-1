@@ -1,5 +1,6 @@
 package com.blackice.bc1.editor;
 
+import com.blackice.bc1.core.EffectCatalog;
 import org.json.*;
 
 /** Selective copy/paste of layer attributes and the reusable presets built from them.
@@ -17,7 +18,7 @@ public final class Attributes {
             JSONObject j=new JSONObject();
             if((categories&TRANSFORM)!=0) j.put("transform",transform(c.x,c.y,c.scale,c.aspect,c.rotation,c.skewX,c.skewY,c.anchorX,c.anchorY,c.flipH,c.flipV).put("heightScale",c.heightScale));
             if((categories&EFFECTS)!=0&&!EditProject.audioTrack(c.track)) j.put("effects",new JSONObject().put("effect",c.effect).put("intensity",c.intensity).put("opacity",c.opacity)
-                    .put("chroma",c.chroma).put("keyColor",c.keyColor).put("keyTolerance",c.keyTolerance).put("keySoftness",c.keySoftness).put("keySpill",c.keySpill));
+                    .put("chroma",c.chroma).put("keyColor",c.keyColor).put("keyTolerance",c.keyTolerance).put("keySoftness",c.keySoftness).put("keySpill",c.keySpill).put("fx",fxArray(c)));
             if((categories&ANIMATION)!=0) j.put("animation",ProjectStoreAccess.motion(retime(c.motion,c.inMs,1/c.speed,true)));
             return new Attributes(j,mask(j));
         } catch(JSONException e) { throw new IllegalStateException(e); }
@@ -45,7 +46,7 @@ public final class Attributes {
             JSONObject t=data.optJSONObject("transform");
             if(t!=null&&(requested&TRANSFORM)!=0&&!EditProject.audioTrack(c.track)){c.x=f(t,"x");c.y=f(t,"y");c.scale=Math.max(.05f,Math.min(Motion.MAX_SCALE,f(t,"scale")));c.aspect=f(t,"aspect");c.heightScale=(float)t.optDouble("heightScale",-1);c.rotation=f(t,"rotation");c.skewX=f(t,"skewX");c.skewY=f(t,"skewY");c.anchorX=f(t,"anchorX");c.anchorY=f(t,"anchorY");c.flipH=t.getBoolean("flipH");c.flipV=t.getBoolean("flipV");applied|=TRANSFORM;}
             JSONObject e=data.optJSONObject("effects");
-            if(e!=null&&(requested&EFFECTS)!=0&&!EditProject.audioTrack(c.track)){if(e.has("effect")){c.effect=e.getInt("effect");c.intensity=f(e,"intensity");c.chroma=e.getBoolean("chroma");c.keyColor=e.getInt("keyColor");c.keyTolerance=f(e,"keyTolerance");c.keySoftness=f(e,"keySoftness");c.keySpill=f(e,"keySpill");}c.opacity=f(e,"opacity");applied|=EFFECTS;}
+            if(e!=null&&(requested&EFFECTS)!=0&&!EditProject.audioTrack(c.track)){if(e.has("effect")){c.effect=e.getInt("effect");c.intensity=f(e,"intensity");c.chroma=e.getBoolean("chroma");c.keyColor=e.getInt("keyColor");c.keyTolerance=f(e,"keyTolerance");c.keySoftness=f(e,"keySoftness");c.keySpill=f(e,"keySpill");c.fx=null;c.fxEffect=c.effect;JSONArray fx=e.optJSONArray("fx");if(fx!=null&&fx.length()>0&&fx.length()<=EffectCatalog.MAX_PARAMS){c.fx=new float[fx.length()];for(int i=0;i<c.fx.length;i++)c.fx[i]=(float)fx.optDouble(i,0);}}c.opacity=f(e,"opacity");applied|=EFFECTS;}
             JSONArray a=data.optJSONArray("animation");
             if(a!=null&&(requested&ANIMATION)!=0){c.motion=retime(ProjectStoreAccess.motion(a),c.inMs,c.speed,false);applied|=ANIMATION;}
         } catch(JSONException ex) { throw new IllegalArgumentException("The copied attributes are damaged."); }
@@ -74,6 +75,8 @@ public final class Attributes {
         }
         return m;
     }
+    /** The clip's effect controls, copied only while they belong to its current effect. */
+    private static JSONArray fxArray(EditProject.Clip c){if(c.fx==null||c.fxEffect!=c.effect)return null;JSONArray a=new JSONArray();for(float v:c.fx)try{a.put((double)v);}catch(JSONException ignored){}return a;}
     private static float f(JSONObject j,String key)throws JSONException{return (float)j.getDouble(key);}
 
     /** Presets persist as JSON: a name, a kind and the attribute payload (or, for elements, layers). */

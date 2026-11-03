@@ -133,7 +133,7 @@ public final class ProjectStore {
                 .put("chroma",c.chroma).put("keyColor",c.keyColor).put("keyTolerance",c.keyTolerance).put("keySoftness",c.keySoftness).put("keySpill",c.keySpill)
                 .put("transition",c.transition).put("transitionMs",c.transitionMs).put("easing",c.easing).put("blend",c.blend)
                 .put("heightScale",c.heightScale).put("aspect",c.aspect).put("skewX",c.skewX).put("skewY",c.skewY).put("anchorX",c.anchorX).put("anchorY",c.anchorY)
-                .put("flipH",c.flipH).put("flipV",c.flipV).put("width",c.width).put("height",c.height).put("group",c.group),c.parentId,c.attach).put("reversed",c.reversed?true:null).put("forwardUri",c.reversed?c.forwardUri:null).put("forwardName",c.reversed?c.forwardName:null).put("forwardSourceDurationMs",c.reversed?c.forwardSourceDurationMs:null).put("reverseBaseMs",c.reversed?c.reverseBaseMs:null).put("reverseSpanMs",c.reversed?c.reverseSpanMs:null));
+                .put("flipH",c.flipH).put("flipV",c.flipV).put("width",c.width).put("height",c.height).put("group",c.group),c.parentId,c.attach).put("fx",fxJson(c)).put("fxEffect",c.fx!=null&&c.fxEffect==c.effect?c.fxEffect:null).put("reversed",c.reversed?true:null).put("forwardUri",c.reversed?c.forwardUri:null).put("forwardName",c.reversed?c.forwardName:null).put("forwardSourceDurationMs",c.reversed?c.forwardSourceDurationMs:null).put("reverseBaseMs",c.reversed?c.reverseBaseMs:null).put("reverseSpanMs",c.reversed?c.reverseSpanMs:null));
         j.put("clips",clips); JSONArray library=new JSONArray();
         for(EditProject.Clip a:p.library) library.put(new JSONObject().put("id",a.id).put("uri",a.uri).put("name",a.name).put("image",a.image).put("audioOnly",a.audioOnly)
                 .put("sourceDurationMs",a.sourceDurationMs).put("inMs",a.inMs).put("outMs",a.outMs).put("width",a.width).put("height",a.height));
@@ -176,7 +176,7 @@ public final class ProjectStore {
             c.effect=v.getInt("effect"); c.intensity=(float)v.getDouble("intensity"); c.opacity=(float)v.getDouble("opacity");
             c.volume=(float)v.getDouble("volume");c.unmutedVolume=(float)v.optDouble("unmutedVolume",-1);c.speed=(float)v.optDouble("speed",1); c.transition=v.getInt("transition"); c.transitionMs=v.getLong("transitionMs"); c.easing=v.getInt("easing");c.blend=v.optInt("blend",0);
             c.heightScale=(float)v.optDouble("heightScale",-1); c.aspect=(float)v.optDouble("aspect",1); c.skewX=(float)v.optDouble("skewX",0); c.skewY=(float)v.optDouble("skewY",0); c.anchorX=(float)v.optDouble("anchorX",0); c.anchorY=(float)v.optDouble("anchorY",0);
-            c.flipH=v.optBoolean("flipH"); c.flipV=v.optBoolean("flipV"); c.width=v.optInt("width",0); c.height=v.optInt("height",0); c.group=v.isNull("group")?null:v.optString("group",null);c.parentId=v.isNull("parentId")?null:v.optString("parentId",null);c.attach=attach(v.optJSONArray("attach"));c.reversed=v.optBoolean("reversed")&&v.has("forwardUri");if(c.reversed){c.forwardUri=v.optString("forwardUri",null);c.forwardName=v.optString("forwardName",c.name);c.forwardSourceDurationMs=v.optLong("forwardSourceDurationMs",c.sourceDurationMs);c.reverseBaseMs=v.optLong("reverseBaseMs",0);c.reverseSpanMs=v.optLong("reverseSpanMs",c.outMs-c.inMs);} p.clips.add(c); }
+            c.flipH=v.optBoolean("flipH"); c.flipV=v.optBoolean("flipV"); c.width=v.optInt("width",0); c.height=v.optInt("height",0); c.group=v.isNull("group")?null:v.optString("group",null);c.parentId=v.isNull("parentId")?null:v.optString("parentId",null);c.attach=attach(v.optJSONArray("attach"));c.fx=fx(v.optJSONArray("fx"));c.fxEffect=v.optInt("fxEffect",0);if(c.fx!=null&&c.fxEffect!=c.effect)c.fx=null;c.reversed=v.optBoolean("reversed")&&v.has("forwardUri");if(c.reversed){c.forwardUri=v.optString("forwardUri",null);c.forwardName=v.optString("forwardName",c.name);c.forwardSourceDurationMs=v.optLong("forwardSourceDurationMs",c.sourceDurationMs);c.reverseBaseMs=v.optLong("reverseBaseMs",0);c.reverseSpanMs=v.optLong("reverseSpanMs",c.outMs-c.inMs);} p.clips.add(c); }
         // The media bin is optional: older files rebuild it from their timeline sources.
         JSONArray library=j.optJSONArray("library");
         if(library!=null) for(int i=0;i<library.length();i++) { JSONObject v=library.getJSONObject(i); EditProject.Clip a=new EditProject.Clip();
@@ -207,6 +207,16 @@ public final class ProjectStore {
         if(parentId!=null)layer.put("parentId",parentId);
         if(attach!=null){JSONArray values=new JSONArray();for(float v:attach)values.put((double)v);layer.put("attach",values);}
         return layer;
+    }
+    /** Effect controls are written only while they belong to the clip's current effect. */
+    private static JSONArray fxJson(EditProject.Clip c)throws JSONException{
+        if(c.fx==null||c.fxEffect!=c.effect||c.effect==0)return null;
+        JSONArray values=new JSONArray();for(float v:c.fx)values.put((double)v);return values;
+    }
+    private static float[] fx(JSONArray values){
+        if(values==null||values.length()==0||values.length()>com.blackice.bc1.core.EffectCatalog.MAX_PARAMS)return null;
+        float[] out=new float[values.length()];for(int i=0;i<out.length;i++)out[i]=(float)values.optDouble(i,0);
+        return out;
     }
     private static float[] attach(JSONArray values){
         if(values==null||values.length()!=6)return null;

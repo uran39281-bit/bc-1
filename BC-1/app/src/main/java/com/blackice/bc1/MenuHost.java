@@ -416,12 +416,36 @@ final class MenuHost implements MenuScreenFactory.Host {
     @Override public boolean canAddEffects() { return !a.loading && !a.importing && !a.captionApplying && !a.uiLocked; }
     @Override public void addEffects() { a.effectCatalog.open(); }
 
+    // Effect controls beyond strength (EffectCatalog.params): static, 0..1, owned by the clip while its effect stays the same.
+    @Override public int effectParamCount() { return hasSelectedEffect() ? EffectCatalog.paramCount(clip().effect) : 0; }
+    @Override public String effectParamName(int index) { return paramAt(index) == null ? "" : paramAt(index).name; }
+    @Override public boolean effectParamIsAngle(int index) { return paramAt(index) != null && paramAt(index).angle; }
+    @Override public double effectParam(int index) { return hasSelectedEffect() && index >= 0 && index < EffectCatalog.MAX_PARAMS ? clip().effectParams()[index] : 0; }
+    @Override public double effectParamDefault(int index) { return paramAt(index) == null ? 0 : paramAt(index).def; }
+    @Override public boolean effectParamEditable() { return hasSelectedEffect() && editable(Property.EFFECT_STRENGTH); }
+    @Override public void previewEffectParam(int index, double value) {
+        a.liveAdjust(() -> {
+            EditProject.Clip c = clip();
+            if (c == null || c.effect == 0 || index < 0 || index >= EffectCatalog.paramCount(c.effect)) return;
+            float[] now = c.effectParams();
+            c.fx = new float[]{now[0], now[1], now[2], now[3]};
+            c.fx[index] = (float) Math.max(0, Math.min(1, value));
+            c.fxEffect = c.effect;
+        });
+    }
+    private EffectCatalog.Param paramAt(int index) {
+        if (!hasSelectedEffect()) return null;
+        EffectCatalog.Param[] all = EffectCatalog.params(clip().effect);
+        return index >= 0 && index < all.length ? all[index] : null;
+    }
+
     /** Removes only the effect and its strength animation; one undo restores both exactly. */
     @Override public void removeSelectedEffect() {
         if (!hasSelectedEffect()) return;
         a.transformPanel.commit("Effect removed", () -> {
             EditProject.Clip c = clip();
             c.effect = 0;
+            c.fx = null;
             c.intensity = .6f;
             c.motion.curves.get(Motion.INTENSITY).clear();
             a.easingControls.selected.remove(a.easingControls.scope(Motion.INTENSITY));

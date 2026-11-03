@@ -346,6 +346,7 @@ final class Compositor {
         p.set("uAspect", (float) width / height);
         p.set("uEffect", d.effect);
         p.set("uIntensity", d.intensity);
+        p.set("uParams", d.params[0], d.params[1], d.params[2], d.params[3]);
         p.set("uTime", d.sourceTimeMs / 1000f);
         quad.draw();
         GlKit.check("effect pass");
@@ -390,6 +391,7 @@ final class Compositor {
         program.set("uChroma", c.chroma ? 1 : 0, c.keyTolerance, c.keySoftness, c.keySpill);
         program.set("uEffect", effectId);
         program.set("uIntensity", d.intensity);
+        program.set("uParams", d.params[0], d.params[1], d.params[2], d.params[3]);
         program.set("uOpacity", d.opacity);
         program.set("uTransition", d.transition);
         program.set("uRole", d.role);

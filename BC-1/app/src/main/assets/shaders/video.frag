@@ -15,6 +15,8 @@ uniform vec3 uKeyColor;
 uniform int uEffect,uTransition,uRole,uTop;
 // Clip source time in seconds, for animated effects (ripple, wave, grain, glitch, light leak).
 uniform float uTime;
+// Effect controls 0..1 (see EffectCatalog); the defaults reproduce the original single-slider look.
+uniform vec4 uParams;
 float rnd(vec2 p) { return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
 float mask(vec2 uv,float p) {
     if(p<=0.0) return 0.0;
@@ -37,53 +39,54 @@ vec3 bcHsv2Rgb(vec3 c){vec3 p=abs(fract(c.xxx+vec3(1.0,2.0/3.0,1.0/3.0))*6.0-3.0
 float bcLuma(vec3 c){return dot(c,vec3(.2126,.7152,.0722));}
 // Distortions move the sampling point inside the layer (uv in 0..1, aspect-correct around the centre).
 vec2 bcDistort(int e,vec2 uv,float k){
-    vec2 d=(uv-.5)*vec2(uAspect,1.0);float r=length(d);
+    vec2 ctr=(e==32||e==33||e==35||e==37)?vec2(.5):clamp(uParams.yz,0.0,1.0);
+    vec2 d=(uv-ctr)*vec2(uAspect,1.0);float r=length(d);
 #if !defined(BC_EFFECT) || BC_EFFECT == 29
-    if(e==29){float R=.5,t=clamp(1.0-r/R,0.0,1.0);float ang=k*6.0*t*t;float cs=cos(ang),sn=sin(ang);d=mat2(cs,-sn,sn,cs)*d;}           // Swirl
+    if(e==29){float R=mix(.1,.9,uParams.x),t=clamp(1.0-r/R,0.0,1.0);float ang=k*6.0*t*t;float cs=cos(ang),sn=sin(ang);d=mat2(cs,-sn,sn,cs)*d;}           // Swirl
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 30
-    if(e==30){float R=.45;if(r<R){d*=mix(1.0,pow(r/R,.65),k);}}                                                           // Bulge
+    if(e==30){float R=.9*uParams.x;if(r<R){d*=mix(1.0,pow(r/R,.65),k);}}                                                           // Bulge
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 31
-    if(e==31){float R=.45;if(r>0.0&&r<R){d*=mix(1.0,pow(r/R,-.35),k);}}                                                 // Pinch
+    if(e==31){float R=.9*uParams.x;if(r>0.0&&r<R){d*=mix(1.0,pow(r/R,-.35),k);}}                                                 // Pinch
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 32
-    if(e==32){if(r>0.0)d+=d/r*sin(r*70.0-uTime*7.0)*k*.012;}                                                          // Ripple
+    if(e==32){if(r>0.0)d+=d/r*sin(r*140.0*uParams.x-uTime*14.0*uParams.y)*k*.012;}                                                          // Ripple
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 33
-    if(e==33){d.x+=sin(d.y*22.0+uTime*4.0)*k*.035;}                                                                     // Wave
+    if(e==33){d.x+=sin(d.y*44.0*uParams.x+uTime*8.0*uParams.y)*k*.035;}                                                                     // Wave
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 34
-    if(e==34){float f=1.0+k*1.6*r*r;d/=f;}                                                                              // Fisheye
+    if(e==34){float f=1.0+k*1.6*exp2((uParams.x-.5)*2.0)*r*r;d/=f;}                                                                              // Fisheye
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 35
-    if(e==35){if(k>0.0&&d.x>0.0)d.x=-d.x;}                                                                               // Mirror
+    if(e==35){float sx=(uParams.x-.5)*uAspect;if(k>0.0&&d.x>sx)d.x=2.0*sx-d.x;}                                                                               // Mirror
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 36
-    if(e==36){float n=floor(mix(3.0,12.0,k));float a=atan(d.y,d.x),seg=2.0*BC_PI/n;a=mod(a,seg);a=abs(a-seg*.5);d=vec2(cos(a),sin(a))*r;} // Kaleidoscope
+    if(e==36){float n=floor(mix(3.0,12.0,k));float a=atan(d.y,d.x)+uParams.x*2.0*BC_PI,seg=2.0*BC_PI/n;a=mod(a,seg);a=abs(a-seg*.5);d=vec2(cos(a),sin(a))*r;} // Kaleidoscope
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 37
-    if(e==37){float t=floor(uTime*24.0);d+=(vec2(rnd(vec2(t,1.7)),rnd(vec2(3.1,t)))-.5)*k*.05;}                         // Shake
+    if(e==37){float t=floor(uTime*48.0*uParams.x);d+=(vec2(rnd(vec2(t,1.7)),rnd(vec2(3.1,t)))-.5)*k*.05;}                         // Shake
 #endif
-    return d/vec2(uAspect,1.0)+.5;
+    return d/vec2(uAspect,1.0)+ctr;
 }
 vec4 bcEffect(int e,vec2 uv,vec4 a,float k){
     vec2 px=uTexel;
 #if !defined(BC_EFFECT) || BC_EFFECT == 12
-    if(e==12){vec3 s=vec3(0.0);float r=mix(1.0,10.0,k);for(int y=-2;y<=2;y++)for(int x=-2;x<=2;x++)s+=texture(uInput,uv+vec2(float(x),float(y))*px*r).rgb;a.rgb=s/25.0; return a;} // Box blur
+    if(e==12){vec3 s=vec3(0.0);float r=mix(1.0,10.0,k)*exp2((uParams.x-.5)*2.0);for(int y=-2;y<=2;y++)for(int x=-2;x<=2;x++)s+=texture(uInput,uv+vec2(float(x),float(y))*px*r).rgb;a.rgb=s/25.0; return a;} // Box blur
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 13
-    if(e==13){vec3 s=vec3(0.0);for(int i=-7;i<=7;i++)s+=texture(uInput,uv+vec2(float(i)/7.0*k*.04,0.0)).rgb;a.rgb=s/15.0; return a;} // Motion blur
+    if(e==13){vec3 s=vec3(0.0);float an=uParams.x*2.0*BC_PI;vec2 dir=vec2(cos(an),sin(an)*uAspect)*k*.04*exp2((uParams.y-.5)*2.0);for(int i=-7;i<=7;i++)s+=texture(uInput,uv+dir*(float(i)/7.0)).rgb;a.rgb=s/15.0; return a;} // Motion blur
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 14
-    if(e==14){vec3 s=vec3(0.0);vec2 c=(uv-.5)*vec2(uAspect,1.0);for(int i=-7;i<=7;i++){float ang=float(i)/7.0*k*.12;float cs=cos(ang),sn=sin(ang);
-        s+=texture(uInput,(mat2(cs,-sn,sn,cs)*c)/vec2(uAspect,1.0)+.5).rgb;}a.rgb=s/15.0; return a;} // Spin blur
+    if(e==14){vec3 s=vec3(0.0);vec2 c=(uv-uParams.xy)*vec2(uAspect,1.0);for(int i=-7;i<=7;i++){float ang=float(i)/7.0*k*.12;float cs=cos(ang),sn=sin(ang);
+        s+=texture(uInput,(mat2(cs,-sn,sn,cs)*c)/vec2(uAspect,1.0)+uParams.xy).rgb;}a.rgb=s/15.0; return a;} // Spin blur
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 15
-    if(e==15){vec3 s=vec3(0.0);for(int i=0;i<15;i++)s+=texture(uInput,(uv-.5)*(1.0-float(i)/14.0*k*.18)+.5).rgb;a.rgb=s/15.0; return a;} // Zoom blur
+    if(e==15){vec3 s=vec3(0.0);for(int i=0;i<15;i++)s+=texture(uInput,(uv-uParams.xy)*(1.0-float(i)/14.0*k*.18)+uParams.xy).rgb;a.rgb=s/15.0; return a;} // Zoom blur
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 16
-    if(e==16){vec3 b=vec3(0.0);for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++)b+=texture(uInput,uv+vec2(float(x),float(y))*px*2.0).rgb;b/=9.0;a.rgb+=(a.rgb-b)*k*2.5; return a;} // Unsharp mask
+    if(e==16){vec3 b=vec3(0.0);for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++)b+=texture(uInput,uv+vec2(float(x),float(y))*px*2.0*exp2((uParams.x-.5)*2.0)).rgb;b/=9.0;a.rgb+=(a.rgb-b)*k*2.5; return a;} // Unsharp mask
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 17
     if(e==17){a.rgb=(a.rgb-.5)*exp2((k-.5)*3.0)+.5; return a;} // Contrast
@@ -95,7 +98,7 @@ vec4 bcEffect(int e,vec2 uv,vec4 a,float k){
     if(e==19){a.rgb=pow(max(a.rgb,vec3(0.0)),vec3(exp2((.5-k)*2.0))); return a;} // Gamma
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 20
-    if(e==20){a.rgb=(a.rgb-k*.25)/max(1.0-k*.5,.01); return a;} // Levels
+    if(e==20){a.rgb=(a.rgb-k*.25)/max(1.0-k*.5*exp2((uParams.x-.5)*2.0),.01); return a;} // Levels
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 21
     if(e==21){vec3 h=bcRgb2Hsv(clamp(a.rgb,0.0,1.0));h.x=fract(h.x+k);a.rgb=bcHsv2Rgb(h); return a;} // Hue shift
@@ -119,41 +122,41 @@ vec4 bcEffect(int e,vec2 uv,vec4 a,float k){
     if(e==27){a.rgb=mix(a.rgb,mix(vec3(.02,.06,.16),vec3(.62,.93,1.0),bcLuma(a.rgb)),k); return a;} // Ice duotone
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 28
-    if(e==28){vec2 q=uv+vec2(sin(uTime*.4),cos(uTime*.3))*.08;float g=smoothstep(.9,0.0,length((q-vec2(0.0,1.0))*vec2(uAspect,1.0)));
+    if(e==28){vec2 q=uv+vec2(sin(uTime*.4),cos(uTime*.3))*.08;float g=smoothstep(.9*exp2((uParams.z-.5)*2.0),0.0,length((q-uParams.xy)*vec2(uAspect,1.0)));
         a.rgb+=vec3(1.0,.55,.2)*g*k*.9; return a;} // Light leak
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 38
     if(e==38){float t=mix(.15,.85,k);a.rgb=vec3(smoothstep(t-.02,t+.02,bcLuma(a.rgb))); return a;} // Threshold
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 39
-    if(e==39){vec3 l=texture(uInput,uv-vec2(px.x,0.0)).rgb,r=texture(uInput,uv+vec2(px.x,0.0)).rgb,u=texture(uInput,uv+vec2(0.0,px.y)).rgb,d=texture(uInput,uv-vec2(0.0,px.y)).rgb;
+    if(e==39){vec2 ox=px*exp2((uParams.x-.5)*2.0);vec3 l=texture(uInput,uv-vec2(ox.x,0.0)).rgb,r=texture(uInput,uv+vec2(ox.x,0.0)).rgb,u=texture(uInput,uv+vec2(0.0,ox.y)).rgb,d=texture(uInput,uv-vec2(0.0,ox.y)).rgb;
         float g=length(vec2(bcLuma(r)-bcLuma(l),bcLuma(u)-bcLuma(d)))*4.0;a.rgb=mix(a.rgb,vec3(clamp(g,0.0,1.0)),k); return a;} // Edge detect
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 40
-    if(e==40){float g=bcLuma(texture(uInput,uv+px*1.5).rgb)-bcLuma(texture(uInput,uv-px*1.5).rgb);a.rgb=mix(a.rgb,vec3(.5+g*2.0),k); return a;} // Emboss
+    if(e==40){float an=uParams.y*2.0*BC_PI;vec2 off=vec2(cos(an),sin(an))*px*2.12;float g=bcLuma(texture(uInput,uv+off).rgb)-bcLuma(texture(uInput,uv-off).rgb);a.rgb=mix(a.rgb,vec3(.5+g*2.0*exp2((uParams.x-.5)*2.0)),k); return a;} // Emboss
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 41
-    if(e==41){a.a*=smoothstep(k-.06,k+.06,bcLuma(a.rgb)); return a;} // Luma key
+    if(e==41){a.a*=smoothstep(k-.12*uParams.x,k+.12*uParams.x,bcLuma(a.rgb)); return a;} // Luma key
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 42
-    if(e==42){float n=rnd(uv/px+vec2(fract(uTime*7.13)*97.0,fract(uTime*3.7)*53.0))-.5;a.rgb+=n*k*.35; return a;} // Film grain
+    if(e==42){float gs=exp2((uParams.x-.5)*4.0),gt=exp2((uParams.y-.5)*2.0);float n=rnd(floor(uv/px/gs)+vec2(fract(uTime*7.13*gt)*97.0,fract(uTime*3.7*gt)*53.0))-.5;a.rgb+=n*k*.35; return a;} // Film grain
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 43
-    if(e==43){float l=sin(uv.y/px.y*BC_PI*.5)*.5+.5;a.rgb*=1.0-k*.6*l; return a;} // Scanlines
+    if(e==43){float l=sin(uv.y/px.y*BC_PI*.5*exp2((uParams.x-.5)*3.0))*.5+.5;a.rgb*=1.0-k*.6*l; return a;} // Scanlines
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 44
-    if(e==44){float t=floor(uTime*12.0),row=floor(uv.y*24.0);float on=step(1.0-k*.6,rnd(vec2(row,t)));float sh=(rnd(vec2(t,row*1.3))-.5)*.15*k*on;
+    if(e==44){float t=floor(uTime*24.0*uParams.x),row=floor(uv.y*48.0*uParams.y);float on=step(1.0-k*.6,rnd(vec2(row,t)));float sh=(rnd(vec2(t,row*1.3))-.5)*.15*k*on;
         vec2 g=uv+vec2(sh,0.0);a=vec4(texture(uInput,g+vec2(k*.012,0.0)).r,texture(uInput,g).g,texture(uInput,g-vec2(k*.012,0.0)).b,a.a); return a;} // Glitch
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 45
-    if(e==45){vec2 g=uv+vec2(sin(uv.y*140.0+uTime*20.0)*k*.0025,0.0);vec3 c=vec3(texture(uInput,g+vec2(k*.006,0.0)).r,texture(uInput,g).g,texture(uInput,g-vec2(k*.006,0.0)).b);
-        c+=(rnd(vec2(floor(uv.y/px.y),floor(uTime*30.0)))-.5)*k*.12;c*=1.0-k*.25*(sin(uv.y/px.y*BC_PI*.5)*.5+.5);a.rgb=mix(a.rgb,c,clamp(k*2.0,0.0,1.0)); return a;} // VHS
+    if(e==45){vec2 g=uv+vec2(sin(uv.y*140.0+uTime*20.0)*k*.0025*exp2((uParams.x-.5)*2.0),0.0);vec3 c=vec3(texture(uInput,g+vec2(k*.006,0.0)).r,texture(uInput,g).g,texture(uInput,g-vec2(k*.006,0.0)).b);
+        c+=(rnd(vec2(floor(uv.y/px.y),floor(uTime*30.0)))-.5)*k*.12*exp2((uParams.y-.5)*2.0);c*=1.0-k*.25*(sin(uv.y/px.y*BC_PI*.5)*.5+.5);a.rgb=mix(a.rgb,c,clamp(k*2.0,0.0,1.0)); return a;} // VHS
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 46
-    if(e==46){float o=k*.015;a=vec4(texture(uInput,uv+vec2(o,0.0)).r,a.g,texture(uInput,uv-vec2(o,0.0)).b,a.a); return a;} // RGB split
+    if(e==46){float o=k*.015,an=uParams.x*2.0*BC_PI;vec2 off=vec2(cos(an),sin(an)*uAspect)*o;a=vec4(texture(uInput,uv+off).r,a.g,texture(uInput,uv-off).b,a.a); return a;} // RGB split
 #endif
 #if !defined(BC_EFFECT) || BC_EFFECT == 47
-    if(e==47){float cell=mix(.008,.03,k);vec2 g=(uv-.5)*vec2(uAspect,1.0)/cell;mat2 rot=mat2(.7071,-.7071,.7071,.7071);vec2 q=rot*g;
+    if(e==47){float cell=mix(.008,.03,k)*exp2((uParams.y-.5)*2.0);vec2 g=(uv-.5)*vec2(uAspect,1.0)/cell;float ra=uParams.x*2.0*BC_PI;mat2 rot=mat2(cos(ra),-sin(ra),sin(ra),cos(ra));vec2 q=rot*g;
         vec2 c=(floor(q)+.5);float lum=bcLuma(texture(uInput,(transpose(rot)*c)*cell/vec2(uAspect,1.0)+.5).rgb);
         float dot_=smoothstep(.05,-.05,length(q-c)-sqrt(1.0-lum)*.62);a.rgb=mix(a.rgb,vec3(1.0-dot_),clamp(k*1.5,0.0,1.0)); return a;} // Halftone
 #endif
@@ -178,11 +181,11 @@ void main() {
         else inside*=step(0.0,uv.x)*step(uv.x,1.0)*step(0.0,uv.y)*step(uv.y,1.0);
     }
     vec2 coord=uv;
-    if(uEffect==8 && k>0.0) { vec2 cells=(1.0/uTexel)/mix(1.0,48.0,k); coord=(floor(uv*cells)+.5)/cells; }
+    if(uEffect==8 && k>0.0) { vec2 cells=(1.0/uTexel)/max(1.0,mix(1.0,48.0,k)*exp2((uParams.x-.5)*2.0)); coord=(floor(uv*cells)+.5)/cells; }
     vec4 a=texture(uInput,coord);
     // A fixed 13-tap Gaussian approximation bounds bandwidth on moving frames.
     if(uEffect==1 || uEffect==2) {
-        vec2 d=uTexel*mix(1.0,14.0,k);
+        vec2 d=uTexel*mix(1.0,14.0,k)*exp2((uParams.x-.5)*2.0);
         vec3 b=a.rgb*.20;
         b+=(texture(uInput,uv+vec2(d.x,0)).rgb+texture(uInput,uv-vec2(d.x,0)).rgb
            +texture(uInput,uv+vec2(0,d.y)).rgb+texture(uInput,uv-vec2(0,d.y)).rgb)*.12;
@@ -190,20 +193,21 @@ void main() {
            +texture(uInput,uv+vec2(d.x,-d.y)).rgb+texture(uInput,uv+vec2(-d.x,d.y)).rgb)*.06;
         b+=(texture(uInput,uv+vec2(2.0*d.x,0)).rgb+texture(uInput,uv-vec2(2.0*d.x,0)).rgb
            +texture(uInput,uv+vec2(0,2.0*d.y)).rgb+texture(uInput,uv-vec2(0,2.0*d.y)).rgb)*.02;
-        a.rgb=uEffect==1?mix(a.rgb,b,k):a.rgb+max(b-.16,vec3(0))*k*1.7;
+        a.rgb=uEffect==1?mix(a.rgb,b,k):a.rgb+max(b-uParams.y*.5,vec3(0))*k*1.7;
     }
-    if(uEffect==3) {float tol=mix(.08,.42,k); a.a*=smoothstep(tol-.045,tol+.045,distance(a.rgb,vec3(.10,.84,.29)));}
-    if(uEffect==4) a.rgb=mix(a.rgb,vec3(dot(a.rgb,vec3(.2126,.7152,.0722))),k);
+    if(uEffect==3) {float tol=mix(.08,.42,k); float soft=.09*uParams.x;a.a*=smoothstep(tol-soft,tol+soft,distance(a.rgb,vec3(.10,.84,.29)));}
+    if(uEffect==4) {vec3 g=vec3(dot(a.rgb,vec3(.2126,.7152,.0722)));g=(g-.5)*(1.0+uParams.x*1.5)+.5;a.rgb=mix(a.rgb,g,k);}
     if(uEffect==5) a.a*=k;
-    if(uEffect==6) a.rgb*=1.0-k*smoothstep(.25,.95,length((uv-.5)*vec2(uAspect,1)));
+    if(uEffect==6) {float e0=mix(.05,.45,uParams.x);a.rgb*=1.0-k*smoothstep(e0,e0+.7*exp2((uParams.y-.5)*2.0),length((uv-.5)*vec2(uAspect,1)));}
     if(uEffect==7) {
-        vec3 n=texture(uInput,uv+vec2(uTexel.x,0)).rgb+texture(uInput,uv-vec2(uTexel.x,0)).rgb
-              +texture(uInput,uv+vec2(0,uTexel.y)).rgb+texture(uInput,uv-vec2(0,uTexel.y)).rgb;
+        vec2 sp=uTexel*exp2((uParams.x-.5)*2.0);
+        vec3 n=texture(uInput,uv+vec2(sp.x,0)).rgb+texture(uInput,uv-vec2(sp.x,0)).rgb
+              +texture(uInput,uv+vec2(0,sp.y)).rgb+texture(uInput,uv-vec2(0,sp.y)).rgb;
         a.rgb+=(a.rgb*4.0-n)*k;
     }
     if(uEffect==9) a.rgb*=exp2((k-.5)*4.0);
     if(uEffect==10) a.rgb=mix(vec3(dot(a.rgb,vec3(.2126,.7152,.0722))),a.rgb,k*2.0);
-    if(uEffect==11) a.rgb=mix(a.rgb,(a.rgb-.5)*1.08+.5+vec3(-.06,.015,.09),k);
+    if(uEffect==11) a.rgb=mix(a.rgb,(a.rgb-.5)*1.08+.5+vec3(-.06,.015,.09)*exp2((uParams.x-.5)*3.0),k);
     if(uEffect>=12 && !(uEffect>=29 && uEffect<=37)) a=bcEffect(uEffect,uv,a,k);
     if(uChroma.x>.5){
         float chromaDistance=length((a.rgb-dot(a.rgb,vec3(.2126,.7152,.0722)))-(uKeyColor-dot(uKeyColor,vec3(.2126,.7152,.0722))));

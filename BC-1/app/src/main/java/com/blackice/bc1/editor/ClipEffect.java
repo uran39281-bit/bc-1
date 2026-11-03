@@ -63,7 +63,7 @@ public final class ClipEffect implements GlEffect {
                 program.setFloatsUniform("uAnchor",new float[]{t.anchorX,t.anchorY});
                 program.setFloatsUniform("uKeyColor",new float[]{((c.keyColor>>16)&255)/255f,((c.keyColor>>8)&255)/255f,(c.keyColor&255)/255f});
                 program.setFloatsUniform("uChroma",new float[]{c.chroma?1:0,c.keyTolerance,c.keySoftness,c.keySpill});
-                program.setIntUniform("uEffect",c.effect); program.setFloatUniform("uIntensity",c.motion.value(5,sourceTime,c.intensity));
+                float[] fx=c.effectParams();program.setFloatsUniform("uParams",new float[]{fx[0],fx[1],fx[2],fx[3]});program.setIntUniform("uEffect",c.effect); program.setFloatUniform("uIntensity",c.motion.value(5,sourceTime,c.intensity));
                 program.setFloatUniform("uOpacity",visible?c.motion.value(4,sourceTime,c.opacity):0); program.setIntUniform("uTransition",type);
                 program.setIntUniform("uRole",role); program.setIntUniform("uTop",top?1:0); if(program.getUniformLocation("uTime")>=0)program.setFloatUniform("uTime",sourceTime/1000f); // only effects that animate use it
                 program.setFloatUniform("uProgress",progress); program.bindAttributesAndUniforms();
