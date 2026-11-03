@@ -15,7 +15,7 @@ public final class PositionTrackpadView extends View {
  private final Binding binding;private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
  private boolean dragging;private int pointer=-1;private float downX,downY,lastX,lastY;private double startX,startY;
  public PositionTrackpadView(Context context,Binding binding){
-  super(context);this.binding=binding;setFocusable(true);setClickable(true);setBackground(MenuPalette.surface(context,false));
+  super(context);this.binding=binding;setFocusable(true);setFocusableInTouchMode(true);setClickable(true);setBackground(MenuPalette.surface(context,false));
   setContentDescription("Position trackpad. Drag to move X and Y. Arrow keys move one pixel; Shift moves ten pixels.");
  }
  private int dp(float n){return MenuPalette.dp(getContext(),n);}
