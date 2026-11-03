@@ -41,7 +41,8 @@ public class EffectParamsTest {
             for(int i=0;i<params.length;i++){
                 if(id==3)continue; // keys a fixed green; the pattern's green block sits exactly on the key, so softness has no edge to show
                 clip.effect=id;clip.intensity=.6f;clip.fxEffect=id;
-                float low=0f,high=params[i].angle?.125f:1f;
+                // 36 degrees, not 45: the kaleidoscope has 8 segments of exactly 45 degrees at this strength, so a 45 degree turn maps it onto itself.
+                float low=0f,high=params[i].angle?.1f:1f;
                 float[] a=new float[]{params[0].def,params.length>1?params[1].def:0,params.length>2?params[2].def:0,0},b=a.clone();a[i]=low;b[i]=high;
                 clip.fx=a;Bitmap first=LayerCapture.render(context,ProjectStore.snapshot(project),clip.id,1500,360);
                 clip.fx=b;Bitmap second=LayerCapture.render(context,ProjectStore.snapshot(project),clip.id,1500,360);
