@@ -22,7 +22,7 @@ final class PortraitChrome {
         m.content=a.column();m.content.setPadding(dp(8),dp(4),dp(8),0);m.stage.addView(m.content,new FrameLayout.LayoutParams(-1,-1));
         m.previewColumn=a.column();m.content.addView(m.previewColumn,new LinearLayout.LayoutParams(-1,-2));
         a.phonePreview=a.buildMonitor();m.previewColumn.addView(a.phonePreview,new LinearLayout.LayoutParams(-1,dp(223)));
-        a.monitor.setClipToOutline(true);GradientDrawable frame=a.buttonBackground(false);frame.setColor(0xFF030A12);frame.setCornerRadius(dp(10));a.monitor.setBackground(frame);
+        a.monitor.setClipToOutline(true);GradientDrawable frame=a.buttonBackground(false);frame.setColor(0xFF030A12);frame.setCornerRadius(dp(16));a.monitor.setBackground(frame);
         // The phone reference has an uncluttered player; its options remain in the project menu.
         a.monitorInfo.setVisibility(View.GONE);a.emptyPreview.setTextSize(12);a.emptyPreview.setTextColor(EditorActivity.MUTED);
         m.clock=a.label("",12,EditorActivity.TEXT,false);m.clock.setPadding(dp(8),0,dp(4),0);m.clock.setGravity(Gravity.CENTER_VERTICAL);a.monitor.addView(m.clock,new FrameLayout.LayoutParams(-2,dp(44),Gravity.BOTTOM|Gravity.START));
@@ -34,7 +34,7 @@ final class PortraitChrome {
         if(a.phoneTimelineArea instanceof ScrollView){((ScrollView)a.phoneTimelineArea).setVerticalScrollBarEnabled(false);ScrollView tracks=(ScrollView)a.phoneTimelineArea;int restoreY=state.timelineScroll;tracks.post(()->{if(a.mobile==m&&a.phoneTimelineArea==tracks)tracks.scrollTo(0,restoreY);});}
         m.add=a.button("+",v->openAdd(0));m.add.setTextSize(32);m.add.setContentDescription("Add content");m.add.setTextColor(BlackIceTheme.ON_ACCENT);m.add.setBackground(BlackIceTheme.primary(a.getResources().getDisplayMetrics().density));m.add.setElevation(dp(2));
         m.stage.addView(m.add,new FrameLayout.LayoutParams(dp(56),dp(56),Gravity.BOTTOM|Gravity.END));
-        m.sheet=a.column();m.sheet.setElevation(dp(12));m.sheet.setClickable(true);GradientDrawable bg=a.buttonBackground(false);bg.setColor(BlackIceTheme.SECONDARY);bg.setCornerRadii(new float[]{dp(14),dp(14),dp(14),dp(14),0,0,0,0});m.sheet.setBackground(bg);
+        m.sheet=a.column();m.sheet.setElevation(dp(12));m.sheet.setClickable(true);GradientDrawable bg=a.buttonBackground(false);bg.setColor(BlackIceTheme.SECONDARY);bg.setCornerRadii(new float[]{dp(24),dp(24),dp(24),dp(24),0,0,0,0});m.sheet.setBackground(bg);
         m.handle=a.label("",10,BlackIceTheme.ICE,true);m.handle.setContentDescription("Dismiss editing drawer");m.handle.setFocusable(true);m.handle.setOnClickListener(v->dismiss());
         FrameLayout grip=new FrameLayout(a){@Override public boolean onInterceptTouchEvent(MotionEvent e){return true;}};grip.addView(m.handle,new FrameLayout.LayoutParams(-1,-1));View line=new View(a);GradientDrawable pill=new GradientDrawable();pill.setCornerRadius(dp(2));pill.setColor(BlackIceTheme.ICE);line.setBackground(pill);grip.addView(line,new FrameLayout.LayoutParams(dp(40),dp(3),Gravity.CENTER));m.sheet.addView(grip,new LinearLayout.LayoutParams(-1,dp(24)));
         grip.setOnTouchListener(new View.OnTouchListener(){float y;public boolean onTouch(View v,MotionEvent e){if(e.getActionMasked()==MotionEvent.ACTION_DOWN){y=e.getY();return true;}if(e.getActionMasked()==MotionEvent.ACTION_UP){if(e.getY()-y>dp(24))dismiss();else v.performClick();return true;}return true;}});grip.setOnClickListener(v->dismiss());grip.setContentDescription("Dismiss editing drawer");grip.setFocusable(true);
@@ -46,10 +46,10 @@ final class PortraitChrome {
         m.stage.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{if(r-l!=or-ol||b-t!=ob-ot)update();});
     }
     private View makeTransport(boolean selected){
-        transport=a.row();transport.setGravity(Gravity.CENTER);int gap=dp(selected?4:14);
+        transport=a.row();transport.setGravity(Gravity.CENTER);transport.setPadding(0,selected?0:dp(4),0,0);int gap=dp(selected?4:8);
         a.jumpStart=a.jumpEnd=null;if(selected)a.jumpStart=addTransport("SkipStart","Jump to beginning of selected clip",()->a.jump(false),gap);
         addTransport(selected?"StepBack":"SkipStart",selected?"Previous frame":"Previous edit point",()->{if(selected)a.seek(Math.max(0,a.project.playheadMs-Math.round(1000d/a.project.frameRate)));else m.boundary(false);},gap);
-        a.play=m.control("Play","Play",v->a.togglePlay());a.play.setMinHeight(0);a.play.setMinimumHeight(0);a.play.setMinWidth(0);a.play.setMinimumWidth(0);GradientDrawable playBg=new GradientDrawable();playBg.setCornerRadius(dp(selected?24:8));playBg.setColor(selected?0xFF0B1721:EditorActivity.CYAN);if(selected)playBg.setStroke(dp(2),EditorActivity.CYAN);a.play.setBackground(playBg);transport.addView(a.play,new LinearLayout.LayoutParams(dp(44),dp(44)));
+        a.play=m.control("Play","Play",v->a.togglePlay());a.play.setMinHeight(0);a.play.setMinimumHeight(0);a.play.setMinWidth(0);a.play.setMinimumWidth(0);GradientDrawable playBg=new GradientDrawable();playBg.setCornerRadius(dp(selected?24:12));playBg.setColor(selected?0xFF0B1721:EditorActivity.CYAN);if(selected)playBg.setStroke(dp(2),EditorActivity.CYAN);a.play.setBackground(playBg);transport.addView(a.play,new LinearLayout.LayoutParams(dp(selected?44:50),dp(selected?44:50)));
         addTransport(selected?"StepForward":"SkipEnd",selected?"Next frame":"Next edit point",()->{if(selected)a.seek(a.project.playheadMs+Math.round(1000d/a.project.frameRate));else m.boundary(true);},gap);
         if(selected)a.jumpEnd=addTransport("SkipEnd","Jump to end of selected clip",()->a.jump(true),gap);
         a.play.setTag(null);a.syncPlayButton();if(selected)a.play.setCompoundDrawables(a.icon(a.player!=null&&a.player.isPlaying()?"Pause":"Play",EditorActivity.TEXT),null,null,null);
