@@ -28,7 +28,7 @@ public class PortraitWorkspaceTest {
  }
  @Test public void threeReferenceStatesKeepPlayerTimelineAndEditsAcrossRecreation()throws Exception{
   String size=h.override(h.shell("wm size")),density=h.override(h.shell("wm density"));String font=h.shell("settings get system font_scale").trim();
-  try{for(int width:new int[]{360,412}){h.shell("wm size "+width+"x800");h.shell("wm density 160");fixture();
+  try{for(int width:new int[]{360,412}){h.shell("wm size "+(width*2)+"x1600");h.shell("wm density 320");fixture();
    try(ActivityScenario<EditorActivity> scene=ActivityScenario.launch(EditorActivity.class)){h.waitLoaded(scene);Thread.sleep(400);
     AtomicReference<Rect> preview=new AtomicReference<>(),timeline=new AtomicReference<>(),transport=new AtomicReference<>();AtomicReference<View> surface=new AtomicReference<>();AtomicReference<String> document=new AtomicReference<>();
     scene.onActivity(a->{assertTrue(a.portraitPhone());assertEquals(0,a.timeline.headerWidth());assertEquals(View.GONE,a.phoneTimelineTools.getVisibility());assertEquals(6,a.timeline.rows().size());assertEquals(3,children(a.phoneTransport));assertEquals(View.GONE,a.mobile.sheet.getVisibility());assertNull(WorkspaceV2Test.described(a.monitor,"Preview resolution"));assertEquals(View.GONE,a.status.getVisibility());preview.set(rect(a.phonePreview));timeline.set(rect(a.phoneTimelineArea));transport.set(rect(a.phoneTransport));surface.set(a.surface);document.set(document(a.project));});h.capture("portrait-"+width+"-base");

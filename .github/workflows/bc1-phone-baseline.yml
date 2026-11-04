@@ -4,6 +4,9 @@ on:
     branches: [codex/portrait-layout-update]
     paths: [BC-1/**, .github/workflows/bc1-phone-baseline.yml]
   workflow_dispatch:
+concurrency:
+  group: phone-reference-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:

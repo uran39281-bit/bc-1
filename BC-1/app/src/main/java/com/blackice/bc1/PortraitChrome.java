@@ -14,7 +14,7 @@ final class PortraitChrome {
     final MobileChrome m;final EditorActivity a;final PhoneWorkspaceState state;
     int rowHeight;private LinearLayout transport;private ListView mediaList;private MediaRows adapter;
     private final ArrayList<PhoneActionView> filters=new ArrayList<>();
-    private boolean selectedTransport,updating;private int libraryWidth;
+    private boolean selectedTransport,updating;
     PortraitChrome(MobileChrome owner){m=owner;a=m.a;state=a.phoneState;rowHeight=a.dp(46);m.dismissed=state.dismissed;}
     int dp(float n){return a.dp(n);}
     void build(LinearLayout root){
@@ -36,7 +36,7 @@ final class PortraitChrome {
         m.stage.addView(m.add,new FrameLayout.LayoutParams(dp(56),dp(56),Gravity.BOTTOM|Gravity.END));
         m.sheet=a.column();m.sheet.setElevation(dp(12));m.sheet.setClickable(true);GradientDrawable bg=a.buttonBackground(false);bg.setColor(BlackIceTheme.SECONDARY);bg.setCornerRadii(new float[]{dp(14),dp(14),dp(14),dp(14),0,0,0,0});m.sheet.setBackground(bg);
         m.handle=a.label("",10,BlackIceTheme.ICE,true);m.handle.setContentDescription("Dismiss editing drawer");m.handle.setFocusable(true);m.handle.setOnClickListener(v->dismiss());
-        FrameLayout grip=new FrameLayout(a);grip.addView(m.handle,new FrameLayout.LayoutParams(-1,-1));View line=new View(a);GradientDrawable pill=new GradientDrawable();pill.setCornerRadius(dp(2));pill.setColor(BlackIceTheme.ICE);line.setBackground(pill);grip.addView(line,new FrameLayout.LayoutParams(dp(40),dp(3),Gravity.CENTER));m.sheet.addView(grip,new LinearLayout.LayoutParams(-1,dp(24)));
+        FrameLayout grip=new FrameLayout(a){@Override public boolean onInterceptTouchEvent(MotionEvent e){return true;}};grip.addView(m.handle,new FrameLayout.LayoutParams(-1,-1));View line=new View(a);GradientDrawable pill=new GradientDrawable();pill.setCornerRadius(dp(2));pill.setColor(BlackIceTheme.ICE);line.setBackground(pill);grip.addView(line,new FrameLayout.LayoutParams(dp(40),dp(3),Gravity.CENTER));m.sheet.addView(grip,new LinearLayout.LayoutParams(-1,dp(24)));
         grip.setOnTouchListener(new View.OnTouchListener(){float y;public boolean onTouch(View v,MotionEvent e){if(e.getActionMasked()==MotionEvent.ACTION_DOWN){y=e.getY();return true;}if(e.getActionMasked()==MotionEvent.ACTION_UP){if(e.getY()-y>dp(24))dismiss();else v.performClick();return true;}return true;}});grip.setOnClickListener(v->dismiss());grip.setContentDescription("Dismiss editing drawer");grip.setFocusable(true);
         m.catalogHost=new FrameLayout(a);m.catalogHost.setVisibility(View.GONE);m.sheet.addView(m.catalogHost,new LinearLayout.LayoutParams(-1,0,1));
         a.inspector=a.column();a.inspector.setPadding(dp(8),0,dp(8),dp(6));a.phoneDrawer=new ScrollView(a);a.phoneDrawer.setFillViewport(true);a.phoneDrawer.setContentDescription("Phone editing drawer");a.phoneDrawer.addView(a.inspector);m.sheet.addView(a.phoneDrawer,new LinearLayout.LayoutParams(-1,0,1));

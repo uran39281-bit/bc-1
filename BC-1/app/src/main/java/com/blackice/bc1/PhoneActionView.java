@@ -16,6 +16,7 @@ final class PhoneActionView extends FrameLayout {
         setForeground(new RippleDrawable(ColorStateList.valueOf(0x337CD5F3),null,null));setOnClickListener(v->action.run());text.setOnClickListener(v->performClick());
         setOnFocusChangeListener((v,focus)->{GradientDrawable bg=a.buttonBackground(isSelected());if(focus)bg.setStroke(a.dp(2),BlackIceTheme.ICE);text.setBackground(bg);});
     }
+    @Override public boolean onInterceptTouchEvent(android.view.MotionEvent event){return true;}
     void active(EditorActivity a,boolean on){setSelected(on);text.setTextColor(on?BlackIceTheme.ICE:EditorActivity.TEXT);text.setBackground(a.buttonBackground(on));}
     @Override public void setEnabled(boolean enabled){super.setEnabled(enabled);if(text!=null){text.setEnabled(enabled);text.setAlpha(enabled?1:.4f);}}
 }
