@@ -1,0 +1,19 @@
+# Phone portrait workspace
+
+This change follows the three active targets in the user-provided Black-Ice-Portrait-Layout-Update handoff: base editor, Add Media tray, and selected-layer tools. It applies only when LayoutPolicy chooses the phone workspace and the available window is portrait. Project canvas ratio does not select the interface. Wide/DeX and the existing phone-landscape path retain their existing presentation.
+
+The native portrait presentation lives in PortraitChrome, delegated from MobileChrome. PhoneWorkspaceState stores drawer presentation and library/vertical-scroll state outside the document and undo history. Opening drawers keeps the same preview views, renderer, player, timeline and project. The Add tray follows the timeline's actual third-row top; the selected drawer measures its own content. Small windows and larger text scroll inside the drawer.
+
+Six visible real lanes use existing track IDs; additional layers scroll. The broad phone-only track gutter is removed consistently from drawing, hit testing, drag placement and accessibility bounds. The visible lanes do not change track capacity or rendering order. Layer visibility, mute, lock, naming and ordering remain available through Layer management.
+
+The phone library binds only visible ListView rows and uses the existing asynchronous ThumbnailCache, original media references and insertion commands. All excludes generated shapes; Shapes is its own catalog. Favorites, search and sorting remain available; long press Import Media for library options. The project-name menu provides Settings, preview quality, Undo/Redo, text, manual captions, saved elements, effects, snapping and layer management. The short selected-layer cards have nonoverlapping 44dp native targets. Duration, trim, split, duplicate and the focused panels use the existing editor commands.
+
+Unsupported effects on generated overlays remain disabled, matching current engine capabilities. Audio/text layers receive their applicable counterpart tools. This UI update does not add engine, schema, export, shape or Layer Tools features.
+
+## Verification evidence
+
+Before production changes, commit 72500d0b0a665a11ad3cce20dfbb716d82c98f3c ran the unchanged app's eight wide fixtures in run 41766486241. The baseline test passed and its Phone-update-wide-baseline artifact is 13292369981. It contains native device captures, deterministic native-view pixels and visible view geometry for Media Settings, Position, Rotation, Scale, Blending, Effects, Layer Tools and Add.
+
+PortraitWorkspaceTest checks the three native states at 360/412dp, a 16:9 project and a 9:16 project, large text, navigation without document/undo changes, unchanged upper-editor geometry, drawer anchoring, lazy library rows, selected-layer duplication/undo and Activity recreation. Existing phone integration assertions have been migrated to the new menu entry points while retaining editing, playback, locking, keyframe, media and save/reopen checks.
+
+Post-change screenshot comparison and full build/GPU qualification are pending. This document is an implementation record, not a claim that the update is release-qualified. Physical Samsung/DeX testing remains unavailable.

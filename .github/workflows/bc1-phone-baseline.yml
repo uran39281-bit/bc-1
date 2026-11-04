@@ -43,8 +43,9 @@ jobs:
             adb install -r BC-1/app/build/outputs/apk/debug/app-debug.apk
             adb install -r BC-1/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
             adb shell am instrument -w -r -e class com.blackice.bc1.PortraitWideBaselineTest,com.blackice.bc1.PortraitWorkspaceTest com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee phone-baseline/tests.txt
-            adb exec-out run-as com.blackice.bc1.preview tar -C files/qa -cf - . > phone-baseline/captures.tar
-            tar -xf phone-baseline/captures.tar -C phone-baseline
+            adb root
+            adb wait-for-device
+            adb pull /data/user/0/com.blackice.bc1.preview/files/qa/. phone-baseline/
             if rg 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' phone-baseline/tests.txt; then exit 1; fi
             rg '^OK \([0-9]+ tests?\)' phone-baseline/tests.txt
       - uses: actions/upload-artifact@v4
