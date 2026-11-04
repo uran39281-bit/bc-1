@@ -9,10 +9,7 @@ mkdir -p BC-1/app/build/reports/androidTests
 # Pull complete files after the instrumented process exits. A tar stream from run-as can end
 # early while the emulator settles after display changes, silently truncating the evidence.
 collect_qa() {
-  mkdir -p BC-1/app/build/reports/androidTests/qa
-  adb root
-  adb wait-for-device
-  adb pull /data/user/0/com.blackice.bc1.preview/files/qa/. BC-1/app/build/reports/androidTests/qa/
+  bash .github/scripts/bc1-collect-qa.sh BC-1/app/build/reports/androidTests/qa
 }
 adb install -r BC-1/app/build/outputs/apk/debug/app-debug.apk
 adb install -r BC-1/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
