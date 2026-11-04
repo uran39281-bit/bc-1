@@ -1,6 +1,6 @@
 # Black Ice Editor 1.5.3 Preview — build 47
 
-> **Status: qualified and retained-key signed; in-place upgrade verification pending. Not officially published.** PR #26 remains open. These release inputs are being tested on a separate verification branch and are not included in PR #26.
+> **Status: qualified, retained-key signed and in-place upgrade verified. Not officially published.** PR #26 remains open. These release inputs were verified on a separate verification branch and are not included in PR #26.
 
 ## Fix
 The new portrait workspace previously inherited the global Expand timeline preference, shrinking its preview to 60% of the reference height. Portrait now has an independent `portrait-workspace-focus` setting, defaulting to Balanced when absent. The saved wide/landscape preference remains unchanged. Explicit later portrait choices persist across reopening.
@@ -14,6 +14,7 @@ The release also includes the 33 per-effect parameter controls already present i
 |---|---|
 | App source / PR head | `87358e5eb71000ba63e3e2eeacbcaaeb0796d7ef` |
 | Full CI | [41867013484](https://github.com/uran39281-bit/bc-1/actions/runs/41867013484), attempt 1, success |
+| Candidate artifact expiry | `2026-12-04T16:28:15Z` |
 | Candidate artifact | `13342143626`, Black-Ice-Editor-v1.5.3-ci-candidate |
 | Candidate ZIP SHA-256 | `284934ae7590c394941abb4f265cdfe7d14a9cdddd25725b47150a96f9af2bb0` |
 | CI APK SHA-256 | `bb1839b835e75fff4199e91a56bf214af9d02bccbca0473ecedb2dd8a760188a` |
@@ -45,7 +46,9 @@ Retained Preview certificate SHA-256: `3c578586198b9ebadd9496d38e25851ec0e90d918
 The exact qualified CI candidate was signed with the retained key. APK verification, ZIP/16 KiB native-library alignment, all 57 identical nonsignature payloads, binary package/version checks and byte-for-byte public reconstruction passed. V2/V3 verify for the supported SDK range; the existing JAR signature was also verified separately with the SDK-23 verifier. No private key or password is included in these files or CI.
 
 ## Upgrade gate
-A separate read-only verification workflow will install the published retained-key 1.5.1 (45), preserve a real saved project/media/curves/fill/paused work clock and legacy Expand timeline setting, then install this exact 1.5.3 (47) APK with `adb install -r`. It performs no uninstall or application-data clear. Upgrade success is not claimed until its report passes. No official publishing workflow is started by this verification branch.
+[Signed upgrade run 41873840129](https://github.com/uran39281-bit/bc-1/actions/runs/41873840129), attempt 1, passed. Artifact `13346825345` (ZIP SHA-256 `a81f240a63126f045077f5ca8d516dbc6ad5b6c617519d2b392ad0feab5225de`) contains the exact tested APK, byte-identical to this delivery, and its verification record/captures. The read-only workflow ran on metadata commit `434ff407b70bb2d74cabcb8f8330256dedd72470`; application source remains the fully qualified `87358e5eb71000ba63e3e2eeacbcaaeb0796d7ef`.
+
+Published retained-key Preview 1.5.1 (45) was installed and saved a real fixture. This exact 1.5.3 (47) APK was installed over it using `adb install -r`, with no uninstall or application-data clear. Source URI and image bytes, trims, opacity, position, rotation, scale, motion keys, custom cubic and legacy easing interval representations, shape/gradient keys, canvas, frame rate, saved effect and paused work clock (123456 ms) survived. The saved wide/landscape Expand timeline choice remained intact while the Samsung-shaped portrait opened at full Balanced height; Add Media showed all six filters and Back retained the graph/media. No official publishing workflow was run.
 
 ## Test history
 Earlier PR source timed out installing media tools before emulator tests; the install timeout was increased to ten minutes. The first portrait-fix source failed Android-test compilation because its new test referenced an absent UI testing library; the current native AlertDialog test needs no added library. Source `0d713e5` ran 109 Android tests with one failure: the old PhoneMediaSpaceTest still wrote the global field directly. Its preview-expansion, timeline-expansion and Balanced-restoration assertions are retained and now operate the actual portrait dialog. An earlier focused attempt failed downloading the emulator before running tests; its unchanged-source retry was superseded. Final source `87358e5eb71000ba63e3e2eeacbcaaeb0796d7ef` passed full and focused qualification on attempt 1. No failed/superseded candidate is delivered.
