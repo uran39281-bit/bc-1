@@ -1,0 +1,73 @@
+name: Verify signed Black Ice 1.5.2 upgrade
+on:
+  push:
+    branches: [codex/portrait-layout-update]
+    paths: [v1.5.2/release.json]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require qualified source and artifacts
+        id: release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const release = JSON.parse(fs.readFileSync('v1.5.2/release.json'));
+            if (release.version !== '1.5.2' || release.version_code !== 46) throw new Error('Wrong release');
+            const {data: run} = await github.rest.actions.getWorkflowRun({...context.repo, run_id: release.workflow_run});
+            if (run.head_sha !== release.source_commit || run.conclusion !== 'success') throw new Error('Source has not passed full qualification');
+            const {data: artifacts} = await github.rest.actions.listWorkflowRunArtifacts({...context.repo, run_id: release.workflow_run, per_page: 100});
+            for (const [key,name] of [['candidate_artifact_id','Black-Ice-Editor-v1.5.2-ci-candidate'],['qa_artifact_id','BC-1-GPU-test-reports']]) {
+              if (!artifacts.artifacts.some(a => a.id === release[key] && a.name === name && !a.expired)) throw new Error('Qualified artifact missing: ' + key);
+              core.setOutput(key,release[key]);
+            }
+            core.setOutput('run',release.workflow_run);
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ steps.release.outputs.candidate_artifact_id }}
+          merge-multiple: true
+          run-id: ${{ steps.release.outputs.run }}
+          github-token: ${{ github.token }}
+          path: candidate
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ steps.release.outputs.qa_artifact_id }}
+          merge-multiple: true
+          run-id: ${{ steps.release.outputs.run }}
+          github-token: ${{ github.token }}
+          path: qualification
+      - name: Restore and verify exact signed candidate
+        run: |
+          mkdir -p publish
+          python .github/scripts/bc1-restore-signed-apk.py v1.5.2/release.json candidate/app-debug.apk publish/Black-Ice-Editor-v1.5.2-Preview-build46.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs publish/Black-Ice-Editor-v1.5.2-Preview-build46.apk | tee publish/SIGNATURE-VERIFICATION.txt
+          grep -F '3c578586198b9ebadd9496d38e25851ec0e90d918684dc4994e03d1d7f29a29d' publish/SIGNATURE-VERIFICATION.txt
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 4 publish/Black-Ice-Editor-v1.5.2-Preview-build46.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging publish/Black-Ice-Editor-v1.5.2-Preview-build46.apk | head -1 | tee publish/PACKAGE.txt
+          grep -F "package: name='com.blackice.bc1.preview' versionCode='46' versionName='1.5.2'" publish/PACKAGE.txt
+          cd publish && sha256sum -c ../v1.5.2/SHA256SUMS.txt
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: python .github/scripts/bc1-v152-upgrade.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Black-Ice-v152-signed-upgrade-verification
+          path: publish/
