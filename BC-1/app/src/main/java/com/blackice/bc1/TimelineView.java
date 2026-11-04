@@ -239,7 +239,7 @@ final class TimelineView extends View {
         float top=0,bottom=height;if(a.timelineScroll.getParent() instanceof ScrollView){ScrollView sv=(ScrollView)a.timelineScroll.getParent();top=sv.getScrollY();bottom=top+sv.getHeight();}
         canvas.drawColor(0xFF060D17);
         for(int i=0;i<rows.size();i++){Row r=rows.get(i);paint.setColor(i%2==0?0xFF08121E:0xFF060D17);canvas.drawRect(left,r.top,right,r.top+rowHeight(),paint);paint.setColor(0xFF0E1C2B);canvas.drawRect(left,r.top+rowHeight()-a.dp(1),right,r.top+rowHeight(),paint);}
-        if(a.portraitPhone()){paint.setTypeface(Typeface.DEFAULT);paint.setTextSize(a.dp(10));paint.setColor(EditorActivity.MUTED);for(Row r:rows){boolean empty=r.kind==2?a.project.music==null:r.kind==0&&a.trackEmpty(r.index);if(empty){String label="Drop media here";canvas.drawText(label,left+(viewport()-paint.measureText(label))/2,r.top+rowHeight()/2f+a.dp(3),paint);}}}
+        if(a.portraitPhone()){paint.setTypeface(Typeface.DEFAULT);paint.setTextSize(a.dp(10));paint.setColor(EditorActivity.MUTED);for(Row r:rows){boolean empty=r.kind==2?a.project.music==null:r.kind==0&&a.trackEmpty(r.index);if(empty){String label="Drop media here";canvas.drawText(label,Math.max(x(0),left+a.dp(8))+a.dp(8),r.top+rowHeight()/2f+a.dp(3),paint);}}}
         drawRuler(canvas,left,right,height);
         EditProject p=a.project;List<EditProject.Placement> placements=p.placements();float bar=barHeight(),inset=(rowHeight()-bar)/2f;
         for(EditProject.Placement pl:placements){float y=rowTopOfTrackCached(rows,pl.clip.track);if(y<0)continue;float l=x(pl.startMs),r=x(pl.endMs);if(r<left||l>right||y+bar<top||y>bottom)continue;drawClip(canvas,pl,l,r,y+inset,bar,left,right);}

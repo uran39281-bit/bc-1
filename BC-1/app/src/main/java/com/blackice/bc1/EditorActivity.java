@@ -507,7 +507,7 @@ public final class EditorActivity extends Activity {
         else transport.addView(controls);return transport;
     }
     TextView transportIcon(String icon,String description,View.OnClickListener l){TextView b=compactButton("",description,l);b.setBackground(null);b.setCompoundDrawables(icon(icon,TEXT),null,null,null);b.setPadding(dp(11),0,dp(11),0);b.setMinWidth(dp(44));b.setMinHeight(dp(44));return b;}
-    void syncPlayButton(){boolean playing=player!=null&&player.isPlaying();if(play==null||Boolean.valueOf(playing).equals(play.getTag()))return;play.setTag(playing);play.setContentDescription(playing?"Pause":"Play");play.setCompoundDrawables(icon(playing?"Pause":"Play",portraitPhone()&&(clip()!=null||overlay()!=null||multiCount()>1)?TEXT:mobile!=null?BlackIceTheme.ON_ACCENT:TEXT),null,null,null);play.setPadding(dp(playing?13:15),0,dp(playing?13:11),0);}
+    void syncPlayButton(){boolean playing=player!=null&&player.isPlaying();if(play==null||Boolean.valueOf(playing).equals(play.getTag()))return;play.setTag(playing);play.setContentDescription(playing?"Pause":"Play");play.setCompoundDrawables(icon(playing?"Pause":"Play",portraitPhone()&&(clip()!=null||overlay()!=null||multiCount()>1)?TEXT:mobile!=null?BlackIceTheme.ON_ACCENT:TEXT),null,null,null);if(portraitPhone())play.setPadding(dp(10),0,dp(10),0);else play.setPadding(dp(playing?13:15),0,dp(playing?13:11),0);}
     void clipPercent(boolean volume){EditProject.Clip c=clip();if(c==null)return;percentPanel(volume?"Volume":"Opacity",volume?c.volume:c.opacity,volume?.7f:1f,value->{if(volume)c.volume=value;else c.opacity=value;});}
     void percentPanel(String title,float initial,float defaultValue,ValueAction action){
         if(!editable())return;LinearLayout f=form();EditText numeric=field(f,title+" (%)",String.valueOf(Math.round(initial*100)));numeric.setInputType(android.text.InputType.TYPE_CLASS_NUMBER|android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
@@ -1499,11 +1499,12 @@ public final class EditorActivity extends Activity {
         }
     }
     int lastShape=-1;long lastShapeTap;String selectedMediaUri,lastMediaTapUri;long lastMediaTap;
-    View shapeCard(int shape){
-        LinearLayout card=mediaList?row():column();card.setBackground(buttonBackground(false));card.setPadding(dp(8),dp(6),dp(8),dp(6));card.setFocusable(true);card.setClickable(true);
+    View shapeCard(int shape){return shapeCard(shape,mediaList);}
+    View shapeCard(int shape,boolean list){
+        LinearLayout card=list?row():column();card.setBackground(buttonBackground(false));card.setPadding(dp(8),dp(6),dp(8),dp(6));card.setFocusable(true);card.setClickable(true);
         View preview=new View(this){final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);@Override protected void onDraw(Canvas canvas){super.onDraw(canvas);float r=Math.max(1,Math.min(getWidth(),getHeight())*.42f);paint.setColor(CYAN);canvas.save();canvas.translate(getWidth()/2f,getHeight()/2f);canvas.drawPath(ShapePaths.create(shape,r,Math.max(1,r*.035f)),paint);canvas.restore();}};
-        FrameLayout shapeFrame=new FrameLayout(this);shapeFrame.addView(preview,new FrameLayout.LayoutParams(-1,-1));card.addView(shapeFrame,mediaList?new LinearLayout.LayoutParams(dp(88),-1):new LinearLayout.LayoutParams(-1,0,1));
-        TextView name=label(EditProject.SHAPES[shape],11,TEXT,false);name.setMaxLines(2);name.setEllipsize(android.text.TextUtils.TruncateAt.END);name.setGravity(Gravity.CENTER_VERTICAL);card.addView(name,mediaList?new LinearLayout.LayoutParams(0,-1,1):new LinearLayout.LayoutParams(-1,dp(32)));
+        FrameLayout shapeFrame=new FrameLayout(this);shapeFrame.addView(preview,new FrameLayout.LayoutParams(-1,-1));card.addView(shapeFrame,list?new LinearLayout.LayoutParams(dp(88),-1):new LinearLayout.LayoutParams(-1,0,1));
+        TextView name=label(EditProject.SHAPES[shape],11,TEXT,false);name.setMaxLines(2);name.setEllipsize(android.text.TextUtils.TruncateAt.END);name.setGravity(Gravity.CENTER_VERTICAL);card.addView(name,list?new LinearLayout.LayoutParams(0,-1,1):new LinearLayout.LayoutParams(-1,portraitPhone()?Math.max(dp(32),name.getLineHeight()*2):dp(32)));
         card.setContentDescription("Insert shape: "+EditProject.SHAPES[shape]);card.setTooltipText("Drag onto the timeline; tap to insert centered at the playhead");
         card.setOnClickListener(v->{long now=android.os.SystemClock.uptimeMillis();if(lastShape==shape&&now-lastShapeTap<ViewConfiguration.getDoubleTapTimeout())return;lastShape=shape;lastShapeTap=now;addShapeAt(shape,QuickInsertion.start(project.playheadMs,3000),project.overlays.size());});
         Runnable drag=()->{if(!editable())return;card.startDragAndDrop(ClipData.newPlainText("shape",EditProject.SHAPES[shape]),new View.DragShadowBuilder(preview),new ShapeCatalog.Drag(shape,project.id),0);tell("Drop "+EditProject.SHAPES[shape]+" on a visual timeline row");};
