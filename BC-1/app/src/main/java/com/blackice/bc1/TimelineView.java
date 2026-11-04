@@ -83,7 +83,7 @@ final class TimelineView extends View {
                 EditProject editProject = TimelineView.this.a.project;
                 boolean locked = ov ? editProject.overlays.get(r.index).locked : editProject.tracks[r.index].locked;
                 n.setContentDescription(TimelineView.this.a.rowName(new int[]{r.kind, r.index}) + ", " + (ov ? "overlay " : EditProject.audioTrack(r.index) ? "audio track " : "visual track ") + (r.index + 1) + ", " + (hidden ? "hidden or muted" : "enabled") + (locked ? ", locked" : "") + ". Tap to toggle visibility or mute. Long press for lock and layer options.");
-                Rect bounds = new Rect(TimelineView.this.a.timelineScroll.getScrollX(), Math.round(r.top), TimelineView.this.a.timelineScroll.getScrollX() + TimelineView.this.headerWidth(), Math.round(r.top) + TimelineView.this.a.dp(ROW_DP));
+                Rect bounds = new Rect(TimelineView.this.a.timelineScroll.getScrollX(), Math.round(r.top), TimelineView.this.a.timelineScroll.getScrollX() + (TimelineView.this.a.portraitPhone()?TimelineView.this.viewport():TimelineView.this.headerWidth()), Math.round(r.top) + TimelineView.this.rowHeight());
                 n.setBoundsInParent(bounds);
                 int[] location = new int[2];
                 TimelineView.this.getLocationOnScreen(location);
@@ -204,14 +204,16 @@ final class TimelineView extends View {
     float timelineScale(){return Math.min(a.dp(a.pixelsPerSecond),16_000_000f/Math.max(1f,a.timelineEnd()/1000f));}
     float x(long ms){return pad()+ms/1000f*timelineScale();}
     long time(float x){return Math.round((x-pad())/timelineScale()*1000);}
-    int headerWidth(){return a.dp(56);}
+    int headerWidth(){return a.portraitPhone()?0:a.dp(56);}
+    int rowHeight(){return a.portraitPhone()?a.mobile.portrait.rowHeight:a.dp(ROW_DP);}
+    int barHeight(){return a.portraitPhone()?Math.min(a.dp(34),rowHeight()-a.dp(8)):a.dp(BAR_DP);}
     List<Row> rows(){
         List<Row> list=new ArrayList<>();float y=a.dp(RULER_DP);
-        for(int[] r:a.layerRows()){Row row=new Row(r[0],r[1]);row.top=y;y+=a.dp(ROW_DP);list.add(row);}
+        for(int[] r:a.layerRows()){Row row=new Row(r[0],r[1]);row.top=y;y+=rowHeight();list.add(row);}
         Row music=new Row(2,0);music.top=y;list.add(music);rows=list;return list;
     }
-    float contentHeight(){return a.dp(RULER_DP)+(a.layerRows().size()+1)*a.dp(ROW_DP)+a.dp(8);}
-    Row rowAt(float y){for(Row r:rows)if(y>=r.top&&y<r.top+a.dp(ROW_DP))return r;return null;}
+    float contentHeight(){return a.dp(RULER_DP)+(a.layerRows().size()+1)*rowHeight()+a.dp(8);}
+    Row rowAt(float y){for(Row r:rows)if(y>=r.top&&y<r.top+rowHeight())return r;return null;}
     float rowTopOfTrack(int track){for(Row r:rows())if(r.kind==0&&r.index==track)return r.top;return -1;}
     float rowTopOfOverlay(int overlay){for(Row r:rows())if(r.kind==1&&r.index==overlay)return r.top;return -1;}
     /** Room after the last clip so layers can be dragged, and media dropped, past the current end. */
@@ -236,9 +238,10 @@ final class TimelineView extends View {
         List<Row> rows=rows();int height=getHeight();float left=a.timelineScroll.getScrollX(),right=left+viewport();
         float top=0,bottom=height;if(a.timelineScroll.getParent() instanceof ScrollView){ScrollView sv=(ScrollView)a.timelineScroll.getParent();top=sv.getScrollY();bottom=top+sv.getHeight();}
         canvas.drawColor(0xFF060D17);
-        for(int i=0;i<rows.size();i++){Row r=rows.get(i);paint.setColor(i%2==0?0xFF08121E:0xFF060D17);canvas.drawRect(left,r.top,right,r.top+a.dp(ROW_DP),paint);paint.setColor(0xFF0E1C2B);canvas.drawRect(left,r.top+a.dp(ROW_DP)-a.dp(1),right,r.top+a.dp(ROW_DP),paint);}
+        for(int i=0;i<rows.size();i++){Row r=rows.get(i);paint.setColor(i%2==0?0xFF08121E:0xFF060D17);canvas.drawRect(left,r.top,right,r.top+rowHeight(),paint);paint.setColor(0xFF0E1C2B);canvas.drawRect(left,r.top+rowHeight()-a.dp(1),right,r.top+rowHeight(),paint);}
+        if(a.portraitPhone()){paint.setTypeface(Typeface.DEFAULT);paint.setTextSize(a.dp(10));paint.setColor(EditorActivity.MUTED);for(Row r:rows){boolean empty=r.kind==2?a.project.music==null:r.kind==0&&a.trackEmpty(r.index);if(empty){String label="Drop media here";canvas.drawText(label,Math.max(x(0),left+a.dp(8))+a.dp(8),r.top+rowHeight()/2f+a.dp(3),paint);}}}
         drawRuler(canvas,left,right,height);
-        EditProject p=a.project;List<EditProject.Placement> placements=p.placements();float bar=a.dp(BAR_DP),inset=(a.dp(ROW_DP)-bar)/2f;
+        EditProject p=a.project;List<EditProject.Placement> placements=p.placements();float bar=barHeight(),inset=(rowHeight()-bar)/2f;
         for(EditProject.Placement pl:placements){float y=rowTopOfTrackCached(rows,pl.clip.track);if(y<0)continue;float l=x(pl.startMs),r=x(pl.endMs);if(r<left||l>right||y+bar<top||y>bottom)continue;drawClip(canvas,pl,l,r,y+inset,bar,left,right);}
         for(Row row:rows)if(row.kind==1){String g=a.project.overlays.get(row.index).group;
             if(g!=null&&a.collapsedGroups.contains(g)){for(int i=0;i<a.project.overlays.size();i++)if(g.equals(a.project.overlays.get(i).group))drawOverlay(canvas,i,row.top+inset,bar,left,right);}
@@ -249,7 +252,7 @@ final class TimelineView extends View {
         if(dropAsset!=null&&dropTrack>=0)drawDropPreview(canvas,rows,bar,inset);
         if(dropShape!=null&&dropShapeIndex>=0)ghost(canvas,x(dropStart),dropShapeY+inset,x(dropStart+3000),bar,EditProject.SHAPES[dropShape.shape]+" · new layer");
         if(guide>=0){paint.setColor(0xAA9FEAFF);paint.setStrokeWidth(a.dp(1));for(float y=a.dp(RULER_DP);y<height;y+=a.dp(8))canvas.drawLine(x(guide),y,x(guide),y+a.dp(4),paint);}
-        drawHeaders(canvas,rows,left);
+        if(!a.portraitPhone())drawHeaders(canvas,rows,left);
         drawPlayhead(canvas,left,height);
     }
     private void drawPlayhead(Canvas canvas,float left,int height){
@@ -342,7 +345,7 @@ final class TimelineView extends View {
         int w=headerWidth();paint.setColor(BlackIceTheme.PRIMARY);canvas.drawRect(left,0,left+w,getHeight(),paint);
         paint.setColor(BlackIceTheme.BORDER);paint.setStrokeWidth(a.dp(1));canvas.drawLine(left+w,0,left+w,getHeight(),paint);
         paint.setColor(EditorActivity.CYAN);paint.setTextSize(a.dp(10));canvas.drawText(EditorActivity.clock(a.project.playheadMs),left+a.dp(2),a.dp(19),paint);
-        for(Row r:rows){float mid=r.top+a.dp(ROW_DP)/2f;
+        for(Row r:rows){float mid=r.top+rowHeight()/2f;
             if(r.kind==2){drawIcon(canvas,"Audio",left+a.dp(16),mid-a.dp(12),EditorActivity.MUTED,24);continue;}
             boolean overlay=r.kind==1;EditProject.Overlay o=overlay?a.project.overlays.get(r.index):null;EditProject.Track t=overlay?null:a.project.tracks[r.index];
             boolean audio=!overlay&&EditProject.audioTrack(r.index),hidden=overlay?o.hidden:audio?t.muted:t.hidden,locked=overlay?o.locked:t.locked;
@@ -393,7 +396,7 @@ final class TimelineView extends View {
         hitClip=hitClip(downX,downY);hitOverlay=hitClip>=0?-1:hitOverlay(downX,downY);
         // Edge handles of the selected clip win even slightly outside its bar.
         if(a.multiCount()<=1&&a.clip()!=null&&!LayerOps.locked(a.project,a.selected)){EditProject.Placement chosen=a.project.placements().get(a.selected);float y=rowTopOfTrack(chosen.clip.track);
-            if(y>=0&&downY>=y&&downY<=y+a.dp(ROW_DP)&&Math.min(Math.abs(downX-x(chosen.startMs)),Math.abs(downX-x(chosen.endMs)))<=a.dp(16))hitClip=a.selected;}
+            if(y>=0&&downY>=y&&downY<=y+rowHeight()&&Math.min(Math.abs(downX-x(chosen.startMs)),Math.abs(downX-x(chosen.endMs)))<=a.dp(16))hitClip=a.selected;}
         if(a.uiLocked||a.loading||a.importing||a.exporting())return true;
         if(a.multiCount()>1&&(hitClip>=0&&a.multiClips.contains(hitClip)||hitOverlay>=0&&a.multiOverlays.contains(hitOverlay))){boolean anyLocked=false;for(int i:a.selectedClips())anyLocked|=LayerOps.locked(a.project,i);for(int i:a.selectedOverlays())anyLocked|=a.project.overlays.get(i).locked;if(!anyLocked)operation=OP_MULTI;return true;}
         if(hitClip>=0&&!LayerOps.locked(a.project,hitClip)){original=a.project.placements().get(hitClip);
@@ -540,7 +543,7 @@ final class TimelineView extends View {
             if((event.getMetaState()&KeyEvent.META_CTRL_ON)!=0){a.zoomTimeline(wheel>0?1.2f:1/1.2f,event.getX()-a.timelineScroll.getScrollX());return true;}
             boolean sideways=(event.getMetaState()&KeyEvent.META_SHIFT_ON)!=0||horizontal!=0||contentHeight()<=((View)a.timelineScroll.getParent()).getHeight();
             if(sideways){float amount=horizontal!=0?horizontal:wheel;a.pausePlayback();a.seek(a.project.playheadMs-Math.round(amount*a.dp(70)/timelineScale()*1000));}
-            else((ScrollView)a.timelineScroll.getParent()).smoothScrollBy(0,Math.round(-wheel*a.dp(ROW_DP)));
+            else((ScrollView)a.timelineScroll.getParent()).smoothScrollBy(0,Math.round(-wheel*rowHeight()));
             return true;}
         return super.onGenericMotionEvent(event);
     }
