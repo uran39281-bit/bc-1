@@ -1,6 +1,6 @@
 # Black Ice Editor 1.5.2 Preview — build 46
 
-Status: signed candidate verified; in-place upgrade gate pending. This branch is not merged and no official Preview branch or download table has been published.
+Status: signed Preview candidate verified; in-place upgrade gate passed. This branch is not merged and no official Preview branch or download table has been published.
 
 ## Change
 
@@ -47,7 +47,22 @@ The candidate and report artifact ZIP digests were checked against GitHub's arti
 
 ## Upgrade gate
 
-Pending: install signed 1.5.2 (46) over signed 1.5.1 (45) using `adb install -r`, without uninstalling or clearing data. The fixture checks original source bytes/URI, trims, canvas/frame rate, effects, transforms, shape/gradient keys, custom/legacy easing intervals and a paused work clock. It also opens the real portrait Add Media controls after the upgrade. This report will record the actual result after that job finishes.
+Passed in [run 41793483262](https://github.com/uran39281-bit/bc-1/actions/runs/41793483262), on metadata commit `8f5b7818e1203c24af5ec7cc5fb91c60fe2ee24e`. Artifact `13303434778` contains the exact tested APK, verification JSON, package/certificate checks and native wide/phone captures. Its ZIP digest was verified, and the tested APK is byte-identical to the delivered signed APK.
+
+The job installed signed 1.5.2 (46) over signed 1.5.1 (45) with `adb install -r`, without uninstalling or clearing data. The actual assertions verified:
+
+- Install -r accepted original Preview signing lineage.
+- Project saved by 1.5.1 opens in 1.5.2 and saves again as schema 11.
+- Source URI and original image bytes retained.
+- Trim, opacity, rotation, scale, position and rotation keyframes retained.
+- Custom cubic handles and the legacy Ease Out preset keep their stored ids, discriminators and coordinates.
+- Shape, timing, opacity and legacy linear gradient/color keys retained.
+- Canvas and frame rate unchanged.
+- Saved clip effect retained.
+- Paused project work clock retains total 123456 ms and paused state.
+- Portrait Add Media opens with all six real filters; Back retains the saved graph and original source bytes.
+
+The retained source image SHA-256 is `246c8cfa22a569e9750f7c1af62cdd61b5555607ac86507a89d4e712ad1976a4`. The saved work timer remains paused at 123456 ms.
 
 ## Test history and limits
 
