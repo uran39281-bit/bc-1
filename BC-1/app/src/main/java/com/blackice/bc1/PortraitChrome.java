@@ -84,15 +84,24 @@ final class PortraitChrome {
         if(a.workspaceFocus==1)preview=Math.max(dp(90),Math.round(balancedPreview*.6f));
         else if(a.workspaceFocus==2)preview=Math.max(dp(90),Math.min(Math.round(balancedPreview*1.25f),h-fixed));
         if(a.phonePreview.getLayoutParams().height!=preview){a.phonePreview.getLayoutParams().height=preview;a.phonePreview.requestLayout();}
-        int timelineHeight=dp(30)+6*rowHeight+(a.workspaceFocus==1?balancedPreview-preview:0);if(a.phoneTimelineArea.getLayoutParams().height!=timelineHeight){a.phoneTimelineArea.getLayoutParams().height=timelineHeight;a.phoneTimelineArea.requestLayout();}
+        int timelineHeight=dp(30)+6*rowHeight+(a.workspaceFocus==1?balancedPreview-preview:0);
+        // Short portrait windows keep the same genuine lanes inside a smaller scroll viewport.
+        // Measuring an oversized ScrollView would clip tracks that it incorrectly considers visible.
+        timelineHeight=Math.min(timelineHeight,Math.max(dp(44),h-dp(4)-preview-dp(54)-footer));
+        if(a.phoneTimelineArea.getLayoutParams().height!=timelineHeight){a.phoneTimelineArea.getLayoutParams().height=timelineHeight;a.phoneTimelineArea.requestLayout();}
         int bottom=Math.max(dp(8),h-(dp(4)+preview+dp(54)+timelineHeight)-dp(70));FrameLayout.LayoutParams ap=(FrameLayout.LayoutParams)m.add.getLayoutParams();ap.rightMargin=dp(16);ap.bottomMargin=bottom;m.add.setLayoutParams(ap);
         // Add starts at the actual third-row top. Selected tools are measured independently.
         int timelineTop=dp(4)+preview+dp(54),scroll=a.phoneTimelineArea instanceof ScrollView?((ScrollView)a.phoneTimelineArea).getScrollY():0;
         int addTop=timelineTop+Math.round(a.timeline.rows().get(2).top)-scroll;
         if(a.timeline.getHeight()>0&&a.phoneTimelineArea.getHeight()>0){int[] timeOrigin=new int[2],stageOrigin=new int[2];a.timeline.getLocationOnScreen(timeOrigin);m.stage.getLocationOnScreen(stageOrigin);addTop=timeOrigin[1]-stageOrigin[1]+Math.round(a.timeline.rows().get(2).top);}
         int selectedHeight=dp(24+44+6+3*44+44+6);int selectedTop=Math.max(addTop,Math.min(addTop+dp(20),h-selectedHeight));
-        int top=a.tab==0?addTop:selectedTop;top=Math.max(timelineTop+dp(30+44),Math.min(top,h-dp(180)));
-        FrameLayout.LayoutParams sp=(FrameLayout.LayoutParams)m.sheet.getLayoutParams();sp.height=Math.max(dp(180),h-top);sp.gravity=Gravity.BOTTOM;m.sheet.setLayoutParams(sp);
+        int top=a.tab==0?addTop:selectedTop;
+        // At small heights the drawer scrolls below the player/transport/ruler instead of a
+        // minimum sheet height pushing its top over those controls. Reference-sized windows
+        // retain the measured row-three anchor and independent selected-layer height.
+        int minimumTop=Math.min(h,timelineTop+dp(30)),minimumSheet=Math.min(dp(180),h-minimumTop);
+        top=Math.max(minimumTop,Math.min(top,h-minimumSheet));
+        FrameLayout.LayoutParams sp=(FrameLayout.LayoutParams)m.sheet.getLayoutParams();sp.height=Math.max(1,h-top);sp.gravity=Gravity.BOTTOM;m.sheet.setLayoutParams(sp);
         m.sheet.setVisibility(visible?View.VISIBLE:View.GONE);m.add.setVisibility(visible?View.GONE:View.VISIBLE);
         boolean catalog=a.effectCatalog.showing;m.catalogHost.setVisibility(catalog?View.VISIBLE:View.GONE);a.phoneDrawer.setVisibility(catalog?View.GONE:View.VISIBLE);
         if(a.project.clips.isEmpty()&&a.project.overlays.isEmpty()){android.text.SpannableString hint=new android.text.SpannableString("Tap + to add media.");hint.setSpan(new android.text.style.ForegroundColorSpan(EditorActivity.CYAN),4,5,0);a.emptyPreview.setText(hint);}sync();
