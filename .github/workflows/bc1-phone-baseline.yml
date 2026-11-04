@@ -42,7 +42,7 @@ jobs:
             mkdir -p phone-baseline
             adb install -r BC-1/app/build/outputs/apk/debug/app-debug.apk
             adb install -r BC-1/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-            adb shell am instrument -w -r -e class com.blackice.bc1.PortraitWideBaselineTest,com.blackice.bc1.PortraitWorkspaceTest,com.blackice.bc1.EffectParamsTest#theEffectsMenuOffersTheControlsOfTheSelectedEffect com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee phone-baseline/tests.txt
+            adb shell am instrument -w -r -e class com.blackice.bc1.PortraitWideBaselineTest,com.blackice.bc1.PortraitWorkspaceTest,com.blackice.bc1.EffectParamsTest#theEffectsMenuOffersTheControlsOfTheSelectedEffect,com.blackice.bc1.TimelineInteractionTest,com.blackice.bc1.WorkspaceV2Test,com.blackice.bc1.Workspace144Test#catalogIsInPlaceRestoresMediaAndSurvivesResize,com.blackice.bc1.WorkflowControlsTest,com.blackice.bc1.PhoneMediaSpaceTest,com.blackice.bc1.FootageWorkspaceTest,com.blackice.bc1.ExportDiagnosticsUiTest com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee phone-baseline/tests.txt
             adb root
             adb wait-for-device
             adb pull /data/user/0/com.blackice.bc1.preview/files/qa/. phone-baseline/

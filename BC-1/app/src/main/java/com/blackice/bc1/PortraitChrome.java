@@ -47,15 +47,15 @@ final class PortraitChrome {
     }
     private View makeTransport(boolean selected){
         transport=a.row();transport.setGravity(Gravity.CENTER);int gap=dp(selected?4:14);
-        if(selected)addTransport("SkipStart","Jump to start",()->a.seek(0),gap);
+        a.jumpStart=a.jumpEnd=null;if(selected)a.jumpStart=addTransport("SkipStart","Jump to beginning of selected clip",()->a.jump(false),gap);
         addTransport(selected?"StepBack":"SkipStart",selected?"Previous frame":"Previous edit point",()->{if(selected)a.seek(Math.max(0,a.project.playheadMs-Math.round(1000d/a.project.frameRate)));else m.boundary(false);},gap);
         a.play=m.control("Play","Play",v->a.togglePlay());a.play.setMinHeight(0);a.play.setMinimumHeight(0);a.play.setMinWidth(0);a.play.setMinimumWidth(0);GradientDrawable playBg=new GradientDrawable();playBg.setCornerRadius(dp(selected?24:8));playBg.setColor(selected?0xFF0B1721:EditorActivity.CYAN);if(selected)playBg.setStroke(dp(2),EditorActivity.CYAN);a.play.setBackground(playBg);transport.addView(a.play,new LinearLayout.LayoutParams(dp(44),dp(44)));
         addTransport(selected?"StepForward":"SkipEnd",selected?"Next frame":"Next edit point",()->{if(selected)a.seek(a.project.playheadMs+Math.round(1000d/a.project.frameRate));else m.boundary(true);},gap);
-        if(selected)addTransport("SkipEnd","Jump to end",()->a.seek(a.project.durationMs()),gap);
+        if(selected)a.jumpEnd=addTransport("SkipEnd","Jump to end of selected clip",()->a.jump(true),gap);
         a.play.setTag(null);a.syncPlayButton();if(selected)a.play.setCompoundDrawables(a.icon(a.player!=null&&a.player.isPlaying()?"Pause":"Play",EditorActivity.TEXT),null,null,null);
         return transport;
     }
-    private void addTransport(String icon,String label,Runnable run,int gap){TextView b=m.control(icon,label,v->run.run());b.setMinWidth(0);b.setMinimumWidth(0);b.setMinHeight(0);b.setMinimumHeight(0);b.setBackground(null);b.setPadding(dp(10),0,dp(10),0);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(dp(44),dp(48));p.setMargins(gap/2,0,gap/2,0);transport.addView(b,p);}
+    private TextView addTransport(String icon,String label,Runnable run,int gap){TextView b=m.control(icon,label,v->run.run());b.setMinWidth(0);b.setMinimumWidth(0);b.setMinHeight(0);b.setMinimumHeight(0);b.setBackground(null);b.setPadding(dp(10),0,dp(10),0);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(dp(44),dp(48));p.setMargins(gap/2,0,gap/2,0);transport.addView(b,p);return b;}
     void header(){
         a.header.removeAllViews();a.header.setOrientation(LinearLayout.HORIZONTAL);a.header.setPadding(0,0,dp(8),0);a.header.getLayoutParams().height=dp(Math.max(48,44*a.getResources().getConfiguration().fontScale));
         TextView back=m.control("Back","Back to Projects",v->m.saveAndProjects());back.setBackground(null);back.setPadding(dp(10),0,dp(10),0);a.header.addView(back,new LinearLayout.LayoutParams(dp(44),dp(48)));

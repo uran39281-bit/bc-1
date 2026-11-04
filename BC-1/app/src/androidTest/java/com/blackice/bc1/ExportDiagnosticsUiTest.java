@@ -25,7 +25,7 @@ public class ExportDiagnosticsUiTest {
         context.getSharedPreferences(ExportService.PREFS,0).edit().putString(ExportService.LAST_FAILURE,report).commit();
         context.getSharedPreferences(EditorActivity.PREFS,0).edit().remove("last-project").commit();
         try(ActivityScenario<EditorActivity> scenario=ActivityScenario.launch(EditorActivity.class)){
-            scenario.onActivity(a->{View root=a.getWindow().getDecorView();text(root,"Settings").performClick();text(root,"Export diagnostics").performClick();});
+            new WorkspaceV2Test().waitLoaded(scenario);scenario.onActivity(a->{View root=a.getWindow().getDecorView();if(a.portraitPhone()){assertNotNull(WorkspaceV2Test.described(root,"Project menu: "+a.project.name));a.mobile.dismissed=false;a.tab=4;a.renderInspector();}else text(root,"Settings").performClick();text(root,"Export diagnostics").performClick();});
             inst.waitForIdleSync();
             // The dialog can reach the accessibility tree a moment after the click; wait for it (up to 5 s).
             java.util.List<AccessibilityNodeInfo> copy=java.util.Collections.emptyList();

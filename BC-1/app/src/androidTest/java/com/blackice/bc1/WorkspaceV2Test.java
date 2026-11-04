@@ -76,7 +76,7 @@ public class WorkspaceV2Test {
                     assertEquals(2,a.project.overlays.size());assertEquals("BLACK ICE",a.project.overlays.get(1).text);
                     if(wide){a.moreAction("Edit Text");assertNotNull(text(a.inspector,"Apply text"));a.panels.back();}else{described(a.inspector,"Media Settings: Text & Style").performClick();assertNotNull("Text tools",text(a.inspector,"Edit Text"));assertNotNull(text(a.inspector,"Font"));}
                     // Multi-select and group.
-                    a.toggleMulti(-1,0);assertEquals(2,a.multiCount());assertNotNull(text(a.getWindow().getDecorView(),"2 layers selected"));a.multiAction("Group");
+                    a.toggleMulti(-1,0);assertEquals(2,a.multiCount());assertNotNull(startsWith(a.getWindow().getDecorView(),"2 layers selected"));a.multiAction("Group");
                     assertNotNull(a.project.overlays.get(0).group);assertEquals(a.project.overlays.get(0).group,a.project.overlays.get(1).group);
                     a.deselect();a.tab=3;a.renderInspector();View hide=described(a.getWindow().getDecorView(),"Hide "+a.project.overlays.get(1).label());assertNotNull(hide);hide.performClick();
                     assertTrue("Eye toggle hides the layer",a.project.overlays.get(1).hidden);
