@@ -646,10 +646,11 @@ public final class EditorActivity extends Activity {
         if(emptyPreview!=null&&(project.clips.isEmpty()&&project.overlays.isEmpty()))emptyPreview.setText(browse?"+ Import video or images":"START YOUR FIRST CUT\n\n+ Import video or images");
     }
     private String inspectorScrollOwner="";
+    String inspectorOwner(){return (portraitPhone()?project.id+":":"")+selected+":"+selectedOverlay+":"+tab+":"+panels.title()+":"+transformPanel.tab;}
     void renderInspector() {
         if(inspector==null)return;
         ScrollView scroller=inspector.getParent() instanceof ScrollView?(ScrollView)inspector.getParent():null;
-        String owner=selected+":"+selectedOverlay+":"+tab+":"+panels.title()+":"+transformPanel.tab;
+        String owner=inspectorOwner();
         int previousScroll=scroller!=null&&owner.equals(inspectorScrollOwner)?scroller.getScrollY():0;
         boolean restorePhoneScroll=portraitPhone()&&phoneState.restoreDrawerScroll&&!loading;
         if(restorePhoneScroll)previousScroll=owner.equals(phoneState.drawerOwner)?phoneState.drawerScroll:0;
