@@ -80,7 +80,8 @@ public class EffectParamsTest {
                     assertNotNull("Motion Blur offers an angle",WorkspaceV2Test.described(a.inspector,"Angle"));
                     assertNotNull("...and a length",WorkspaceV2Test.described(a.inspector,"Length"));
                     assertNotNull(WorkspaceV2Test.described(a.inspector,"Angle reset"));
-                    assertNotNull("Strength is still there",WorkspaceV2Test.described(a.inspector,"Effect strength"));
+                    android.widget.EditText strength=WorkspaceV2Test.field(a.inspector,"Effect strength exact value in percent");
+                    assertNotNull("Strength remains editable",strength);int undo=a.undo.size();strength.setText("65");WorkspaceV2Test.text(a.inspector,"Apply").performClick();assertEquals(.65f,a.clip().intensity,1e-5);assertEquals("Strength edit is undoable",undo+1,a.undo.size());assertEquals("Selected effect retained",13,a.clip().effect);
                 });
                 h.capture("v151-effect-controls");
             }

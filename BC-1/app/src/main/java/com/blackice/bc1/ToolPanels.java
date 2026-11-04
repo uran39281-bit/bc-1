@@ -19,6 +19,8 @@ final class ToolPanels {
     private Panel current;
     private String owner="";
     private final List<Runnable> valueRefresh=new ArrayList<>();
+    private final List<Runnable> phoneAvailability=new ArrayList<>();
+    void syncPhoneControls(){for(Runnable update:phoneAvailability)update.run();}
     void refresh(){if(!showing())return;for(Runnable update:valueRefresh)update.run();a.transformPanel.menus.refresh();}
     private static final class Panel{final String title;final Runnable build;Panel(String t,Runnable b){title=t;build=b;}}
     ToolPanels(EditorActivity activity){a=activity;}
@@ -35,7 +37,7 @@ final class ToolPanels {
 
     /** Renders the open panel, or the contextual tool grid for the current selection. */
     void render(LinearLayout into) {
-        valueRefresh.clear();
+        valueRefresh.clear();phoneAvailability.clear();
         if(current!=null&&!owner.equals(selectionKey()))reset();
         if(current!=null){if(!drawsOwnHeader(current.title))header(into,current.title);current.build.run();return;}
         if(a.tab==2){effectsHome();return;}
@@ -43,6 +45,7 @@ final class ToolPanels {
         if(a.multiCount()>1){multiTools();return;}
         if(c==null&&o==null){browseHome();return;}
         if(a.wideLayout){landscapeMediaSettings(into);return;}
+        if(a.portraitPhone()){portraitSelection(into);return;}
         if(footage()){footagePanel(into);return;}
         String kind=kind(c,o);
         into.addView(a.note(kind+"  •  "+(c!=null?c.name:o.label())+(locked()?"  •  Layer locked":"")));
@@ -74,6 +77,21 @@ final class ToolPanels {
         // Secondary supported operations remain reachable without returning the removed category tiles.
         TextView extra=a.button("More footage tools",v->open("More footage tools",()->{for(String tool:tools(a.clip(),a.overlay()))a.gridAction(tool,()->runTool(tool));a.flushGrid();a.inspector.addView(a.button("Compare before / after",compareView->a.compare(!a.comparing)));}));extra.setContentDescription("Slip, chroma key, audio extraction and animation tools");into.addView(extra,new LinearLayout.LayoutParams(-1,a.dp(48)));
         if(c!=null&&c.track==0)into.addView(a.note("Main sequence: edge dragging uses ripple trim. Trim Start/End at playhead preserve other clip positions."));
+    }
+    /** Compact portrait-only home. Each short painted card has its own full-height touch wrapper. */
+    private void portraitSelection(LinearLayout into){
+        EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();boolean editable=!locked()&&!a.uiLocked;
+        boolean visual=c==null||c.track<EditProject.AUDIO_FIRST;
+        boolean inside=editable&&(c!=null?LayerOps.canSplitOrTrim(a.project,a.selected):a.project.playheadMs-o.startMs>=EditProject.MIN_CLIP_MS&&o.endMs-a.project.playheadMs>=EditProject.MIN_CLIP_MS);
+        String[] names={"Duration","Trim Start","Split","Trim End","Duplicate"},icons={"Time","TrimStart","Split","TrimEnd","Duplicate"};
+        HorizontalScrollView strip=new HorizontalScrollView(a);strip.setHorizontalScrollBarEnabled(false);strip.setFillViewport(true);LinearLayout quick=a.row();strip.addView(quick);into.addView(strip,new LinearLayout.LayoutParams(-1,PhoneActionView.touchHeight(a)));
+        boolean large=a.getResources().getConfiguration().fontScale>1.15f;
+        for(int i=0;i<names.length;i++){final int index=i;PhoneActionView b=new PhoneActionView(a,names[i],icons[i],true,40,()->{if(index==0)runTool("Duration");else if(index==4)a.duplicateSelected();else playheadEdit(index-1);});b.setEnabled(i==0||i==4?editable:inside);if(i>0&&i<4)phoneAvailability.add(()->{EditProject.Overlay current=a.overlay();boolean valid=!locked()&&!a.uiLocked&&(a.clip()!=null?LayerOps.canSplitOrTrim(a.project,a.selected):current!=null&&a.project.playheadMs-current.startMs>=EditProject.MIN_CLIP_MS&&current.endMs-a.project.playheadMs>=EditProject.MIN_CLIP_MS);b.setEnabled(valid);});b.setContentDescription(names[i]+(i>0&&i<4?" at playhead":""));LinearLayout.LayoutParams lp=large?new LinearLayout.LayoutParams(Math.max(a.dp(86),(int)Math.ceil(b.text.getPaint().measureText(names[i]))+a.dp(12)),PhoneActionView.touchHeight(a)):new LinearLayout.LayoutParams(0,PhoneActionView.touchHeight(a),1);lp.setMargins(a.dp(2),0,a.dp(2),0);quick.addView(b,lp);}
+        boolean shape=o!=null&&o.shape>0,text=o!=null&&o.shape==0&&o.imageUri==null;
+        String style=shape?"Shape & Style":text?"Text & Style":"Audio";
+        String[] labels={"Move & Transform","Blending & Opacity","Effects",style,"Layer Tools"};String[] art={"Transform","Blending & Opacity","Effects",shape?"Shapes":text?"Text":"Volume","Layers"};
+        for(int row=0;row<3;row++){LinearLayout line=a.row();LinearLayout.LayoutParams rp=new LinearLayout.LayoutParams(-1,PhoneActionView.touchHeight(a));rp.topMargin=a.dp(row==0?6:0);into.addView(line,rp);for(int col=0;col<2;col++){int i=row*2+col;View cell;if(i>=labels.length)cell=new View(a);else{PhoneActionView b=new PhoneActionView(a,labels[i],art[i],false,32,()->{if(i==3){if(shape)open("Shape & Style",this::shapePanel);else if(text)open("Text & Style",()->{for(String tool:tools(a.clip(),a.overlay()))a.gridAction(tool,()->runTool(tool));a.flushGrid();});else open("Audio",this::audioPanel);}else category(labels[i]);});b.setContentDescription("Media Settings: "+labels[i]);b.setEnabled(editable&&(i==3||i==4||visual&&(i!=2||c!=null)));cell=b;}LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(0,-1,1);cp.setMargins(a.dp(2),0,a.dp(2),0);line.addView(cell,cp);}}
+        PhoneActionView more=new PhoneActionView(a,"More footage tools",null,false,32,()->open("More footage tools",()->{for(String tool:tools(a.clip(),a.overlay()))a.gridAction(tool,()->runTool(tool));a.flushGrid();a.inspector.addView(a.button("Selected layer actions",v->a.moreMenu()));a.inspector.addView(a.button("Delete",v->a.deleteSelection()));a.inspector.addView(a.button("Undo",v->a.undo(false)));a.inspector.addView(a.button("Redo",v->a.undo(true)));}));into.addView(more,new LinearLayout.LayoutParams(-1,PhoneActionView.touchHeight(a)));
     }
     private void landscapeMediaSettings(LinearLayout into){
         EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();boolean visual=c==null||c.track<EditProject.AUDIO_FIRST;if(c!=null&&!c.image)checkAudio(c);

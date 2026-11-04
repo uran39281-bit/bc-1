@@ -6,6 +6,6 @@ bc1_apt_options=(-o Acquire::Retries=2 -o Acquire::http::Timeout=20 -o Acquire::
 if ! sudo timeout 180s apt-get "${bc1_apt_options[@]}" update; then
   echo 'Package index refresh timed out; trying the runner’s cached indexes.'
 fi
-sudo timeout 180s apt-get "${bc1_apt_options[@]}" install -y ffmpeg ripgrep
+sudo timeout 600s apt-get "${bc1_apt_options[@]}" install -y ffmpeg ripgrep
 ffmpeg -version >/dev/null
 rg --version >/dev/null
