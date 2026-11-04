@@ -31,7 +31,7 @@ final class PortraitChrome {
         // No idle editing toolbar. Commands remain in the project/context menus.
         a.phoneTimelineTools=a.buildTimelineTools();a.phoneTimelineTools.setVisibility(View.GONE);
         a.phoneTimelineArea=a.buildTimeline();a.phoneTimelineArea.setBackgroundColor(0xFF07111B);a.phoneTimelineArea.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{if(t!=ot||b-t!=ob-ot)m.stage.post(this::update);});m.content.addView(a.phoneTimelineArea,new LinearLayout.LayoutParams(-1,dp(306)));
-        if(a.phoneTimelineArea instanceof ScrollView){((ScrollView)a.phoneTimelineArea).setVerticalScrollBarEnabled(false);a.phoneTimelineArea.post(()->((ScrollView)a.phoneTimelineArea).scrollTo(0,state.timelineScroll));}
+        if(a.phoneTimelineArea instanceof ScrollView){((ScrollView)a.phoneTimelineArea).setVerticalScrollBarEnabled(false);ScrollView tracks=(ScrollView)a.phoneTimelineArea;int restoreY=state.timelineScroll;tracks.post(()->{if(a.mobile==m&&a.phoneTimelineArea==tracks)tracks.scrollTo(0,restoreY);});}
         m.add=a.button("+",v->openAdd(0));m.add.setTextSize(32);m.add.setContentDescription("Add content");m.add.setTextColor(BlackIceTheme.ON_ACCENT);m.add.setBackground(BlackIceTheme.primary(a.getResources().getDisplayMetrics().density));m.add.setElevation(dp(2));
         m.stage.addView(m.add,new FrameLayout.LayoutParams(dp(56),dp(56),Gravity.BOTTOM|Gravity.END));
         m.sheet=a.column();m.sheet.setElevation(dp(12));m.sheet.setClickable(true);GradientDrawable bg=a.buttonBackground(false);bg.setColor(BlackIceTheme.SECONDARY);bg.setCornerRadii(new float[]{dp(14),dp(14),dp(14),dp(14),0,0,0,0});m.sheet.setBackground(bg);
@@ -69,7 +69,7 @@ final class PortraitChrome {
     void openAdd(int category){capture();m.dismissed=false;m.overlayInsert=false;a.panels.reset();a.addDrawer.category=category;if(category==3){a.mediaKind=MediaFilter.Kind.SHAPES;a.favoritesOnly=false;}else if(category==1){a.mediaKind=MediaFilter.Kind.AUDIO;a.favoritesOnly=false;}a.tab=0;state.drawer=PhoneWorkspaceState.Drawer.ADD_MEDIA;a.renderInspector();}
     boolean dismiss(){if(m.sheet.getVisibility()!=View.VISIBLE)return false;capture();m.dismissed=true;state.dismissed=true;state.drawer=PhoneWorkspaceState.Drawer.BASE;a.tab=1;a.renderInspector();return true;}
     void back(){if(a.effectCatalog.showing){a.effectCatalog.back();return;}if(a.panels.showing()){a.panels.back();return;}if(dismiss())return;if(a.clip()!=null||a.overlay()!=null||a.multiCount()>1){a.deselect();return;}m.saveAndProjects();}
-    void update(){if(updating||m.stage==null)return;updating=true;try{
+    void update(){if(updating||m.stage==null||a.mobile!=m||a.isDestroyed())return;updating=true;try{
         String selection=a.selected+":"+a.selectedOverlay+":"+a.multiCount();if(!selection.equals(state.selection)){state.selection=selection;m.dismissed=false;}
         boolean selected=a.clip()!=null||a.overlay()!=null||a.multiCount()>1;
         boolean visible=!m.dismissed&&(a.tab!=1||selected||a.effectCatalog.showing);
@@ -105,7 +105,7 @@ final class PortraitChrome {
         for(int r=0;r<2;r++){LinearLayout row=a.row();into.addView(row,new LinearLayout.LayoutParams(-1,PhoneActionView.touchHeight(a)));for(int c=0;c<3;c++){int index=r*3+c;PhoneActionView f=new PhoneActionView(a,names[index],icons[index],false,36,()->{capture();state.firstMedia=state.mediaOffset=0;if(index==5){a.favoritesOnly=true;a.mediaKind=MediaFilter.Kind.ALL;}else{a.favoritesOnly=false;a.mediaKind=MediaFilter.Kind.values()[index];}refreshLibrary();});f.setContentDescription("Filter "+names[index]);filters.add(f);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,-1,1);p.setMargins(c==0?0:dp(3),0,c==2?0:dp(3),0);row.addView(f,p);}}
         FrameLayout frame=new FrameLayout(a);frame.setMinimumHeight(dp(104));frame.setPadding(dp(6),dp(6),dp(6),dp(4));frame.setBackground(a.buttonBackground(false));LinearLayout.LayoutParams fp=new LinearLayout.LayoutParams(-1,0,1);fp.topMargin=dp(8);into.addView(frame,fp);
         mediaList=new ListView(a);mediaList.setDivider(null);mediaList.setDividerHeight(0);mediaList.setClipToPadding(false);mediaList.setContentDescription("Project media library");mediaList.setItemsCanFocus(true);adapter=new MediaRows();mediaList.setAdapter(adapter);frame.addView(mediaList,new FrameLayout.LayoutParams(-1,-1));mediaList.setOnScrollListener(new AbsListView.OnScrollListener(){public void onScrollStateChanged(AbsListView v,int s){}public void onScroll(AbsListView v,int f,int count,int total){if(v!=mediaList)return;state.firstMedia=f;state.mediaOffset=v.getChildCount()==0?0:v.getChildAt(0).getTop();}});
-        refreshLibrary();mediaList.post(()->mediaList.setSelectionFromTop(state.firstMedia,state.mediaOffset));
+        refreshLibrary();ListView restoreList=mediaList;int first=state.firstMedia,offset=state.mediaOffset;restoreList.post(()->{if(a.mobile==m&&mediaList==restoreList&&restoreList.isAttachedToWindow())restoreList.setSelectionFromTop(first,offset);});
         // Search/sort/view commands stay accessible without repeating a permanent toolbar in the tray.
         imp.setOnLongClickListener(v->{libraryOptions();return true;});imp.setTooltipText("Import media. Long press for search and sorting.");
     }
