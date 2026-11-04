@@ -6,6 +6,14 @@ bash .github/scripts/bc1-media-fixtures.sh
   gradle --no-daemon -Pbc1SideBySide assembleDebug assembleDebugAndroidTest
 )
 mkdir -p BC-1/app/build/reports/androidTests
+# Pull complete files after the instrumented process exits. A tar stream from run-as can end
+# early while the emulator settles after display changes, silently truncating the evidence.
+collect_qa() {
+  mkdir -p BC-1/app/build/reports/androidTests/qa
+  adb root
+  adb wait-for-device
+  adb pull /data/user/0/com.blackice.bc1.preview/files/qa/. BC-1/app/build/reports/androidTests/qa/
+}
 adb install -r BC-1/app/build/outputs/apk/debug/app-debug.apk
 adb install -r BC-1/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 adb logcat -c
@@ -17,9 +25,7 @@ trap 'kill "$bc1_logcat_pid" 2>/dev/null || true; wait "$bc1_logcat_pid" 2>/dev/
 # This supplements, rather than replaces, the full instrumentation run below.
 adb shell am instrument -w -r -e class com.blackice.bc1.InspectorControlsTest com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee BC-1/app/build/reports/androidTests/inspector-preflight.txt
 if rg 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' BC-1/app/build/reports/androidTests/inspector-preflight.txt; then
-  adb exec-out run-as com.blackice.bc1.preview tar -C files/qa -cf - . > BC-1/app/build/reports/androidTests/qa.tar || true
-  mkdir -p BC-1/app/build/reports/androidTests/qa
-  tar -xf BC-1/app/build/reports/androidTests/qa.tar -C BC-1/app/build/reports/androidTests/qa || true
+  collect_qa || true
   exit 1
 fi
 rg '^OK \([0-9]+ tests?\)' BC-1/app/build/reports/androidTests/inspector-preflight.txt
@@ -34,9 +40,7 @@ rg -n 'BC1Preview|VideoFrameProcessingException|ExoPlaybackException|PlaybackExc
 echo "Preview log: $(wc -l < BC-1/app/build/reports/androidTests/preview-log.txt) lines (errors and lifecycle first, then the last seeks)"
 rg -v ' D BC1Preview' BC-1/app/build/reports/androidTests/preview-log.txt | head -120 || true
 rg ' D BC1Preview' BC-1/app/build/reports/androidTests/preview-log.txt | tail -60 || true
-mkdir -p BC-1/app/build/reports/androidTests/qa
-adb exec-out run-as com.blackice.bc1.preview tar -C files/qa -cf - . > BC-1/app/build/reports/androidTests/qa.tar
-tar -xf BC-1/app/build/reports/androidTests/qa.tar -C BC-1/app/build/reports/androidTests/qa
+collect_qa
 # Repeat the instrumentation failure summary last, so it is visible at the end of the job log.
 sed -n '/^There w\(as\|ere\) [0-9]* failure/,/^FAILURES!!!/p' BC-1/app/build/reports/androidTests/instrumentation.txt | head -120 || true
 if rg 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' BC-1/app/build/reports/androidTests/instrumentation.txt; then exit 1; fi
