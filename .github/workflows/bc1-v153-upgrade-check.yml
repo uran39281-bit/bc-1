@@ -1,7 +1,7 @@
 name: Verify signed Black Ice 1.5.3 upgrade
 on:
   push:
-    branches: [ccr-1b5779ac-w50tyk]
+    branches: [codex/v153-signed-verification-87358e5]
     paths: [v1.5.3/release.json]
   workflow_dispatch:
 permissions:
