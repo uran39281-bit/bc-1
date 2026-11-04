@@ -122,6 +122,8 @@ public final class EditorActivity extends Activity {
     TextView markerCount;
     TextView status,time,play,projectLabel,exportButton,emptyPreview,monitorInfo;
     MobileChrome mobile;
+    final PhoneWorkspaceState phoneState=new PhoneWorkspaceState();
+    boolean portraitPhone(){return mobile!=null&&mobile.portrait!=null;}
     View phonePreview,phoneTransport,phoneTimelineTools,phoneTimelineArea; ScrollView phoneDrawer;
     TimelineView timeline;
     final Runnable timelineThumbnailsReady=()->{if(!isDestroyed()&&timeline!=null)timeline.invalidate();};
@@ -173,7 +175,7 @@ public final class EditorActivity extends Activity {
         try {mode=LayoutPolicy.Preference.valueOf(getSharedPreferences(PREFS,MODE_PRIVATE).getString("mode","AUTO"));}catch(Exception ignored){}
         snapping=getSharedPreferences(PREFS,MODE_PRIVATE).getBoolean("snapping",true);
         workspaceFocus=getSharedPreferences(PREFS,MODE_PRIVATE).getInt("workspace-focus",0);
-        effectCatalog.restore(state);easingControls.restore(state);fillPanel.restore(state);if(state!=null){restoredPanel=state.getString("focused-panel");selectedMediaUri=state.getString("selected-media-uri");pendingSubtitleExport=state.getString("subtitle-export");transformPanel.linked=state.getBoolean("transform-linked",true);transformPanel.menus.restoreGraphSelection(state.getInt("graph-selection",0));transformPanel.tab=state.getInt("transform-tab",0);mediaSort=state.getInt("media-sort",0);mediaList=state.getBoolean("media-list",false);favoritesOnly=state.getBoolean("media-favorites",false);customTimelineHeight=state.getInt("timeline-height",0);selected=state.getInt("selected",-1);selectedOverlay=state.getInt("selected-overlay",-1);pixelsPerSecond=state.getFloat("timeline-zoom",48);tab=state.getInt("tab",0);mediaQuery=state.getString("media-query","");try{mediaKind=MediaFilter.Kind.valueOf(state.getString("media-kind","ALL"));}catch(IllegalArgumentException ignored){}}
+        phoneState.restore(state);effectCatalog.restore(state);easingControls.restore(state);fillPanel.restore(state);if(state!=null){restoredPanel=state.getString("focused-panel");selectedMediaUri=state.getString("selected-media-uri");pendingSubtitleExport=state.getString("subtitle-export");transformPanel.linked=state.getBoolean("transform-linked",true);transformPanel.menus.restoreGraphSelection(state.getInt("graph-selection",0));transformPanel.tab=state.getInt("transform-tab",0);mediaSort=state.getInt("media-sort",0);mediaList=state.getBoolean("media-list",false);favoritesOnly=state.getBoolean("media-favorites",false);customTimelineHeight=state.getInt("timeline-height",0);selected=state.getInt("selected",-1);selectedOverlay=state.getInt("selected-overlay",-1);pixelsPerSecond=state.getFloat("timeline-zoom",48);tab=state.getInt("tab",0);mediaQuery=state.getString("media-query","");try{mediaKind=MediaFilter.Kind.valueOf(state.getString("media-kind","ALL"));}catch(IllegalArgumentException ignored){}}
         if(state==null)tab=1;
         buildWorkspace();
         String id=state==null?getIntent().getStringExtra("project-id"):state.getString("project-id",getIntent().getStringExtra("project-id"));
@@ -218,7 +220,7 @@ public final class EditorActivity extends Activity {
     @Override protected void onStart(){super.onStart();active=true;main.post(pulse);if(!loading)showLive();}
     @Override protected void onStop(){cancelLiveAdjust();active=false;main.removeCallbacks(pulse);main.removeCallbacks(warmPreview);if(projectSession!=null)projectSession.checkpoint();releasePreview();if(previewProxy!=null)previewProxy.cancel();if(live!=null)live.releaseDecoders();super.onStop();}
     @Override protected void onDestroy(){if(mediaImportWindow!=null)mediaImportWindow.close();main.removeCallbacks(autosave);if(projectSession!=null){projectSession.model=project;projectSession.listener=null;}if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
-    @Override protected void onSaveInstanceState(Bundle state){if(panels.showing())state.putString("focused-panel",panels.title());easingControls.save(state);fillPanel.save(state);effectCatalog.save(state);mediaImportWindow.save(state);state.putString("selected-media-uri",selectedMediaUri);state.putString("subtitle-export",pendingSubtitleExport);state.putString("project-id",loading?openingProjectId:project.id);cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("graph-selection",transformPanel.menus.graphSelection());state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());if(projectSession!=null)projectSession.checkpoint();super.onSaveInstanceState(state);}
+    @Override protected void onSaveInstanceState(Bundle state){if(portraitPhone())mobile.portrait.capture();phoneState.save(state);if(panels.showing())state.putString("focused-panel",panels.title());easingControls.save(state);fillPanel.save(state);effectCatalog.save(state);mediaImportWindow.save(state);state.putString("selected-media-uri",selectedMediaUri);state.putString("subtitle-export",pendingSubtitleExport);state.putString("project-id",loading?openingProjectId:project.id);cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("graph-selection",transformPanel.menus.graphSelection());state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());if(projectSession!=null)projectSession.checkpoint();super.onSaveInstanceState(state);}
     @Override public void onConfigurationChanged(Configuration config){super.onConfigurationChanged(config);cancelLiveAdjust();buildWorkspace();}
     boolean exporting(){return getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getBoolean("running",false)||exportLaunching;}
     boolean editable(){if(captionApplying){tell("Saving captions…");return false;}if(uiLocked){tell("UI locked • unlock editing in Settings");return false;}if(loading||importing){tell("Wait for the current import to finish.");return false;}if(exporting()){tell("Wait for export to finish, or cancel it to continue editing.");return false;}return true;}
@@ -355,6 +357,7 @@ public final class EditorActivity extends Activity {
 
     final EffectCatalogPanel effectCatalog=new EffectCatalogPanel(this);
     void buildWorkspace() {
+        if(portraitPhone())mobile.portrait.capture();
         effectCatalog.prepareLayout();
         mediaImportWindow.prepareForLayout();
         // Layout switches keep selection, playhead and zoom (fields) and the layer list's vertical scroll.
@@ -396,6 +399,7 @@ public final class EditorActivity extends Activity {
 
         }
         status=label(message,10,MUTED,false);status.setSingleLine(true);status.setPadding(dp(10),0,dp(10),dp(3));status.setOnClickListener(v->new AlertDialog.Builder(this).setMessage(status.getText()).setPositiveButton("OK",null).show());root.addView(status,new LinearLayout.LayoutParams(-1,dp(wide&&c.screenHeightDp<450?16:24)));
+        if(portraitPhone())status.setVisibility(View.GONE);
         root.setOnApplyWindowInsetsListener((v,insets)->{v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets.consumeSystemWindowInsets();});
         setContentView(root);root.requestApplyInsets();if(timelineScroll!=null)timelineScroll.post(()->timeline.syncScroll());if(layerScroll>0&&timelineScroll!=null)timelineScroll.post(()->{if(timelineScroll.getParent() instanceof ScrollView)((ScrollView)timelineScroll.getParent()).scrollTo(0,layerScroll);});if(player!=null)player.setVideoSurfaceView(surface);renderInspector();syncPosition();if(previewPending)previewHint("Preparing preview…\nTap to cancel");mediaImportWindow.reposition();effectCatalog.mount();
     }
@@ -656,6 +660,7 @@ public final class EditorActivity extends Activity {
     private void renderInspectorContents() {
         if(inspector==null)return;sizePhoneDrawer();renderTimelineTools();if(selected>=0)selectedOverlay=-1;pruneSelection();renderHeader();updateMediaSelection();if(timeline!=null)timeline.invalidate();if(previewControls!=null)previewControls.invalidate();updateJumpLabels();inspector.removeAllViews();contextualRow=null;contextualCount=0;gridRow=null;gridCount=0;
         for(int i=0;i<navTabs.size();i++){navTabs.get(i).setTextColor(i==tab?CYAN:TEXT);navTabs.get(i).setBackground(navBackground(i==tab));navTabs.get(i).setSelected(i==tab);for(android.graphics.drawable.Drawable icon:navTabs.get(i).getCompoundDrawables())if(icon!=null)icon.setTint(i==tab?CYAN:TEXT);}
+        if(portraitPhone()){mobile.portrait.render(inspector);return;}
         if(panels.showing()&&"Effects".equals(panels.title())){panels.render(inspector);return;}
         if(mobile!=null){mobile.inspectorTitle(inspector);}
         else if(!wideLayout&&tab==0){
@@ -722,6 +727,12 @@ public final class EditorActivity extends Activity {
         java.util.List<int[]> rows=new ArrayList<>();
         java.util.Set<String> shown=new java.util.HashSet<>();
         for(int i=project.overlays.size()-1;i>=0;i--){String g=project.overlays.get(i).group;if(g!=null&&collapsedGroups.contains(g)){if(!shown.add(g))continue;}rows.add(new int[]{1,i});}
+        // Phone exposes six real lanes without changing track capacity or saved track IDs.
+        if(portraitPhone()){
+            for(int t=0;t<=EditProject.LAST_LAYER;t++)if(!trackEmpty(t)||t<=3)rows.add(new int[]{0,t});
+            for(int t=EditProject.AUDIO_FIRST;t<=EditProject.AUDIO_LAST;t++)if(!trackEmpty(t)||t==EditProject.AUDIO_FIRST)rows.add(new int[]{0,t});
+            return rows;
+        }
         // One empty visual layer and one empty audio layer stay visible as drop targets for new layers.
         int freeVisual=-1,freeAudio=-1;for(int t=1;t<=EditProject.LAST_LAYER&&freeVisual<0;t++)if(trackEmpty(t))freeVisual=t;for(int t=EditProject.AUDIO_FIRST;t<=EditProject.AUDIO_LAST&&freeAudio<0;t++)if(trackEmpty(t))freeAudio=t;
         for(int t=EditProject.LAST_LAYER;t>=0;t--){if(t==0||!trackEmpty(t)||t==freeVisual)rows.add(new int[]{0,t});}
@@ -784,8 +795,8 @@ public final class EditorActivity extends Activity {
     void pruneSelection(){multiClips.removeIf(i->i>=project.clips.size());multiOverlays.removeIf(i->i>=project.overlays.size());if(multiCount()==1){multiClips.clear();multiOverlays.clear();}}
     void deselect(){compareSnapshot=null;selected=-1;selectedOverlay=-1;multiClips.clear();multiOverlays.clear();panels.reset();renderInspector();}
     void baseline(){try{compareSnapshot=ProjectStore.encode(project);}catch(Exception e){compareSnapshot=null;}}
-    void selectClip(int index,boolean seekToStart){selectedMediaUri=project.clips.get(index).uri;if(index!=selected)baseline();selected=index;selectedOverlay=-1;multiClips.clear();multiOverlays.clear();tab=1;if(seekToStart)seek(project.placements().get(index).startMs);renderInspector();}
-    void selectOverlay(int index){if(selected>=0||index!=selectedOverlay)baseline();selected=-1;selectedOverlay=index;multiClips.clear();multiOverlays.clear();tab=1;renderInspector();}
+    void selectClip(int index,boolean seekToStart){if(portraitPhone())mobile.dismissed=false;selectedMediaUri=project.clips.get(index).uri;if(index!=selected)baseline();selected=index;selectedOverlay=-1;multiClips.clear();multiOverlays.clear();tab=1;if(seekToStart)seek(project.placements().get(index).startMs);renderInspector();}
+    void selectOverlay(int index){if(portraitPhone())mobile.dismissed=false;if(selected>=0||index!=selectedOverlay)baseline();selected=-1;selectedOverlay=index;multiClips.clear();multiOverlays.clear();tab=1;renderInspector();}
     /** Ctrl/Shift-click or long-press: add or remove a layer from the multi-selection; groups select together. */
     void toggleMulti(int clipIndex,int overlayIndex){
         if(multiCount()==0){if(selected>=0)multiClips.add(selected);if(selectedOverlay>=0)multiOverlays.add(selectedOverlay);}
@@ -1414,6 +1425,7 @@ public final class EditorActivity extends Activity {
 
     void toggleLock(){uiLocked=!uiLocked;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putBoolean("ui-locked",uiLocked).apply();renderInspector();tell(uiLocked?"UI locked • playback and seeking remain available":"UI unlocked");}
     void renderMediaBrowser(){
+        if(portraitPhone()){mobile.portrait.refreshLibrary();return;}
         if(mediaBrowser==null)return;
         if(effectCatalog.showing&&wideLayout){effectCatalog.render(mediaBrowser);return;}
         mediaBrowser.removeAllViews();mediaFilterButtons.clear();
@@ -1456,6 +1468,7 @@ public final class EditorActivity extends Activity {
     final Runnable mediaRefresh=()->renderMediaGrid();
     int mediaGridColumns=3;
     void renderMediaGrid(){
+        if(portraitPhone()){mobile.portrait.refreshLibrary();return;}
         if(effectCatalog.showing&&wideLayout)return;
         if(mediaGrid==null)return;
         mediaGrid.removeAllViews();
@@ -1557,7 +1570,7 @@ public final class EditorActivity extends Activity {
         return card;
     }
     /** Keep bin selection separate from timeline selection and insertion. */
-    void refreshBinSelection(){renderMediaGrid();if(!wideLayout&&binGrid!=null)renderInspector();}
+    void refreshBinSelection(){renderMediaGrid();if(!wideLayout&&!portraitPhone()&&binGrid!=null)renderInspector();}
     void mediaActions(EditProject.Clip asset){selectedMediaUri=asset.uri;refreshBinSelection();}
     void mediaActionsMenu(EditProject.Clip asset){
 
@@ -1594,7 +1607,7 @@ public final class EditorActivity extends Activity {
     }
     /** The Add panel's copy of Project Media (phone and compact windows). */
     LinearLayout binGrid;
-    void refreshMediaThumbnails(){if(!isDestroyed()){refreshMediaThumbnails(mediaGrid);refreshMediaThumbnails(binGrid);}}
+    void refreshMediaThumbnails(){if(!isDestroyed()){if(portraitPhone())mobile.portrait.refreshThumbnails();refreshMediaThumbnails(mediaGrid);refreshMediaThumbnails(binGrid);}}
     void refreshMediaThumbnails(LinearLayout grid){
         if(grid==null)return;
         // Update current images in place; decoding must not recreate cards, focus or scroll state.
@@ -1612,7 +1625,7 @@ public final class EditorActivity extends Activity {
         }
     }
     static String clockShort(long ms){return String.format(Locale.US,"%02d:%02d",ms/60000,(ms/1000)%60);}
-    void tell(String text){message=text==null?"Something went wrong.":text;if(status!=null)status.setText(message);}
+    void tell(String text){message=text==null?"Something went wrong.":text;if(status!=null)status.setText(message);if(portraitPhone())android.widget.Toast.makeText(this,message,android.widget.Toast.LENGTH_SHORT).show();}
     int dp(float value){return Math.round(value*getResources().getDisplayMetrics().density);}
     LinearLayout column(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);return l;}
     LinearLayout row(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.HORIZONTAL);return l;}

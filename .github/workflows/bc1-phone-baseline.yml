@@ -2,7 +2,7 @@ name: Phone update wide baseline
 on:
   push:
     branches: [codex/portrait-layout-update]
-    paths: [BC-1/app/src/androidTest/java/com/blackice/bc1/PortraitWideBaselineTest.java, .github/workflows/bc1-phone-baseline.yml]
+    paths: [BC-1/**, .github/workflows/bc1-phone-baseline.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -39,7 +39,7 @@ jobs:
             mkdir -p phone-baseline
             adb install -r BC-1/app/build/outputs/apk/debug/app-debug.apk
             adb install -r BC-1/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-            adb shell am instrument -w -r -e class com.blackice.bc1.PortraitWideBaselineTest com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee phone-baseline/tests.txt
+            adb shell am instrument -w -r -e class com.blackice.bc1.PortraitWideBaselineTest,com.blackice.bc1.PortraitWorkspaceTest com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee phone-baseline/tests.txt
             adb exec-out run-as com.blackice.bc1.preview tar -C files/qa -cf - . > phone-baseline/captures.tar
             tar -xf phone-baseline/captures.tar -C phone-baseline
             if rg 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' phone-baseline/tests.txt; then exit 1; fi
@@ -47,5 +47,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Phone-update-wide-baseline
+          name: Phone-update-native-captures
           path: phone-baseline/

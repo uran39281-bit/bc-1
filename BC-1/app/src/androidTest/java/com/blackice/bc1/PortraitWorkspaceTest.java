@@ -1,0 +1,45 @@
+package com.blackice.bc1;
+
+import android.graphics.*;
+import android.net.Uri;
+import android.view.*;
+import android.widget.*;
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import com.blackice.bc1.editor.*;
+import java.io.*;
+import java.util.concurrent.atomic.AtomicReference;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import static org.junit.Assert.*;
+
+/** Reference states use actual native views and the real project/undo/player, not a screenshot overlay. */
+@RunWith(AndroidJUnit4.class)
+public class PortraitWorkspaceTest {
+ final WorkspaceV2Test h=new WorkspaceV2Test();
+ static Rect rect(View v){int[] p=new int[2];v.getLocationOnScreen(p);return new Rect(p[0],p[1],p[0]+v.getWidth(),p[1]+v.getHeight());}
+ static int children(View root){return root instanceof ViewGroup?((ViewGroup)root).getChildCount():0;}
+ void fixture()throws Exception{
+  EditProject p=new EditProject();p.name="Portrait reference";p.id="portrait-reference";
+  File file=new File(h.inst.getTargetContext().getFilesDir(),"portrait-reference.png");Bitmap b=Bitmap.createBitmap(320,180,Bitmap.Config.ARGB_8888);b.eraseColor(0xff244366);try(OutputStream out=new FileOutputStream(file)){b.compress(Bitmap.CompressFormat.PNG,100,out);}b.recycle();
+  for(int i=0;i<60;i++){EditProject.Clip asset=new MediaImporter(h.inst.getTargetContext()).importClip(Uri.fromFile(file),false);asset.name="Footage "+i;asset.sourceDurationMs=asset.outMs=5000;p.library.add(asset);}
+  new ProjectStore(h.inst.getTargetContext()).save(p);h.inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("last-project",p.id).putString("mode","PHONE").putBoolean("ui-locked",false).putBoolean("reduced-motion",true).putInt("workspace-focus",0).commit();
+ }
+ @Test public void threeReferenceStatesKeepPlayerTimelineAndEditsAcrossRecreation()throws Exception{
+  String size=h.override(h.shell("wm size")),density=h.override(h.shell("wm density"));String font=h.shell("settings get system font_scale").trim();
+  try{for(int width:new int[]{360,412}){h.shell("wm size "+width+"x800");h.shell("wm density 160");fixture();
+   try(ActivityScenario<EditorActivity> scene=ActivityScenario.launch(EditorActivity.class)){h.waitLoaded(scene);Thread.sleep(400);
+    AtomicReference<Rect> preview=new AtomicReference<>(),timeline=new AtomicReference<>(),transport=new AtomicReference<>();AtomicReference<View> surface=new AtomicReference<>();AtomicReference<String> document=new AtomicReference<>();
+    scene.onActivity(a->{assertTrue(a.portraitPhone());assertEquals(0,a.timeline.headerWidth());assertEquals(View.GONE,a.phoneTimelineTools.getVisibility());assertEquals(6,a.timeline.rows().size());assertEquals(3,children(a.phoneTransport));assertEquals(View.GONE,a.mobile.sheet.getVisibility());assertNull(WorkspaceV2Test.described(a.monitor,"Preview resolution"));assertEquals(View.GONE,a.status.getVisibility());preview.set(rect(a.phonePreview));timeline.set(rect(a.phoneTimelineArea));transport.set(rect(a.phoneTransport));surface.set(a.surface);document.set(ProjectStore.encode(a.project));});h.capture("portrait-"+width+"-base");
+    scene.onActivity(a->a.mobile.add.performClick());Thread.sleep(300);
+    scene.onActivity(a->{assertEquals(PhoneWorkspaceState.Drawer.ADD_MEDIA,a.phoneState.drawer);assertEquals(preview.get(),rect(a.phonePreview));assertEquals(timeline.get(),rect(a.phoneTimelineArea));assertEquals(transport.get(),rect(a.phoneTransport));assertSame(surface.get(),a.surface);assertEquals(document.get(),ProjectStore.encode(a.project));assertEquals(0,a.undo.size());int anchor=rect(a.phoneTimelineArea).top+a.dp(30)+2*a.timeline.rowHeight();assertEquals("Tray follows real row-three top",anchor,rect(a.mobile.sheet).top);for(String f:new String[]{"All","Video","Audio","Image","Shapes","Favorites"})assertNotNull(WorkspaceV2Test.described(a.inspector,"Filter "+f));View list=WorkspaceV2Test.described(a.inspector,"Project media library");assertTrue(list instanceof ListView);assertTrue("Visible library rows must have height",list.getHeight()>a.dp(60));assertTrue("Only visible rows are bound",((ListView)list).getChildCount()<20);assertNull(WorkspaceV2Test.text(a.inspector,"Project Media"));});h.capture("portrait-"+width+"-add");
+    scene.onActivity(a->{WorkspaceV2Test.described(a.inspector,"Filter Shapes").performClick();});Thread.sleep(200);
+    scene.onActivity(a->{assertNotNull(WorkspaceV2Test.described(a.inspector,"Insert shape: Square"));WorkspaceV2Test.described(a.inspector,"Insert shape: Square").performClick();});Thread.sleep(400);
+    scene.onActivity(a->{assertEquals(1,a.project.overlays.size());assertEquals(PhoneWorkspaceState.Drawer.SELECTED_LAYER,a.phoneState.drawer);assertEquals(5,children(a.phoneTransport));assertEquals(preview.get(),rect(a.phonePreview));assertSame(surface.get(),a.surface);assertNull(WorkspaceV2Test.text(a.inspector,"Media Settings"));assertNull(WorkspaceV2Test.text(a.inspector,"Mute"));for(String tool:new String[]{"Duration","Trim Start","Split","Trim End","Duplicate","Move & Transform","Blending & Opacity","Effects","Shape & Style","Layer Tools","More footage tools"})assertNotNull(tool,WorkspaceV2Test.text(a.inspector,tool));View duplicate=WorkspaceV2Test.described(a.inspector,"Duplicate");assertTrue(duplicate.getHeight()>=a.dp(44));duplicate.performClick();assertEquals(2,a.project.overlays.size());a.undo(false);assertEquals(1,a.project.overlays.size());a.mobile.dismiss();assertEquals(View.GONE,a.mobile.sheet.getVisibility());a.selectOverlay(0);assertEquals(View.VISIBLE,a.mobile.sheet.getVisibility());a.seek(1000);a.saveNow();});Thread.sleep(400);h.capture("portrait-"+width+"-selected");
+    scene.recreate();h.waitLoaded(scene);Thread.sleep(300);scene.onActivity(a->{assertEquals(1,a.project.overlays.size());assertEquals(1000,a.project.playheadMs);assertEquals(0,a.selectedOverlay);assertEquals(PhoneWorkspaceState.Drawer.SELECTED_LAYER,a.phoneState.drawer);a.mobile.dismiss();a.mobile.openAdd(3);});Thread.sleep(200);scene.recreate();h.waitLoaded(scene);Thread.sleep(200);scene.onActivity(a->{assertEquals(PhoneWorkspaceState.Drawer.ADD_MEDIA,a.phoneState.drawer);assertEquals(MediaFilter.Kind.SHAPES,a.mediaKind);assertNotNull(WorkspaceV2Test.described(a.inspector,"Insert shape: Square"));a.mobile.dismiss();a.saveNow();});
+   }
+  }
+  h.shell("settings put system font_scale 1.5");h.shell("wm size 360x720");fixture();try(ActivityScenario<EditorActivity> scene=ActivityScenario.launch(EditorActivity.class)){h.waitLoaded(scene);scene.onActivity(a->{a.addShapeAt(1,0,0);assertTrue(a.portraitPhone());});Thread.sleep(300);scene.onActivity(a->{assertTrue("Drawer scrolls instead of shrinking touch targets",a.inspector.getHeight()>=a.dp(230));View duplicate=WorkspaceV2Test.described(a.inspector,"Duplicate");assertNotNull(duplicate);assertTrue(duplicate.getHeight()>=a.dp(44));});h.capture("portrait-large-font-selected");}
+  }finally{h.shell("settings put system font_scale "+(font.matches("[0-9.]+")?font:"1.0"));h.shell("wm size "+size);h.shell("wm density "+density);h.inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("mode","AUTO").commit();}
+ }
+}
