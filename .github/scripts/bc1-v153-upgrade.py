@@ -76,7 +76,23 @@ if not OLD.exists():urllib.request.urlretrieve('https://raw.githubusercontent.co
 assert hashlib.sha256(OLD.read_bytes()).hexdigest()=='2c1b69156276c45e723eea98deb01100d8be3904ab1697d980067a49d7a4f707'
 print(adb('install','-r',str(OLD)).decode(),flush=True)
 adb('shell','wm','size','1920x1080');adb('shell','wm','density','160')
-adb('shell','run-as',PKG,'mkdir','-p','files/media','files/projects-v1')
+adb('shell','run-as',PKG,'mkdir','-p','files/media','files/projects-v1','shared_prefs')
+# A genuinely paused clock is both a migration fixture and a quiet UI for system hierarchy reads.
+clock_path='shared_prefs/project-work-clocks.xml'
+private(clock_path,('<map><long name="'+ID+'" value="123456"/><boolean name="'+ID+'-paused" value="true"/></map>').encode())
+def verify_clock():
+    clock=ET.fromstring(private(clock_path))
+    values={n.get('name'):n.get('value') for n in clock}
+    assert values[ID]=='123456' and values[ID+'-paused']=='true','Saved paused work clock changed'
+
+# Preserve the old wide/landscape layout choice during this real APK upgrade.
+space_path='shared_prefs/bc1-editor.xml'
+private(space_path,b'<map><int name="workspace-focus" value="1"/></map>')
+def verify_space():
+    values={n.get('name'):n.get('value') for n in ET.fromstring(private(space_path))}
+    assert values['workspace-focus']=='1','Saved wide/landscape layout choice changed'
+    assert 'portrait-workspace-focus' not in values,'First portrait launch must use its Balanced default without overwriting preferences'
+
 # Small deterministic PNG: private source media retained byte-for-byte across the APK upgrade.
 def chunk(kind,data):return struct.pack('>I',len(data))+kind+data+struct.pack('>I',zlib.crc32(kind+data)&0xffffffff)
 png=b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>2I5B',64,32,8,6,0,0,0))+chunk(b'IDAT',zlib.compress((b'\0'+bytes([24,85,140,255])*64)*32))+chunk(b'IEND',b'')
@@ -95,7 +111,7 @@ private(path,json.dumps(project,indent=2).encode())
 # rather than requiring the editor's accessibility hierarchy to become idle.
 open_project(verify_title=False)
 adb('shell','input','keycombination','113','47')
-for _ in range(45):
+for _ in range(44):
     before_bytes=private(path)
     before=json.loads(before_bytes)
     # The fixture was written pretty-printed; 1.5.1 rewrites it compactly, which proves its save completed.
@@ -103,6 +119,8 @@ for _ in range(45):
     time.sleep(.25)
 else:raise AssertionError('1.5.1 Ctrl+S did not rewrite the fixture')
 subset(project,before)
+verify_clock()
+verify_space()
 print('1.5.1 saved fixture verified; upgrading in place',flush=True)
 adb('shell','am','force-stop',PKG)
 print(adb('install','-r',str(NEW)).decode(),flush=True)
@@ -113,20 +131,38 @@ private(path,json.dumps(before,indent=2).encode())
 open_project(verify_title=False)
 print('Opened upgraded editor; saving through Ctrl+S',flush=True)
 adb('shell','input','keycombination','113','47')
-for _ in range(45):
+for _ in range(44):
     after_bytes=private(path)
     after=json.loads(after_bytes)
     if after.get('schema')==11 and b'\n  ' not in after_bytes:break
     time.sleep(.25)
 else:raise AssertionError('1.5.3 Ctrl+S did not rewrite the project')
 subset(project,after)
+verify_clock()
+verify_space()
 assert after['clips'][0]['effect']==12,'Saved effect must survive the upgrade'
 # Opening and saving must not rewrite any interval: custom cubic and legacy preset keep their stored data.
 assert [list(k) for k in after['clips'][0]['motion'][3]]==[list(k) for k in before['clips'][0]['motion'][3]],'Easing intervals changed during upgrade'
 assert after['clips'][0]['motion'][3][0][7]==-1 and after['clips'][0]['motion'][3][1][7]==2 and after['clips'][0]['motion'][3][2][7]==0
 assert private('files/media/upgrade-source.png')==png
 (OUT/'upgrade-after.png').write_bytes(adb('exec-out','screencap','-p'))
-report=dict(result='PASS',from_version='1.5.1 (45)',to_version='1.5.3 (47)',package=PKG,project_id=ID,source_sha256=hashlib.sha256(png).hexdigest(),verified=['Install -r accepted original Preview signing lineage','Project saved by 1.5.1 opens in 1.5.3 and saves again as schema 11','Source URI and original image bytes retained','Trim, opacity, rotation, scale, position and rotation keyframes retained','Custom cubic handles and the legacy Ease Out preset keep their stored ids, discriminators and coordinates','Shape, timing, opacity and legacy linear gradient/color keys retained','Canvas and frame rate unchanged','Saved clip effect retained'])
+report=dict(result='PASS',from_version='1.5.1 (45)',to_version='1.5.3 (47)',package=PKG,project_id=ID,source_sha256=hashlib.sha256(png).hexdigest(),verified=['Install -r accepted original Preview signing lineage','Project saved by 1.5.1 opens in 1.5.3 and saves again as schema 11','Source URI and original image bytes retained','Trim, opacity, rotation, scale, position and rotation keyframes retained','Custom cubic handles and the legacy Ease Out preset keep their stored ids, discriminators and coordinates','Shape, timing, opacity and legacy linear gradient/color keys retained','Canvas and frame rate unchanged','Saved clip effect retained','Paused project work clock retains total 123456 ms and paused state'])
+adb('shell','wm','size','824x1784');adb('shell','wm','density','320');time.sleep(2)
+verify_space()
+fullscreen=[n for n in tree().iter('node') if n.get('content-desc')=='Fullscreen preview']
+assert len(fullscreen)==1,'Portrait preview fullscreen control must be available'
+preview_bounds=list(map(int,re.findall(r'\d+',fullscreen[0].get('bounds'))))
+assert preview_bounds[3]>824*.7,('Retained Expand timeline shrank the new portrait preview',preview_bounds)
+report['verified'].append('Saved wide/landscape Expand timeline choice survives; Samsung-shaped portrait opens at full Balanced reference height')
+(OUT/'upgrade-phone-base.png').write_bytes(adb('exec-out','screencap','-p'))
+click('Add content');time.sleep(.5)
+labels={n.get('content-desc','') for n in tree().iter('node')}
+assert all('Filter '+kind in labels for kind in ['All','Video','Audio','Image','Shapes','Favorites']),labels
+(OUT/'upgrade-phone-add.png').write_bytes(adb('exec-out','screencap','-p'))
+adb('shell','input','keyevent','4');time.sleep(.5)
+subset(after,json.loads(private(path)))
+assert private('files/media/upgrade-source.png')==png
+report['verified'].append('Portrait Add Media opens with all six real filters; Back retains the saved graph and original source bytes')
 (OUT/'upgrade-verification.json').write_text(json.dumps(report,indent=2)+'\n')
 print(json.dumps(report,indent=2))
 OLD.unlink()
