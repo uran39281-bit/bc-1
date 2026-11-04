@@ -27,9 +27,9 @@ public class PortraitWorkspaceTest {
   new ProjectStore(h.inst.getTargetContext()).save(p);h.inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("last-project",p.id).putString("mode","PHONE").putBoolean("ui-locked",false).putBoolean("reduced-motion",true).putInt("workspace-focus",0).commit();
  }
  void waitShapeRendered(ActivityScenario<EditorActivity> scene)throws Exception{
-  java.util.concurrent.atomic.AtomicBoolean ready=new java.util.concurrent.atomic.AtomicBoolean();
-  for(int i=0;i<200&&!ready.get();i++){scene.onActivity(a->{if(a.liveView.isAvailable()&&a.live.lastFrameMs()==a.project.playheadMs){Bitmap b=a.liveView.getBitmap(8,8);if(b!=null){int pixel=b.getPixel(4,4);ready.set(Color.blue(pixel)>150&&Color.green(pixel)>60);b.recycle();}}});if(!ready.get())Thread.sleep(50);}
-  assertTrue("Native capture waits for the actual rendered shape",ready.get());
+  java.util.concurrent.atomic.AtomicBoolean ready=new java.util.concurrent.atomic.AtomicBoolean();AtomicReference<int[]> sample=new AtomicReference<>();
+  for(int i=0;i<200&&!ready.get();i++){sample.set(null);scene.onActivity(a->{if(a.liveView.getVisibility()==View.VISIBLE&&a.liveView.isAvailable()&&a.live.lastFrameMs()==a.project.playheadMs){int[] xy=new int[2];a.liveView.getLocationOnScreen(xy);sample.set(new int[]{xy[0]+a.liveView.getWidth()/2+a.dp(12),xy[1]+a.liveView.getHeight()/2});}});int[] xy=sample.get();if(xy!=null){Bitmap b=h.inst.getUiAutomation().takeScreenshot();if(b!=null){if(xy[0]<b.getWidth()&&xy[1]<b.getHeight()){int pixel=b.getPixel(xy[0],xy[1]);ready.set(Color.blue(pixel)>Color.green(pixel)+20&&Color.blue(pixel)>Color.red(pixel)+80);}b.recycle();}}if(!ready.get())Thread.sleep(50);}
+  assertTrue("Native device capture must show the actual rendered blue shape, not only a ready TextureView",ready.get());
  }
  @Test public void threeReferenceStatesKeepPlayerTimelineAndEditsAcrossRecreation()throws Exception{
   String size=h.override(h.shell("wm size")),density=h.override(h.shell("wm density"));String font=h.shell("settings get system font_scale").trim();
