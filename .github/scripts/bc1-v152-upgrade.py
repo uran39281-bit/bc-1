@@ -76,7 +76,15 @@ if not OLD.exists():urllib.request.urlretrieve('https://raw.githubusercontent.co
 assert hashlib.sha256(OLD.read_bytes()).hexdigest()=='2c1b69156276c45e723eea98deb01100d8be3904ab1697d980067a49d7a4f707'
 print(adb('install','-r',str(OLD)).decode(),flush=True)
 adb('shell','wm','size','1920x1080');adb('shell','wm','density','160')
-adb('shell','run-as',PKG,'mkdir','-p','files/media','files/projects-v1')
+adb('shell','run-as',PKG,'mkdir','-p','files/media','files/projects-v1','shared_prefs')
+# A genuinely paused clock is both a migration fixture and a quiet UI for system hierarchy reads.
+clock_path='shared_prefs/project-work-clocks.xml'
+private(clock_path,('<map><long name="'+ID+'" value="123456"/><boolean name="'+ID+'-paused" value="true"/></map>').encode())
+def verify_clock():
+    clock=ET.fromstring(private(clock_path))
+    values={n.get('name'):n.get('value') for n in clock}
+    assert values[ID]=='123456' and values[ID+'-paused']=='true','Saved paused work clock changed'
+
 # Small deterministic PNG: private source media retained byte-for-byte across the APK upgrade.
 def chunk(kind,data):return struct.pack('>I',len(data))+kind+data+struct.pack('>I',zlib.crc32(kind+data)&0xffffffff)
 png=b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>2I5B',64,32,8,6,0,0,0))+chunk(b'IDAT',zlib.compress((b'\0'+bytes([24,85,140,255])*64)*32))+chunk(b'IEND',b'')
@@ -103,6 +111,7 @@ for _ in range(44):
     time.sleep(.25)
 else:raise AssertionError('1.5.1 Ctrl+S did not rewrite the fixture')
 subset(project,before)
+verify_clock()
 print('1.5.1 saved fixture verified; upgrading in place',flush=True)
 adb('shell','am','force-stop',PKG)
 print(adb('install','-r',str(NEW)).decode(),flush=True)
@@ -120,13 +129,14 @@ for _ in range(44):
     time.sleep(.25)
 else:raise AssertionError('1.5.2 Ctrl+S did not rewrite the project')
 subset(project,after)
+verify_clock()
 assert after['clips'][0]['effect']==12,'Saved effect must survive the upgrade'
 # Opening and saving must not rewrite any interval: custom cubic and legacy preset keep their stored data.
 assert [list(k) for k in after['clips'][0]['motion'][3]]==[list(k) for k in before['clips'][0]['motion'][3]],'Easing intervals changed during upgrade'
 assert after['clips'][0]['motion'][3][0][7]==-1 and after['clips'][0]['motion'][3][1][7]==2 and after['clips'][0]['motion'][3][2][7]==0
 assert private('files/media/upgrade-source.png')==png
 (OUT/'upgrade-after.png').write_bytes(adb('exec-out','screencap','-p'))
-report=dict(result='PASS',from_version='1.5.1 (45)',to_version='1.5.2 (46)',package=PKG,project_id=ID,source_sha256=hashlib.sha256(png).hexdigest(),verified=['Install -r accepted original Preview signing lineage','Project saved by 1.5.1 opens in 1.5.2 and saves again as schema 11','Source URI and original image bytes retained','Trim, opacity, rotation, scale, position and rotation keyframes retained','Custom cubic handles and the legacy Ease Out preset keep their stored ids, discriminators and coordinates','Shape, timing, opacity and legacy linear gradient/color keys retained','Canvas and frame rate unchanged','Saved clip effect retained'])
+report=dict(result='PASS',from_version='1.5.1 (45)',to_version='1.5.2 (46)',package=PKG,project_id=ID,source_sha256=hashlib.sha256(png).hexdigest(),verified=['Install -r accepted original Preview signing lineage','Project saved by 1.5.1 opens in 1.5.2 and saves again as schema 11','Source URI and original image bytes retained','Trim, opacity, rotation, scale, position and rotation keyframes retained','Custom cubic handles and the legacy Ease Out preset keep their stored ids, discriminators and coordinates','Shape, timing, opacity and legacy linear gradient/color keys retained','Canvas and frame rate unchanged','Saved clip effect retained','Paused project work clock retains total 123456 ms and paused state'])
 adb('shell','wm','size','720x1600');adb('shell','wm','density','320');time.sleep(2)
 (OUT/'upgrade-phone-base.png').write_bytes(adb('exec-out','screencap','-p'))
 click('Add content');time.sleep(.5)
