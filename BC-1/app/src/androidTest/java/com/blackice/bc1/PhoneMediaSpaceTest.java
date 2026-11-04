@@ -13,6 +13,7 @@ import static org.junit.Assert.*;
 /** Actual window measurements prevent the phone asset picker regressing to a tiny leftover strip. */
 @RunWith(AndroidJUnit4.class)
 public class PhoneMediaSpaceTest {
+    static void chooseSpace(EditorActivity a,int choice){android.app.AlertDialog dialog=a.chooseSpace();android.widget.ListView options=dialog.getListView();assertTrue("Native layout option is actionable",options.performItemClick(options.getChildAt(choice),choice,options.getAdapter().getItemId(choice)));}
     @Test public void mediaBrowserHasSpaceAndReturnsToEditingWithoutProjectLoss() throws Exception {
         WorkspaceV2Test h=new WorkspaceV2Test();String size=h.override(h.shell("wm size")),density=h.override(h.shell("wm density"));
         try{for(boolean small:new boolean[]{false,true}){
@@ -21,21 +22,22 @@ public class PhoneMediaSpaceTest {
             File picture=new File(h.inst.getTargetContext().getFilesDir(),"phone-space.png");Bitmap bitmap=Bitmap.createBitmap(160,90,Bitmap.Config.ARGB_8888);bitmap.eraseColor(0xFF2879A2);try(OutputStream out=new FileOutputStream(picture)){bitmap.compress(Bitmap.CompressFormat.PNG,100,out);}bitmap.recycle();
             EditProject.Clip asset=new EditProject.Clip();asset.name="Footage";asset.uri=android.net.Uri.fromFile(picture).toString();asset.image=true;asset.sourceDurationMs=asset.outMs=3500;p.library.add(asset);
             new ProjectStore(h.inst.getTargetContext()).save(p);
-            h.inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("last-project",p.id).putString("mode","PHONE").putBoolean("ui-locked",false).putInt("workspace-focus",0).commit();
+            h.inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("last-project",p.id).putString("mode","PHONE").putBoolean("ui-locked",false).putInt("workspace-focus",0).putInt("portrait-workspace-focus",0).commit();
             try(ActivityScenario<EditorActivity> scenario=ActivityScenario.launch(EditorActivity.class)){
                 h.waitLoaded(scenario);scenario.onActivity(a->a.mobile.openAdd(0));Thread.sleep(300);
                 scenario.onActivity(a->{assertFalse(a.wideLayout);assertEquals(0,a.tab);
-                    assertTrue("Browser has at least 40% of window height",a.mobile.sheet.getHeight()>a.mobile.stage.getHeight()*.4f);
+                    assertEquals("Drawer is anchored after two real rows",PortraitWorkspaceTest.rect(a.phoneTimelineArea).top+a.dp(30)+2*a.timeline.rowHeight(),PortraitWorkspaceTest.rect(a.mobile.sheet).top);
                     assertTrue("Timeline remains flexible below preview",a.phoneTimelineArea.getHeight()>a.dp(100));
-                    assertEquals(View.VISIBLE,a.phoneTransport.getVisibility());assertEquals(View.VISIBLE,a.phoneTimelineTools.getVisibility());
+                    assertEquals(View.VISIBLE,a.phoneTransport.getVisibility());assertEquals(View.GONE,a.phoneTimelineTools.getVisibility());
                     assertNull(WorkspaceV2Test.text(a.inspector,"Inspector"));assertNotNull(WorkspaceV2Test.described(a.inspector,"Media Footage"));
                     assertEquals(0,a.project.clips.size());
                 });
                 h.capture(small?"v111-phone-small-picker":"v111-phone-picker");
-                scenario.onActivity(a->{View surface=a.surface;a.mediaAction(a.project.library.get(0),"Add to main sequence at playhead");assertEquals(1,a.tab);assertEquals(1,a.project.clips.size());assertEquals(3500,a.project.durationMs());assertSame("Opening/closing drawer retains preview surface",surface,a.surface);assertEquals(View.VISIBLE,a.phoneTransport.getVisibility());
-                    int balanced=a.phonePreview.getLayoutParams().height;a.workspaceFocus=2;a.sizePhoneDrawer();assertTrue(a.phonePreview.getLayoutParams().height>balanced);
-                    a.workspaceFocus=1;a.sizePhoneDrawer();assertTrue(a.phonePreview.getLayoutParams().height<balanced);a.workspaceFocus=0;a.sizePhoneDrawer();
-                    a.tab=0;a.renderInspector();a.onKeyDown(KeyEvent.KEYCODE_BACK,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_BACK));assertEquals(1,a.tab);assertEquals(3500,a.project.durationMs());a.saveNow();});
+                java.util.concurrent.atomic.AtomicInteger balanced=new java.util.concurrent.atomic.AtomicInteger();
+                scenario.onActivity(a->{View surface=a.surface;a.mediaAction(a.project.library.get(0),"Add to main sequence at playhead");assertEquals(1,a.tab);assertEquals(1,a.project.clips.size());assertEquals(3500,a.project.durationMs());assertSame("Opening/closing drawer retains preview surface",surface,a.surface);assertEquals(View.VISIBLE,a.phoneTransport.getVisibility());balanced.set(a.phonePreview.getLayoutParams().height);chooseSpace(a,2);});Thread.sleep(250);
+                scenario.onActivity(a->{assertEquals(2,a.portraitWorkspaceFocus);assertTrue("Explicit preview expansion uses available space",a.phonePreview.getLayoutParams().height>=balanced.get());if(a.mobile.stage.getHeight()>a.dp(650))assertTrue(a.phonePreview.getLayoutParams().height>balanced.get());chooseSpace(a,1);});Thread.sleep(250);
+                scenario.onActivity(a->{assertEquals(1,a.portraitWorkspaceFocus);assertEquals("Portrait choices do not change the wide preference",0,a.workspaceFocus);assertTrue("Explicit timeline expansion reduces preview",a.phonePreview.getLayoutParams().height<balanced.get());chooseSpace(a,0);});Thread.sleep(250);
+                scenario.onActivity(a->{assertEquals("Balanced choice restores the reference size",balanced.get(),a.phonePreview.getLayoutParams().height);a.tab=0;a.renderInspector();a.onKeyDown(KeyEvent.KEYCODE_BACK,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_BACK));assertEquals(1,a.tab);assertEquals(3500,a.project.durationMs());a.saveNow();});
                 Thread.sleep(500);scenario.recreate();h.waitLoaded(scenario);scenario.onActivity(a->{assertEquals(1,a.project.clips.size());assertEquals(3500,a.project.durationMs());assertEquals(1,a.project.library.size());});
             }
         }}finally{h.shell("wm size "+size);h.shell("wm density "+density);h.inst.getTargetContext().getSharedPreferences(EditorActivity.PREFS,0).edit().putString("mode","AUTO").commit();}
