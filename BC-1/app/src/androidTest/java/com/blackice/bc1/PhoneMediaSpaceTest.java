@@ -33,8 +33,8 @@ public class PhoneMediaSpaceTest {
                 });
                 h.capture(small?"v111-phone-small-picker":"v111-phone-picker");
                 scenario.onActivity(a->{View surface=a.surface;a.mediaAction(a.project.library.get(0),"Add to main sequence at playhead");assertEquals(1,a.tab);assertEquals(1,a.project.clips.size());assertEquals(3500,a.project.durationMs());assertSame("Opening/closing drawer retains preview surface",surface,a.surface);assertEquals(View.VISIBLE,a.phoneTransport.getVisibility());
-                    int balanced=a.phonePreview.getLayoutParams().height;a.workspaceFocus=2;a.sizePhoneDrawer();assertEquals("Focus does not move the fixed reference preview",balanced,a.phonePreview.getLayoutParams().height);
-                    a.workspaceFocus=1;a.sizePhoneDrawer();assertEquals(balanced,a.phonePreview.getLayoutParams().height);a.workspaceFocus=0;a.sizePhoneDrawer();
+                    int balanced=a.phonePreview.getLayoutParams().height;a.workspaceFocus=2;a.sizePhoneDrawer();assertTrue("Explicit preview expansion uses available space",a.phonePreview.getLayoutParams().height>=balanced);if(a.mobile.stage.getHeight()>a.dp(650))assertTrue(a.phonePreview.getLayoutParams().height>balanced);
+                    a.workspaceFocus=1;a.sizePhoneDrawer();assertTrue("Explicit timeline expansion reduces preview",a.phonePreview.getLayoutParams().height<balanced);a.workspaceFocus=0;a.sizePhoneDrawer();
                     a.tab=0;a.renderInspector();a.onKeyDown(KeyEvent.KEYCODE_BACK,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_BACK));assertEquals(1,a.tab);assertEquals(3500,a.project.durationMs());a.saveNow();});
                 Thread.sleep(500);scenario.recreate();h.waitLoaded(scenario);scenario.onActivity(a->{assertEquals(1,a.project.clips.size());assertEquals(3500,a.project.durationMs());assertEquals(1,a.project.library.size());});
             }

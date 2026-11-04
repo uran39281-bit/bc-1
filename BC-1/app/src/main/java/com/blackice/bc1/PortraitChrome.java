@@ -78,9 +78,12 @@ final class PortraitChrome {
         int w=m.stage.getWidth(),h=m.stage.getHeight();if(w<=0||h<=0)return;
         // Six complete native lanes; reserve footer space independently of which drawer is showing.
         int preview=Math.round((w-dp(16))*.65f),footer=dp(80),fixed=dp(4+54+30)+6*rowHeight+footer;
-        preview=Math.max(dp(90),Math.min(preview,h-fixed));
+        preview=Math.max(dp(90),Math.min(preview,h-fixed));int balancedPreview=preview;
+        // Explicit space preferences still work; opening/closing a drawer never changes these sizes.
+        if(a.workspaceFocus==1)preview=Math.max(dp(90),Math.round(balancedPreview*.6f));
+        else if(a.workspaceFocus==2)preview=Math.max(dp(90),Math.min(Math.round(balancedPreview*1.25f),h-fixed));
         if(a.phonePreview.getLayoutParams().height!=preview){a.phonePreview.getLayoutParams().height=preview;a.phonePreview.requestLayout();}
-        int timelineHeight=dp(30)+6*rowHeight;if(a.phoneTimelineArea.getLayoutParams().height!=timelineHeight){a.phoneTimelineArea.getLayoutParams().height=timelineHeight;a.phoneTimelineArea.requestLayout();}
+        int timelineHeight=dp(30)+6*rowHeight+(a.workspaceFocus==1?balancedPreview-preview:0);if(a.phoneTimelineArea.getLayoutParams().height!=timelineHeight){a.phoneTimelineArea.getLayoutParams().height=timelineHeight;a.phoneTimelineArea.requestLayout();}
         int bottom=Math.max(dp(8),h-(dp(4)+preview+dp(54)+timelineHeight)-dp(70));FrameLayout.LayoutParams ap=(FrameLayout.LayoutParams)m.add.getLayoutParams();ap.rightMargin=dp(16);ap.bottomMargin=bottom;m.add.setLayoutParams(ap);
         // Add starts at the actual third-row top. Selected tools are measured independently.
         int timelineTop=dp(4)+preview+dp(54),scroll=a.phoneTimelineArea instanceof ScrollView?((ScrollView)a.phoneTimelineArea).getScrollY():0;
