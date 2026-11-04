@@ -15,6 +15,8 @@ public class WorkflowControlsTest {
         EditProject p=new EditProject();p.name="Workflow QA";new ProjectStore(context).save(p);context.getSharedPreferences(EditorActivity.PREFS,0).edit().putString("last-project",p.id).putBoolean("ui-locked",false).putString("mode","AUTO").commit();Shortcuts.prefs(context).edit().clear().commit();
         try{h.shell("wm size 1080x1920");h.shell("wm density 320");try(ActivityScenario<EditorActivity> scenario=ActivityScenario.launch(EditorActivity.class)){
             h.waitLoaded(scenario);Thread.sleep(1200);
+            scenario.onActivity(a->a.mobile.portrait.projectMenu());click(h,"Timeline markers");click(h,"Add marker at playhead • 0/5");
+            scenario.onActivity(a->{assertEquals("Phone menu creates a real marker",1,a.project.landmarks.size());a.undo(false);assertTrue(a.project.landmarks.isEmpty());});
             scenario.onActivity(a->{assertEquals(p.id,a.project.id);for(int i=0;i<5;i++)LandmarkControls.add(a,i*100);assertEquals(5,a.project.landmarks.size());LandmarkControls.add(a,999);assertEquals(5,a.project.landmarks.size());a.undo(false);assertEquals(4,a.project.landmarks.size());a.undo(true);assertEquals(5,a.project.landmarks.size());
                 a.workClock.checkpoint();assertTrue(a.workClock.total>0);long total=a.workClock.total;a.workClock.paused=true;a.workClock.checkpoint();assertTrue(a.workClock.total>=total);
                 EditText input=new EditText(a);a.inspector.addView(input);input.requestFocus();assertFalse(Shortcuts.dispatch(a,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_M)));assertEquals(5,a.project.landmarks.size());input.clearFocus();
