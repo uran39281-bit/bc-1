@@ -1,6 +1,6 @@
 # Black Ice Editor 1.5.3 Preview — build 47
 
-> **Status: qualified, retained-key signed and in-place upgrade verified. Not officially published.** PR #26 remains open. These release inputs were verified on a separate verification branch and are not included in PR #26.
+> **Status: qualified, retained-key signed and in-place upgrade verified. Not officially published.** PR #26 was merged concurrently as `52cc963290147e389ff9cda6dac583ae4bf0a4a7`; its complete tree is identical to qualified source `87358e5eb71000ba63e3e2eeacbcaaeb0796d7ef`. These release inputs were verified on a separate verification branch and are not included in PR #26.
 
 ## Fix
 The new portrait workspace previously inherited the global Expand timeline preference, shrinking its preview to 60% of the reference height. Portrait now has an independent `portrait-workspace-focus` setting, defaulting to Balanced when absent. The saved wide/landscape preference remains unchanged. Explicit later portrait choices persist across reopening.
@@ -54,4 +54,4 @@ Published retained-key Preview 1.5.1 (45) was installed and saved a real fixture
 Earlier PR source timed out installing media tools before emulator tests; the install timeout was increased to ten minutes. The first portrait-fix source failed Android-test compilation because its new test referenced an absent UI testing library; the current native AlertDialog test needs no added library. Source `0d713e5` ran 109 Android tests with one failure: the old PhoneMediaSpaceTest still wrote the global field directly. Its preview-expansion, timeline-expansion and Balanced-restoration assertions are retained and now operate the actual portrait dialog. An earlier focused attempt failed downloading the emulator before running tests; its unchanged-source retry was superseded. Final source `87358e5eb71000ba63e3e2eeacbcaaeb0796d7ef` passed full and focused qualification on attempt 1. No failed/superseded candidate is delivered.
 
 ## Remaining limits
-Physical Samsung and DeX hardware remain untested. Existing one-effect-per-clip, unsupported effects on generated overlays, bounded cubic handles/no overshoot and engine limits remain. The APK is a Preview build; PR #26 is not merged and no `test-apk/preview/v1.5.3` publication or root download-table update is claimed.
+Physical Samsung and DeX hardware remain untested. Existing one-effect-per-clip, unsupported effects on generated overlays, bounded cubic handles/no overshoot and engine limits remain. The APK is a Preview build; PR #26 is merged with an identical qualified tree. No `test-apk/preview/v1.5.3` publication or root download-table update is claimed; the version download branch was confirmed absent when delivery was finalized.
