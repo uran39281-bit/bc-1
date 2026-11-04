@@ -48,6 +48,20 @@ jobs:
             adb pull /data/user/0/com.blackice.bc1.preview/files/qa/. phone-baseline/
             if rg 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' phone-baseline/tests.txt; then exit 1; fi
             rg '^OK \([0-9]+ tests?\)' phone-baseline/tests.txt
+      - name: Collect public SDK signing tools
+        if: always()
+        run: |
+          mkdir -p android-signing-tools/lib
+          tools="$ANDROID_HOME/build-tools/36.0.0"
+          cp "$tools/zipalign" android-signing-tools/
+          cp "$tools/lib/apksigner.jar" android-signing-tools/lib/
+          cp "$tools/NOTICE.txt" "$tools/source.properties" android-signing-tools/
+          if [ -d "$tools/lib64" ]; then cp -R "$tools/lib64" android-signing-tools/; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Android-signing-tools-linux
+          path: android-signing-tools/
       - uses: actions/upload-artifact@v4
         if: always()
         with:
