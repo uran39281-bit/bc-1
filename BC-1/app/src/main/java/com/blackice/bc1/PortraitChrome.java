@@ -74,7 +74,8 @@ final class PortraitChrome {
         boolean selected=a.clip()!=null||a.overlay()!=null||a.multiCount()>1;
         boolean visible=!m.dismissed&&(a.tab!=1||selected||a.effectCatalog.showing);
         state.drawer=!visible?PhoneWorkspaceState.Drawer.BASE:a.tab==0?PhoneWorkspaceState.Drawer.ADD_MEDIA:PhoneWorkspaceState.Drawer.SELECTED_LAYER;state.dismissed=m.dismissed;
-        if(selectedTransport!=selected){selectedTransport=selected;m.previewColumn.removeView(a.phoneTransport);a.phoneTransport=makeTransport(selected);m.previewColumn.addView(a.phoneTransport,new LinearLayout.LayoutParams(-1,dp(54)));}
+        boolean layerTransport=selected&&state.drawer==PhoneWorkspaceState.Drawer.SELECTED_LAYER;
+        if(selectedTransport!=layerTransport){selectedTransport=layerTransport;m.previewColumn.removeView(a.phoneTransport);a.phoneTransport=makeTransport(layerTransport);m.previewColumn.addView(a.phoneTransport,new LinearLayout.LayoutParams(-1,dp(54)));}
         int w=m.stage.getWidth(),h=m.stage.getHeight();if(w<=0||h<=0)return;
         // Six complete native lanes; reserve footer space independently of which drawer is showing.
         int preview=Math.round((w-dp(16))*.65f),footer=dp(80),fixed=dp(4+54+30)+6*rowHeight+footer;
