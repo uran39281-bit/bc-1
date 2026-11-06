@@ -55,7 +55,7 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 4 publish/Black-Ice-Editor-v1.5.5-Preview-build49.apk
           mkdir -p publish/screenshots
           # Real menu, Layer Tools, effect-controls and portrait captures from the qualified run.
-          cp qualification/qa/v147-*.png qualification/qa/v150-*.png qualification/qa/v151-*.png qualification/qa/portrait-*.png publish/screenshots/
+          cp qualification/qa/v154-*.png publish/screenshots/
           cp v1.5.5/QA.md publish/QA.md
           cp v1.5.5/SHA256SUMS.txt publish/SHA256SUMS.txt
           cd publish
@@ -88,7 +88,7 @@ jobs:
           import json, pathlib, re
           assert json.loads(pathlib.Path('upgrade-verification.json').read_text())['result'] == 'PASS'
           p = pathlib.Path('QA.md')
-          note = '> **Status: upgrade verified. The retained-key signed APK is published with this record.** Signed Preview 1.5.3 build 47 was upgraded in place to 1.5.5 build 49; the fixture, edits, saved effect, custom and legacy easing curves and original media were preserved.'
+          note = '> **Status: upgrade verified. The retained-key signed APK is published with this record.** Signed Preview 1.5.4 build 48 was upgraded in place to 1.5.5 build 49; the fixture, edits, saved effect, custom and legacy easing curves and original media were preserved.'
           text = re.sub(r'^> \*\*Status:.*$', note, p.read_text(), count=1, flags=re.MULTILINE)
           text = text.replace('Once published, install', 'Install')
           p.write_text(text)

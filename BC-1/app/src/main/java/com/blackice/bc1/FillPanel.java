@@ -4,6 +4,7 @@ import android.graphics.*;
 import android.view.*;
 import android.widget.*;
 import com.blackice.bc1.editor.*;
+import com.blackice.bc1.menu.*;
 import java.util.*;
 
 /** Fill controls use the same project snapshot/undo transaction as transform gestures. */
@@ -13,7 +14,7 @@ final class FillPanel {
  void save(android.os.Bundle state){state.putString("fill-stop",stopId);state.putString("fill-easing-property",activeEasing);}
  void restore(android.os.Bundle state){if(state!=null){stopId=state.getString("fill-stop");activeEasing=state.getString("fill-easing-property","Fill color and alpha");}}
  Wheel wheel;Ramp ramp;View swatch;EditText hex,rgba;TextView activeLabel,colorKey,positionKey,angleKey,previous,next;
- SeekBar value,alpha,position,angle;TextView valueLabel,alphaLabel,positionLabel,angleLabel;
+ FillRuler value,alpha,position,angle;TextView valueLabel,alphaLabel,positionLabel,angleLabel;
  FillPanel(EditorActivity a){this.a=a;}
  long time(){return Math.max(0,a.project.playheadMs-a.overlay().startMs);}
  FillStyle style(){return a.overlay().fill==null?draft:a.overlay().fill;}
@@ -28,8 +29,8 @@ final class FillPanel {
  void build(LinearLayout into){
   easingGroups.clear();
   owner=a.overlay().id;draft=a.overlay().fill==null?new FillStyle(a.overlay().color):a.overlay().fill;List<String> ids=style().ids(time());if(!ids.contains(stopId))stopId=ids.get(0);renderedStop=stopId;
-  LinearLayout modes=a.row();for(boolean gradient:new boolean[]{false,true}){TextView b=button(gradient?"Linear gradient":"Solid color",()->commit("Fill mode updated",()->style().gradient=gradient));b.setSelected(style().gradient==gradient);b.setTextColor(style().gradient==gradient?EditorActivity.CYAN:EditorActivity.TEXT);modes.addView(b,new LinearLayout.LayoutParams(0,a.dp(48),1));}into.addView(modes);
-  LinearLayout navigation=a.row();previous=button("‹ Previous Key",()->jump(false));next=button("Next Key ›",()->jump(true));navigation.addView(previous,new LinearLayout.LayoutParams(0,a.dp(48),1));navigation.addView(next,new LinearLayout.LayoutParams(0,a.dp(48),1));into.addView(navigation);
+  LinearLayout modes=a.row();for(boolean gradient:new boolean[]{false,true}){TextView b=button(gradient?"Linear gradient":"Solid color",()->commit("Fill mode updated",()->style().gradient=gradient));b.setSelected(style().gradient==gradient);b.setTextColor(style().gradient==gradient?MenuPalette.GREEN:EditorActivity.TEXT);b.setBackground(MenuPalette.surface(a,b.isSelected()));modes.addView(b,new LinearLayout.LayoutParams(0,a.dp(48),1));}into.addView(modes);
+  KeyNavigation navigation=new KeyNavigation(a,48,()->jump(false),()->jump(true));previous=navigation.previous;next=navigation.next;into.addView(navigation);
   ramp=null;position=null;positionKey=null;angle=null;angleKey=null;
   if(style().gradient){
    activeLabel=a.note("");into.addView(activeLabel);ramp=new Ramp();into.addView(ramp,new LinearLayout.LayoutParams(-1,a.dp(72)));
@@ -47,16 +48,29 @@ final class FillPanel {
   into.addView(a.note("Fill alpha multiplies layer opacity. Each diamond animates its own property. Stop additions and removals hold until their saved time."));refresh();
  }
  interface TrackSource{FillStyle.Track get();}
- TextView diamond(String name,TrackSource source){TextView b=button("◇",()->commit(name+" keyframe",()->{source.get().toggle(time());activeEasing=name;a.easingControls.selectFill(easingScope(name),source.get(),time());}));b.setContentDescription(name+" keyframe");return b;}
+ TextView diamond(String name,TrackSource source){KeyframeButton button=new KeyframeButton(a,name+" keyframe",()->commit(name+" keyframe",()->{source.get().toggle(time());activeEasing=name;a.easingControls.selectFill(easingScope(name),source.get(),time());}));return button;}
  String easingScope(String title){return title+(title.equals("Gradient direction")||!style().gradient?"":":"+stopId);}
  void easing(LinearLayout into,String title,TrackSource source){LinearLayout group=a.column();into.addView(group);Runnable render=()->{group.removeAllViews();a.easingControls.buildFill(group,title,easingScope(title),source::get,()->activeEasing=title);};easingGroups.add(render);render.run();}
  FillStyle.Track activeTrack(){if(!style().gradient)return color();return activeEasing.equals("Gradient direction")?style().angle:activeEasing.equals("Stop position")?style().stops.get(stopId).position:color();}
  interface SliderAction{void set(int value);}
- SeekBar slider(LinearLayout into,String name,int max,SliderAction action){SeekBar s=new SeekBar(a);s.setMax(max);s.setContentDescription(name);into.addView(s,new LinearLayout.LayoutParams(-1,a.dp(48)));s.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){public void onStartTrackingTouch(SeekBar bar){begin();}public void onStopTrackingTouch(SeekBar bar){end(false);}public void onProgressChanged(SeekBar bar,int n,boolean user){if(!user||updating)return;if(dragging)live(()->action.set(n));else commit(name+" updated",()->action.set(n));}});s.setOnTouchListener((v,e)->{if(e.getActionMasked()==MotionEvent.ACTION_CANCEL)end(true);return false;});return s;}
+ static final class RulerState{double value;}
+ final class FillRuler extends RulerView{
+  final RulerState state;
+  FillRuler(String name,int max,SliderAction action){this(name,max,action,new RulerState());}
+  FillRuler(String name,int max,SliderAction action,RulerState state){super(a,name+(name.contains("direction")?" degrees":" percent"),name.contains("direction")?-360000:0,name.contains("direction")?360000:100,name.contains("direction")?1:.5,new RulerView.Binding(){
+   public double value(){return state.value*(name.contains("direction")?.1:100d/max);}
+   public void begin(){FillPanel.this.begin();}
+   public void preview(double n){state.value=n/(name.contains("direction")?.1:100d/max);if(dragging)live(()->action.set((int)Math.round(state.value)));}
+   public void commit(){end(false);}public void cancel(){end(true);}
+  });this.state=state;}
+  void setProgress(int n){state.value=n;invalidate();}
+ }
+ FillRuler slider(LinearLayout into,String name,int max,SliderAction action){FillRuler ruler=new FillRuler(name,max,action);into.addView(ruler,new LinearLayout.LayoutParams(-1,a.dp(64)));return ruler;}
  void number(String title,FillStyle.Track track,double multiplier,double min,double max){a.numberDialog(title,String.format(Locale.ROOT,"%.2f",track.at(time())*multiplier),text->{double v=Double.parseDouble(text);if(!Double.isFinite(v)||v<min||v>max)throw new IllegalArgumentException("Use "+min+" to "+max);commit(title+" updated",()->track.set(time(),v/multiplier));});}
- void jump(boolean next){long key=style().neighbor(time(),next,a.panels.tolerance());if(key>=0){a.pausePlayback();a.seek(a.overlay().startMs+key);a.easingControls.selectFill(easingScope(activeEasing),activeTrack(),key);a.renderInspector();}}
- void key(TextView view,FillStyle.Track track){if(view==null)return;view.setText(track.keys.containsKey(time())?"◆":track.keys.isEmpty()?"◇":"◇·");view.setTextColor(track.keys.isEmpty()?EditorActivity.MUTED:EditorActivity.CYAN);}
- void refresh(){if(!visible()||wheel==null)return;FillStyle f=style();List<String> ids=f.ids(time());if(!ids.contains(stopId))stopId=ids.get(0);if(!Objects.equals(renderedStop,stopId)){renderedStop=stopId;for(Runnable render:easingGroups)render.run();}updating=true;int c=(int)color().at(time());float[] hsv=new float[3];Color.colorToHSV(c,hsv);value.setProgress(Math.round(hsv[2]*1000));alpha.setProgress(Color.alpha(c));valueLabel.setText(String.format(Locale.ROOT,"Brightness · %.1f%%",hsv[2]*100));alphaLabel.setText(String.format(Locale.ROOT,"Fill alpha · %.1f%%",Color.alpha(c)*100/255f));swatch.setBackgroundColor(c);if(!hex.hasFocus())hex.setText(String.format(Locale.ROOT,"#%06X%02X",c&0xFFFFFF,Color.alpha(c)));if(!rgba.hasFocus())rgba.setText(Color.red(c)+", "+Color.green(c)+", "+Color.blue(c)+", "+Color.alpha(c));key(colorKey,color());if(position!=null){FillStyle.Stop stop=f.stops.get(stopId);position.setProgress((int)Math.round(stop.position.at(time())*1000));positionLabel.setText(String.format(Locale.ROOT,"Position · %.1f%%",stop.position.at(time())*100));angle.setProgress((int)Math.round((f.angle.at(time())%360+360)%360*10));angleLabel.setText(String.format(Locale.ROOT,"Direction · %.1f°",f.angle.at(time())));activeLabel.setText("Selected stop "+(ids.indexOf(stopId)+1)+" of "+ids.size());key(positionKey,stop.position);key(angleKey,f.angle);ramp.invalidate();}EditorActivity.dim(previous,f.neighbor(time(),false,a.panels.tolerance())>=0);EditorActivity.dim(next,f.neighbor(time(),true,a.panels.tolerance())>=0);wheel.invalidate();updating=false;}
+ long neighbor(boolean next){Long t=next?activeTrack().keys.higherKey(time()):activeTrack().keys.lowerKey(time());return t==null?-1:t;}
+ void jump(boolean next){long key=neighbor(next);if(key>=0){a.pausePlayback();a.seek(a.overlay().startMs+key);a.easingControls.selectFill(easingScope(activeEasing),activeTrack(),key);a.renderInspector();}}
+ void key(TextView view,FillStyle.Track track){if(view==null)return;((KeyframeButton)view).state(!track.keys.isEmpty(),track.keys.containsKey(time()));}
+ void refresh(){if(!visible()||wheel==null)return;FillStyle f=style();List<String> ids=f.ids(time());if(!ids.contains(stopId))stopId=ids.get(0);if(!Objects.equals(renderedStop,stopId)){renderedStop=stopId;for(Runnable render:easingGroups)render.run();}updating=true;int c=(int)color().at(time());float[] hsv=new float[3];Color.colorToHSV(c,hsv);value.setProgress(Math.round(hsv[2]*1000));alpha.setProgress(Color.alpha(c));valueLabel.setText(String.format(Locale.ROOT,"Brightness · %.1f%%",hsv[2]*100));alphaLabel.setText(String.format(Locale.ROOT,"Fill alpha · %.1f%%",Color.alpha(c)*100/255f));swatch.setBackgroundColor(c);if(!hex.hasFocus())hex.setText(String.format(Locale.ROOT,"#%06X%02X",c&0xFFFFFF,Color.alpha(c)));if(!rgba.hasFocus())rgba.setText(Color.red(c)+", "+Color.green(c)+", "+Color.blue(c)+", "+Color.alpha(c));key(colorKey,color());if(position!=null){FillStyle.Stop stop=f.stops.get(stopId);position.setProgress((int)Math.round(stop.position.at(time())*1000));positionLabel.setText(String.format(Locale.ROOT,"Position · %.1f%%",stop.position.at(time())*100));angle.setProgress((int)Math.round(f.angle.at(time())*10));angleLabel.setText(String.format(Locale.ROOT,"Direction · %.1f°",f.angle.at(time())));activeLabel.setText("Selected stop "+(ids.indexOf(stopId)+1)+" of "+ids.size());key(positionKey,stop.position);key(angleKey,f.angle);ramp.invalidate();}EditorActivity.dim(previous,neighbor(false)>=0);EditorActivity.dim(next,neighbor(true)>=0);wheel.invalidate();updating=false;}
  void setHsv(float hue,float saturation,float brightness){int c=(int)color().at(time());float[] hsv=new float[3];Color.colorToHSV(c,hsv);if(hue>=0)hsv[0]=hue;if(saturation>=0)hsv[1]=saturation;if(brightness>=0)hsv[2]=brightness;color().set(time(),Color.HSVToColor(Color.alpha(c),hsv));}
  final class Wheel extends View {
   final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);Wheel(){super(a);setFocusable(true);setContentDescription("Hue and saturation wheel. Arrow keys change hue and saturation; use HEX or RGBA for exact input.");}

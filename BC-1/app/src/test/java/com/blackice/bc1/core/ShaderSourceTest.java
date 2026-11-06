@@ -56,10 +56,12 @@ public class ShaderSourceTest {
         assertTrue(pass.startsWith("#version 300 es\n#define BC_EFFECT 25\n"));
         assertEquals("One main", 1, pass.split("void main\\(\\)", -1).length - 1);
         assertFalse("No transform, keying or opacity in the pass", pass.contains("uTransform.w") || pass.contains("uChroma.x") || pass.contains("uOpacity)"));
-        assertTrue(pass.contains("a=bcEffect(uEffect,uv,a,k);") && pass.contains("uv=bcDistort(uEffect,uv,k);"));
+        assertTrue("Pass opcode is fixed so unrelated branches can be discarded before the first draw",pass.contains("a=bcEffect(25,uv,a,k);") && pass.contains("uv=bcDistort(25,uv,k);"));
+        assertFalse("No dynamic opcode in the pass main",pass.substring(pass.indexOf("void main()")).contains("uEffect"));
         assertTrue("Shorter than the layer shader", pass.length() < LayerShader.forEffect(s, 25).length());
         assertFalse(LayerShader.separable(11));
         assertTrue(LayerShader.separable(12));
-        try { LayerShader.effectPass(s, 4); fail(); } catch (IllegalArgumentException expected) { }
+        String basic=LayerShader.effectPass(s,4);assertTrue("Stack passes support the legacy grayscale effect",basic.contains("if(4==4)"));assertFalse(basic.contains("uTransform.w"));
+        for(int invalid:new int[]{0,999})try{LayerShader.effectPass(s,invalid);fail("Unsupported pass "+invalid);}catch(IllegalArgumentException expected){}
     }
 }

@@ -10,6 +10,7 @@ import com.blackice.bc1.menu.MenuScreenFactory;
 final class MenuPanels {
     private final MenuScreenFactory factory;
     private LinearLayout body;
+    String selectedEffectId;
 
     MenuPanels(EditorActivity activity) { factory = new MenuScreenFactory(activity, new MenuHost(activity, this)); }
 
@@ -30,6 +31,8 @@ final class MenuPanels {
         if (body != null && body.isAttachedToWindow()) factory.refresh();
     }
 
+    void save(android.os.Bundle b){b.putBundle("menu-curve-expansion",factory.expansionState());}
+    void restore(android.os.Bundle b){if(b!=null)factory.restoreExpansion(b.getBundle("menu-curve-expansion"));}
     void showGraph(MenuScreenFactory.Property property) { factory.restoreGraphSelection(property.ordinal()); }
     int graphSelection() { return factory.graphSelection(); }
     void restoreGraphSelection(int ordinal) { factory.restoreGraphSelection(ordinal); }

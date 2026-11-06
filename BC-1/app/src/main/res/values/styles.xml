@@ -1,6 +1,6 @@
 <resources>
     <style name="BlackIceTheme" parent="android:style/Theme.Material.NoActionBar">
-        <item name="android:colorAccent">#40BFFF</item>
+        <item name="android:colorAccent">#48E59F</item>
         <item name="android:colorButtonNormal">#112A40</item>
         <item name="android:colorControlHighlight">#5540BFFF</item>
         <item name="android:buttonStyle">@style/BlackIceButton</item>
@@ -17,12 +17,14 @@
     <style name="BlackIceDialog" parent="android:style/Theme.Material.Dialog.Alert">
         <item name="android:windowBackground">@drawable/dialog_surface</item>
         <item name="android:colorBackground">#0C1B2B</item>
-        <item name="android:colorAccent">#40BFFF</item>
+        <item name="android:colorBackgroundFloating">#0C1B2B</item>
+        <item name="android:background">#0C1B2B</item>
+        <item name="android:colorAccent">#48E59F</item>
         <item name="android:colorButtonNormal">#112A40</item>
         <item name="android:colorControlHighlight">#5540BFFF</item>
         <item name="android:buttonStyle">@style/BlackIceButton</item>
         <item name="android:colorControlNormal">#9DBAD1</item>
-        <item name="android:colorControlActivated">#40BFFF</item>
+        <item name="android:colorControlActivated">#48E59F</item>
         <item name="android:textColorPrimary">#F2F6FA</item>
         <item name="android:textColorSecondary">#97A8BA</item>
         <item name="android:windowMinWidthMajor">65%</item>

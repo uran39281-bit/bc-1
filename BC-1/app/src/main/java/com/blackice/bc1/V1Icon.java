@@ -56,7 +56,7 @@ final class V1Icon extends Drawable {
             case "Solo":path.addCircle(12,12,9,Path.Direction.CW);path.moveTo(15,8);path.cubicTo(13,6,9,7,9,9.5f);path.cubicTo(9,12,15,12,15,14.5f);path.cubicTo(15,17,11,18,9,16);break;
             case "Mute":path.moveTo(3,9);path.lineTo(7,9);path.lineTo(12,4);path.lineTo(12,20);path.lineTo(7,15);path.lineTo(3,15);path.close();line(15,9,21,15);line(21,9,15,15);break;
             case "Handle":for(int y=7;y<=17;y+=5){line(6,y,18,y);}break;
-            case "Keyframe":path.moveTo(12,3);path.lineTo(21,12);path.lineTo(12,21);path.lineTo(3,12);path.close();break;
+            case "Keyframe":path.moveTo(12,4);path.lineTo(20,12);path.lineTo(12,20);path.lineTo(4,12);path.close();break;
             case "Text":case "Edit Text":line(4,5,20,5);line(12,5,12,20);line(9,20,15,20);break;
             case "Shapes":path.addRect(3,10,13,20,Path.Direction.CW);path.addCircle(16,8,5,Path.Direction.CW);break;
             case "Audio":path.moveTo(9,18);path.lineTo(9,5);path.lineTo(20,3);path.lineTo(20,16);path.addCircle(6.5f,18,2.5f,Path.Direction.CW);path.addCircle(17.5f,16,2.5f,Path.Direction.CW);break;
@@ -71,6 +71,9 @@ final class V1Icon extends Drawable {
             case "Slip":line(3,12,21,12);line(3,12,7,8);line(3,12,7,16);line(21,12,17,8);line(21,12,17,16);break;
             case "Fade In":line(3,20,21,4);line(3,20,21,20);break;
             case "Fade Out":line(3,4,21,20);line(3,20,21,20);break;
+            case "Keyboard":path.addRoundRect(2,5,22,19,2,2,Path.Direction.CW);for(int y:new int[]{8,11})for(int x:new int[]{6,10,14,18})line(x,y,x+.5f,y);line(7,16,17,16);break;
+            case "Monitor":path.addRoundRect(2,3,22,17,2,2,Path.Direction.CW);line(12,17,12,21);line(7,21,17,21);break;
+            case "Clock":path.addCircle(12,12,9,Path.Direction.CW);line(12,6,12,12);line(12,12,16,14);break;
             case "Settings":path.addCircle(12,12,3,Path.Direction.CW);path.addCircle(12,12,8,Path.Direction.CW);for(int i=0;i<8;i++){double r=Math.PI*i/4;line(12+8*(float)Math.cos(r),12+8*(float)Math.sin(r),12+10.5f*(float)Math.cos(r),12+10.5f*(float)Math.sin(r));}break;
             case "SkipStart":line(5,5,5,19);path.moveTo(19,5);path.lineTo(8,12);path.lineTo(19,19);path.close();break;
             case "SkipEnd":line(19,5,19,19);path.moveTo(5,5);path.lineTo(16,12);path.lineTo(5,19);path.close();break;
@@ -78,7 +81,7 @@ final class V1Icon extends Drawable {
             case "StepForward":path.moveTo(4,6);path.lineTo(12,12);path.lineTo(4,18);path.close();path.moveTo(12,6);path.lineTo(20,12);path.lineTo(12,18);path.close();break;
             case "Play":fill=true;path.moveTo(6,4);path.lineTo(20,12);path.lineTo(6,20);path.close();break;
             case "Pause":fill=true;path.addRoundRect(6,4,10,20,1,1,Path.Direction.CW);path.addRoundRect(14,4,18,20,1,1,Path.Direction.CW);break;
-            case "Fullscreen":line(3,9,3,3);line(3,3,9,3);line(15,3,21,3);line(21,3,21,9);line(21,15,21,21);line(21,21,15,21);line(9,21,3,21);line(3,21,3,15);break;
+            case "Expand":case "Fullscreen":line(3,9,3,3);line(3,3,9,3);line(15,3,21,3);line(21,3,21,9);line(21,15,21,21);line(21,21,15,21);line(9,21,3,21);line(3,21,3,15);break;
             case "Magnet":path.moveTo(5,3);path.lineTo(5,12);path.cubicTo(5,21,19,21,19,12);path.lineTo(19,3);line(10,3,10,12);path.moveTo(10,12);path.cubicTo(10,15,14,15,14,12);line(14,12,14,3);line(5,7,10,7);line(14,7,19,7);break;
             case "Fit":line(3,12,9,12);line(9,12,6,9);line(9,12,6,15);line(21,12,15,12);line(15,12,18,9);line(15,12,18,15);line(12,4,12,20);break;
             case "Search":path.addCircle(10,10,6,Path.Direction.CW);line(15,15,21,21);break;

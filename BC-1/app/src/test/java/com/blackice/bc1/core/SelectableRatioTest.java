@@ -5,10 +5,10 @@ import com.blackice.bc1.editor.EditProject;
 import org.junit.Test;
 
 public class SelectableRatioTest {
-    @Test public void portraitNineBySixteenIsNotOffered() {
-        assertFalse(CanvasFormat.selectable("9:16"));
+    @Test public void portraitNineBySixteenIsOffered() {
+        assertTrue(CanvasFormat.selectable("9:16"));
         for (String ratio : new String[]{"16:9", "4:5", "1:1", "4:3"}) assertTrue(ratio, CanvasFormat.selectable(ratio));
-        assertEquals(4, CanvasFormat.SELECTABLE.length);
+        assertArrayEquals(CanvasFormat.RATIOS, CanvasFormat.SELECTABLE);
     }
 
     @Test public void everyOfferedRatioIsStillAValidFormat() {

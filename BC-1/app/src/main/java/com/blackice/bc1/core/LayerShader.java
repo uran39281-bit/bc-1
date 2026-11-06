@@ -27,21 +27,14 @@ public final class LayerShader {
      * Changing a clip's effect then compiles only this, not another copy of the whole layer shader.
      */
     public static String effectPass(String fragment, int effect) {
-        if (!separable(effect)) throw new IllegalArgumentException("Effect " + effect + " is drawn by the base layer shader");
-        String source = forEffect(fragment, effect);
-        int main = source.indexOf("void main()");
-        if (main < 0) throw new IllegalArgumentException("Shader has no main");
-        return source.substring(0, main) +
-                "void main() {\n" +
-                "    float k=uIntensity; vec2 uv=vUV; float inside=1.0;\n" +
-                "    if(uEffect>=29 && uEffect<=37 && k>0.0) {\n" +
-                "        uv=bcDistort(uEffect,uv,k);\n" +
-                "        if(uEffect==32||uEffect==33||uEffect==36||uEffect==37) uv=clamp(uv,uTexel*.5,1.0-uTexel*.5);\n" +
-                "        else inside*=step(0.0,uv.x)*step(uv.x,1.0)*step(0.0,uv.y)*step(uv.y,1.0);\n" +
-                "    }\n" +
-                "    vec4 a=texture(uInput,uv);\n" +
-                "    if(uEffect>=12 && !(uEffect>=29 && uEffect<=37)) a=bcEffect(uEffect,uv,a,k);\n" +
-                "    fragColor=vec4(clamp(a.rgb,0.0,1.0),a.a*inside);\n" +
-                "}\n";
+        if (effect<=0||!EffectCatalog.valid(effect)) throw new IllegalArgumentException("Unsupported effect "+effect);
+        String source=forEffect(fragment,effect);
+        int main=source.indexOf("void main()");
+        int begin=source.indexOf("    if(uEffect>=29",main),end=source.indexOf("    if(uChroma.x",begin);
+        if(main<0||begin<0||end<0)throw new IllegalArgumentException("Shader effect stage not found");
+        // Keep the shipping equations, but make the selected opcode a compile-time constant.
+        // Uniform branches leave unrelated legacy blur/filter paths in the driver's first-draw JIT.
+        return source.substring(0,main)+"void main() {\nfloat k=uIntensity; vec2 uv=vUV; float inside=1.0;\n"+
+            source.substring(begin,end).replace("uEffect",Integer.toString(effect))+"fragColor=vec4(clamp(a.rgb,0.0,1.0),a.a*inside);\n}\n";
     }
 }

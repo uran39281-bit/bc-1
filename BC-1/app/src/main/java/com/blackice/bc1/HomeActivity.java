@@ -48,14 +48,14 @@ public final class HomeActivity extends Activity {
         if(saved!=null){query=saved.getString("query","");destination=saved.getString("destination","Home");
             listMode=saved.getBoolean("listMode");byName=saved.getBoolean("byName");searchVisible=saved.getBoolean("searchVisible");
             scrollY=saved.getInt("scroll");anchorId=saved.getString("anchor");anchorOffset=saved.getInt("offset");}
-        build();
+        build();if(saved!=null&&saved.getBundle("new-project-form")!=null)NewProjectDialog.show(this,project->work("Creating project…",()->{store.save(project);return project;},true),saved.getBundle("new-project-form"));
     }
     @Override protected void onResume(){super.onResume();refresh();}
-    @Override protected void onDestroy(){io.shutdown();thumbnails.close();super.onDestroy();}
-    @Override protected void onSaveInstanceState(Bundle out){captureScroll();out.putString("query",query);out.putString("destination",destination);
+    @Override protected void onDestroy(){NewProjectDialog.dismiss(this);io.shutdown();thumbnails.close();super.onDestroy();}
+    @Override protected void onSaveInstanceState(Bundle out){NewProjectDialog.save(this,out);captureScroll();out.putString("query",query);out.putString("destination",destination);
         out.putBoolean("listMode",listMode);out.putBoolean("byName",byName);out.putBoolean("searchVisible",searchVisible);out.putInt("scroll",scrollY);
         out.putString("anchor",anchorId);out.putInt("offset",anchorOffset);super.onSaveInstanceState(out);}
-    @Override public void onConfigurationChanged(Configuration c){super.onConfigurationChanged(c);captureScroll();build();}
+    @Override public void onConfigurationChanged(Configuration c){super.onConfigurationChanged(c);captureScroll();build();NewProjectDialog.reflow(this);}
     private void captureScroll(){
         if(loading||scroll==null||list==null)return;scrollY=scroll.getScrollY();anchorId=null;
         for(int i=0;i<list.getChildCount();i++){View row=list.getChildAt(i);int top=list.getTop()+row.getTop();
@@ -97,6 +97,7 @@ public final class HomeActivity extends Activity {
             if(wide&&height>=520){TextView footer=text("Create. Edit. Make it yours.",14,MUTED,false);footer.setGravity(Gravity.CENTER);content.addView(footer,new LinearLayout.LayoutParams(-1,dp(64)));}}
         if(!wide){LinearLayout bottom=row();bottom.setPadding(dp(8),dp(4),dp(8),dp(4));bottom.setBackgroundColor(0xff071522);
             for(String item:new String[]{"Home","Projects","Settings"})bottom.addView(nav(item,false),new LinearLayout.LayoutParams(0,dp(64),1));page.addView(bottom);}
+        TextView version=text("v"+getVersionName(),10,MUTED,false);version.setGravity(Gravity.END);version.setPadding(0,0,dp(12),0);page.addView(version,new LinearLayout.LayoutParams(-1,dp(14)));
         setContentView(root);
         root.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{int now=Math.round((r-l)/getResources().getDisplayMetrics().density);if(now>0&&Math.abs(now-renderedWidth)>4){renderedWidth=now;main.post(()->{if(!isDestroyed()){captureScroll();build();}});}});
     }
@@ -114,8 +115,8 @@ public final class HomeActivity extends Activity {
     private View branding(boolean stacked){LinearLayout box=stacked?column():row();box.setGravity(Gravity.CENTER_VERTICAL|(stacked?Gravity.CENTER_HORIZONTAL:Gravity.START));
         ImageView logo=new ImageView(this);logo.setImageResource(R.drawable.ic_black_ice);logo.setContentDescription("Black Ice logo");box.addView(logo,new LinearLayout.LayoutParams(dp(stacked?64:44),dp(stacked?64:52)));
         LinearLayout words=column();words.setGravity(Gravity.CENTER_VERTICAL);TextView name=text("BLACK ICE",stacked?22:24,TEXT,true);name.setSingleLine(true);words.addView(name);TextView sub=text("V I D E O  E D I T O R",stacked?8:9,MUTED,false);sub.setSingleLine(true);words.addView(sub);box.addView(words,new LinearLayout.LayoutParams(-2,-2));return box;}
-    private View nav(String name,boolean sidebar){TextView t=action(name,v->navigate(name));boolean selected=name.equals(destination);t.setTextColor(selected?CYAN:MUTED);t.setTextSize(16);t.setGravity(Gravity.CENTER);
-        Drawable glyph=new V1Icon(name.equals("Projects")?"Folder":name,selected?CYAN:MUTED);glyph.setBounds(0,0,dp(26),dp(26));if(sidebar)t.setCompoundDrawables(glyph,null,null,null);else t.setCompoundDrawables(null,glyph,null,null);t.setCompoundDrawablePadding(dp(5));t.setBackground(interactive(selected?0xff0d2a48:0x00000000));t.setSelected(selected);return t;}
+    private View nav(String name,boolean sidebar){TextView t=action(name,v->navigate(name));boolean selected=name.equals(destination);t.setTextColor(selected?BlackIceTheme.ACCENT:MUTED);t.setTextSize(16);t.setGravity(Gravity.CENTER);
+        Drawable glyph=new V1Icon(name.equals("Projects")?"Folder":name,selected?BlackIceTheme.ACCENT:MUTED);glyph.setBounds(0,0,dp(26),dp(26));if(sidebar)t.setCompoundDrawables(glyph,null,null,null);else t.setCompoundDrawables(null,glyph,null,null);t.setCompoundDrawablePadding(dp(5));t.setBackground(selected?BlackIceTheme.surface(getResources().getDisplayMetrics().density,true):interactive(0x00000000));t.setSelected(selected);return t;}
     private View createCard(boolean importing){LinearLayout card=column();card.setGravity(Gravity.CENTER);card.setPadding(dp(8),dp(12),dp(8),dp(12));card.setBackground(new WaveDrawable(!importing));
         ImageView icon=new ImageView(this);icon.setImageDrawable(new V1Icon(importing?"ImportProject":"NewProject",TEXT));card.addView(icon,new LinearLayout.LayoutParams(dp(wide?68:54),dp(wide?68:54)));
         TextView label=text(importing?"Import project":"New project",wide?23:18,TEXT,true);label.setGravity(Gravity.CENTER);label.setSingleLine(true);label.setHorizontallyScrolling(false);label.setAutoSizeTextTypeUniformWithConfiguration(12,wide?23:18,1,android.util.TypedValue.COMPLEX_UNIT_SP);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.topMargin=dp(10);card.addView(label,lp);
@@ -161,6 +162,7 @@ public final class HomeActivity extends Activity {
             case "Open":open(e);break;case "Rename":rename(e);break;case "Duplicate":work("Duplicating project…",()->{store.duplicate(e.id);return null;},false);break;
             case "Delete":new AlertDialog.Builder(this).setTitle("Delete “"+e.name+"”?").setMessage("This deletes the saved project and its recovery records. Your original videos, photos and audio are kept.").setNegativeButton("Cancel",null).setPositiveButton("Delete",(d,w)->work("Deleting project…",()->{store.delete(e.id);if(e.id.equals(getSharedPreferences(EditorActivity.PREFS,MODE_PRIVATE).getString("last-project",null)))getSharedPreferences(EditorActivity.PREFS,MODE_PRIVATE).edit().remove("last-project").apply();return null;},false)).show();break;}return true;});menu.show();}
     private void rename(ProjectStore.BrowserEntry e){EditText input=field(e.name);AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Rename project").setView(input).setNegativeButton("Cancel",null).setPositiveButton("Rename",null).create();dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{String name=input.getText().toString().trim();if(!validName(input,name))return;dialog.dismiss();work("Renaming project…",()->{store.rename(e.id,name);return null;},false);}));dialog.show();}
+    private String getVersionName(){try{return getPackageManager().getPackageInfo(getPackageName(),0).versionName;}catch(android.content.pm.PackageManager.NameNotFoundException e){return "unknown";}}
     private void newProject(){if(busy)return;NewProjectDialog.show(this,project->work("Creating project…",()->{store.save(project);return project;},true));}
     private boolean validName(EditText input,String name){if(name.isBlank()||name.length()>120){input.setError("Use 1–120 characters");return false;}return true;}
     private void pickImport(){Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

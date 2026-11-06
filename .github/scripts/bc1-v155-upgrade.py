@@ -1,10 +1,10 @@
-"""Install the retained-key release over 1.5.3 and verify a real saved project survives.
+"""Install the retained-key release over 1.5.4 and verify a real saved project survives.
 Runs only on the disposable CI emulator. Never clears application data or uninstalls either build.
 """
 import atexit,hashlib,json,pathlib,re,shlex,struct,subprocess,time,urllib.request,xml.etree.ElementTree as ET,zlib
 PKG='com.blackice.bc1.preview'
 OUT=pathlib.Path('publish')
-OLD=OUT/'previous-v153.apk'
+OLD=OUT/'previous-v154.apk'
 NEW=OUT/'Black-Ice-Editor-v1.5.5-Preview-build49.apk'
 NAME='Upgrade fixture'
 ID='v155-upgrade-fixture'
@@ -63,6 +63,10 @@ def subset(expected,actual):
         if len(expected)==6 and all(isinstance(x,(int,float)) for x in expected) and len(actual)==8:
             assert actual[6] and actual[7]==-1, 'Legacy interpolation must remain unchanged'
             actual=actual[:6]
+        if len(expected) in (2,4) and all(isinstance(x,(int,float)) for x in expected[:2]) and len(actual)==8:
+            assert actual[4:]==[0,0,1,1], 'Legacy fill handles must retain linear defaults'
+            if len(expected)==2:assert actual[2] and actual[3]==0, 'Legacy fill interpolation changed'
+            actual=actual[:len(expected)]
         if len(expected)==2 and all(isinstance(x,(int,float)) for x in expected) and len(actual)==4:
             assert actual[2] and actual[3]==0, "Legacy fill interpolation must stay linear"
             actual=actual[:2]
@@ -72,8 +76,8 @@ def subset(expected,actual):
     else:assert expected==actual,(expected,actual)
 
 OUT.mkdir(exist_ok=True)
-if not OLD.exists():urllib.request.urlretrieve('https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.5.3/Black-Ice-Editor-v1.5.3-Preview-build47.apk',OLD)
-assert hashlib.sha256(OLD.read_bytes()).hexdigest()=='ca20a3b02afb04970e763d36ae3a4586230f13f888cb7e8d16ee9df71acf7d59'
+if not OLD.exists():urllib.request.urlretrieve('https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.5.4/Black-Ice-Editor-v1.5.4-Preview-build48.apk',OLD)
+assert hashlib.sha256(OLD.read_bytes()).hexdigest()=='5e21fd0f192cbb3967c6e24e61312e0063a4d8f2aa0806691bb2f0452eb4e910'
 print(adb('install','-r',str(OLD)).decode(),flush=True)
 adb('shell','wm','size','1920x1080');adb('shell','wm','density','160')
 adb('shell','run-as',PKG,'mkdir','-p','files/media','files/projects-v1','shared_prefs')
@@ -101,6 +105,7 @@ private('files/media/upgrade-source.png',png)
 # until a person edits that interval: a custom cubic, a legacy analytic preset (Ease Out) and a final key.
 rotation=[[0,0,.2,.6,.7,.1,'curve-a',-1],[1000,90,0,0,.58,1,'curve-b',2],[2000,180,0,0,1,1,'curve-c',0]]
 motion=[[] for _ in range(12)];motion[3]=rotation
+motion[5]=[[100,.2,0,0,1,1,'strength-start',0],[1500,.8,.25,.1,.75,.9,'strength-end',-1]]
 clip=dict(id='upgrade-image',uri=f'file:///data/user/0/{PKG}/files/media/upgrade-source.png',name='Preserved image',image=True,sourceDurationMs=2000,inMs=100,outMs=1600,effect=12,intensity=.5,opacity=.8,volume=1,transition=-1,transitionMs=0,easing=0,width=64,height=32,rotation=17,x=.12,y=-.1,scale=.7,motion=motion)
 shape=dict(id='upgrade-shape',text='Rectangle',shape=14,startMs=0,endMs=1500,x=-.3,y=.1,scale=1.2,opacity=.65,rotation=29,color=-16731137)
 shape["fill"]=dict(gradient=True,solid=dict(base=-1,keys=[]),angle=dict(base=0,keys=[[0,0],[1500,90]]),stops=[dict(id="left",position=dict(base=0,keys=[]),color=dict(base=-65536,keys=[[0,-65536],[1500,-16776961]])),dict(id="right",position=dict(base=1,keys=[]),color=dict(base=-16776961,keys=[]))],active=["left","right"],structures=[])
@@ -114,19 +119,18 @@ adb('shell','input','keycombination','113','47')
 for _ in range(44):
     before_bytes=private(path)
     before=json.loads(before_bytes)
-    # The fixture was written pretty-printed; 1.5.3 rewrites it compactly, which proves its save completed.
+    # The fixture was written pretty-printed; 1.5.4 rewrites it compactly, which proves its save completed.
     if before.get('schema')==11 and b'\n  ' not in before_bytes:break
     time.sleep(.25)
-else:raise AssertionError('1.5.3 Ctrl+S did not rewrite the fixture')
+else:raise AssertionError('1.5.4 Ctrl+S did not rewrite the fixture')
 subset(project,before)
 verify_clock()
 verify_space()
-print('1.5.3 saved fixture verified; upgrading in place',flush=True)
+print('1.5.4 saved fixture verified; upgrading in place',flush=True)
 adb('shell','am','force-stop',PKG)
 print(adb('install','-r',str(NEW)).decode(),flush=True)
 package=adb('shell','dumpsys','package',PKG).decode();assert 'versionCode=49' in package and 'versionName=1.5.5' in package
-# 1.5.5 stores projects in the same compact schema-11 format, so a save of unchanged content is
-# otherwise indistinguishable. Re-indent the same content so this build's own rewrite is observable.
+# Re-indent the old fixture so the new build's own compact schema-12 save is observable.
 private(path,json.dumps(before,indent=2).encode())
 open_project(verify_title=False)
 print('Opened upgraded editor; saving through Ctrl+S',flush=True)
@@ -134,19 +138,25 @@ adb('shell','input','keycombination','113','47')
 for _ in range(44):
     after_bytes=private(path)
     after=json.loads(after_bytes)
-    if after.get('schema')==11 and b'\n  ' not in after_bytes:break
+    if after.get('schema')==12 and b'\n  ' not in after_bytes:break
     time.sleep(.25)
 else:raise AssertionError('1.5.5 Ctrl+S did not rewrite the project')
-subset(project,after)
+(OUT/'upgrade-before-project.json').write_text(json.dumps(before,indent=2)+'\n')
+(OUT/'upgrade-after-project.json').write_text(json.dumps(after,indent=2)+'\n')
+expected=dict(project);expected['schema']=12;subset(expected,after)
 verify_clock()
 verify_space()
 assert after['clips'][0]['effect']==12,'Saved effect must survive the upgrade'
+stack=after['clips'][0]['effects']
+assert len(stack)==1 and stack[0]['type']==12 and stack[0]['id']=='legacy-upgrade-image',('Legacy effect must migrate once with deterministic identity',[(e.get('id'),e.get('type')) for e in stack])
+assert stack[0]['intensity']==after['clips'][0]['intensity'] and stack[0]['motion'][5]==after['clips'][0]['motion'][5],'Effect intensity and its own curve must be retained'
+
 # Opening and saving must not rewrite any interval: custom cubic and legacy preset keep their stored data.
 assert [list(k) for k in after['clips'][0]['motion'][3]]==[list(k) for k in before['clips'][0]['motion'][3]],'Easing intervals changed during upgrade'
 assert after['clips'][0]['motion'][3][0][7]==-1 and after['clips'][0]['motion'][3][1][7]==2 and after['clips'][0]['motion'][3][2][7]==0
 assert private('files/media/upgrade-source.png')==png
 (OUT/'upgrade-after.png').write_bytes(adb('exec-out','screencap','-p'))
-report=dict(result='PASS',from_version='1.5.3 (47)',to_version='1.5.5 (49)',package=PKG,project_id=ID,source_sha256=hashlib.sha256(png).hexdigest(),verified=['Install -r accepted original Preview signing lineage','Project saved by 1.5.3 opens in 1.5.5 and saves again as schema 11','Source URI and original image bytes retained','Trim, opacity, rotation, scale, position and rotation keyframes retained','Custom cubic handles and the legacy Ease Out preset keep their stored ids, discriminators and coordinates','Shape, timing, opacity and legacy linear gradient/color keys retained','Canvas and frame rate unchanged','Saved clip effect retained','Paused project work clock retains total 123456 ms and paused state'])
+report=dict(result='PASS',from_version='1.5.4 (48)',to_version='1.5.5 (49)',package=PKG,project_id=ID,source_sha256=hashlib.sha256(png).hexdigest(),verified=['Install -r accepted original Preview signing lineage','Project saved by 1.5.4 opens in 1.5.5 and saves again as schema 12','Source URI and original image bytes retained','Trim, opacity, rotation, scale, position and rotation keyframes retained','Custom cubic handles and the legacy Ease Out preset keep their stored ids, discriminators and coordinates','Shape, timing, opacity and legacy linear gradient/color keys retained','Canvas and frame rate unchanged','Saved clip effect retained','Paused project work clock retains total 123456 ms and paused state'])
 adb('shell','wm','size','824x1784');adb('shell','wm','density','320');time.sleep(2)
 verify_space()
 fullscreen=[n for n in tree().iter('node') if n.get('content-desc')=='Fullscreen preview']

@@ -15,6 +15,8 @@ public final class ClipEffect implements GlEffect {
     private final EditProject.Clip previous;
     private final boolean top,visible;
     private ParentTransforms parents;
+    private boolean baseOnly;
+    public ClipEffect baseOnly(boolean value){baseOnly=value;return this;}
     /** Joint Movement: set by the composition builder when the project has links, so this layer's pose includes its parents. */
     public ClipEffect parents(ParentTransforms parents){this.parents=parents;return this;}
     public ClipEffect(EditProject.Placement placement,EditProject.Clip previous){this(placement,previous,placement.index%2==0);}
@@ -22,7 +24,7 @@ public final class ClipEffect implements GlEffect {
     /** Hidden layers keep their decoder slot and timing but contribute no pixels. */
     public ClipEffect(EditProject.Placement placement,EditProject.Clip previous,boolean top,boolean visible){this.placement=placement;this.previous=previous;this.top=top;this.visible=visible;}
     @Override public GlShaderProgram toGlShaderProgram(Context context,boolean useHdr) throws VideoFrameProcessingException {
-        return new Program(context,placement,previous,top,visible,useHdr,parents);
+        return new Program(context,placement,previous,top,visible,useHdr,parents,baseOnly);
     }
     private static final class Program extends BaseGlShaderProgram {
         private final GlProgram program;
@@ -30,13 +32,14 @@ public final class ClipEffect implements GlEffect {
         private final EditProject.Clip previous;
         private final boolean top,visible;
         private final ParentTransforms parents;
-        Program(Context context,EditProject.Placement p,EditProject.Clip previous,boolean top,boolean visible,boolean hdr,ParentTransforms parents) throws VideoFrameProcessingException {
-            super(hdr,1); this.parents=parents; this.p=p; this.previous=previous;this.top=top;this.visible=visible;
+        private final boolean baseOnly;
+        Program(Context context,EditProject.Placement p,EditProject.Clip previous,boolean top,boolean visible,boolean hdr,ParentTransforms parents,boolean baseOnly) throws VideoFrameProcessingException {
+            super(hdr,1);this.baseOnly=baseOnly; this.parents=parents; this.p=p; this.previous=previous;this.top=top;this.visible=visible;
             try {
                 String vertex,fragment;
                 try(java.io.InputStream in=context.getAssets().open("shaders/video.vert")) { vertex=readShader(in); }
                 try(java.io.InputStream in=context.getAssets().open("shaders/video.frag")) { fragment=readShader(in); }
-                program=new GlProgram(vertex,com.blackice.bc1.core.LayerShader.forEffect(fragment,p.clip.effect));
+                program=new GlProgram(vertex,com.blackice.bc1.core.LayerShader.forEffect(fragment,baseOnly?0:p.clip.effect));
                 program.setBufferAttribute("aPosition",GlUtil.getNormalizedCoordinateBounds(),4);
             } catch(IOException|GlUtil.GlException e) { throw new VideoFrameProcessingException(e); }
         }
@@ -63,7 +66,7 @@ public final class ClipEffect implements GlEffect {
                 program.setFloatsUniform("uAnchor",new float[]{t.anchorX,t.anchorY});
                 program.setFloatsUniform("uKeyColor",new float[]{((c.keyColor>>16)&255)/255f,((c.keyColor>>8)&255)/255f,(c.keyColor&255)/255f});
                 program.setFloatsUniform("uChroma",new float[]{c.chroma?1:0,c.keyTolerance,c.keySoftness,c.keySpill});
-                float[] fx=c.effectParams();program.setFloatsUniform("uParams",new float[]{fx[0],fx[1],fx[2],fx[3]});program.setIntUniform("uEffect",c.effect); program.setFloatUniform("uIntensity",c.motion.value(5,sourceTime,c.intensity));
+                float[] fx=c.effectParams();program.setFloatsUniform("uParams",new float[]{fx[0],fx[1],fx[2],fx[3]});program.setIntUniform("uEffect",baseOnly?0:c.effect); program.setFloatUniform("uIntensity",c.motion.value(5,sourceTime,c.intensity));
                 program.setFloatUniform("uOpacity",visible?c.motion.value(4,sourceTime,c.opacity):0); program.setIntUniform("uTransition",type);
                 program.setIntUniform("uRole",role); program.setIntUniform("uTop",top?1:0); if(program.getUniformLocation("uTime")>=0)program.setFloatUniform("uTime",sourceTime/1000f); // only effects that animate use it
                 program.setFloatUniform("uProgress",progress); program.bindAttributesAndUniforms();
