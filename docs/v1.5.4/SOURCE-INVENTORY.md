@@ -13,8 +13,8 @@ Native Android Java Views. Both workspaces share the inspector model; phone draw
 | Settings + child choices | EditorActivity.settingsPanel / projectSettingsDialog | Same themed shell and semantic icons; original settings retained |
 | Create | NewProjectDialog → ProjectStore.save | Same themed shell, proportional preview and all five CanvasFormat ratios; registry allocates names atomically |
 | Effects storage/history/copy | EditProject.Clip, ProjectStore, Attributes | Schema 12; primary legacy adapter + stable additional instances; ordered cap enforced in model |
-| Preview/export/layer capture | RenderPlan, Compositor, ClipEffect/CompositionFactory | Same ordered effect passes, two reusable targets in ICE Lite; Media3 pooled passes |
+| Preview/export/layer capture | RenderPlan, Compositor, ClipEffect/CompositionFactory | Same ordered effect passes, one reusable target for a single effect, lazily allocated second target for stacks in ICE Lite; Media3 pooled passes |
 
 Playback seeking and the timeline time ruler remain purpose-specific controls. Timeline zoom UI is not added. WorkbenchActivity is an isolated diagnostic activity, not a production editor menu.
 
-Runtime evidence is pending. Source inspection is not a runtime pass.
+Exact-source runtime evidence is recorded in VERIFICATION.md and ../../v1.5.4/QA.md: 281 unit tests, 112 Android tests, 18 focused native checks and 32 independent export checks passed. Source inspection is not substituted for a runtime pass.
