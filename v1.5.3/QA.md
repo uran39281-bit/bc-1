@@ -1,6 +1,6 @@
 # Black Ice Editor 1.5.3 Preview — build 47
 
-> **Status: qualified, retained-key signed and prepublication upgrade verified; official publication pending.**
+> **Status: upgrade verified. The retained-key signed APK is published with this record.** Signed Preview 1.5.1 build 45 was upgraded in place to 1.5.3 build 47; the fixture, edits, saved effect, custom and legacy easing curves and original media were preserved.
 
 PR #26 was merged as `52cc963290147e389ff9cda6dac583ae4bf0a4a7`; its complete tree matches qualified source `87358e5eb71000ba63e3e2eeacbcaaeb0796d7ef`. The real release inputs were verified separately and are being added after that source merge.
 
@@ -57,3 +57,6 @@ Earlier PR source timed out installing media tools before emulator tests; the in
 
 ## Remaining limits
 Physical Samsung and DeX hardware remain untested. Existing one-effect-per-clip, unsupported effects on generated overlays, bounded cubic handles/no overshoot and engine limits remain. The APK is a Preview build; PR #26 is merged with an identical qualified tree. The immutable `test-apk/preview/v1.5.3` download is created only after the official workflow passes the signed upgrade gate. Its status and canonical APK/checksums are available through [the publish workflow](https://github.com/uran39281-bit/bc-1/actions/workflows/bc1-v153-publish.yml).
+
+## Official GitHub publication
+[Publish run 42156486365](https://github.com/uran39281-bit/bc-1/actions/runs/42156486365) completed successfully and repeated the signed 1.5.1 → 1.5.3 upgrade gate. The immutable download branch is `test-apk/preview/v1.5.3`, commit `451b757173fd2a7979db7f6d68852923e86daa2b`. [Download the verified APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.5.3/Black-Ice-Editor-v1.5.3-Preview-build47.apk) · [Checksums](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.5.3/SHA256SUMS.txt) · [Official upgrade evidence](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.5.3/upgrade-verification.json). The APK is identical to the signed build delivered earlier; no application code was changed for publication.
