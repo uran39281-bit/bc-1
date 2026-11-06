@@ -336,7 +336,9 @@ final class Compositor {
 
     /** Runs the clip's effect over a frame-sized texture with the layer shader's own uniforms; returns the result. */
     private int applyEffect(RenderPlan.LayerDraw d, com.blackice.bc1.editor.EffectInstance instance,int texture,int target) {
-        if(effected==null)effected=new GlKit.Target[]{new GlKit.Target(width,height),new GlKit.Target(width,height)};
+        if(effected==null)effected=new GlKit.Target[2];
+        // A single effect keeps the original one-target cost; a stack allocates the second only when needed.
+        if(effected[target]==null)effected[target]=new GlKit.Target(width,height);
         GlKit.Program p = effectPass(instance.type);
         effected[target].bind(); clear(0, 0, 0, 0);
         GLES30.glDisable(GLES30.GL_BLEND);
@@ -432,7 +434,7 @@ final class Compositor {
             m.clear();
         }
         if (accum != null) for (GlKit.Target t : accum) t.release();
-        if(effected!=null)for(GlKit.Target t:effected)t.release();
+        if(effected!=null)for(GlKit.Target t:effected)if(t!=null)t.release();
         if(stackedExternal!=null)stackedExternal.release();
         if (previewOutput != null) previewOutput.release();
         overlay.release(); quad.release();
