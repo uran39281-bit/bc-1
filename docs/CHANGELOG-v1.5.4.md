@@ -1,6 +1,6 @@
 # Black Ice Editor 1.5.4 — build 48
 
-Status: exact-source CI passed and retained-key APK signed; in-place upgrade/publication gate pending.
+Status: retained-key signed Preview 1.5.4 build 48 published after successful exact-source CI and in-place 1.5.3 upgrade verification.
 
 Applies the supplied thirteen-item update to the native phone and wide editor menus:
 - Shared ruler parameters, joined Effects-style key navigation, square centered vector keyframe controls and collapsible easing sections.
@@ -14,3 +14,5 @@ The source inventory is in `docs/v1.5.4/SOURCE-INVENTORY.md`. Actual evidence is
 Existing exclusions remain: generated shape/text overlays cannot receive visual clip effects; audio does not receive visual effects; cubic handles remain bounded without overshoot; physical Samsung/DeX verification is still required.
 
 The initial signed upgrade gate caught effect identity churn during project save snapshots. That candidate was withdrawn. Corrected project snapshots preserve IDs and detach mutable graphs; actual layer duplication still creates independent IDs. Two additional regressions pass. The original migration assertion and all qualification thresholds are unchanged.
+
+[Download 1.5.4 build 48](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.5.4/Black-Ice-Editor-v1.5.4-Preview-build48.apk) · [Upgrade verification](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.5.4/upgrade-verification.json). Publication run 42183037543 passed. The root README now identifies this actual published build as current.

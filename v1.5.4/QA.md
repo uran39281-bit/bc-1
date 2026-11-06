@@ -1,6 +1,6 @@
 # Black Ice Editor Preview 1.5.4 — build 48
 
-> **Status: signed candidate; upgrade verification and publication pending.** Full source qualification passed. The retained-key signed APK is ready for the separate in-place upgrade gate; this record does not claim that gate has already passed.
+> **Status: published; signed upgrade verified.** The retained-key signed 1.5.4 build 48 passed the in-place 1.5.3 build 47 upgrade gate and is published on the immutable version branch.
 
 ## Exact build and signature
 
@@ -63,6 +63,22 @@ Physical Samsung/S24+/DeX testing and an exhaustive human two-pass review of eve
 
 Generated shape/text overlays and audio retain their existing visual-effect exclusions. Each supported clip has one to three effects, independently animated strength and existing static named controls; catalog duplicate-type policy is unchanged and no reorder UI is added. Cubic handles remain bounded without overshoot. All 118 lint warnings remain. Media3 endpoint frame-count difference is recorded above.
 
-## Installation and upgrade gate
+## Installation and verified upgrade
 
-Once published, install this APK as **Update** over the existing Preview app. Do not uninstall or clear application data. The publication workflow must install signed 1.5.3 build 47, save its real fixture, install 1.5.4 build 48 with `-r`, and verify original media bytes/URIs, trims, transforms, keys, shapes, effect migration, legacy/custom curves, project settings and saved state. The immutable download branch is created only after `upgrade-verification.json` records PASS. This candidate record precedes that separate gate; the immutable published branch contains its actual `upgrade-verification.json` result.
+[Download the signed APK](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.5.4/Black-Ice-Editor-v1.5.4-Preview-build48.apk) · [Upgrade evidence](https://raw.githubusercontent.com/uran39281-bit/bc-1/test-apk/preview/v1.5.4/upgrade-verification.json). Install as **Update** over the existing Preview app; do not uninstall or clear application data.
+
+Publish run [42183037543](https://github.com/uran39281-bit/bc-1/actions/runs/42183037543) passed. It installed signed 1.5.3 build 47, saved its real fixture, installed 1.5.4 build 48 with `-r`, saved the migrated project, and recorded PASS. The published APK blob and checksum match the locally verified signed file. Immutable branch commit: `4517a74070be140dc124684c67cc2dbc44d90e74`.
+
+Actual upgrade assertions recorded in the report:
+
+- Install -r accepted original Preview signing lineage
+- Project saved by 1.5.3 opens in 1.5.4 and saves again as schema 12
+- Source URI and original image bytes retained
+- Trim, opacity, rotation, scale, position and rotation keyframes retained
+- Custom cubic handles and the legacy Ease Out preset keep their stored ids, discriminators and coordinates
+- Shape, timing, opacity and legacy linear gradient/color keys retained
+- Canvas and frame rate unchanged
+- Saved clip effect retained
+- Paused project work clock retains total 123456 ms and paused state
+- Saved wide/landscape Expand timeline choice survives; Samsung-shaped portrait opens at full Balanced reference height
+- Portrait Add Media opens with all six real filters; Back retains the saved graph and original source bytes

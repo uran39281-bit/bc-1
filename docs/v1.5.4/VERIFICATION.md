@@ -1,6 +1,6 @@
 # 1.5.4 menu update — verification scope
 
-This report distinguishes source inspection, executed native assertions and screenshot inspection. It does not turn an expected outcome into a test result. Corrected exact-source full CI and retained-key signing passed. The separate in-place upgrade gate remains pending.
+This report distinguishes source inspection, executed native assertions and screenshot inspection. It does not turn an expected outcome into a test result. Corrected exact-source full CI and retained-key signing passed. The signed in-place 1.5.3 → 1.5.4 upgrade gate passed, and the immutable publication was verified.
 
 ## Source and build
 
@@ -37,4 +37,4 @@ Pass 1 is native automation executed separately at wide 1920 × 1080 / 160 dpi a
 
 ## Honest completion status
 
-Implementation is complete for the requested source changes. Automated regression and retained-key signing passed. The separate signed upgrade/publication gate is pending. v1.5.4/QA.md identifies the withdrawn candidate, save-snapshot correction and exact final source. The exhaustive manual checklist remains partly NOT RUN as detailed above; do not describe that checklist as fully complete. Physical Samsung/DeX performance is unverified. Generated shape/text overlays and audio retain their existing visual-effect exclusions; each supported clip has up to three effects, independent animated strength and existing static named controls. Cubic handles remain bounded without overshoot.
+Implementation is complete for the requested source changes. Automated regression and retained-key signing passed. The separate signed upgrade/publication gate passed; download and upgrade proof are linked from v1.5.4/QA.md. v1.5.4/QA.md identifies the withdrawn candidate, save-snapshot correction and exact final source. The exhaustive manual checklist remains partly NOT RUN as detailed above; do not describe that checklist as fully complete. Physical Samsung/DeX performance is unverified. Generated shape/text overlays and audio retain their existing visual-effect exclusions; each supported clip has up to three effects, independent animated strength and existing static named controls. Cubic handles remain bounded without overshoot.
