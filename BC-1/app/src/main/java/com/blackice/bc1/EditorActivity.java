@@ -187,18 +187,19 @@ public final class EditorActivity extends Activity {
         final String initialId=id;
         loadSession(initialId);
     }
-    void loadSession(String id){ActionTrace.Span openTrace=ActionTrace.begin("project_open");loading=true;io.execute(()->{openTrace.started();EditProject saved=null;String hash="",failure=null;RecoveryStore.Candidate candidate=null;
+    ActionTrace.Span pendingOpenTrace;
+    void loadSession(String id){ActionTrace.Span openTrace=ActionTrace.begin("project_open");pendingOpenTrace=openTrace;loading=true;io.execute(()->{openTrace.started();EditProject saved=null;String hash="",failure=null;RecoveryStore.Candidate candidate=null;
         try{if(id!=null){saved=store.load(id);hash=DocumentIdentity.fingerprint(saved);}else{saved=new EditProject();saved.name="";store.save(saved);hash=DocumentIdentity.fingerprint(saved);}}catch(Exception e){failure=e.getMessage();}
         if(id!=null)try{candidate=new RecoveryStore(this).read(id);}catch(Exception e){failure=e.getMessage();}
         EditProject ordinary=saved;String ordinaryHash=hash,error=failure;RecoveryStore.Candidate recovery=candidate;
-        main.post(()->{if(isDestroyed()){openTrace.end("cancelled");return;}openTrace.end(error==null?"success":"failure");
+        main.post(()->{if(isDestroyed()){openTrace.end("cancelled");return;}openTrace.phase("storage_read","outcome",error==null?"success":"failure");
             ProjectSession retained=id==null?null:ProjectSession.ACTIVE.get(id);
             if(retained!=null){useSession(retained.model,retained.savedHash);return;}
             if(recovery!=null&&!recovery.fingerprint.equals(ordinaryHash)){offerRecovery(ordinary,ordinaryHash,recovery);return;}
             if(ordinary!=null){useSession(ordinary,ordinaryHash);if(error!=null)tell(error);}
-            else{loading=false;new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Could not open project").setMessage(error==null?"Project storage is unavailable.":error).setPositiveButton("Back to Projects",(d,w)->returnHome()).setCancelable(false).show();}
+            else{openTrace.end("failure");loading=false;new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Could not open project").setMessage(error==null?"Project storage is unavailable.":error).setPositiveButton("Back to Projects",(d,w)->returnHome()).setCancelable(false).show();}
         });});}
-    void useSession(EditProject loaded,String ordinaryHash){if(projectSession!=null)projectSession.listener=null;projectSession=ProjectSession.attach(this,loaded,ordinaryHash);project=projectSession.model;loading=false;projectSession.listener=this::saveStateChanged;saveStateChanged();refreshProject();if(restoredPanel!=null){String panel=restoredPanel;restoredPanel=null;panels.category(panel);}showLive();if(mediaImportWindow.restoreOpen)openMediaBrowser();if(restoreExportForm&&!exportPickerPending){restoreExportForm=false;ExportWorkspace.show(this);}if(restoreSettingsForm){restoreSettingsForm=false;showSettingsWindow();}if(restoredNewProjectDraft!=null){Bundle draft=restoredNewProjectDraft;restoredNewProjectDraft=null;NewProjectDialog.show(this,this::createFromDialog,draft);}if(getIntent().getBooleanExtra("show-settings",false)){tab=4;renderInspector();}}
+    void useSession(EditProject loaded,String ordinaryHash){if(projectSession!=null)projectSession.listener=null;projectSession=ProjectSession.attach(this,loaded,ordinaryHash);project=projectSession.model;loading=false;projectSession.listener=this::saveStateChanged;saveStateChanged();refreshProject();if(restoredPanel!=null){String panel=restoredPanel;restoredPanel=null;panels.category(panel);}showLive();if(mediaImportWindow.restoreOpen)openMediaBrowser();if(restoreExportForm&&!exportPickerPending){restoreExportForm=false;ExportWorkspace.show(this);}if(restoreSettingsForm){restoreSettingsForm=false;showSettingsWindow();}if(restoredNewProjectDraft!=null){Bundle draft=restoredNewProjectDraft;restoredNewProjectDraft=null;NewProjectDialog.show(this,this::createFromDialog,draft);}if(getIntent().getBooleanExtra("show-settings",false)){tab=4;renderInspector();}if(pendingOpenTrace!=null){pendingOpenTrace.end("success");pendingOpenTrace=null;}}
     void offerRecovery(EditProject ordinary,String ordinaryHash,RecoveryStore.Candidate candidate){
         String text=candidate.project.name+"\n"+java.text.DateFormat.getDateTimeInstance().format(new java.util.Date(candidate.captured))+"\n\nYour previous editing session ended unexpectedly.\nRestore the last recovery checkpoint? Edits made after this checkpoint may be unavailable.";
         if(!candidate.base.equals(ordinaryHash))text+="\n\nThe saved project also changed. Both versions will remain intact until you explicitly save or discard the recovered edits.";
@@ -315,9 +316,10 @@ public final class EditorActivity extends Activity {
             }
         }catch(Exception e){releasePreview();tell("Cannot prepare preview: "+e.getMessage());previewHint("Preview unavailable • tap to retry");}
     }
-    void remember(){try {undo.addLast(ProjectStore.encode(project));while(undo.size()>30)undo.removeFirst();redo.clear();}catch(Exception e){tell(e.getMessage());}}
+    java.util.Map<String,Object> rememberedTrace;
+    void remember(){rememberedTrace=ActionTrace.values(project);try {undo.addLast(ProjectStore.encode(project));while(undo.size()>30)undo.removeFirst();redo.clear();}catch(Exception e){tell(e.getMessage());}}
     void changed(String text) {
-        CrashLogs.project(project);ActionTrace.context(this);ActionTrace.event("project_edit","complete","","category",text==null?"Editing":text.split(" ",2)[0]);
+        CrashLogs.project(project);ActionTrace.context(this);if(rememberedTrace!=null){ActionTrace.changes("project_edit",rememberedTrace,project,"");rememberedTrace=null;}ActionTrace.event("project_edit","complete","","category",text==null?"Editing":text.split(" ",2)[0]);
         project.ensureLibrary();project.validate();dirty=true;editRevision++;message=text;if(projectSession!=null)projectSession.edited(project,false);refreshProject();showLive();
     }
     void saveNow() {
@@ -343,7 +345,7 @@ public final class EditorActivity extends Activity {
     long timelineEnd(){long end=project.durationMs();for(EditProject.Landmark m:project.landmarks)end=Math.max(end,m.timeMs);return end;}
     long seekTarget(){return Math.min(project.playheadMs,Math.max(0,project.durationMs()-1));}
     void seek(long ms){
-        CrashLogs.operation("Scrubbing");
+        CrashLogs.operation("Scrubbing");ActionTrace.event("timeline_seek","value","","before_ms",project.playheadMs,"requested_ms",ms);
         if(liveBefore!=null)return;
         project.playheadMs=Math.max(0,Math.min(ms,timelineEnd()));
         // Paused scrubbing goes through the live preview; seeking during playback still uses the player.
@@ -590,9 +592,9 @@ public final class EditorActivity extends Activity {
     }
     void edit(String message,Runnable operation){
         if(!editable()){ActionTrace.event("project_edit","rejected","","outcome","locked");return;}pausePlayback();CrashLogs.operation(message);ActionTrace.context(this);ActionTrace.Span trace=ActionTrace.begin("project_edit");java.util.Map<String,Object> values=ActionTrace.values(project);String before;try{before=ProjectStore.encode(project);}catch(Exception e){trace.end("failure");tell(e.getMessage());return;}
-        int selection=selected;
+        String parentTrace=ActionTrace.enter(trace);int selection=selected;
         try{operation.run();ParentTransforms.releaseOrphans(project,before);project.validate();ActionTrace.changes("project_edit",values,project,trace.id);if(!before.equals(ProjectStore.encode(project))){pushUndo(before);changed(message);}trace.end("success");}
-        catch(Exception e){trace.end("failure");CrashLogs.record("Edit rejected",e);try{project=ProjectStore.decode(before);selected=selection;refreshProject();}catch(Exception impossible){throw new IllegalStateException(impossible);}tell(e.getMessage());}
+        catch(Exception e){trace.end("failure");CrashLogs.record("Edit rejected",e);try{project=ProjectStore.decode(before);selected=selection;refreshProject();}catch(Exception impossible){throw new IllegalStateException(impossible);}tell(e.getMessage());}finally{ActionTrace.leave(parentTrace);}
     }
     void pushUndo(String snapshot){undo.addLast(snapshot);while(undo.size()>30)undo.removeFirst();redo.clear();}
     TextView compactButton(String title,String description,View.OnClickListener listener){TextView b=button(title,listener);b.setPadding(dp(5),0,dp(5),0);b.setContentDescription(description);b.setTooltipText(description);return b;}
@@ -636,7 +638,7 @@ public final class EditorActivity extends Activity {
             else{int step=target[1]>row[1]?1:-1;for(int t=row[1];t!=target[1];t+=step)LayerOps.swapTracks(project,t,t+step);}
         });
     }
-    View buildTimeline(){ScrollView vertical=new ScrollView(this);timelineScroll=new HorizontalScrollView(this){@Override public boolean onInterceptTouchEvent(MotionEvent e){return false;}};timelineScroll.setFillViewport(true);timelineScroll.setContentDescription("Timeline scroll");timeline=new TimelineView(this);timelineScroll.setOnScrollChangeListener((v,x,y,oldX,oldY)->timeline.invalidate());vertical.setOnScrollChangeListener((v,x,y,oldX,oldY)->{timeline.invalidate();if(portraitPhone())mobile.portrait.update();});timelineScroll.addView(timeline,new HorizontalScrollView.LayoutParams(-2,Math.round(timeline.contentHeight())));timelineScroll.setHorizontalScrollBarEnabled(false);timelineScroll.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{if(r-l!=or-ol)timelineScroll.post(()->{if(timeline!=null){timeline.requestLayout();timeline.syncScroll();}});});vertical.addView(timelineScroll);return vertical;}
+    View buildTimeline(){ScrollView vertical=new ScrollView(this);timelineScroll=new HorizontalScrollView(this){@Override public boolean onInterceptTouchEvent(MotionEvent e){return false;}};timelineScroll.setFillViewport(true);timelineScroll.setContentDescription("Timeline scroll");timeline=new TimelineView(this);timelineScroll.setOnScrollChangeListener((v,x,y,oldX,oldY)->{ActionTrace.event("timeline_scroll","value","","before_x_px",oldX,"after_x_px",x,"coordinate_space","timeline scroll pixels");timeline.invalidate();});vertical.setOnScrollChangeListener((v,x,y,oldX,oldY)->{ActionTrace.event("timeline_scroll","value","","before_y_px",oldY,"after_y_px",y,"coordinate_space","timeline scroll pixels");timeline.invalidate();if(portraitPhone())mobile.portrait.update();});timelineScroll.addView(timeline,new HorizontalScrollView.LayoutParams(-2,Math.round(timeline.contentHeight())));timelineScroll.setHorizontalScrollBarEnabled(false);timelineScroll.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{if(r-l!=or-ol)timelineScroll.post(()->{if(timeline!=null){timeline.requestLayout();timeline.syncScroll();}});});vertical.addView(timelineScroll);return vertical;}
     EditProject.Clip clip(){return selected<0||selected>=project.clips.size()?null:project.clips.get(selected);}
     /** Reserve the phone's usable space for choosing assets; never recreate the player surface. */
     LinearLayout settingsContent;AlertDialog exportFormDialog,settingsDialog;boolean restoreExportForm,restoreSettingsForm;Bundle restoredNewProjectDraft;String exportDraftName;boolean exportPickerPending;
@@ -839,7 +841,7 @@ public final class EditorActivity extends Activity {
     ActionTrace.Span liveTrace;java.util.Map<String,Object> liveValues;
     void beginLiveAdjust(){if(!layerEditable())return;CrashLogs.operation("Transforms");if(liveBefore!=null)return;liveTrace=ActionTrace.begin("layer_gesture");liveValues=ActionTrace.values(project);try{liveBefore=ProjectStore.encode(project);}catch(Exception e){liveBefore=null;return;}if(player!=null||previewPending)releasePreview();main.removeCallbacks(warmPreview);previewProxy.cancel();}
     /** During a drag: apply the value and redraw at once, without validation or undo. */
-    void liveAdjust(Runnable apply){if(liveBefore==null)return;try{apply.run();if(projectSession!=null)projectSession.edited(project,true);if(timeline!=null)timeline.invalidate();if(previewControls!=null)previewControls.invalidate();renderLive();}catch(RuntimeException ignored){}}
+    void liveAdjust(Runnable apply){if(liveBefore==null)return;String parentTrace=ActionTrace.enter(liveTrace);try{apply.run();if(projectSession!=null)projectSession.edited(project,true);if(timeline!=null)timeline.invalidate();if(previewControls!=null)previewControls.invalidate();renderLive();}catch(RuntimeException ignored){}finally{ActionTrace.leave(parentTrace);}}
     void cancelLiveAdjust(){transformPanel.clearGesture();String before=liveBefore;liveBefore=null;if(before==null)return;if(liveTrace!=null)liveTrace.end("cancelled");try{project=ProjectStore.decode(before);if(projectSession!=null)projectSession.edited(project,false);}catch(Exception e){throw new IllegalStateException(e);}renderInspector();renderLive();if(previewControls!=null)previewControls.invalidate();}
     /** Drag end: validate and record a single undo entry from the drag start. */
     void endLiveAdjust(String message,Runnable apply){
@@ -1329,11 +1331,11 @@ public final class EditorActivity extends Activity {
     /** Copies media into the app. Video, pictures and audio layers go to Project Media, ready to drag onto
      * the timeline; music and overlay pictures are placed directly. One undo step. */
     void importUris(java.util.List<Uri> uris,int request){
-        if(uris.isEmpty()||!editable())return;CrashLogs.operation("Imported");importing=true;tell("Importing media copies…");long at=addDrawer.insertTime();
-        io.execute(()->{
+        if(uris.isEmpty()||!editable())return;ActionTrace.Span batchTrace=ActionTrace.begin("media_import_batch");CrashLogs.operation("Imported");importing=true;tell("Importing media copies…");long at=addDrawer.insertTime();
+        io.execute(()->{batchTrace.started();
             java.util.List<EditProject.Clip> imported=new ArrayList<>();java.util.List<String> errors=new ArrayList<>();
-            for(Uri uri:uris)try{imported.add(new MediaImporter(this).importClip(uri,(request==MUSIC||request==AUDIO_LAYER),request==OVERLAY?1024:2048));}catch(Exception e){CrashLogs.record("Media import failed",e);errors.add(e.getMessage());}
-            main.post(()->{importing=false;if(isDestroyed())return;remember();long cursor=at;
+            String parentTrace=ActionTrace.enter(batchTrace);try{for(Uri uri:uris)try{imported.add(new MediaImporter(this).importClip(uri,(request==MUSIC||request==AUDIO_LAYER),request==OVERLAY?1024:2048));}catch(Exception e){CrashLogs.record("Media import failed",e);errors.add(e.getMessage());}}finally{ActionTrace.leave(parentTrace);}
+            main.post(()->{importing=false;if(isDestroyed()){batchTrace.end("cancelled");return;}remember();long cursor=at;
                 int binned=0;
                 for(EditProject.Clip c:imported){
                     if(request==IMPORT||request==AUDIO_LAYER){if(project.libraryIndex(c.uri)>=0)continue;if(project.library.size()>=EditProject.LIBRARY_LIMIT){errors.add("Project Media holds up to "+EditProject.LIBRARY_LIMIT+" items.");continue;}project.library.add(EditProject.asset(c));binned++;}
@@ -1343,7 +1345,7 @@ public final class EditorActivity extends Activity {
                 if(request!=IMPORT&&request!=AUDIO_LAYER&&(selected>=0||selectedOverlay>=0))tab=1;
                 if(binned>0){mediaKind=MediaFilter.Kind.ALL;favoritesOnly=false;mediaQuery="";}
                 changed(!errors.isEmpty()?"Import issue: "+String.join("; ",errors):request==IMPORT||request==AUDIO_LAYER?"Added "+binned+" item(s) to Project Media • drag onto the timeline":"Imported "+imported.size()+" item(s)");
-                if(!errors.isEmpty())new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Import result").setMessage(message).setPositiveButton("OK",null).show();
+                batchTrace.end(errors.isEmpty()?"success":"partial_or_failure");if(!errors.isEmpty())new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Import result").setMessage(message).setPositiveButton("OK",null).show();
             });
         });
     }

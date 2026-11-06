@@ -32,8 +32,8 @@ final class ProjectSession {
     void checkpoint(){main.removeCallbacks(checkpointDue);firstPendingEdit=0;if(closed||!dirty())return;lastCheckpointAttempt=SystemClock.uptimeMillis();checkpoints.submit(new Snapshot(this,0));}
     void save(Runnable onSuccess){if(closed)return;afterSave=onSuccess==null?afterSave:onSuccess;saveFailure=null;saving=true;notifyChange();saves.submit(new Snapshot(this,++saveRequest));}
     private void writeSave(Snapshot s){if(s.trace!=null)s.trace.started();try{
-        store.save(s.project);if(s.trace!=null)s.trace.end("success");String hash=DocumentIdentity.fingerprint(s.project);committedRevision=s.revision;committedHash=hash;
-        recovery.saved(id,session,s.revision,hash,s.restored);
+        store.save(s.project);String hash=DocumentIdentity.fingerprint(s.project);committedRevision=s.revision;committedHash=hash;
+        recovery.saved(id,session,s.revision,hash,s.restored);if(s.trace!=null)s.trace.end("success");
         main.post(()->{savedHash=hash;if(revision==s.revision){currentHash=hash;model.name=s.project.name;}if(s.request==saveRequest){saving=false;saveFailure=null;}notifyChange();if(!saving&&afterSave!=null){if(!dirty()){Runnable exit=afterSave;afterSave=null;exit.run();}else save(null);}});
     }catch(Exception error){if(s.trace!=null)s.trace.end("failure");main.post(()->{if(s.request!=saveRequest)return;saving=false;saveFailure=error.getMessage()==null?"Storage is unavailable.":error.getMessage();afterSave=null;notifyChange();});}}
     private void writeCheckpoint(Snapshot s){try{

@@ -46,7 +46,7 @@ final class PortraitChrome {
                 case MotionEvent.ACTION_UP:case MotionEvent.ACTION_CANCEL:v.getParent().requestDisallowInterceptTouchEvent(false);if(e.getActionMasked()==MotionEvent.ACTION_CANCEL){state.drawerHeightDp=original;update();span.end("cancelled");}else{span.end("success");if(!moved)v.performClick();}return true;
             }return true;}});
         m.catalogHost=new FrameLayout(a);m.catalogHost.setVisibility(View.GONE);m.sheet.addView(m.catalogHost,new LinearLayout.LayoutParams(-1,0,1));
-        a.inspector=a.column();a.inspector.setPadding(dp(8),0,dp(8),dp(6));a.phoneDrawer=new ScrollView(a);a.phoneDrawer.setFillViewport(true);a.phoneDrawer.setContentDescription("Phone editing drawer");a.phoneDrawer.addView(a.inspector);m.sheet.addView(a.phoneDrawer,new LinearLayout.LayoutParams(-1,0,1));
+        a.inspector=a.column();a.inspector.setPadding(dp(8),0,dp(8),dp(6));a.phoneDrawer=new ScrollView(a);a.phoneDrawer.setFillViewport(true);a.phoneDrawer.setOnScrollChangeListener((v,x,y,oldX,oldY)->ActionTrace.event("drawer_scroll","value","","before_y_px",oldY,"after_y_px",y));a.phoneDrawer.setContentDescription("Phone editing drawer");a.phoneDrawer.addView(a.inspector);m.sheet.addView(a.phoneDrawer,new LinearLayout.LayoutParams(-1,0,1));
         m.stage.addView(m.sheet,new FrameLayout.LayoutParams(-1,dp(260),Gravity.BOTTOM));m.sheet.setVisibility(View.GONE);
         // Kept as nonvisible compatibility references, never mounted as a second navigation surface.
         m.nav=new HorizontalScrollView(a);m.nav.setVisibility(View.GONE);

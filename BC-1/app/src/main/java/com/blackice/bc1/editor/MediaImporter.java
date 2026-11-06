@@ -42,7 +42,7 @@ public final class MediaImporter {
             }
             if(!image&&!audioOnly){BitmapFactory.Options probe=new BitmapFactory.Options();probe.inJustDecodeBounds=true;BitmapFactory.decodeFile(copy.getPath(),probe);image=probe.outWidth>0&&probe.outHeight>0;}
             EditProject.Clip clip=new EditProject.Clip();clip.name=name;clip.image=image;
-            if(image) {
+            if(image) {trace.phase("image_decode_start");
                 Bitmap bitmap;
                 if(Build.VERSION.SDK_INT>=28) bitmap=ImageDecoder.decodeBitmap(ImageDecoder.createSource(copy),(decoder,info,source)->{
                     int w=info.getSize().getWidth(),h=info.getSize().getHeight();
@@ -68,7 +68,7 @@ public final class MediaImporter {
                 try(OutputStream out=new FileOutputStream(png)) {if(!bitmap.compress(Bitmap.CompressFormat.PNG,100,out))throw new IOException("Image conversion failed.");}
                 finally {bitmap.recycle();sourceFile.delete();}
                 clip.sourceDurationMs=600_000;clip.outMs=3000;
-            } else {
+            } else {trace.phase("metadata_start");
                 try(MediaMetadataRetriever metadata=new MediaMetadataRetriever()) {
                     metadata.setDataSource(copy.getPath());
                     String duration=metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
