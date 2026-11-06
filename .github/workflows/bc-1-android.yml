@@ -26,7 +26,19 @@ jobs:
       - name: Install Android SDK 36
         run: |
           SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)
-          "$SDKMANAGER" --install "platforms;android-36" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
+          for bc1_attempt in 1 2 3; do
+            if "$SDKMANAGER" --install "platforms;android-36" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.22.1" \
+              && test -f "$ANDROID_HOME/platforms/android-36/android.jar" \
+              && test -x "$ANDROID_HOME/build-tools/35.0.0/zipalign" \
+              && test -f "$ANDROID_HOME/ndk/27.2.12479018/source.properties" \
+              && test -x "$ANDROID_HOME/cmake/3.22.1/bin/cmake"; then
+              break
+            fi
+            if [ "$bc1_attempt" = 3 ]; then exit 1; fi
+            # Discard only this runner's incomplete downloads before retrying the same required SDK.
+            rm -rf "$ANDROID_HOME/.temp"
+            sleep 5
+          done
       - name: Install media test tools
         run: bash .github/scripts/bc1-install-media-tools.sh
       - name: Generate deterministic video and audio fixtures

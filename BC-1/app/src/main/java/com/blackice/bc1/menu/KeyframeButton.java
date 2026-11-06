@@ -14,7 +14,7 @@ public final class KeyframeButton extends TextView {
         icon = new MenuIconDrawable(context, MenuIconDrawable.Kind.DIAMOND, MenuPalette.MUTED);
         setGravity(Gravity.CENTER); setFocusable(true); setClickable(true); setText("");
         setPadding(0,0,0,0); setMinWidth(0); setMinHeight(0);
-        setBackground(MenuPalette.surface(context,false)); setContentDescription(label);
+        setBackground(MenuPalette.surface(context,false));setForeground(MenuPalette.interaction(context)); setContentDescription(label);
         setOnClickListener(v -> action.run());
     }
     public void state(boolean animated, boolean keyed) {

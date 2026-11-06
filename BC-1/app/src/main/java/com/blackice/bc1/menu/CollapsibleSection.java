@@ -20,7 +20,7 @@ public final class CollapsibleSection extends LinearLayout {
         LinearLayout labels=new LinearLayout(c);labels.setOrientation(VERTICAL);heading=new TextView(c);heading.setText(title);heading.setTextSize(14);heading.setTextColor(MenuPalette.TEXT);labels.addView(heading);
         detailView=new TextView(c);detailView.setTextSize(12);detailView.setTextColor(MenuPalette.MUTED);labels.addView(detailView);header.addView(labels,new LayoutParams(0,-2,1));
         chevron=new TextView(c);chevron.setTextSize(20);chevron.setTextColor(MenuPalette.CYAN);header.addView(chevron,new LayoutParams(MenuPalette.dp(c,28),-2));
-        header.setMinimumHeight(MenuPalette.dp(c,48));header.setFocusable(true);header.setClickable(true);
+        header.setMinimumHeight(MenuPalette.dp(c,48));header.setFocusable(true);header.setClickable(true);header.setForeground(MenuPalette.interaction(c));
         header.setOnClickListener(v->{if(Boolean.TRUE.equals(session.get(key)))cancelGesture.run();session.put(key,!Boolean.TRUE.equals(session.get(key)));render();});
         addView(header,new LayoutParams(-1,-2));addView(content,new LayoutParams(-1,-2));render();
     }

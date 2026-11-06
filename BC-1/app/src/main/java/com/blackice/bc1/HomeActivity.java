@@ -48,14 +48,14 @@ public final class HomeActivity extends Activity {
         if(saved!=null){query=saved.getString("query","");destination=saved.getString("destination","Home");
             listMode=saved.getBoolean("listMode");byName=saved.getBoolean("byName");searchVisible=saved.getBoolean("searchVisible");
             scrollY=saved.getInt("scroll");anchorId=saved.getString("anchor");anchorOffset=saved.getInt("offset");}
-        build();
+        build();if(saved!=null&&saved.getBundle("new-project-form")!=null)NewProjectDialog.show(this,project->work("Creating project…",()->{store.save(project);return project;},true),saved.getBundle("new-project-form"));
     }
     @Override protected void onResume(){super.onResume();refresh();}
-    @Override protected void onDestroy(){io.shutdown();thumbnails.close();super.onDestroy();}
-    @Override protected void onSaveInstanceState(Bundle out){captureScroll();out.putString("query",query);out.putString("destination",destination);
+    @Override protected void onDestroy(){NewProjectDialog.dismiss(this);io.shutdown();thumbnails.close();super.onDestroy();}
+    @Override protected void onSaveInstanceState(Bundle out){NewProjectDialog.save(this,out);captureScroll();out.putString("query",query);out.putString("destination",destination);
         out.putBoolean("listMode",listMode);out.putBoolean("byName",byName);out.putBoolean("searchVisible",searchVisible);out.putInt("scroll",scrollY);
         out.putString("anchor",anchorId);out.putInt("offset",anchorOffset);super.onSaveInstanceState(out);}
-    @Override public void onConfigurationChanged(Configuration c){super.onConfigurationChanged(c);captureScroll();build();}
+    @Override public void onConfigurationChanged(Configuration c){super.onConfigurationChanged(c);captureScroll();build();NewProjectDialog.reflow(this);}
     private void captureScroll(){
         if(loading||scroll==null||list==null)return;scrollY=scroll.getScrollY();anchorId=null;
         for(int i=0;i<list.getChildCount();i++){View row=list.getChildAt(i);int top=list.getTop()+row.getTop();

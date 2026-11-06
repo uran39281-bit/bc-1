@@ -12,6 +12,13 @@ import java.util.function.Consumer;
 
 /** Native project setup. Canvas choice never depends on display orientation. */
 final class NewProjectDialog {
+    private static final java.util.Map<Activity,NewProjectDialog> open=new java.util.WeakHashMap<>();
+    private AlertDialog activeDialog;private EditText nameField;private Consumer<EditProject> createAction;
+    static void save(Activity a,android.os.Bundle state){NewProjectDialog form=open.get(a);if(form!=null&&form.activeDialog!=null&&form.activeDialog.isShowing())state.putBundle("new-project-form",form.draft());}
+    private android.os.Bundle draft(){android.os.Bundle b=new android.os.Bundle();b.putString("name",nameField.getText().toString());b.putString("ratio",project.ratioName());return b;}
+    static void reflow(Activity a){NewProjectDialog form=open.get(a);if(form==null||!form.activeDialog.isShowing())return;android.os.Bundle draft=form.draft();Consumer<EditProject> create=form.createAction;form.activeDialog.dismiss();show(a,create,draft);}
+    static void dismiss(Activity a){NewProjectDialog form=open.remove(a);if(form!=null&&form.activeDialog!=null)form.activeDialog.dismiss();}
+    static AlertDialog show(Activity a,Consumer<EditProject> create,android.os.Bundle draft){NewProjectDialog form=new NewProjectDialog(a);if(draft!=null&&CanvasFormat.valid(draft.getString("ratio","16:9")))form.project.setCanvasRatio(draft.getString("ratio"));AlertDialog result=form.show(create);if(draft!=null)form.nameField.setText(draft.getString("name",""));return result;}
     private final Activity a;private final EditProject project=new EditProject();
     private final java.util.List<RatioTile> tiles=new java.util.ArrayList<>();
     private NewProjectDialog(Activity activity){a=activity;}
@@ -22,11 +29,12 @@ final class NewProjectDialog {
     TextView button(String s,Runnable action){TextView b=text(s,14);b.setGravity(Gravity.CENTER);b.setMinHeight(dp(48));b.setPadding(dp(16),0,dp(16),0);b.setFocusable(true);b.setBackground(background(BlackIceTheme.ELEVATED,BlackIceTheme.BORDER));b.setOnClickListener(v->action.run());return b;}
     private View preview;private TextView caption;
     AlertDialog show(Consumer<EditProject> create){
-        BlackIceDialog shell=new BlackIceDialog(a,"Create new project","Add",null);AlertDialog dialog=shell.dialog;
+        createAction=create;View launchingFocus=a.getCurrentFocus();
+        BlackIceDialog shell=new BlackIceDialog(a,"Create new project","Add",null);AlertDialog dialog=shell.dialog;activeDialog=dialog;
         View close=findClose(shell.root);if(close!=null)close.setContentDescription("Close create new project");
         LinearLayout columns=new LinearLayout(a);columns.setOrientation(shell.wide?LinearLayout.HORIZONTAL:LinearLayout.VERTICAL);
         LinearLayout setup=BlackIceDialog.column(a),canvas=BlackIceDialog.column(a);
-        setup.addView(text("Project name",14));EditText name=BlackIceDialog.field(a,"Project name","");name.setHint("Automatic: ICE_01, ICE_02…");LinearLayout.LayoutParams nameLp=new LinearLayout.LayoutParams(-1,dp(48));nameLp.topMargin=dp(8);nameLp.bottomMargin=dp(20);setup.addView(name,nameLp);
+        setup.addView(text("Project name",14));EditText name=BlackIceDialog.field(a,"Project name","");nameField=name;name.setHint("Automatic: ICE_01, ICE_02…");LinearLayout.LayoutParams nameLp=new LinearLayout.LayoutParams(-1,dp(48));nameLp.topMargin=dp(8);nameLp.bottomMargin=dp(20);setup.addView(name,nameLp);
         setup.addView(text("Aspect ratio",14));RatioFlow ratios=new RatioFlow();for(String ratio:CanvasFormat.SELECTABLE){RatioTile tile=new RatioTile(ratio);tiles.add(tile);ratios.addView(tile);}setup.addView(ratios,new LinearLayout.LayoutParams(-1,-2));
         canvas.addView(text("Canvas preview",14));preview=new View(a){final Paint paint=new Paint(3);@Override protected void onDraw(Canvas c){
             float pad=dp(10),aspect=project.canvasAspect(),w=Math.min(getWidth()-2*pad,(getHeight()-2*pad)*aspect),h=w/aspect;
@@ -38,7 +46,7 @@ final class NewProjectDialog {
         }};preview.setContentDescription("Project canvas preview");canvas.addView(preview,new LinearLayout.LayoutParams(-1,dp(190)));caption=text("",13);caption.setGravity(Gravity.CENTER);canvas.addView(caption);updateCanvas();
         columns.addView(setup,shell.wide?new LinearLayout.LayoutParams(0,-2,1.5f):new LinearLayout.LayoutParams(-1,-2));
         LinearLayout.LayoutParams canvasLp=shell.wide?new LinearLayout.LayoutParams(0,-2,1):new LinearLayout.LayoutParams(-1,-2);if(shell.wide){canvasLp.leftMargin=dp(20);canvas.setPadding(dp(20),0,0,0);}else canvasLp.topMargin=dp(16);columns.addView(canvas,canvasLp);shell.content.addView(columns);
-        shell.footer("Cancel",false,dialog::dismiss);final boolean[] submitting={false};shell.footer("Create project",true,()->{if(submitting[0])return;String n=name.getText().toString().trim();if(n.length()>120){name.setError("Use at most 120 characters");return;}submitting[0]=true;project.name=n;dialog.dismiss();create.accept(project);});shell.show();return dialog;
+        shell.footer("Cancel",false,dialog::dismiss);final boolean[] submitting={false};shell.footer("Create project",true,()->{if(submitting[0])return;String n=name.getText().toString().trim();if(n.length()>120){name.setError("Use at most 120 characters");return;}submitting[0]=true;project.name=n;dialog.dismiss();create.accept(project);});shell.show();open.put(a,this);dialog.setOnDismissListener(d->{if(open.get(a)==this)open.remove(a);if(launchingFocus!=null&&launchingFocus.isAttachedToWindow())launchingFocus.requestFocus();});return dialog;
     }
     View findClose(View v){if(v instanceof TextView&&"×".contentEquals(((TextView)v).getText()))return v;if(v instanceof android.view.ViewGroup)for(int i=0;i<((android.view.ViewGroup)v).getChildCount();i++){View found=findClose(((android.view.ViewGroup)v).getChildAt(i));if(found!=null)return found;}return null;}
     void updateCanvas(){if(preview!=null)preview.invalidate();if(caption!=null){int[] size=project.canvasSize(1080);caption.setText(size[0]+" × "+size[1]+" · "+project.frameRate+" fps");}}
