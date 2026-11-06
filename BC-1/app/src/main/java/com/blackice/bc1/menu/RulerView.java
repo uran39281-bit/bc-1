@@ -5,13 +5,13 @@ import android.os.Bundle;
 import android.view.*;
 import android.view.accessibility.AccessibilityNodeInfo;
 import java.util.Locale;
-/** Fixed-center ruler. Finger-right increases value; cancellation delegates rollback. */
+/** Fixed-center ruler. Phone ticks follow the pointer; wide preserves its original mapping. */
 public class RulerView extends View {
  public interface Binding {double value();void begin();void preview(double value);void commit();void cancel();}
  private final Binding binding;private final double min,max,step;private final Paint p=new Paint(3);
  private RulerGesture gesture;
  private boolean phone(){return com.blackice.bc1.ActionTrace.phone(getContext());}
- private void drag(float x){value(gesture.move(x,(phone()?-1:1)*step/dp(14),min,max));}
+ private void drag(float x){if(phone())value(gesture.move(x,-step/dp(14),min,max));else value(start+(x-downX)/dp(14)*step);}
  private int pointer=-1;private boolean dragging;private float downX;private double start;
  public RulerView(Context c,String label,double min,double max,double step,Binding b){super(c);if(!Double.isFinite(min)||!Double.isFinite(max)||min>max||!Double.isFinite(step)||step<=0)throw new IllegalArgumentException("Invalid ruler bounds");this.min=min;this.max=max;this.step=step;binding=b;setContentDescription(label);setFocusable(true);setClickable(true);setMinimumHeight(dp(58));}
  private int dp(float v){return MenuPalette.dp(getContext(),v);}private double bounded(double v){return Math.max(min,Math.min(max,v));}

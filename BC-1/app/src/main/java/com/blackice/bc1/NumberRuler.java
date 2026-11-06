@@ -35,7 +35,7 @@ final class NumberRuler extends View {
     }
     @Override public boolean onTouchEvent(MotionEvent e){if(!isEnabled())return false;switch(e.getActionMasked()){
         case MotionEvent.ACTION_DOWN:requestFocus();begin.run();start=(float)read.getAsDouble();down=e.getX();gesture=new com.blackice.bc1.menu.RulerGesture(start,down);dragging=true;getParent().requestDisallowInterceptTouchEvent(true);return true;
-        case MotionEvent.ACTION_MOVE:if(dragging)set(gesture.move(e.getX(),-step/dp(12),min,max));return true;
+        case MotionEvent.ACTION_MOVE:if(dragging)set(ActionTrace.phone(getContext())?gesture.move(e.getX(),-step/dp(12),min,max):start-(e.getX()-down)/dp(12)*step);return true;
         case MotionEvent.ACTION_UP:case MotionEvent.ACTION_CANCEL:if(dragging){dragging=false;getParent().requestDisallowInterceptTouchEvent(false);if(e.getActionMasked()==MotionEvent.ACTION_CANCEL)cancel.run();else{end.run();performClick();}}return true;
     }return super.onTouchEvent(e);}
     @Override public boolean onKeyDown(int code,KeyEvent e){if(code==KeyEvent.KEYCODE_DPAD_LEFT||code==KeyEvent.KEYCODE_DPAD_RIGHT){nudge(code==KeyEvent.KEYCODE_DPAD_RIGHT?step:-step);return true;}return super.onKeyDown(code,e);}
