@@ -39,7 +39,7 @@ public class EffectParamsTest {
         for(int id=1;id<EffectCatalog.count();id++){
             EffectCatalog.Param[] params=EffectCatalog.params(id);
             for(int i=0;i<params.length;i++){
-                if(id==3)continue; // keys a fixed green; the pattern's green block sits exactly on the key, so softness has no edge to show
+                if(id==3||id==65)continue; // key a fixed green / blue; the pattern has no edge for their softness to show
                 clip.effect=id;clip.intensity=.6f;clip.fxEffect=id;
                 // 36 degrees, not 45: the kaleidoscope has 8 segments of exactly 45 degrees at this strength, so a 45 degree turn maps it onto itself.
                 float low=0f,high=params[i].angle?.1f:1f;
@@ -86,5 +86,19 @@ public class EffectParamsTest {
                 h.capture("v151-effect-controls");
             }
         }finally{h.shell("wm size "+size);h.shell("wm density "+density);}
+    }
+
+    @Test public void everyNewGradingEffectChangesThePictureAtItsDefaults()throws Exception{
+        android.content.Context context=h.inst.getTargetContext();File image=pattern();
+        EditProject project=new EditProject();EditProject.Clip clip=new MediaImporter(context).importClip(Uri.fromFile(image),false);clip.outMs=clip.sourceDurationMs=5000;project.clips.add(clip);project.library.add(clip.copy());
+        clip.effect=0;clip.fx=null;Bitmap plain=LayerCapture.render(context,ProjectStore.snapshot(project),clip.id,1500,360);
+        StringBuilder failures=new StringBuilder();
+        for(int id=48;id<EffectCatalog.count();id++){
+            if(id==65)continue; // a blue-screen key leaves a picture with no blue untouched
+            clip.effect=id;clip.intensity=.6f;clip.fx=null;
+            Bitmap shown=LayerCapture.render(context,ProjectStore.snapshot(project),clip.id,1500,360);
+            int changed=differing(plain,shown);if(changed<40)failures.append(EffectCatalog.name(id)).append(" changed ").append(changed).append(" px; ");shown.recycle();
+        }
+        plain.recycle();assertEquals("Effects that do nothing when first added: "+failures,0,failures.length());
     }
 }
