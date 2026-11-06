@@ -141,12 +141,14 @@ for _ in range(44):
     if after.get('schema')==12 and b'\n  ' not in after_bytes:break
     time.sleep(.25)
 else:raise AssertionError('1.5.4 Ctrl+S did not rewrite the project')
+(OUT/'upgrade-before-project.json').write_text(json.dumps(before,indent=2)+'\n')
+(OUT/'upgrade-after-project.json').write_text(json.dumps(after,indent=2)+'\n')
 expected=dict(project);expected['schema']=12;subset(expected,after)
 verify_clock()
 verify_space()
 assert after['clips'][0]['effect']==12,'Saved effect must survive the upgrade'
 stack=after['clips'][0]['effects']
-assert len(stack)==1 and stack[0]['type']==12 and stack[0]['id']=='legacy-upgrade-image','Legacy effect must migrate once with deterministic identity'
+assert len(stack)==1 and stack[0]['type']==12 and stack[0]['id']=='legacy-upgrade-image',('Legacy effect must migrate once with deterministic identity',[(e.get('id'),e.get('type')) for e in stack])
 assert stack[0]['intensity']==after['clips'][0]['intensity'] and stack[0]['motion'][5]==after['clips'][0]['motion'][5],'Effect intensity and its own curve must be retained'
 
 # Opening and saving must not rewrite any interval: custom cubic and legacy preset keep their stored data.
