@@ -103,7 +103,7 @@ final class PortraitChrome {
         int timelineTop=dp(4)+preview+dp(54),scroll=a.phoneTimelineArea instanceof ScrollView?((ScrollView)a.phoneTimelineArea).getScrollY():0;
         int addTop=timelineTop+Math.round(a.timeline.rows().get(2).top)-scroll;
         if(a.timeline.getHeight()>0&&a.phoneTimelineArea.getHeight()>0){int[] timeOrigin=new int[2],stageOrigin=new int[2];a.timeline.getLocationOnScreen(timeOrigin);m.stage.getLocationOnScreen(stageOrigin);addTop=timeOrigin[1]-stageOrigin[1]+Math.round(a.timeline.rows().get(2).top);}
-        int selectedHeight=dp(24+44+6+3*44+44+6);int selectedTop=Math.max(addTop,Math.min(addTop+dp(20),h-selectedHeight));
+        int selectedHeight=Math.max(dp(256),Math.round(h*.34f));int selectedTop=h-selectedHeight;
         int top=a.tab==0?addTop:selectedTop;
         if(a.tab!=0&&state.drawerHeightDp>0)top=h-dp(state.drawerHeightDp);
         // At small heights the drawer scrolls below the player/transport/ruler instead of a
