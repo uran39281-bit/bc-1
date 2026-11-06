@@ -60,7 +60,7 @@ public final class EditProject {
     /** Model-boundary snapshot: preserve identities, detach every mutable graph. */
     public EditProject copy(){EditProject p=new EditProject();p.id=id;p.name=name;p.appliedCaptionJobId=appliedCaptionJobId;p.portrait=portrait;p.canvasRatio=canvasRatio;p.previewHeight=previewHeight;p.playheadMs=playheadMs;p.frameRate=frameRate;p.loopInMs=loopInMs;p.loopOutMs=loopOutMs;
         for(int i=0;i<tracks.length;i++)p.tracks[i]=tracks[i].copy();p.markers.addAll(markers);
-        for(Clip c:clips){Clip n=c.copy();n.id=c.id;p.clips.add(n);}for(Clip c:library){Clip n=c.copy();n.id=c.id;p.library.add(n);}for(Overlay o:overlays){Overlay n=o.copy();n.id=o.id;p.overlays.add(n);}
+        for(Clip c:clips)p.clips.add(c.copy(false));for(Clip c:library)p.library.add(c.copy(false));for(Overlay o:overlays){Overlay n=o.copy();n.id=o.id;p.overlays.add(n);}
         for(Landmark m:landmarks){Landmark n=new Landmark();n.id=m.id;n.label=m.label;n.timeMs=m.timeMs;n.slot=m.slot;p.landmarks.add(n);}
         if(music!=null){Music n=new Music();n.uri=music.uri;n.name=music.name;n.sourceDurationMs=music.sourceDurationMs;n.inMs=music.inMs;n.outMs=music.outMs;n.startMs=music.startMs;n.volume=music.volume;n.loop=music.loop;p.music=n;}return p;
     }
@@ -148,14 +148,17 @@ public final class EditProject {
         public float intensity = .6f, opacity = 1f, volume = .7f,speed=1f;
         public long transitionMs = 500;
         public long durationMs() { return Math.round((outMs - inMs)/(double)speed); }
-        public Clip copy() {
-            Clip c = new Clip(); c.audio=audio.copy();c.gapMs=gapMs; c.uri=uri; c.name=name; c.image=image;c.audioOnly=audioOnly;
+        /** A new timeline layer receives new layer/effect identities. */
+        public Clip copy() { return copy(true); }
+        /** Session/render/recovery snapshots detach state while retaining the same document identities. */
+        private Clip copy(boolean newIdentities) {
+            Clip c = new Clip(); if(!newIdentities)c.id=id;c.audio=audio.copy();c.gapMs=gapMs; c.uri=uri; c.name=name; c.image=image;c.audioOnly=audioOnly;
             c.track=track;c.startMs=startMs;c.fadeInMs=fadeInMs;c.fadeOutMs=fadeOutMs;c.x=x;c.y=y;c.scale=scale;c.rotation=rotation;c.chroma=chroma;c.keyColor=keyColor;c.keyTolerance=keyTolerance;c.keySoftness=keySoftness;c.keySpill=keySpill;c.motion=motion.copy();
             c.heightScale=heightScale;c.aspect=aspect;c.skewX=skewX;c.skewY=skewY;c.anchorX=anchorX;c.anchorY=anchorY;c.flipH=flipH;c.flipV=flipV;c.width=width;c.height=height;c.group=group;
             c.sourceDurationMs=sourceDurationMs; c.inMs=inMs; c.outMs=outMs;
             c.effect=effect; c.transition=transition; c.easing=easing; c.blend=blend;
             c.intensity=intensity; c.opacity=opacity; c.volume=volume;c.unmutedVolume=unmutedVolume; c.transitionMs=transitionMs;c.speed=speed;
-            c.parentId=parentId;c.attach=attach==null?null:attach.clone();c.fx=fx==null?null:fx.clone();c.fxEffect=fxEffect;c.primaryEffectId=effect==0?null:UUID.randomUUID().toString();c.primaryEffectEnabled=primaryEffectEnabled;for(EffectInstance e:additionalEffects)c.additionalEffects.add(e.copy(true));c.reversed=reversed;c.forwardUri=forwardUri;c.forwardName=forwardName;c.forwardSourceDurationMs=forwardSourceDurationMs;c.reverseBaseMs=reverseBaseMs;c.reverseSpanMs=reverseSpanMs;return c;
+            c.parentId=parentId;c.attach=attach==null?null:attach.clone();c.fx=fx==null?null:fx.clone();c.fxEffect=fxEffect;c.primaryEffectId=effect==0?null:newIdentities?UUID.randomUUID().toString():primaryEffectId;c.primaryEffectEnabled=primaryEffectEnabled;for(EffectInstance e:additionalEffects)c.additionalEffects.add(e.copy(newIdentities));c.reversed=reversed;c.forwardUri=forwardUri;c.forwardName=forwardName;c.forwardSourceDurationMs=forwardSourceDurationMs;c.reverseBaseMs=reverseBaseMs;c.reverseSpanMs=reverseSpanMs;return c;
         }
     }
     public static final class Overlay {

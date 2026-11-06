@@ -1,6 +1,6 @@
 # Black Ice Editor Preview 1.5.4 — build 48
 
-> **Status: signed candidate; upgrade verification and publication pending.** Full source qualification passed. The retained-key signed APK is ready for the separate in-place upgrade gate; this record does not claim that gate has already passed.
+> **Status: candidate withdrawn; signed upgrade gate failed.** Run 42174140656 found real effect-identity churn in project save snapshots. This signed candidate is not published and must not be released. A corrected exact-source candidate requires fresh full CI, signing and upgrade verification.
 
 ## Exact build and signature
 
@@ -66,3 +66,7 @@ Generated shape/text overlays and audio retain their existing visual-effect excl
 ## Installation and upgrade gate
 
 Once published, install this APK as **Update** over the existing Preview app. Do not uninstall or clear application data. The publication workflow must install signed 1.5.3 build 47, save its real fixture, install 1.5.4 build 48 with `-r`, and verify original media bytes/URIs, trims, transforms, keys, shapes, effect migration, legacy/custom curves, project settings and saved state. The immutable download branch is created only after `upgrade-verification.json` records PASS. That result is pending at the time this candidate record is committed.
+
+## Signed upgrade failure (2026-11-06)
+
+Run [42174140656](https://github.com/uran39281-bit/bc-1/actions/runs/42174140656) installed both retained-key APKs with `-r` and verified the old/new fixture values, but the new save changed the migrated effect identity. `ProjectSession.Snapshot` uses `EditProject.copy()`, which was incorrectly assigning new effect IDs through the clip duplication helper. The fix separates identity-preserving snapshots from identity-creating layer duplication and adds two regression tests covering legacy and three-instance snapshots, stable document fingerprints and detached mutable tracks. The original exact-identity upgrade assertion is retained. All results above describe the withdrawn candidate only.

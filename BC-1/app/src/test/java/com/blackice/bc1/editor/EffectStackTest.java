@@ -31,6 +31,30 @@ public class EffectStackTest {
         EditProject p=project();EditProject.Clip source=p.clips.get(0);source.inMs=1000;source.sourceDurationMs=source.outMs=5000;for(int type:new int[]{4,9,26})source.addEffect(type);for(EffectInstance e:source.effects()){e.motion.put(Motion.INTENSITY,new Motion.Key(1000,.2f));e.motion.put(Motion.INTENSITY,new Motion.Key(3000,.8f));}
         EditProject.Clip target=project().clips.get(0);target.inMs=2000;target.outMs=target.sourceDurationMs=6000;Attributes attrs=Attributes.decode(Attributes.of(source,Attributes.EFFECTS|Attributes.ANIMATION).encode());attrs.applyTo(target,Attributes.EFFECTS|Attributes.ANIMATION);assertEquals(3,target.effects().size());for(int i=0;i<3;i++){EffectInstance a=source.effects().get(i),b=target.effects().get(i);assertNotEquals(a.id,b.id);assertEquals(.5f,b.strength(3000),1e-6);b.motion.curves.get(Motion.INTENSITY).get(0).value=.1f;assertEquals(.2f,a.strength(1000),0);}
     }
+    @Test public void sessionSnapshotsKeepLegacyIdentityAndDocumentFingerprint()throws Exception{
+        EditProject p=project();EditProject.Clip c=p.clips.get(0);c.id="upgrade-image";c.effect=12;c.intensity=.5f;c.motion.put(Motion.INTENSITY,new Motion.Key(100,.2f));
+        JSONObject legacy=new JSONObject(ProjectStore.encode(p));legacy.put("schema",11);legacy.getJSONArray("clips").getJSONObject(0).remove("effects");
+        p=ProjectStore.decode(legacy.toString());String identity="legacy-upgrade-image",fingerprint=DocumentIdentity.fingerprint(p);
+        for(int n=0;n<3;n++){
+            EditProject snapshot=ProjectStore.snapshot(p);assertEquals(p.id,snapshot.id);assertEquals(p.clips.get(0).id,snapshot.clips.get(0).id);
+            assertEquals(identity,snapshot.clips.get(0).effects().get(0).id);assertEquals(fingerprint,DocumentIdentity.fingerprint(snapshot));
+            p=ProjectStore.decode(ProjectStore.encode(snapshot));assertEquals(identity,p.clips.get(0).effects().get(0).id);assertEquals(fingerprint,DocumentIdentity.fingerprint(p));
+        }
+    }
+    @Test public void stackedSessionSnapshotsRetainIdsAndDetachEveryMutableTrack()throws Exception{
+        EditProject p=project();EditProject.Clip c=p.clips.get(0);for(int type:new int[]{4,9,26})c.addEffect(type);
+        for(EffectInstance effect:c.effects()){effect.params=new float[]{.25f};c.updateEffect(effect);effect=c.effect(effect.id);effect.motion.put(Motion.INTENSITY,new Motion.Key(100,.75f));}
+        String before=ProjectStore.encode(p),fingerprint=DocumentIdentity.fingerprint(p);
+        EditProject snapshot=p.copy();assertEquals(before,ProjectStore.encode(snapshot));assertEquals(fingerprint,DocumentIdentity.fingerprint(snapshot));
+        EditProject.Clip detached=snapshot.clips.get(0);
+        for(int i=0;i<3;i++){
+            EffectInstance original=c.effects().get(i),copy=detached.effects().get(i);assertEquals(original.id,copy.id);
+            assertNotSame(original.motion,copy.motion);assertNotSame(original.params,copy.params);assertEquals(original.motion.curves.get(Motion.INTENSITY).get(0).id,copy.motion.curves.get(Motion.INTENSITY).get(0).id);
+            copy.params[0]=.9f;copy.motion.curves.get(Motion.INTENSITY).get(0).value=.1f;assertEquals(.25f,original.params[0],0);assertEquals(.75f,original.motion.curves.get(Motion.INTENSITY).get(0).value,0);
+        }
+        assertEquals(before,ProjectStore.encode(p));EditProject.Clip duplicate=c.copy();assertNotEquals(c.id,duplicate.id);
+        for(int i=0;i<3;i++)assertNotEquals(c.effects().get(i).id,duplicate.effects().get(i).id);
+    }
     @Test public void fillCustomCurveUsesTheSharedTimingAndRoundTrips()throws Exception{
         FillStyle fill=new FillStyle(0xFFFF0000);fill.solid.toggle(0);fill.solid.set(4000,0xFF0000FF);fill.solid.curve(0,.25f,.1f,.75f,.9f);String id=fill.solid.interval(0).id;FillStyle restored=FillStyle.read(fill.json());Motion.Key key=new Motion.Key(0,0);key.easingToNext=-1;key.x1=.25f;key.y1=.1f;key.x2=.75f;key.y2=.9f;
         for(long t=0;t<=4000;t+=53){double progress=Motion.ease(t/4000f,key);assertEquals(FillStyle.mix(0xFFFF0000,0xFF0000FF,progress),(int)restored.solid.at(t));}assertEquals(id,restored.solid.interval(0).id);assertEquals(-1,restored.solid.interval(0).easing);
