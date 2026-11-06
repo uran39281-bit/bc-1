@@ -17,4 +17,6 @@ Native Android Java Views. Both workspaces share the inspector model; phone draw
 
 Playback seeking and the timeline time ruler remain purpose-specific controls. Timeline zoom UI is not added. WorkbenchActivity is an isolated diagnostic activity, not a production editor menu.
 
-Exact-source runtime evidence is recorded in VERIFICATION.md and ../../v1.5.4/QA.md: 281 unit tests, 112 Android tests, 18 focused native checks and 32 independent export checks passed. Source inspection is not substituted for a runtime pass.
+Exact-source runtime evidence is recorded in VERIFICATION.md and ../../v1.5.4/QA.md: 283 unit tests, 112 Android tests, 18 focused native checks and 32 independent export checks passed. Source inspection is not substituted for a runtime pass.
+
+ProjectSession snapshots now use identity-preserving Clip.copy(false), detaching every mutable effect graph; public Clip.copy() remains the new-layer duplication path. Two regression tests cover legacy and three-instance snapshots and stable document fingerprints.

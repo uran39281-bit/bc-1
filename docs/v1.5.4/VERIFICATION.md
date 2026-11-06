@@ -1,13 +1,13 @@
 # 1.5.4 menu update — verification scope
 
-This report distinguishes source inspection, executed native assertions and screenshot inspection. It does not turn an expected outcome into a test result. The exact-source full CI passed. Retained-key signing is verified; the separate in-place upgrade gate is pending.
+This report distinguishes source inspection, executed native assertions and screenshot inspection. It does not turn an expected outcome into a test result. Corrected exact-source full CI and retained-key signing passed. The separate in-place upgrade gate remains pending.
 
 ## Source and build
 
 Baseline main: `38493d4aa5019bf950162416e6c0170c658894f9` (1.5.3 build 47).
-Candidate source: `62b2ca19250d329a29af7f9e19028cb5fcecb75f` (1.5.4 build 48), PR #28.
+Candidate source: `793692ebc062b808495ca807493498f2c38b96fa` (1.5.4 build 48), PR #29.
 Native Android Java Views; existing project commands, ProjectStore, RulerView, CurveEditorView, V1Icon, live-adjust/undo and both render/export engines are used.
-Local unit/lint/Android-test compile passed: 281 tests, no failures or skips; lint 0 errors / 118 warnings. Full CI run 42171039606 passed: 112/112 Android tests, 4/4 preflight and 32 independent export checks. Focused native run 42171039613 passed 18/18. Preview redraw was 95 ms under the unchanged 1,500-ms limit.
+Local unit/lint/Android-test compile passed: 283 tests, no failures or skips; lint 0 errors / 118 warnings. Full CI 42174819548 passed 112/112 Android tests, 4/4 preflight and 32 independent export checks. Native run 42174819692 passed 18/18. Preview redraw was 262 ms under the unchanged 1,500-ms limit.
 
 ## Coverage against the thirteen requested changes
 
@@ -37,4 +37,4 @@ Pass 1 is native automation executed separately at wide 1920 × 1080 / 160 dpi a
 
 ## Honest completion status
 
-Implementation is complete for the requested source changes. Automated regression and retained-key signing passed. Signed upgrade, publication and delivery remain pending. See v1.5.4/QA.md for hashes, exact artifact IDs and actual results. The exhaustive manual checklist remains partly NOT RUN as detailed above; do not describe that checklist as fully complete. Physical Samsung/DeX performance is unverified. Generated shape/text overlays and audio retain their existing visual-effect exclusions; each supported clip has up to three effects, independent animated strength and existing static named controls. Cubic handles remain bounded without overshoot.
+Implementation is complete for the requested source changes. Automated regression and retained-key signing passed. The separate signed upgrade/publication gate is pending. v1.5.4/QA.md identifies the withdrawn candidate, save-snapshot correction and exact final source. The exhaustive manual checklist remains partly NOT RUN as detailed above; do not describe that checklist as fully complete. Physical Samsung/DeX performance is unverified. Generated shape/text overlays and audio retain their existing visual-effect exclusions; each supported clip has up to three effects, independent animated strength and existing static named controls. Cubic handles remain bounded without overshoot.
