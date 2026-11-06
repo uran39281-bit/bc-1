@@ -1,9 +1,9 @@
 # v1.5.5 (build 49) — 18 new grading and look effects
 
-No project-schema change (still 11). Effect ids 48–65 are appended, so saved projects and the existing effect ids are unaffected. Version 1.5.4 (build 48) belongs to a separate line of work; this release is based on published Preview 1.5.3 (build 47).
+No project-schema change (still 12). Effect ids 48–65 are appended, so saved projects and the existing effect ids are unaffected. This release follows published Preview 1.5.4 (build 48) and is based on published Preview 1.5.4 (build 48).
 
 ## New effects
-Eighteen effects join the 47 existing ones (66 in all). Each has strength plus its own controls (slider, readout and Reset in the Effects menu), and all work in the preview and in both export engines.
+Eighteen effects join the 47 existing ones (66 in all). Each has strength plus its own controls (slider, readout and Reset in the Effects menu), and all work in the preview, in both export engines and inside the three-effect stacks from 1.5.4.
 
 | Effect | Controls | Notes |
 |---|---|---|
@@ -37,4 +37,4 @@ How the pack maps to the editor:
 - **Not implemented, because they are features rather than shader effects:** 21 face and beauty entries (need face tracking), 9 brush tools (touch painting), 13 cutout, matting and removal entries (need segmentation or mattes), 8 split-screen layouts (multi-layer compositing), 5 text and animation templates, Area Locked and Draw Locked Box (tracking), and entries whose function cannot be identified (Dark Mask, Light Sensation, Combine Adjust, Unidentified Filter, 00Origin Pic).
 
 ## Publishing 1.5.5
-`.github/workflows/bc1-v155-publish.yml` mirrors the 1.5.3 gate: it runs when `v1.5.5/release.json` lands on `main`, restores the retained-key signed APK from the qualified CI APK, installs published Preview 1.5.3 build 47, upgrades in place, verifies the project and publishes to `test-apk/preview/v1.5.5`. If 1.5.4 is published first, point the gate at that build instead. The signed APK, `release.json`, checksums and QA do not exist yet and are not committed as placeholders.
+`.github/workflows/bc1-v155-publish.yml` mirrors the 1.5.4 gate: it runs when `v1.5.5/release.json` lands on `main`, restores the retained-key signed APK from the qualified CI APK, installs published Preview 1.5.4 build 48, upgrades in place, verifies the project and publishes to `test-apk/preview/v1.5.5`. The signed APK, `release.json`, checksums and QA do not exist yet and are not committed as placeholders.

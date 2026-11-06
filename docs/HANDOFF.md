@@ -1,6 +1,6 @@
 # v1.5.5 (build 49) — 18 new effects (source, unsigned)
 
-Effect ids 48–65 appended in `EffectCatalog` (names, categories, centered flags, controls) and `EffectCatalogBrowser` (display groups); shader blocks in `video.frag` after id 47, reading `uParams`. Written from scratch: nothing from the Black Ice Effects Integration Lab pack (another vendor's assets) is imported. `EffectParamsTest` renders every control and every new effect at defaults. 1.5.4 (build 48) is a separate line; the upgrade gate assumes published 1.5.3. Not signed or published. See CHANGELOG-v1.5.5.md.
+Effect ids 48–65 appended in `EffectCatalog` (names, categories, centered flags, controls) and `EffectCatalogBrowser` (display groups); shader blocks in `video.frag` after id 47, reading `uParams`. Written from scratch: nothing from the Black Ice Effects Integration Lab pack (another vendor's assets) is imported. `EffectParamsTest` renders every control and every new effect at defaults. The upgrade gate installs published 1.5.4 (build 48); effects work inside 1.5.4 effect stacks. Not signed or published. See CHANGELOG-v1.5.5.md.
 
 # v1.5.3 (build 47) — published Preview: effect controls and portrait workspace
 
