@@ -24,10 +24,10 @@ final class StackEffect implements GlEffect {
                 program=new GlProgram(vertex,com.blackice.bc1.core.LayerShader.effectPass(fragment,effect.type));program.setBufferAttribute("aPosition",GlUtil.getNormalizedCoordinateBounds(),4);
             }catch(java.io.IOException|GlUtil.GlException e){throw new VideoFrameProcessingException(e);}
         }
-        @Override public Size configure(int w,int h){program.setFloatsUniform("uTexel",new float[]{1f/w,1f/h});program.setFloatUniform("uAspect",(float)w/h);return new Size(w,h);}
+        @Override public Size configure(int w,int h){if(program.getUniformLocation("uTexel")>=0)program.setFloatsUniform("uTexel",new float[]{1f/w,1f/h});if(program.getUniformLocation("uAspect")>=0)program.setFloatUniform("uAspect",(float)w/h);return new Size(w,h);}
         @Override public void drawFrame(int texture,long timeUs)throws VideoFrameProcessingException{
             long source=com.blackice.bc1.core.RenderPlan.sourceTime(placement,timeUs/1000);
-            try{program.use();program.setSamplerTexIdUniform("uInput",texture,0);program.setIntUniform("uEffect",effect.type);program.setFloatUniform("uIntensity",effect.strength(source));program.setFloatsUniform("uParams",effect.resolved());if(program.getUniformLocation("uTime")>=0)program.setFloatUniform("uTime",source/1000f);program.bindAttributesAndUniforms();GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP,0,4);GlUtil.checkGlError();}catch(GlUtil.GlException e){throw new VideoFrameProcessingException(e,timeUs);}
+            try{program.use();program.setSamplerTexIdUniform("uInput",texture,0);if(program.getUniformLocation("uEffect")>=0)program.setIntUniform("uEffect",effect.type);if(program.getUniformLocation("uIntensity")>=0)program.setFloatUniform("uIntensity",effect.strength(source));if(program.getUniformLocation("uParams")>=0)program.setFloatsUniform("uParams",effect.resolved());if(program.getUniformLocation("uTime")>=0)program.setFloatUniform("uTime",source/1000f);program.bindAttributesAndUniforms();GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP,0,4);GlUtil.checkGlError();}catch(GlUtil.GlException e){throw new VideoFrameProcessingException(e,timeUs);}
         }
         @Override public void release()throws VideoFrameProcessingException{super.release();try{program.delete();}catch(GlUtil.GlException e){throw new VideoFrameProcessingException(e);}}
     }

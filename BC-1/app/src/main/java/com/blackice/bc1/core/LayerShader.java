@@ -32,8 +32,9 @@ public final class LayerShader {
         int main=source.indexOf("void main()");
         int begin=source.indexOf("    if(uEffect>=29",main),end=source.indexOf("    if(uChroma.x",begin);
         if(main<0||begin<0||end<0)throw new IllegalArgumentException("Shader effect stage not found");
-        // Reuse the shipping effect stage byte for byte, including the original 1–11 filters.
+        // Keep the shipping equations, but make the selected opcode a compile-time constant.
+        // Uniform branches leave unrelated legacy blur/filter paths in the driver's first-draw JIT.
         return source.substring(0,main)+"void main() {\nfloat k=uIntensity; vec2 uv=vUV; float inside=1.0;\n"+
-            source.substring(begin,end)+"fragColor=vec4(clamp(a.rgb,0.0,1.0),a.a*inside);\n}\n";
+            source.substring(begin,end).replace("uEffect",Integer.toString(effect))+"fragColor=vec4(clamp(a.rgb,0.0,1.0),a.a*inside);\n}\n";
     }
 }
