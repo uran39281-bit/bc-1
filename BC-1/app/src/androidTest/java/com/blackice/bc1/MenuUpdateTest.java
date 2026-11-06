@@ -86,7 +86,7 @@ public class MenuUpdateTest {
                     a.easingControls.select(Motion.OPACITY,0);a.panels.category("Blending & Opacity");
                     assertEquals("Opacity · Key 1 → Key 2",WorkspaceV2Test.startsWith(a.inspector,"Opacity · Key 1").getText().toString());
                     Motion.Key first=a.overlay().motion.curves.get(Motion.OPACITY).get(0);int preset=first.easingToNext;float[] before={first.x1,first.y1,first.x2,first.y2};int undo=a.undo.size();
-                    View graph=find(a.inspector,com.blackice.bc1.menu.CurveEditorView.class);assertNotNull(graph);graph.layout(0,0,600,400);graph.draw(new android.graphics.Canvas(android.graphics.Bitmap.createBitmap(600,400,android.graphics.Bitmap.Config.ARGB_8888)));
+                    com.blackice.bc1.menu.CollapsibleSection section=(com.blackice.bc1.menu.CollapsibleSection)find(a.inspector,com.blackice.bc1.menu.CollapsibleSection.class);assertNotNull(section);assertFalse(section.expanded());section.getChildAt(0).performClick();View graph=find(a.inspector,com.blackice.bc1.menu.CurveEditorView.class);assertNotNull(graph);graph.layout(0,0,600,400);graph.draw(new android.graphics.Canvas(android.graphics.Bitmap.createBitmap(600,400,android.graphics.Bitmap.Config.ARGB_8888)));
                     float left=com.blackice.bc1.menu.MenuPalette.dp(a,47),top=com.blackice.bc1.menu.MenuPalette.dp(a,18),right=600-com.blackice.bc1.menu.MenuPalette.dp(a,18),bottom=400-com.blackice.bc1.menu.MenuPalette.dp(a,46);
                     float x0=left+(right-left)/3f,y0=bottom-(bottom-top)/3f;long t=android.os.SystemClock.uptimeMillis();
                     send(graph,t,t,MotionEvent.ACTION_DOWN,x0,y0);send(graph,t,t+20,MotionEvent.ACTION_MOVE,left+(right-left)*.2f,top);

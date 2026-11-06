@@ -21,7 +21,7 @@ final class EasingControls {
         LinearLayout content=a.column();TextView select=a.button(status,v->choose(property));content.addView(select);
         CurveEditorView graph=new CurveEditorView(a,new CurveEditorView.Model(){
             public CubicBezier curve(){return first==null?CubicBezier.LINEAR:CurveEdits.seed(first);}
-            public boolean editable(){return first!=null&&scope.equals(scope(property))&&a.layerEditable();}
+            public boolean editable(){return first!=null&&scope.equals(scope(property))&&!a.loading&&!a.importing&&!a.captionApplying&&!a.uiLocked&&!a.selectionLocked();}
             public String intervalLabel(){return status;}
             public double progressAt(double u){return first==null?u:CurveEdits.progress(first,u);}
         },new CurveEditorView.Edits(){
@@ -30,7 +30,7 @@ final class EasingControls {
             public void commit(){a.endLiveAdjust("Easing curve updated",()->{});}
             public void cancel(){a.cancelLiveAdjust();}
         });graph.setEnabled(first!=null&&!a.selectionLocked()&&!a.uiLocked);content.addView(graph);
-        TextView reset=a.button("Reset curve",v->{if(first!=null&&scope.equals(scope(property))&&a.layerEditable())a.edit("Easing curve reset",()->CurveEdits.write(first,CubicBezier.LINEAR));});reset.setEnabled(first!=null);content.addView(reset);
+        TextView reset=a.button("Reset curve",v->{if(first!=null&&scope.equals(scope(property))&&!a.loading&&!a.importing&&!a.captionApplying&&!a.uiLocked&&!a.selectionLocked())a.edit("Easing curve reset",()->CurveEdits.write(first,CubicBezier.LINEAR));});reset.setEnabled(first!=null);content.addView(reset);
         for(int i=0;i<4;i++){final int preset=i;TextView button=a.button(Keyframes.EASINGS[i],v->apply(property,preset));button.setEnabled(first!=null);content.addView(button);}
         CollapsibleSection section=new CollapsibleSection(a,scope,expanded,"Easing Curve Editor",content,a::cancelLiveAdjust);section.context(status);parent.addView(section);
     }
