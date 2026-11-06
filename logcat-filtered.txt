@@ -1,0 +1,625 @@
+11-06 03:50:44.903  4165  4165 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-06 03:50:44.911  4165  4165 I AndroidRuntime: Using default boot image
+11-06 03:50:44.911  4165  4165 I AndroidRuntime: Leaving lock profiling enabled
+11-06 03:50:45.271  4165  4165 D AndroidRuntime: Calling main entry com.android.commands.am.Am
+11-06 03:50:45.759  4214  4231 I TestRunner: run started: 4 tests
+11-06 03:50:45.760  4214  4231 I TestRunner: started: trackpadMovesBothAxesWithOneUndoAndCancelRestoresStaticAndAnimatedLayers(com.blackice.bc1.InspectorControlsTest)
+11-06 03:50:48.172  4214  4241 D BC1Live : frame at 0 waits for a surface
+11-06 03:50:48.204  4214  4241 D BC1Live : surface attached
+11-06 03:50:48.733  4214  4241 D BC1Live : layer program 0 compiled in 18 ms
+11-06 03:50:52.264  4214  4241 D BC1Live : slow frame: setup 38 ms, open+prepare 128 ms, latch 0 ms, draw 3509 ms, swap 184 ms
+11-06 03:50:52.265  4214  4241 D BC1Live : frame 1 at 0 ms took 3861 ms, 1 sources open
+11-06 03:50:53.634  4214  4231 I TestRunner: finished: trackpadMovesBothAxesWithOneUndoAndCancelRestoresStaticAndAnimatedLayers(com.blackice.bc1.InspectorControlsTest)
+11-06 03:50:53.644  4214  4231 I TestRunner: started: controlChoiceSurvivesRecreationWithoutChangingTheProject(com.blackice.bc1.InspectorControlsTest)
+11-06 03:50:54.083  4214  4306 D BC1Live : frame at 0 waits for a surface
+11-06 03:50:54.087  4214  4306 D BC1Live : surface attached
+11-06 03:50:54.345  4214  4306 D BC1Live : layer program 0 compiled in 11 ms
+11-06 03:50:57.116  4214  4306 D BC1Live : slow frame: setup 40 ms, open+prepare 7 ms, latch 0 ms, draw 2813 ms, swap 126 ms
+11-06 03:50:57.117  4214  4306 D BC1Live : frame 1 at 0 ms took 2988 ms, 1 sources open
+11-06 03:51:01.385  4214  4323 D BC1Live : frame at 0 waits for a surface
+11-06 03:51:01.393  4214  4323 D BC1Live : surface attached
+11-06 03:51:01.676  4214  4323 D BC1Live : layer program 0 compiled in 33 ms
+11-06 03:51:04.658  4214  4323 D BC1Live : slow frame: setup 21 ms, open+prepare 7 ms, latch 0 ms, draw 2967 ms, swap 223 ms
+11-06 03:51:04.658  4214  4323 D BC1Live : frame 1 at 0 ms took 3219 ms, 1 sources open
+11-06 03:51:05.039  4214  4231 I TestRunner: finished: controlChoiceSurvivesRecreationWithoutChangingTheProject(com.blackice.bc1.InspectorControlsTest)
+11-06 03:51:05.045  4214  4231 I TestRunner: started: sliderAndTrackpadKeyboardUseTheRealPositionAndRespectLocks(com.blackice.bc1.InspectorControlsTest)
+11-06 03:51:05.160  4214  4389 D BC1Live : frame at 0 waits for a surface
+11-06 03:51:05.193  4214  4389 D BC1Live : surface attached
+11-06 03:51:05.475  4214  4389 D BC1Live : layer program 0 compiled in 45 ms
+11-06 03:51:08.052  4214  4389 D BC1Live : slow frame: setup 42 ms, open+prepare 14 ms, latch 0 ms, draw 2572 ms, swap 188 ms
+11-06 03:51:08.052  4214  4389 D BC1Live : frame 1 at 0 ms took 2817 ms, 1 sources open
+11-06 03:51:08.550  4214  4231 I TestRunner: finished: sliderAndTrackpadKeyboardUseTheRealPositionAndRespectLocks(com.blackice.bc1.InspectorControlsTest)
+11-06 03:51:08.556  4214  4231 I TestRunner: started: wideMenusUseCompactRowsAndScrollableGraphs(com.blackice.bc1.InspectorControlsTest)
+11-06 03:51:09.809  4214  4453 D BC1Live : frame at 0 waits for a surface
+11-06 03:51:09.836  4214  4453 D BC1Live : surface attached
+11-06 03:51:11.022  4214  4453 D BC1Live : layer program 0 compiled in 72 ms
+11-06 03:51:14.673  4214  4453 D BC1Live : slow frame: setup 553 ms, open+prepare 6 ms, latch 0 ms, draw 3642 ms, swap 215 ms
+11-06 03:51:14.673  4214  4453 D BC1Live : frame 1 at 0 ms took 4418 ms, 1 sources open
+11-06 03:51:20.842  4214  4453 D BC1Live : layer program 2 compiled in 97 ms
+11-06 03:51:23.427  4214  4453 D BC1Live : slow frame: setup 0 ms, open+prepare 0 ms, latch 0 ms, draw 2671 ms, swap 11 ms
+11-06 03:51:23.427  4214  4453 D BC1Live : frame 3 at 1000 ms took 2682 ms, 1 sources open
+11-06 03:51:30.478  4214  4575 D BC1Live : frame at 1000 waits for a surface
+11-06 03:51:30.482  4214  4575 D BC1Live : surface attached
+11-06 03:51:31.323  4214  4575 D BC1Live : layer program 2 compiled in 68 ms
+11-06 03:51:35.218  4214  4575 D BC1Live : slow frame: setup 441 ms, open+prepare 104 ms, latch 0 ms, draw 3765 ms, swap 337 ms
+11-06 03:51:35.221  4214  4575 D BC1Live : frame 1 at 1000 ms took 4653 ms, 1 sources open
+11-06 03:51:41.223  4214  4231 I TestRunner: finished: wideMenusUseCompactRowsAndScrollableGraphs(com.blackice.bc1.InspectorControlsTest)
+11-06 03:51:41.225  4214  4231 I TestRunner: run finished: 4 tests, 0 failed, 0 ignored
+11-06 03:51:41.273  4165  4165 I AndroidRuntime: VM exiting with result code 0.
+11-06 03:51:41.604  4632  4632 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-06 03:51:41.620  4632  4632 I AndroidRuntime: Using default boot image
+11-06 03:51:41.625  4632  4632 I AndroidRuntime: Leaving lock profiling enabled
+11-06 03:51:41.842  4632  4632 D AndroidRuntime: Calling main entry com.android.commands.am.Am
+11-06 03:51:42.779  4656  4680 I TestRunner: run started: 110 tests
+11-06 03:51:42.784  4656  4680 I TestRunner: started: bothEnginesExportFiveRatiosWithSolidTranslucentShapeCenters(com.blackice.bc1.CanvasShapeExportTest)
+11-06 03:51:43.166  4656  4680 D BC1Live : layer program 0 compiled in 122 ms
+11-06 03:51:56.552  4656  4680 D BC1Live : layer program 0 compiled in 86 ms
+11-06 03:52:02.760  4656  4680 D BC1Live : layer program 0 compiled in 85 ms
+11-06 03:52:08.537  4656  4680 D BC1Live : layer program 0 compiled in 83 ms
+11-06 03:52:14.361  4656  4680 D BC1Live : layer program 0 compiled in 86 ms
+11-06 03:52:20.135  4656  4680 I TestRunner: finished: bothEnginesExportFiveRatiosWithSolidTranslucentShapeCenters(com.blackice.bc1.CanvasShapeExportTest)
+11-06 03:52:20.137  4656  4680 I TestRunner: started: audioAndCaptionsRemainReachableInBothWorkspaces(com.blackice.bc1.CombinedAudioWorkspaceTest)
+11-06 03:52:20.979  4656  5197 D BC1Live : frame at 0 waits for a surface
+11-06 03:52:21.133  4656  5197 D BC1Live : surface attached
+11-06 03:52:23.782  4656  5197 D BC1Live : layer program 0 compiled in 1164 ms
+11-06 03:52:26.128  4656  5197 D BC1Live : slow frame: setup 409 ms, open+prepare 672 ms, latch 53 ms, draw 3623 ms, swap 221 ms
+11-06 03:52:26.130  4656  5197 D BC1Live : frame 1 at 0 ms took 4981 ms, 1 sources open
+11-06 03:52:35.971  4656  5329 D BC1Live : frame at 0 waits for a surface
+11-06 03:52:35.988  4656  5329 D BC1Live : surface attached
+11-06 03:52:37.318  4656  5329 D BC1Live : layer program 0 compiled in 164 ms
+11-06 03:52:39.835  4656  5329 D BC1Live : slow frame: setup 46 ms, open+prepare 367 ms, latch 374 ms, draw 2674 ms, swap 295 ms
+11-06 03:52:39.835  4656  5329 D BC1Live : frame 1 at 0 ms took 3757 ms, 1 sources open
+11-06 03:52:47.262  4656  4680 I TestRunner: finished: audioAndCaptionsRemainReachableInBothWorkspaces(com.blackice.bc1.CombinedAudioWorkspaceTest)
+11-06 03:52:47.274  4656  4680 I TestRunner: started: framingEasingRulersAndToolbarUseRealModelOnBothLayouts(com.blackice.bc1.DailyUpdateTest)
+11-06 03:52:48.361  4656  5477 D BC1Live : frame at 0 waits for a surface
+11-06 03:52:48.361  4656  5477 D BC1Live : surface attached
+11-06 03:52:48.806  4656  5477 D BC1Live : layer program 0 compiled in 15 ms
+11-06 03:52:51.821  4656  5477 D BC1Live : slow frame: setup 157 ms, open+prepare 37 ms, latch 0 ms, draw 2876 ms, swap 291 ms
+11-06 03:52:51.821  4656  5477 D BC1Live : frame 1 at 0 ms took 3362 ms, 1 sources open
+11-06 03:52:53.747  4656  5477 D BC1Live : surface attached
+11-06 03:52:54.210  4656  5477 D BC1Live : surface attached
+11-06 03:52:54.922  4656  5477 D BC1Live : slow frame: setup 0 ms, open+prepare 0 ms, latch 0 ms, draw 67 ms, swap 184 ms
+11-06 03:52:54.922  4656  5477 D BC1Live : frame 14 at 1000 ms took 253 ms, 1 sources open
+11-06 03:52:58.905  4656  4680 I TestRunner: finished: framingEasingRulersAndToolbarUseRealModelOnBothLayouts(com.blackice.bc1.DailyUpdateTest)
+11-06 03:52:58.907  4656  4680 I TestRunner: started: boundedReportsRetainTechnicalEvidenceAndExcludePrivateMessages(com.blackice.bc1.DiagnosticsTest)
+11-06 03:52:59.099  4656  4680 I TestRunner: finished: boundedReportsRetainTechnicalEvidenceAndExcludePrivateMessages(com.blackice.bc1.DiagnosticsTest)
+11-06 03:52:59.111  4656  4680 I TestRunner: started: stateSavedBeforeDiskLoadRetainsRequestedProjectIdentity(com.blackice.bc1.EditorRestoreTest)
+11-06 03:52:59.939  4656  4680 I TestRunner: finished: stateSavedBeforeDiskLoadRetainsRequestedProjectIdentity(com.blackice.bc1.EditorRestoreTest)
+11-06 03:52:59.950  4656  4680 I TestRunner: started: rapidSearchDuringDecodeUpdatesCurrentThumbnail(com.blackice.bc1.EditorWorkspaceTest)
+11-06 03:53:00.868  4656  5649 D BC1Live : frame at 0 waits for a surface
+11-06 03:53:00.880  4656  5649 D BC1Live : surface attached
+11-06 03:53:01.288  4656  5649 D BC1Live : layer program 0 compiled in 89 ms
+11-06 03:53:04.378  4656  5649 D BC1Live : slow frame: setup 152 ms, open+prepare 2 ms, latch 0 ms, draw 3201 ms, swap 118 ms
+11-06 03:53:04.382  4656  5649 D BC1Live : frame 1 at 0 ms took 3480 ms, 1 sources open
+11-06 03:53:09.959  4656  4680 I TestRunner: finished: rapidSearchDuringDecodeUpdatesCurrentThumbnail(com.blackice.bc1.EditorWorkspaceTest)
+11-06 03:53:09.967  4656  4680 I TestRunner: started: editorAdaptsAndTabsKeepVideoSurface(com.blackice.bc1.EditorWorkspaceTest)
+11-06 03:53:10.940  4656  5725 D BC1Live : frame at 0 waits for a surface
+11-06 03:53:10.942  4656  5725 D BC1Live : surface attached
+11-06 03:53:11.120  4656  5725 D BC1Live : layer program 0 compiled in 8 ms
+11-06 03:53:13.784  4656  5725 D BC1Live : slow frame: setup 37 ms, open+prepare 5 ms, latch 0 ms, draw 2635 ms, swap 116 ms
+11-06 03:53:13.784  4656  5725 D BC1Live : frame 1 at 0 ms took 2794 ms, 1 sources open
+11-06 03:53:31.951  4656  4656 D BC1Preview: state 2 pos=0 playhead=0
+11-06 03:53:32.409  4656  4656 D BC1Preview: state 3 pos=0 playhead=0
+11-06 03:53:37.826  4656  5725 D BC1Live : surface attached
+11-06 03:53:38.155  4656  5725 D BC1Live : surface attached
+11-06 03:53:41.301  4656  5926 D BC1Live : frame at 1000 waits for a surface
+11-06 03:53:41.305  4656  5926 D BC1Live : surface attached
+11-06 03:53:41.601  4656  5926 D BC1Live : layer program 0 compiled in 8 ms
+11-06 03:53:42.505  4656  4656 D BC1Preview: playback render ready
+11-06 03:53:43.831  4656  5926 D BC1Live : slow frame: setup 176 ms, open+prepare 95 ms, latch 0 ms, draw 2036 ms, swap 206 ms
+11-06 03:53:43.832  4656  5926 D BC1Live : frame 1 at 1000 ms took 2515 ms, 2 sources open
+11-06 03:53:45.388  4656  5926 D BC1Live : surface attached
+11-06 03:53:45.688  4656  5926 D BC1Live : slow frame: setup 0 ms, open+prepare 22 ms, latch 0 ms, draw 50 ms, swap 226 ms
+11-06 03:53:45.688  4656  5926 D BC1Live : frame 2 at 1000 ms took 298 ms, 2 sources open
+11-06 03:53:46.003  4656  5945 D BC1Live : frame at 1000 waits for a surface
+11-06 03:53:46.015  4656  5945 D BC1Live : surface attached
+11-06 03:53:46.334  4656  5945 D BC1Live : layer program 0 compiled in 11 ms
+11-06 03:53:47.201  4656  4656 D BC1Preview: playback render ready
+11-06 03:53:49.759  4656  5945 D BC1Live : slow frame: setup 104 ms, open+prepare 142 ms, latch 0 ms, draw 3214 ms, swap 226 ms
+11-06 03:53:49.759  4656  5945 D BC1Live : frame 1 at 1000 ms took 3688 ms, 2 sources open
+11-06 03:53:51.157  4656  4680 I TestRunner: finished: editorAdaptsAndTabsKeepVideoSurface(com.blackice.bc1.EditorWorkspaceTest)
+11-06 03:53:51.167  4656  4680 I TestRunner: started: theEffectsMenuOffersTheControlsOfTheSelectedEffect(com.blackice.bc1.EffectParamsTest)
+11-06 03:53:51.923  4656  6012 D BC1Live : frame at 0 waits for a surface
+11-06 03:53:51.952  4656  6012 D BC1Live : surface attached
+11-06 03:53:52.386  4656  6012 D BC1Live : effect 13 pass compiled in 7 ms
+11-06 03:53:52.684  4656  6012 D BC1Live : layer program 0 compiled in 296 ms
+11-06 03:53:55.833  4656  6012 D BC1Live : slow frame: setup 37 ms, open+prepare 5 ms, latch 0 ms, draw 3441 ms, swap 148 ms
+11-06 03:53:55.833  4656  6012 D BC1Live : frame 1 at 0 ms took 3633 ms, 1 sources open
+11-06 03:53:57.456  4656  4680 I TestRunner: finished: theEffectsMenuOffersTheControlsOfTheSelectedEffect(com.blackice.bc1.EffectParamsTest)
+11-06 03:53:57.476  4656  4680 I TestRunner: started: defaultControlsLeaveTheOriginalLookUntouched(com.blackice.bc1.EffectParamsTest)
+11-06 03:53:57.993  4656  6057 D BC1Live : layer program 1 compiled in 11 ms
+11-06 03:54:01.562  4656  6060 D BC1Live : layer program 1 compiled in 7 ms
+11-06 03:54:03.801  4656  6061 D BC1Live : layer program 8 compiled in 10 ms
+11-06 03:54:06.321  4656  6072 D BC1Live : layer program 8 compiled in 6 ms
+11-06 03:54:08.483  4656  6073 D BC1Live : effect 12 pass compiled in 5 ms
+11-06 03:54:08.686  4656  6073 D BC1Live : layer program 0 compiled in 202 ms
+11-06 03:54:10.849  4656  6074 D BC1Live : effect 12 pass compiled in 4 ms
+11-06 03:54:11.038  4656  6074 D BC1Live : layer program 0 compiled in 188 ms
+11-06 03:54:13.277  4656  6075 D BC1Live : effect 29 pass compiled in 3 ms
+11-06 03:54:13.415  4656  6075 D BC1Live : layer program 0 compiled in 137 ms
+11-06 03:54:15.511  4656  6076 D BC1Live : effect 29 pass compiled in 3 ms
+11-06 03:54:15.640  4656  6076 D BC1Live : layer program 0 compiled in 127 ms
+11-06 03:54:17.820  4656  6077 D BC1Live : effect 30 pass compiled in 3 ms
+11-06 03:54:17.946  4656  6077 D BC1Live : layer program 0 compiled in 125 ms
+11-06 03:54:20.075  4656  6078 D BC1Live : effect 30 pass compiled in 3 ms
+11-06 03:54:20.198  4656  6078 D BC1Live : layer program 0 compiled in 122 ms
+11-06 03:54:22.358  4656  6079 D BC1Live : effect 34 pass compiled in 3 ms
+11-06 03:54:22.488  4656  6079 D BC1Live : layer program 0 compiled in 129 ms
+11-06 03:54:24.567  4656  6080 D BC1Live : effect 34 pass compiled in 3 ms
+11-06 03:54:24.690  4656  6080 D BC1Live : layer program 0 compiled in 121 ms
+11-06 03:54:26.829  4656  6082 D BC1Live : effect 40 pass compiled in 3 ms
+11-06 03:54:27.021  4656  6082 D BC1Live : layer program 0 compiled in 191 ms
+11-06 03:54:29.118  4656  6083 D BC1Live : effect 40 pass compiled in 3 ms
+11-06 03:54:29.312  4656  6083 D BC1Live : layer program 0 compiled in 192 ms
+11-06 03:54:31.754  4656  6084 D BC1Live : effect 43 pass compiled in 3 ms
+11-06 03:54:31.871  4656  6084 D BC1Live : layer program 0 compiled in 115 ms
+11-06 03:54:33.965  4656  6093 D BC1Live : effect 43 pass compiled in 3 ms
+11-06 03:54:34.083  4656  6093 D BC1Live : layer program 0 compiled in 117 ms
+11-06 03:54:36.280  4656  6094 D BC1Live : effect 47 pass compiled in 4 ms
+11-06 03:54:36.465  4656  6094 D BC1Live : layer program 0 compiled in 183 ms
+11-06 03:54:38.560  4656  6095 D BC1Live : effect 47 pass compiled in 3 ms
+11-06 03:54:38.749  4656  6095 D BC1Live : layer program 0 compiled in 188 ms
+11-06 03:54:40.795  4656  4680 I TestRunner: finished: defaultControlsLeaveTheOriginalLookUntouched(com.blackice.bc1.EffectParamsTest)
+11-06 03:54:40.795  4656  4680 I TestRunner: started: everyControlChangesThePicture(com.blackice.bc1.EffectParamsTest)
+11-06 03:54:40.958  4656  6096 D BC1Live : layer program 1 compiled in 7 ms
+11-06 03:54:43.099  4656  6097 D BC1Live : layer program 1 compiled in 7 ms
+11-06 03:54:45.322  4656  6098 D BC1Live : layer program 2 compiled in 7 ms
+11-06 03:54:47.551  4656  6099 D BC1Live : layer program 2 compiled in 7 ms
+11-06 03:54:49.806  4656  6100 D BC1Live : layer program 2 compiled in 7 ms
+11-06 03:54:51.992  4656  6101 D BC1Live : layer program 2 compiled in 7 ms
+11-06 03:54:54.273  4656  6102 D BC1Live : layer program 4 compiled in 7 ms
+11-06 03:54:56.478  4656  6103 D BC1Live : layer program 4 compiled in 7 ms
+11-06 03:54:58.755  4656  6105 D BC1Live : layer program 6 compiled in 7 ms
+11-06 03:55:01.395  4656  6106 D BC1Live : layer program 6 compiled in 7 ms
+11-06 03:55:03.603  4656  6107 D BC1Live : layer program 6 compiled in 7 ms
+11-06 03:55:05.733  4656  6108 D BC1Live : layer program 6 compiled in 7 ms
+11-06 03:55:08.424  4656  6110 D BC1Live : layer program 7 compiled in 7 ms
+11-06 03:55:10.572  4656  6111 D BC1Live : layer program 7 compiled in 7 ms
+11-06 03:55:12.751  4656  6112 D BC1Live : layer program 8 compiled in 7 ms
+11-06 03:55:14.832  4656  6113 D BC1Live : layer program 8 compiled in 7 ms
+11-06 03:55:16.997  4656  6114 D BC1Live : layer program 11 compiled in 7 ms
+11-06 03:55:19.142  4656  6115 D BC1Live : layer program 11 compiled in 7 ms
+11-06 03:55:21.331  4656  6116 D BC1Live : effect 12 pass compiled in 4 ms
+11-06 03:55:21.521  4656  6116 D BC1Live : layer program 0 compiled in 188 ms
+11-06 03:55:23.636  4656  6117 D BC1Live : effect 12 pass compiled in 3 ms
+11-06 03:55:23.828  4656  6117 D BC1Live : layer program 0 compiled in 191 ms
+11-06 03:55:26.165  4656  6118 D BC1Live : effect 13 pass compiled in 5 ms
+11-06 03:55:26.344  4656  6118 D BC1Live : layer program 0 compiled in 178 ms
+11-06 03:55:28.546  4656  6119 D BC1Live : effect 13 pass compiled in 3 ms
+11-06 03:55:28.746  4656  6119 D BC1Live : layer program 0 compiled in 198 ms
+11-06 03:55:31.073  4656  6120 D BC1Live : effect 13 pass compiled in 5 ms
+11-06 03:55:31.337  4656  6120 D BC1Live : layer program 0 compiled in 262 ms
+11-06 03:55:33.488  4656  6121 D BC1Live : effect 13 pass compiled in 3 ms
+11-06 03:55:33.675  4656  6121 D BC1Live : layer program 0 compiled in 186 ms
+11-06 03:55:35.876  4656  6122 D BC1Live : effect 14 pass compiled in 3 ms
+11-06 03:55:36.088  4656  6122 D BC1Live : layer program 0 compiled in 210 ms
+11-06 03:55:38.457  4656  6123 D BC1Live : effect 14 pass compiled in 3 ms
+11-06 03:55:38.655  4656  6123 D BC1Live : layer program 0 compiled in 196 ms
+11-06 03:55:40.786  4656  6124 D BC1Live : effect 14 pass compiled in 3 ms
+11-06 03:55:40.986  4656  6124 D BC1Live : layer program 0 compiled in 198 ms
+11-06 03:55:43.183  4656  6125 D BC1Live : effect 14 pass compiled in 5 ms
+11-06 03:55:43.384  4656  6125 D BC1Live : layer program 0 compiled in 199 ms
+11-06 03:55:45.562  4656  6126 D BC1Live : effect 15 pass compiled in 3 ms
+11-06 03:55:45.736  4656  6126 D BC1Live : layer program 0 compiled in 173 ms
+11-06 03:55:47.933  4656  6127 D BC1Live : effect 15 pass compiled in 3 ms
+11-06 03:55:48.124  4656  6127 D BC1Live : layer program 0 compiled in 190 ms
+11-06 03:55:50.410  4656  6128 D BC1Live : effect 15 pass compiled in 4 ms
+11-06 03:55:50.589  4656  6128 D BC1Live : layer program 0 compiled in 177 ms
+11-06 03:55:52.698  4656  6129 D BC1Live : effect 15 pass compiled in 3 ms
+11-06 03:55:52.873  4656  6129 D BC1Live : layer program 0 compiled in 174 ms
+11-06 03:55:55.013  4656  6130 D BC1Live : effect 16 pass compiled in 4 ms
+11-06 03:55:56.199  4656  6130 D BC1Live : layer program 0 compiled in 1185 ms
+11-06 03:55:58.365  4656  6131 D BC1Live : effect 16 pass compiled in 4 ms
+11-06 03:55:59.526  4656  6131 D BC1Live : layer program 0 compiled in 1159 ms
+11-06 03:56:01.710  4656  6132 D BC1Live : effect 20 pass compiled in 3 ms
+11-06 03:56:01.844  4656  6132 D BC1Live : layer program 0 compiled in 132 ms
+11-06 03:56:04.034  4656  6133 D BC1Live : effect 20 pass compiled in 5 ms
+11-06 03:56:04.200  4656  6133 D BC1Live : layer program 0 compiled in 164 ms
+11-06 03:56:06.460  4656  6134 D BC1Live : effect 28 pass compiled in 4 ms
+11-06 03:56:06.604  4656  6134 D BC1Live : layer program 0 compiled in 142 ms
+11-06 03:56:08.762  4656  6135 D BC1Live : effect 28 pass compiled in 4 ms
+11-06 03:56:08.899  4656  6135 D BC1Live : layer program 0 compiled in 135 ms
+11-06 03:56:11.230  4656  6136 D BC1Live : effect 28 pass compiled in 3 ms
+11-06 03:56:11.367  4656  6136 D BC1Live : layer program 0 compiled in 136 ms
+11-06 03:56:13.654  4656  6137 D BC1Live : effect 28 pass compiled in 3 ms
+11-06 03:56:13.791  4656  6137 D BC1Live : layer program 0 compiled in 135 ms
+11-06 03:56:16.152  4656  6138 D BC1Live : effect 28 pass compiled in 4 ms
+11-06 03:56:16.287  4656  6138 D BC1Live : layer program 0 compiled in 134 ms
+11-06 03:56:18.467  4656  6139 D BC1Live : effect 28 pass compiled in 3 ms
+11-06 03:56:18.597  4656  6139 D BC1Live : layer program 0 compiled in 128 ms
+11-06 03:56:20.780  4656  6140 D BC1Live : effect 29 pass compiled in 3 ms
+11-06 03:56:20.912  4656  6140 D BC1Live : layer program 0 compiled in 130 ms
+11-06 03:56:23.021  4656  6141 D BC1Live : effect 29 pass compiled in 3 ms
+11-06 03:56:23.151  4656  6141 D BC1Live : layer program 0 compiled in 129 ms
+11-06 03:56:25.283  4656  6142 D BC1Live : effect 29 pass compiled in 3 ms
+11-06 03:56:25.412  4656  6142 D BC1Live : layer program 0 compiled in 128 ms
+11-06 03:56:27.502  4656  6143 D BC1Live : effect 29 pass compiled in 3 ms
+11-06 03:56:27.634  4656  6143 D BC1Live : layer program 0 compiled in 131 ms
+11-06 03:56:29.788  4656  6144 D BC1Live : effect 29 pass compiled in 4 ms
+11-06 03:56:29.916  4656  6144 D BC1Live : layer program 0 compiled in 126 ms
+11-06 03:56:32.311  4656  6145 D BC1Live : effect 29 pass compiled in 4 ms
+11-06 03:56:32.442  4656  6145 D BC1Live : layer program 0 compiled in 128 ms
+11-06 03:56:34.587  4656  6146 D BC1Live : effect 30 pass compiled in 5 ms
+11-06 03:56:34.711  4656  6146 D BC1Live : layer program 0 compiled in 122 ms
+11-06 03:56:36.838  4656  6147 D BC1Live : effect 30 pass compiled in 3 ms
+11-06 03:56:36.967  4656  6147 D BC1Live : layer program 0 compiled in 127 ms
+11-06 03:56:39.152  4656  6148 D BC1Live : effect 30 pass compiled in 4 ms
+11-06 03:56:39.276  4656  6148 D BC1Live : layer program 0 compiled in 123 ms
+11-06 03:56:41.405  4656  6149 D BC1Live : effect 30 pass compiled in 3 ms
+11-06 03:56:41.532  4656  6149 D BC1Live : layer program 0 compiled in 125 ms
+11-06 03:56:43.688  4656  6150 D BC1Live : effect 30 pass compiled in 3 ms
+11-06 03:56:43.815  4656  6150 D BC1Live : layer program 0 compiled in 126 ms
+11-06 03:56:45.932  4656  6151 D BC1Live : effect 30 pass compiled in 3 ms
+11-06 03:56:46.066  4656  6151 D BC1Live : layer program 0 compiled in 133 ms
+11-06 03:56:48.239  4656  6152 D BC1Live : effect 31 pass compiled in 4 ms
+11-06 03:56:48.367  4656  6152 D BC1Live : layer program 0 compiled in 127 ms
+11-06 03:56:50.489  4656  6153 D BC1Live : effect 31 pass compiled in 3 ms
+11-06 03:56:50.614  4656  6153 D BC1Live : layer program 0 compiled in 123 ms
+11-06 03:56:52.764  4656  6154 D BC1Live : effect 31 pass compiled in 3 ms
+11-06 03:56:52.892  4656  6154 D BC1Live : layer program 0 compiled in 126 ms
+11-06 03:56:55.014  4656  6156 D BC1Live : effect 31 pass compiled in 3 ms
+11-06 03:56:55.140  4656  6156 D BC1Live : layer program 0 compiled in 124 ms
+11-06 03:56:57.284  4656  6157 D BC1Live : effect 31 pass compiled in 3 ms
+11-06 03:56:57.430  4656  6157 D BC1Live : layer program 0 compiled in 144 ms
+11-06 03:56:59.529  4656  6158 D BC1Live : effect 31 pass compiled in 3 ms
+11-06 03:56:59.655  4656  6158 D BC1Live : layer program 0 compiled in 124 ms
+11-06 03:57:02.701  4656  6159 D BC1Live : effect 32 pass compiled in 3 ms
+11-06 03:57:02.830  4656  6159 D BC1Live : layer program 0 compiled in 127 ms
+11-06 03:57:04.956  4656  6160 D BC1Live : effect 32 pass compiled in 3 ms
+11-06 03:57:05.090  4656  6160 D BC1Live : layer program 0 compiled in 132 ms
+11-06 03:57:07.265  4656  6161 D BC1Live : effect 32 pass compiled in 3 ms
+11-06 03:57:07.398  4656  6161 D BC1Live : layer program 0 compiled in 131 ms
+11-06 03:57:09.506  4656  6162 D BC1Live : effect 32 pass compiled in 4 ms
+11-06 03:57:09.635  4656  6162 D BC1Live : layer program 0 compiled in 127 ms
+11-06 03:57:11.799  4656  6163 D BC1Live : effect 33 pass compiled in 4 ms
+11-06 03:57:11.921  4656  6163 D BC1Live : layer program 0 compiled in 121 ms
+11-06 03:57:14.028  4656  6164 D BC1Live : effect 33 pass compiled in 5 ms
+11-06 03:57:14.152  4656  6164 D BC1Live : layer program 0 compiled in 122 ms
+11-06 03:57:16.328  4656  6165 D BC1Live : effect 33 pass compiled in 4 ms
+11-06 03:57:16.454  4656  6165 D BC1Live : layer program 0 compiled in 124 ms
+11-06 03:57:19.853  4656  6167 D BC1Live : effect 33 pass compiled in 3 ms
+11-06 03:57:19.977  4656  6167 D BC1Live : layer program 0 compiled in 123 ms
+11-06 03:57:22.138  4656  6168 D BC1Live : effect 34 pass compiled in 3 ms
+11-06 03:57:22.264  4656  6168 D BC1Live : layer program 0 compiled in 125 ms
+11-06 03:57:24.388  4656  6169 D BC1Live : effect 34 pass compiled in 3 ms
+11-06 03:57:24.518  4656  6169 D BC1Live : layer program 0 compiled in 128 ms
+11-06 03:57:26.688  4656  6170 D BC1Live : effect 34 pass compiled in 3 ms
+11-06 03:57:26.811  4656  6170 D BC1Live : layer program 0 compiled in 121 ms
+11-06 03:57:28.912  4656  6171 D BC1Live : effect 34 pass compiled in 3 ms
+11-06 03:57:29.036  4656  6171 D BC1Live : layer program 0 compiled in 123 ms
+11-06 03:57:31.451  4656  6172 D BC1Live : effect 34 pass compiled in 3 ms
+11-06 03:57:31.581  4656  6172 D BC1Live : layer program 0 compiled in 129 ms
+11-06 03:57:33.709  4656  6173 D BC1Live : effect 34 pass compiled in 3 ms
+11-06 03:57:33.831  4656  6173 D BC1Live : layer program 0 compiled in 120 ms
+11-06 03:57:35.980  4656  6174 D BC1Live : effect 35 pass compiled in 3 ms
+11-06 03:57:36.122  4656  6174 D BC1Live : layer program 0 compiled in 140 ms
+11-06 03:57:38.238  4656  6175 D BC1Live : effect 35 pass compiled in 4 ms
+11-06 03:57:38.361  4656  6175 D BC1Live : layer program 0 compiled in 121 ms
+11-06 03:57:40.529  4656  6176 D BC1Live : effect 36 pass compiled in 3 ms
+11-06 03:57:40.669  4656  6176 D BC1Live : layer program 0 compiled in 139 ms
+11-06 03:57:42.801  4656  6177 D BC1Live : effect 36 pass compiled in 5 ms
+11-06 03:57:42.935  4656  6177 D BC1Live : layer program 0 compiled in 132 ms
+11-06 03:57:45.103  4656  6179 D BC1Live : effect 36 pass compiled in 4 ms
+11-06 03:57:45.243  4656  6179 D BC1Live : layer program 0 compiled in 138 ms
+11-06 03:57:47.402  4656  6180 D BC1Live : effect 36 pass compiled in 3 ms
+11-06 03:57:47.540  4656  6180 D BC1Live : layer program 0 compiled in 136 ms
+11-06 03:57:49.705  4656  6181 D BC1Live : effect 36 pass compiled in 4 ms
+11-06 03:57:49.848  4656  6181 D BC1Live : layer program 0 compiled in 141 ms
+11-06 03:57:51.970  4656  6182 D BC1Live : effect 36 pass compiled in 3 ms
+11-06 03:57:52.105  4656  6182 D BC1Live : layer program 0 compiled in 134 ms
+11-06 03:57:54.254  4656  6183 D BC1Live : effect 37 pass compiled in 3 ms
+11-06 03:57:54.388  4656  6183 D BC1Live : layer program 0 compiled in 133 ms
+11-06 03:57:56.521  4656  6184 D BC1Live : effect 37 pass compiled in 3 ms
+11-06 03:57:56.658  4656  6184 D BC1Live : layer program 0 compiled in 136 ms
+11-06 03:57:58.793  4656  6185 D BC1Live : effect 39 pass compiled in 3 ms
+11-06 03:57:59.148  4656  6185 D BC1Live : layer program 0 compiled in 354 ms
+11-06 03:58:02.061  4656  6186 D BC1Live : effect 39 pass compiled in 4 ms
+11-06 03:58:02.479  4656  6186 D BC1Live : layer program 0 compiled in 416 ms
+11-06 03:58:04.648  4656  6187 D BC1Live : effect 40 pass compiled in 4 ms
+11-06 03:58:04.849  4656  6187 D BC1Live : layer program 0 compiled in 199 ms
+11-06 03:58:06.964  4656  6188 D BC1Live : effect 40 pass compiled in 4 ms
+11-06 03:58:07.153  4656  6188 D BC1Live : layer program 0 compiled in 187 ms
+11-06 03:58:09.329  4656  6189 D BC1Live : effect 40 pass compiled in 5 ms
+11-06 03:58:09.523  4656  6189 D BC1Live : layer program 0 compiled in 193 ms
+11-06 03:58:11.686  4656  6190 D BC1Live : effect 40 pass compiled in 4 ms
+11-06 03:58:11.875  4656  6190 D BC1Live : layer program 0 compiled in 188 ms
+11-06 03:58:14.051  4656  6191 D BC1Live : effect 41 pass compiled in 3 ms
+11-06 03:58:14.167  4656  6191 D BC1Live : layer program 0 compiled in 115 ms
+11-06 03:58:16.302  4656  6192 D BC1Live : effect 41 pass compiled in 3 ms
+11-06 03:58:16.423  4656  6192 D BC1Live : layer program 0 compiled in 119 ms
+11-06 03:58:18.651  4656  6193 D BC1Live : effect 42 pass compiled in 4 ms
+11-06 03:58:18.789  4656  6193 D BC1Live : layer program 0 compiled in 136 ms
+11-06 03:58:20.911  4656  6194 D BC1Live : effect 42 pass compiled in 4 ms
+11-06 03:58:21.043  4656  6194 D BC1Live : layer program 0 compiled in 131 ms
+11-06 03:58:23.218  4656  6195 D BC1Live : effect 42 pass compiled in 4 ms
+11-06 03:58:23.344  4656  6195 D BC1Live : layer program 0 compiled in 125 ms
+11-06 03:58:25.467  4656  6196 D BC1Live : effect 42 pass compiled in 4 ms
+11-06 03:58:25.594  4656  6196 D BC1Live : layer program 0 compiled in 126 ms
+11-06 03:58:27.780  4656  6197 D BC1Live : effect 43 pass compiled in 3 ms
+11-06 03:58:27.898  4656  6197 D BC1Live : layer program 0 compiled in 116 ms
+11-06 03:58:30.087  4656  6198 D BC1Live : effect 43 pass compiled in 4 ms
+11-06 03:58:30.252  4656  6198 D BC1Live : layer program 0 compiled in 164 ms
+11-06 03:58:32.662  4656  6199 D BC1Live : effect 44 pass compiled in 5 ms
+11-06 03:58:32.935  4656  6199 D BC1Live : layer program 0 compiled in 271 ms
+11-06 03:58:35.049  4656  6200 D BC1Live : effect 44 pass compiled in 4 ms
+11-06 03:58:35.322  4656  6200 D BC1Live : layer program 0 compiled in 272 ms
+11-06 03:58:37.468  4656  6201 D BC1Live : effect 44 pass compiled in 3 ms
+11-06 03:58:37.740  4656  6201 D BC1Live : layer program 0 compiled in 271 ms
+11-06 03:58:39.855  4656  6202 D BC1Live : effect 44 pass compiled in 4 ms
+11-06 03:58:40.122  4656  6202 D BC1Live : layer program 0 compiled in 266 ms
+11-06 03:58:42.296  4656  6203 D BC1Live : effect 45 pass compiled in 4 ms
+11-06 03:58:42.583  4656  6203 D BC1Live : layer program 0 compiled in 285 ms
+11-06 03:58:44.723  4656  6204 D BC1Live : effect 45 pass compiled in 4 ms
+11-06 03:58:45.012  4656  6204 D BC1Live : layer program 0 compiled in 287 ms
+11-06 03:58:47.193  4656  6205 D BC1Live : effect 45 pass compiled in 4 ms
+11-06 03:58:47.482  4656  6205 D BC1Live : layer program 0 compiled in 288 ms
+11-06 03:58:49.615  4656  6206 D BC1Live : effect 45 pass compiled in 3 ms
+11-06 03:58:49.905  4656  6206 D BC1Live : layer program 0 compiled in 289 ms
+11-06 03:58:52.093  4656  6207 D BC1Live : effect 46 pass compiled in 3 ms
+11-06 03:58:52.290  4656  6207 D BC1Live : layer program 0 compiled in 196 ms
+11-06 03:58:54.399  4656  6208 D BC1Live : effect 46 pass compiled in 5 ms
+11-06 03:58:54.595  4656  6208 D BC1Live : layer program 0 compiled in 194 ms
+11-06 03:58:56.767  4656  6209 D BC1Live : effect 47 pass compiled in 3 ms
+11-06 03:58:56.953  4656  6209 D BC1Live : layer program 0 compiled in 185 ms
+11-06 03:58:59.077  4656  6210 D BC1Live : effect 47 pass compiled in 4 ms
+11-06 03:58:59.269  4656  6210 D BC1Live : layer program 0 compiled in 190 ms
+11-06 03:59:02.414  4656  6211 D BC1Live : effect 47 pass compiled in 4 ms
+11-06 03:59:02.604  4656  6211 D BC1Live : layer program 0 compiled in 188 ms
+11-06 03:59:04.703  4656  6212 D BC1Live : effect 47 pass compiled in 4 ms
+11-06 03:59:04.893  4656  6212 D BC1Live : layer program 0 compiled in 188 ms
+11-06 03:59:06.954  4656  4680 I TestRunner: finished: everyControlChangesThePicture(com.blackice.bc1.EffectParamsTest)
+11-06 03:59:06.955  4656  4680 I TestRunner: started: setupShowsAndCopiesRedactedReport(com.blackice.bc1.ExportDiagnosticsUiTest)
+11-06 03:59:09.627  4656  4680 I TestRunner: finished: setupShowsAndCopiesRedactedReport(com.blackice.bc1.ExportDiagnosticsUiTest)
+11-06 03:59:09.632  4656  4680 I TestRunner: started: bothEnginesRenderAnimatedFillHugeScaleAndClover(com.blackice.bc1.FillExportTest)
+11-06 03:59:15.639  4656  4680 D BC1Live : layer program 0 compiled in 166 ms
+11-06 03:59:19.590  4656  4680 I TestRunner: finished: bothEnginesRenderAnimatedFillHugeScaleAndClover(com.blackice.bc1.FillExportTest)
+11-06 03:59:19.591  4656  4680 I TestRunner: started: mainAndFootageShareStateAndKeepTimelineAccessible(com.blackice.bc1.FootageWorkspaceTest)
+11-06 03:59:24.268  4656  6706 D BC1Live : frame at 0 waits for a surface
+11-06 03:59:24.268  4656  6706 D BC1Live : frame at 2000 waits for a surface
+11-06 03:59:24.281  4656  6706 D BC1Live : surface attached
+11-06 03:59:24.852  4656  6706 D BC1Live : layer program 0 compiled in 128 ms
+11-06 03:59:27.138  4656  6706 D BC1Live : slow frame: setup 94 ms, open+prepare 218 ms, latch 0 ms, draw 2488 ms, swap 46 ms
+11-06 03:59:27.138  4656  6706 D BC1Live : frame 1 at 2000 ms took 2848 ms, 1 sources open
+11-06 03:59:32.603  4656  6741 D BC1Live : frame at 2000 waits for a surface
+11-06 03:59:32.633  4656  6741 D BC1Live : surface attached
+11-06 03:59:33.187  4656  6741 D BC1Live : layer program 0 compiled in 14 ms
+11-06 03:59:35.865  4656  6741 D BC1Live : slow frame: setup 84 ms, open+prepare 10 ms, latch 0 ms, draw 2901 ms, swap 55 ms
+11-06 03:59:35.865  4656  6741 D BC1Live : frame 1 at 2000 ms took 3052 ms, 1 sources open
+11-06 03:59:35.868  4656  6741 D BC1Live : surface attached
+11-06 03:59:36.184  4656  6741 D BC1Live : surface attached
+11-06 03:59:37.445  4656  6741 D BC1Live : surface attached
+11-06 03:59:37.993  4656  6741 D BC1Live : surface attached
+11-06 03:59:39.351  4656  6741 D BC1Live : surface attached
+11-06 03:59:40.709  4656  4680 I TestRunner: finished: mainAndFootageShareStateAndKeepTimelineAccessible(com.blackice.bc1.FootageWorkspaceTest)
+11-06 03:59:40.732  4656  4680 I TestRunner: started: recoveredFramingAndQuadraticIntervalRenderThroughBothEngines(com.blackice.bc1.FramingExportTest)
+11-06 03:59:46.812  4656  4680 D BC1Live : layer program 0 compiled in 98 ms
+11-06 03:59:49.592  4656  4680 I TestRunner: finished: recoveredFramingAndQuadraticIntervalRenderThroughBothEngines(com.blackice.bc1.FramingExportTest)
+11-06 03:59:49.593  4656  4680 I TestRunner: started: emptyHomeHasCreationActionInBothLayouts(com.blackice.bc1.HomeBrowserTest)
+11-06 03:59:55.078  4656  4680 I TestRunner: finished: emptyHomeHasCreationActionInBothLayouts(com.blackice.bc1.HomeBrowserTest)
+11-06 03:59:55.080  4656  4680 I TestRunner: started: creationOpensEditorAndBackSavesBeforeReturningHome(com.blackice.bc1.HomeBrowserTest)
+11-06 03:59:58.286  4656  4680 I TestRunner: finished: creationOpensEditorAndBackSavesBeforeReturningHome(com.blackice.bc1.HomeBrowserTest)
+11-06 03:59:58.287  4656  4680 I TestRunner: started: invalidBundleDoesNotChangeProjectInventory(com.blackice.bc1.HomeBrowserTest)
+11-06 03:59:58.363  4656  4680 I TestRunner: finished: invalidBundleDoesNotChangeProjectInventory(com.blackice.bc1.HomeBrowserTest)
+11-06 03:59:58.365  4656  4680 I TestRunner: started: damagedProjectsRemainVisible(com.blackice.bc1.HomeBrowserTest)
+11-06 03:59:58.380  4656  4680 I TestRunner: finished: damagedProjectsRemainVisible(com.blackice.bc1.HomeBrowserTest)
+11-06 03:59:58.382  4656  4680 I TestRunner: started: bundleRestoresIndependentProjectAndMedia(com.blackice.bc1.HomeBrowserTest)
+11-06 03:59:58.425  4656  4680 I TestRunner: finished: bundleRestoresIndependentProjectAndMedia(com.blackice.bc1.HomeBrowserTest)
+11-06 03:59:58.428  4656  4680 I TestRunner: started: menuSearchNavigationResizeAndScreenshots(com.blackice.bc1.HomeBrowserTest)
+11-06 04:00:05.864  4656  4680 I TestRunner: finished: menuSearchNavigationResizeAndScreenshots(com.blackice.bc1.HomeBrowserTest)
+11-06 04:00:05.866  4656  4680 I TestRunner: started: duplicateRenameDeletePreserveEditsAndSource(com.blackice.bc1.HomeBrowserTest)
+11-06 04:00:05.969  4656  4680 I TestRunner: finished: duplicateRenameDeletePreserveEditsAndSource(com.blackice.bc1.HomeBrowserTest)
+11-06 04:00:05.971  4656  4680 I TestRunner: started: trackpadMovesBothAxesWithOneUndoAndCancelRestoresStaticAndAnimatedLayers(com.blackice.bc1.InspectorControlsTest)
+11-06 04:00:06.573  4656  7511 D BC1Live : frame at 0 waits for a surface
+11-06 04:00:06.577  4656  7511 D BC1Live : surface attached
+11-06 04:00:06.862  4656  7511 D BC1Live : layer program 0 compiled in 12 ms
+11-06 04:00:09.978  4656  7511 D BC1Live : slow frame: setup 68 ms, open+prepare 17 ms, latch 0 ms, draw 3140 ms, swap 147 ms
+11-06 04:00:09.978  4656  7511 D BC1Live : frame 1 at 0 ms took 3374 ms, 1 sources open
+11-06 04:00:10.302  4656  4680 I TestRunner: finished: trackpadMovesBothAxesWithOneUndoAndCancelRestoresStaticAndAnimatedLayers(com.blackice.bc1.InspectorControlsTest)
+11-06 04:00:10.305  4656  4680 I TestRunner: started: controlChoiceSurvivesRecreationWithoutChangingTheProject(com.blackice.bc1.InspectorControlsTest)
+11-06 04:00:10.566  4656  7525 D BC1Live : frame at 0 waits for a surface
+11-06 04:00:10.574  4656  7525 D BC1Live : surface attached
+11-06 04:00:10.800  4656  7525 D BC1Live : layer program 0 compiled in 16 ms
+11-06 04:00:13.163  4656  7525 D BC1Live : slow frame: setup 42 ms, open+prepare 6 ms, latch 0 ms, draw 2332 ms, swap 189 ms
+11-06 04:00:13.163  4656  7525 D BC1Live : frame 1 at 0 ms took 2571 ms, 1 sources open
+11-06 04:00:13.529  4656  7538 D BC1Live : frame at 0 waits for a surface
+11-06 04:00:13.535  4656  7538 D BC1Live : surface attached
+11-06 04:00:13.737  4656  7538 D BC1Live : layer program 0 compiled in 35 ms
+11-06 04:00:16.356  4656  7538 D BC1Live : slow frame: setup 14 ms, open+prepare 3 ms, latch 0 ms, draw 2585 ms, swap 179 ms
+11-06 04:00:16.356  4656  7538 D BC1Live : frame 1 at 0 ms took 2783 ms, 1 sources open
+11-06 04:00:16.695  4656  4680 I TestRunner: finished: controlChoiceSurvivesRecreationWithoutChangingTheProject(com.blackice.bc1.InspectorControlsTest)
+11-06 04:00:16.700  4656  4680 I TestRunner: started: sliderAndTrackpadKeyboardUseTheRealPositionAndRespectLocks(com.blackice.bc1.InspectorControlsTest)
+11-06 04:00:16.841  4656  7554 D BC1Live : frame at 0 waits for a surface
+11-06 04:00:16.846  4656  7554 D BC1Live : surface attached
+11-06 04:00:17.141  4656  7554 D BC1Live : layer program 0 compiled in 30 ms
+11-06 04:00:20.053  4656  7554 D BC1Live : slow frame: setup 48 ms, open+prepare 2 ms, latch 0 ms, draw 2995 ms, swap 120 ms
+11-06 04:00:20.053  4656  7554 D BC1Live : frame 1 at 0 ms took 3167 ms, 1 sources open
+11-06 04:00:20.475  4656  4680 I TestRunner: finished: sliderAndTrackpadKeyboardUseTheRealPositionAndRespectLocks(com.blackice.bc1.InspectorControlsTest)
+11-06 04:00:20.477  4656  4680 I TestRunner: started: wideMenusUseCompactRowsAndScrollableGraphs(com.blackice.bc1.InspectorControlsTest)
+11-06 04:00:21.368  4656  7593 D BC1Live : frame at 0 waits for a surface
+11-06 04:00:21.392  4656  7593 D BC1Live : surface attached
+11-06 04:00:21.982  4656  7593 D BC1Live : layer program 0 compiled in 73 ms
+11-06 04:00:24.619  4656  7593 D BC1Live : slow frame: setup 313 ms, open+prepare 4 ms, latch 0 ms, draw 2452 ms, swap 409 ms
+11-06 04:00:24.621  4656  7593 D BC1Live : frame 1 at 0 ms took 3181 ms, 1 sources open
+11-06 04:00:31.553  4656  7593 D BC1Live : layer program 2 compiled in 40 ms
+11-06 04:00:34.276  4656  7593 D BC1Live : slow frame: setup 0 ms, open+prepare 0 ms, latch 0 ms, draw 2752 ms, swap 10 ms
+11-06 04:00:34.276  4656  7593 D BC1Live : frame 3 at 1000 ms took 2764 ms, 1 sources open
+11-06 04:00:40.183  4656  7699 D BC1Live : frame at 1000 waits for a surface
+11-06 04:00:40.187  4656  7699 D BC1Live : surface attached
+11-06 04:00:40.502  4656  7699 D BC1Live : layer program 2 compiled in 17 ms
+11-06 04:00:42.839  4656  7699 D BC1Live : slow frame: setup 79 ms, open+prepare 6 ms, latch 0 ms, draw 2260 ms, swap 185 ms
+11-06 04:00:42.867  4656  7699 D BC1Live : frame 1 at 1000 ms took 2533 ms, 1 sources open
+11-06 04:00:47.513  4656  4680 I TestRunner: finished: wideMenusUseCompactRowsAndScrollableGraphs(com.blackice.bc1.InspectorControlsTest)
+11-06 04:00:47.527  4656  4680 I TestRunner: started: instantInsertionClockAndEffectsInBothLayouts(com.blackice.bc1.InstantFillTest)
+11-06 04:00:48.420  4656  7779 D BC1Live : frame at 0 waits for a surface
+11-06 04:00:48.460  4656  7779 D BC1Live : surface attached
+11-06 04:00:48.829  4656  7779 D BC1Live : slow frame: setup 24 ms, open+prepare 0 ms, latch 0 ms, draw 2 ms, swap 251 ms
+11-06 04:00:48.829  4656  7779 D BC1Live : frame 1 at 0 ms took 279 ms, 0 sources open
+11-06 04:00:56.920  4656  8075 D BC1Live : frame at 5000 waits for a surface
+11-06 04:00:56.931  4656  8075 D BC1Live : surface attached
+11-06 04:00:57.285  4656  8075 D BC1Live : slow frame: setup 99 ms, open+prepare 0 ms, latch 0 ms, draw 1 ms, swap 242 ms
+11-06 04:00:57.285  4656  8075 D BC1Live : frame 1 at 5000 ms took 344 ms, 0 sources open
+11-06 04:01:00.058  4656  8111 D BC1Live : frame at 0 waits for a surface
+11-06 04:01:00.069  4656  8111 D BC1Live : surface attached
+11-06 04:01:00.657  4656  8111 D BC1Live : slow frame: setup 106 ms, open+prepare 0 ms, latch 0 ms, draw 1 ms, swap 319 ms
+11-06 04:01:00.657  4656  8111 D BC1Live : frame 1 at 0 ms took 427 ms, 0 sources open
+11-06 04:01:05.210  4656  8140 D BC1Live : frame at 5000 waits for a surface
+11-06 04:01:05.217  4656  8140 D BC1Live : surface attached
+11-06 04:01:05.692  4656  8140 D BC1Live : slow frame: setup 67 ms, open+prepare 0 ms, latch 0 ms, draw 5 ms, swap 328 ms
+11-06 04:01:05.693  4656  8140 D BC1Live : frame 1 at 5000 ms took 403 ms, 0 sources open
+11-06 04:01:05.973  4656  4680 I TestRunner: finished: instantInsertionClockAndEffectsInBothLayouts(com.blackice.bc1.InstantFillTest)
+11-06 04:01:05.974  4656  4680 I TestRunner: started: cloverIsSolidAndHugeShapesRemainFrameBounded(com.blackice.bc1.InstantFillTest)
+11-06 04:01:06.030  4656  4680 I TestRunner: finished: cloverIsSolidAndHugeShapesRemainFrameBounded(com.blackice.bc1.InstantFillTest)
+11-06 04:01:06.038  4656  4680 I TestRunner: started: mediaDoubleActivationAndMarkerDragsAreSingleUndoActions(com.blackice.bc1.InstantFillTest)
+11-06 04:01:06.930  4656  8205 D BC1Live : frame at 0 waits for a surface
+11-06 04:01:06.999  4656  8205 D BC1Live : surface attached
+11-06 04:01:07.338  4656  8205 D BC1Live : slow frame: setup 19 ms, open+prepare 0 ms, latch 0 ms, draw 1 ms, swap 235 ms
+11-06 04:01:07.338  4656  8205 D BC1Live : frame 1 at 0 ms took 257 ms, 0 sources open
+11-06 04:01:11.291  4656  8205 D BC1Live : layer program 0 compiled in 99 ms
+11-06 04:01:13.663  4656  8205 D BC1Live : slow frame: setup 0 ms, open+prepare 30 ms, latch 0 ms, draw 2451 ms, swap 19 ms
+11-06 04:01:13.663  4656  8205 D BC1Live : frame 3 at 5000 ms took 2501 ms, 1 sources open
+11-06 04:01:15.120  4656  4680 I TestRunner: finished: mediaDoubleActivationAndMarkerDragsAreSingleUndoActions(com.blackice.bc1.InstantFillTest)
+11-06 04:01:15.133  4656  4680 I TestRunner: started: toolbarMarkerDragCreatesOnceAndCancelLeavesProjectUntouched(com.blackice.bc1.InstantFillTest)
+11-06 04:01:15.898  4656  8505 D BC1Live : frame at 0 waits for a surface
+11-06 04:01:15.911  4656  8505 D BC1Live : surface attached
+11-06 04:01:16.498  4656  8505 D BC1Live : slow frame: setup 94 ms, open+prepare 0 ms, latch 0 ms, draw 1 ms, swap 344 ms
+11-06 04:01:16.498  4656  8505 D BC1Live : frame 1 at 0 ms took 440 ms, 0 sources open
+11-06 04:01:19.418  4656  4680 I TestRunner: finished: toolbarMarkerDragCreatesOnceAndCancelLeavesProjectUntouched(com.blackice.bc1.InstantFillTest)
+11-06 04:01:19.425  4656  4680 I TestRunner: started: rotationReleaseSurvivesPanelRebuildAndUndo(com.blackice.bc1.LandscapeStabilityTest)
+11-06 04:01:20.191  4656  8580 D BC1Live : frame at 0 waits for a surface
+11-06 04:01:20.199  4656  8580 D BC1Live : surface attached
+11-06 04:01:20.905  4656  8580 D BC1Live : slow frame: setup 289 ms, open+prepare 0 ms, latch 0 ms, draw 1 ms, swap 296 ms
+11-06 04:01:20.905  4656  8580 D BC1Live : frame 1 at 0 ms took 588 ms, 0 sources open
+11-06 04:01:22.931  4656  4680 I TestRunner: finished: rotationReleaseSurvivesPanelRebuildAndUndo(com.blackice.bc1.LandscapeStabilityTest)
+11-06 04:01:22.937  4656  4680 I TestRunner: started: exportHonoursOrderVisibilityAndTransforms(com.blackice.bc1.LayerRenderingTest)
+11-06 04:01:42.516  4656  4680 I TestRunner: finished: exportHonoursOrderVisibilityAndTransforms(com.blackice.bc1.LayerRenderingTest)
+11-06 04:01:42.517  4656  4680 I TestRunner: started: soloIsolatesOnlyInPreview(com.blackice.bc1.LayerRenderingTest)
+11-06 04:01:50.521  4656  4680 I TestRunner: finished: soloIsolatesOnlyInPreview(com.blackice.bc1.LayerRenderingTest)
+11-06 04:01:50.523  4656  4680 I TestRunner: started: reverseFootageEndToEndKeepsTimingAndRestoresTheOriginal(com.blackice.bc1.LayerToolsTest)
+11-06 04:01:52.992  4656  8876 D BC1Live : frame at 0 waits for a surface
+11-06 04:01:53.019  4656  8876 D BC1Live : surface attached
+11-06 04:01:54.299  4656  8876 D BC1Live : layer program 0 compiled in 329 ms
+11-06 04:01:57.696  4656  8876 D BC1Live : slow frame: setup 152 ms, open+prepare 360 ms, latch 222 ms, draw 3629 ms, swap 236 ms
+11-06 04:01:57.696  4656  8876 D BC1Live : frame 1 at 0 ms took 4601 ms, 1 sources open
+11-06 04:02:03.110  4656  8876 D BC1Live : slow frame: setup 0 ms, open+prepare 396 ms, latch 0 ms, draw 27 ms, swap 86 ms
+11-06 04:02:03.110  4656  8876 D BC1Live : frame 2 at 0 ms took 511 ms, 1 sources open
+11-06 04:02:04.381  4656  8876 D BC1Live : slow frame: setup 0 ms, open+prepare 424 ms, latch 0 ms, draw 28 ms, swap 207 ms
+11-06 04:02:04.382  4656  8876 D BC1Live : frame 3 at 0 ms took 660 ms, 1 sources open
+11-06 04:02:05.468  4656  4680 I TestRunner: finished: reverseFootageEndToEndKeepsTimingAndRestoresTheOriginal(com.blackice.bc1.LayerToolsTest)
+11-06 04:02:05.469  4656  4680 I TestRunner: started: layerToolsHasFiveSeparateTabsAndBackKeepsTheSelection(com.blackice.bc1.LayerToolsTest)
+11-06 04:02:06.444  4656  9364 D BC1Live : frame at 0 waits for a surface
+11-06 04:02:06.450  4656  9364 D BC1Live : surface attached
+11-06 04:02:06.834  4656  9364 D BC1Live : layer program 0 compiled in 7 ms
+11-06 04:02:09.891  4656  9364 D BC1Live : slow frame: setup 149 ms, open+prepare 3 ms, latch 0 ms, draw 2859 ms, swap 299 ms
+11-06 04:02:09.891  4656  9364 D BC1Live : frame 1 at 0 ms took 3311 ms, 1 sources open
+11-06 04:02:15.377  4656  4680 I TestRunner: finished: layerToolsHasFiveSeparateTabsAndBackKeepsTheSelection(com.blackice.bc1.LayerToolsTest)
+11-06 04:02:15.391  4656  4680 I TestRunner: started: screenshotCapturesOnlyTheSelectedLayerAsATransparentNewImageLayer(com.blackice.bc1.LayerToolsTest)
+11-06 04:02:17.772  4656  9460 D BC1Live : frame at 0 waits for a surface
+11-06 04:02:17.787  4656  9460 D BC1Live : surface attached
+11-06 04:02:18.365  4656  9460 D BC1Live : layer program 0 compiled in 441 ms
+11-06 04:02:20.878  4656  9460 D BC1Live : slow frame: setup 17 ms, open+prepare 4 ms, latch 0 ms, draw 2590 ms, swap 452 ms
+11-06 04:02:20.878  4656  9460 D BC1Live : frame 1 at 0 ms took 3064 ms, 1 sources open
+11-06 04:02:24.442  4656  9460 D BC1Live : slow frame: setup 0 ms, open+prepare 0 ms, latch 0 ms, draw 2292 ms, swap 71 ms
+11-06 04:02:24.443  4656  9460 D BC1Live : frame 2 at 1500 ms took 2364 ms, 1 sources open
+11-06 04:02:25.953  4656  9485 D BC1Live : layer program 0 compiled in 9 ms
+11-06 04:02:29.647  4656  4680 I TestRunner: finished: screenshotCapturesOnlyTheSelectedLayerAsATransparentNewImageLayer(com.blackice.bc1.LayerToolsTest)
+11-06 04:02:29.651  4656  4680 I TestRunner: started: jointMovementKeepsPoseSurvivesDeleteUndoAndRejectsCycles(com.blackice.bc1.LayerToolsTest)
+11-06 04:02:30.421  4656  9549 D BC1Live : frame at 0 waits for a surface
+11-06 04:02:30.436  4656  9549 D BC1Live : surface attached
+11-06 04:02:30.915  4656  9549 D BC1Live : layer program 0 compiled in 32 ms
+11-06 04:02:33.205  4656  9549 D BC1Live : slow frame: setup 125 ms, open+prepare 75 ms, latch 0 ms, draw 2419 ms, swap 129 ms
+11-06 04:02:33.205  4656  9549 D BC1Live : frame 1 at 0 ms took 2750 ms, 1 sources open
+11-06 04:02:35.014  4656  4680 I TestRunner: finished: jointMovementKeepsPoseSurvivesDeleteUndoAndRejectsCycles(com.blackice.bc1.LayerToolsTest)
+11-06 04:02:35.021  4656  4680 I TestRunner: started: compactToolbarHasNoZoomAndKeepsTouchTargetsApart(com.blackice.bc1.LayerToolsTest)
+11-06 04:02:35.813  4656  9618 D BC1Live : frame at 0 waits for a surface
+11-06 04:02:35.835  4656  9618 D BC1Live : surface attached
+11-06 04:02:36.286  4656  9618 D BC1Live : layer program 0 compiled in 35 ms
+11-06 04:02:38.455  4656  9618 D BC1Live : slow frame: setup 96 ms, open+prepare 69 ms, latch 0 ms, draw 2217 ms, swap 130 ms
+11-06 04:02:38.455  4656  9618 D BC1Live : frame 1 at 0 ms took 2514 ms, 1 sources open
+11-06 04:02:42.162  4656  9618 D BC1Live : slow frame: setup 0 ms, open+prepare 0 ms, latch 0 ms, draw 352 ms, swap 2577 ms
+11-06 04:02:42.162  4656  9618 D BC1Live : frame 2 at 0 ms took 2930 ms, 1 sources open
+11-06 04:02:44.116  4656  4680 I TestRunner: finished: compactToolbarHasNoZoomAndKeepsTouchTargetsApart(com.blackice.bc1.LayerToolsTest)
+11-06 04:02:44.123  4656  4680 I TestRunner: started: browseGalleryImportsToBinAndRestoresAlbumAcrossWindows(com.blackice.bc1.MediaBrowserGalleryTest)
+11-06 04:02:50.538  4656  4680 I TestRunner: finished: browseGalleryImportsToBinAndRestoresAlbumAcrossWindows(com.blackice.bc1.MediaBrowserGalleryTest)
+11-06 04:02:50.543  4656  4680 I TestRunner: started: requestedShapesFitSquareWithoutStretching(com.blackice.bc1.MediaShapesTest)
+11-06 04:02:51.987  4656  4680 I TestRunner: finished: requestedShapesFitSquareWithoutStretching(com.blackice.bc1.MediaShapesTest)
+11-06 04:02:51.988  4656  4680 I TestRunner: started: browserAndShapeDragPreserveProjectAcrossLayouts(com.blackice.bc1.MediaShapesTest)
+11-06 04:02:56.364  4656  9835 D BC1Live : frame at 0 waits for a surface
+11-06 04:02:56.375  4656  9835 D BC1Live : surface attached
+11-06 04:02:56.699  4656  9835 D BC1Live : frame 1 at 0 ms took 241 ms, 0 sources open
+11-06 04:02:57.839  4656  9835 D BC1Live : surface attached
+11-06 04:02:58.726  4656  9835 D BC1Live : surface attached
+11-06 04:02:59.087  4656  9835 D BC1Live : surface attached
+11-06 04:02:59.810  4656  9891 D BC1Live : frame at 0 waits for a surface
+11-06 04:02:59.822  4656  9891 D BC1Live : surface attached
+11-06 04:03:00.160  4656  9891 D BC1Live : slow frame: setup 120 ms, open+prepare 0 ms, latch 0 ms, draw 1 ms, swap 204 ms
+11-06 04:03:00.169  4656  9891 D BC1Live : frame 1 at 0 ms took 335 ms, 0 sources open
+11-06 04:03:02.546  4656  9970 D BC1Live : frame at 1500 waits for a surface
+11-06 04:03:02.557  4656  9970 D BC1Live : surface attached
+11-06 04:03:03.108  4656  9970 D BC1Live : slow frame: setup 101 ms, open+prepare 0 ms, latch 0 ms, draw 0 ms, swap 368 ms
+11-06 04:03:03.112  4656  9970 D BC1Live : frame 1 at 1500 ms took 474 ms, 0 sources open
+11-06 04:03:04.530  4656  4680 I TestRunner: finished: browserAndShapeDragPreserveProjectAcrossLayouts(com.blackice.bc1.MediaShapesTest)
+11-06 04:03:04.531  4656  4680 I TestRunner: started: audioImportsThroughUnifiedFlowAndEffectsEditExistingTimeline(com.blackice.bc1.MediaShapesTest)
+11-06 04:03:05.404  4656 10013 D BC1Live : frame at 0 waits for a surface
+11-06 04:03:05.413  4656 10013 D BC1Live : frame at 0 waits for a surface
+11-06 04:03:05.443  4656 10013 D BC1Live : frame at 0 waits for a surface
+11-06 04:03:05.455  4656 10013 D BC1Live : frame at 0 waits for a surface
+11-06 04:03:05.463  4656 10013 D BC1Live : frame at 0 waits for a surface
+11-06 04:03:05.472  4656 10013 D BC1Live : frame at 0 waits for a surface
+11-06 04:03:05.519  4656 10013 D BC1Live : frame at 0 waits for a surface
+11-06 04:03:05.523  4656 10013 D BC1Live : surface attached
+11-06 04:03:05.857  4656 10013 D BC1Live : layer program 0 compiled in 13 ms
+11-06 04:03:08.110  4656 10013 D BC1Live : slow frame: setup 162 ms, open+prepare 2 ms, latch 0 ms, draw 2251 ms, swap 152 ms
+11-06 04:03:08.111  4656 10013 D BC1Live : frame 1 at 0 ms took 2569 ms, 1 sources open
+11-06 04:03:08.209  4656 10023 D BC1Live : frame at 0 waits for a surface
+11-06 04:03:08.220  4656 10023 D BC1Live : surface attached
+11-06 04:03:08.469  4656 10023 D BC1Live : layer program 0 compiled in 29 ms
+11-06 04:03:10.787  4656 10023 D BC1Live : slow frame: setup 58 ms, open+prepare 2 ms, latch 0 ms, draw 2373 ms, swap 123 ms
+11-06 04:03:10.790  4656 10023 D BC1Live : frame 1 at 0 ms took 2562 ms, 1 sources open
+11-06 04:03:11.393  4656  4680 I TestRunner: finished: audioImportsThroughUnifiedFlowAndEffectsEditExistingTimeline(com.blackice.bc1.MediaShapesTest)
+11-06 04:03:11.398  4656  4680 I TestRunner: started: heightKeyOnLegacyScaleNeverEditsWidth(com.blackice.bc1.MenuUpdateTest)
+11-06 04:03:11.624  4656 10058 D BC1Live : frame at 0 waits for a surface
+11-06 04:03:11.632  4656 10058 D BC1Live : surface attached
+11-06 04:03:11.886  4656 10058 D BC1Live : layer program 0 compiled in 31 ms
+11-06 04:03:15.414  4656 10058 D BC1Live : slow frame: setup 31 ms, open+prepare 2 ms, latch 0 ms, draw 3533 ms, swap 172 ms
+11-06 04:03:15.414  4656 10058 D BC1Live : frame 1 at 0 ms took 3740 ms, 1 sources open
+11-06 04:03:18.973  4656  4680 I TestRunner: finished: heightKeyOnLegacyScaleNeverEditsWidth(com.blackice.bc1.MenuUpdateTest)
+11-06 04:03:18.974  4656  4680 I TestRunner: started: interruptedGraphGesturesRestoreTheOriginalCurve(com.blackice.bc1.MenuUpdateTest)
+11-06 04:03:19.596  4656 10112 D BC1Live : frame at 0 waits for a surface
+11-06 04:03:19.638  4656 10112 D BC1Live : surface attached
+11-06 04:03:20.121  4656 10112 D BC1Live : layer program 0 compiled in 39 ms
+11-06 04:03:23.475  4656 10112 D BC1Live : slow frame: setup 177 ms, open+prepare 3 ms, latch 0 ms, draw 3258 ms, swap 245 ms
+11-06 04:03:23.475  4656 10112 D BC1Live : frame 1 at 0 ms took 3684 ms, 1 sources open
+11-06 04:03:24.358  4656  4680 I TestRunner: finished: interruptedGraphGesturesRestoreTheOriginalCurve(com.blackice.bc1.MenuUpdateTest)
+11-06 04:03:24.382  4656  4680 I TestRunner: started: menusFollowTheReferenceStructureAndStayConnectedToTheModel(com.blackice.bc1.MenuUpdateTest)
+11-06 04:03:25.338  4656 10187 D BC1Live : frame at 0 waits for a surface
+11-06 04:03:25.363  4656 10187 D BC1Live : surface attached
+11-06 04:03:25.794  4656 10187 D BC1Live : layer program 0 compiled in 57 ms
+11-06 04:03:29.275  4656 10187 D BC1Live : slow frame: setup 154 ms, open+prepare 17 ms, latch 0 ms, draw 3442 ms, swap 241 ms
+11-06 04:03:29.275  4656 10187 D BC1Live : frame 1 at 0 ms took 3855 ms, 1 sources open
+11-06 04:03:34.491  4656 10187 D BC1Live : slow frame: setup 0 ms, open+prepare 0 ms, latch 0 ms, draw 3384 ms, swap 17 ms
+11-06 04:03:34.491  4656 10187 D BC1Live : frame 10 at 1000 ms took 3402 ms, 1 sources open
+11-06 04:03:38.884  4656 10187 D BC1Live : slow frame: setup 0 ms, open+prepare 0 ms, latch 0 ms, draw 3759 ms, swap 8 ms
+11-06 04:03:38.884  4656 10187 D BC1Live : frame 14 at 1000 ms took 3768 ms, 1 sources open
+11-06 04:03:39.648  4656 10187 D BC1Live : surface attached
+11-06 04:03:39.943  4656 10187 D BC1Live : surface attached
+11-06 04:03:41.859  4656  4680 I TestRunner: finished: menusFollowTheReferenceStructureAndStayConnectedToTheModel(com.blackice.bc1.MenuUpdateTest)
+11-06 04:03:41.868  4656  4680 I TestRunner: started: rendersEveryMenuAtEachPanelWidth(com.blackice.bc1.MenuUpdateTest)
+11-06 04:03:42.318  4656 10273 D BC1Live : frame at 0 waits for a surface
+11-06 04:03:42.324  4656 10273 D BC1Live : surface attached
+11-06 04:03:42.577  4656 10273 D BC1Live : layer program 0 compiled in 12 ms
+11-06 04:03:45.192  4656 10273 D BC1Live : slow frame: setup 65 ms, open+prepare 20 ms, latch 0 ms, draw 2598 ms, swap 171 ms
+11-06 04:03:45.192  4656 10273 D BC1Live : frame 1 at 0 ms took 2855 ms, 1 sources open
+11-06 04:03:45.203  4656 10273 D BC1Live : layer program 2 compiled in 10 ms
+11-06 04:03:47.810  4656 10273 D BC1Live : slow frame: setup 0 ms, open+prepare 0 ms, latch 0 ms, draw 2606 ms, swap 11 ms
+11-06 04:03:47.810  4656 10273 D BC1Live : frame 2 at 1000 ms took 2617 ms, 1 sources open
+11-06 04:03:48.306  4656  4680 I TestRunner: finished: rendersEveryMenuAtEachPanelWidth(com.blackice.bc1.MenuUpdateTest)
+11-06 04:03:48.307  4656  4680 I TestRunner: started: emptyProjectShapeSheetPreservesFrameAndPersistsVectors(com.blackice.bc1.MobileSheetTest)
+11-06 04:03:50.277  4656 10328 D BC1Live : frame at 0 waits for a surface
+11-06 04:03:50.288  4656 10328 D BC1Live : frame at 0 waits for a surface
+11-06 04:03:50.289  4656 10328 D BC1Live : frame at 500 waits for a surface
+11-06 04:03:50.298  4656 10328 D BC1Live : surface attached
+11-06 04:03:50.610  4656 10328 D BC1Live : slow frame: setup 71 ms, open+prepare 0 ms, latch 0 ms, draw 0 ms, swap 178 ms
+11-06 04:03:50.611  4656 10328 D BC1Live : frame 1 at 500 ms took 250 ms, 0 sources open
+11-06 04:03:51.090  4656 10342 D BC1Live : frame at 500 waits for a surface
+11-06 04:03:51.122  4656 10342 D BC1Live : surface attached
+11-06 04:03:51.393  4656 10342 D BC1Live : frame 1 at 500 ms took 215 ms, 0 sources open
