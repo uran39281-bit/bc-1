@@ -100,6 +100,7 @@ jobs:
           reports=BC-1/app/build/reports/androidTests
           mkdir -p /tmp/shots
           for f in "$dir"/*.png; do [ -e "$f" ] && ffmpeg -v error -y -i "$f" -vf scale=540:-1 "/tmp/shots/$(basename "$f")" || true; done
+          [ -f "$dir/v155-action-log.txt" ] && cp "$dir/v155-action-log.txt" /tmp/shots/ || true
           # Text summaries so failures can be read without downloading artifacts.
           [ -f "$reports/device-checks.log" ] && tail -c 200000 "$reports/device-checks.log" > /tmp/shots/device-checks.log || true
           [ -f "$reports/instrumentation.txt" ] && cp "$reports/instrumentation.txt" /tmp/shots/ || true

@@ -41,7 +41,7 @@ final class MediaImportWindow {
     void show(){
         if(a.isFinishing()||a.isDestroyed()||showing())return;
         restoreOpen=true;
-        content=a.column();content.setPadding(a.dp(14),a.dp(10),a.dp(14),a.dp(10));content.setBackground(a.panelBackground());content.setContentDescription("Browse files window");
+        content=new TraceInputLayout(a);content.setPadding(a.dp(14),a.dp(10),a.dp(14),a.dp(10));content.setBackground(a.panelBackground());content.setContentDescription("Browse files window");
         LinearLayout heading=a.row();heading.setGravity(Gravity.CENTER_VERTICAL);heading.addView(a.label("Browse files",18,EditorActivity.TEXT,true),new LinearLayout.LayoutParams(0,a.dp(48),1));
         heading.addView(a.compactButton("×","Close Browse files",v->close()),new LinearLayout.LayoutParams(a.dp(48),a.dp(48)));content.addView(heading);
         content.addView(a.note("Choose files to add to Project Media, then drag them onto the timeline."));
