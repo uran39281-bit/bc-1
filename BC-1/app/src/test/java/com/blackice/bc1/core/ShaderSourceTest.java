@@ -60,6 +60,7 @@ public class ShaderSourceTest {
         assertTrue("Shorter than the layer shader", pass.length() < LayerShader.forEffect(s, 25).length());
         assertFalse(LayerShader.separable(11));
         assertTrue(LayerShader.separable(12));
-        try { LayerShader.effectPass(s, 4); fail(); } catch (IllegalArgumentException expected) { }
+        String basic=LayerShader.effectPass(s,4);assertTrue("Stack passes support the legacy grayscale effect",basic.contains("if(uEffect==4)"));assertFalse(basic.contains("uTransform.w"));
+        for(int invalid:new int[]{0,999})try{LayerShader.effectPass(s,invalid);fail("Unsupported pass "+invalid);}catch(IllegalArgumentException expected){}
     }
 }

@@ -169,7 +169,7 @@ final class MenuHost implements MenuScreenFactory.Host {
         long now = a.project.playheadMs, best = -1, here = time(), tol = tolerance();
         for (int id : group(p)) {
             for (Motion.Key k : motion(p).curves.get(id)) {
-                if (Math.abs(k.timeMs - here) <= tol) continue;
+                if(k.timeMs==here)continue;
                 if (c != null && (k.timeMs < c.inMs || k.timeMs > c.outMs)) continue;
                 if (o != null && (k.timeMs < 0 || k.timeMs > o.endMs - o.startMs)) continue;
                 long at = timelineTime(k);

@@ -15,7 +15,7 @@ public final class EffectInstance {
     public EffectInstance(int type){this.type=type;id=UUID.randomUUID().toString();motion=new Motion();}
     EffectInstance(String id,int type,float intensity,float[] params,Motion motion,boolean enabled){this.id=id;this.type=type;this.intensity=intensity;this.params=params;this.motion=motion;this.enabled=enabled;}
     public float[] resolved(){return EffectCatalog.resolve(type,params);}
-    public float strength(long sourceMs){return enabled?motion.value(Motion.INTENSITY,sourceMs,intensity):0;}
+    public float strength(long sourceMs){return motion.value(Motion.INTENSITY,sourceMs,intensity);}
     public EffectInstance copy(boolean newIdentity){EffectInstance e=new EffectInstance(type);e.id=newIdentity?UUID.randomUUID().toString():id;e.intensity=intensity;e.params=params==null?null:params.clone();e.motion=motion.copy();e.enabled=enabled;return e;}
     public void validate(){
         if(id==null||id.isEmpty()||id.length()>80||type==0||!EffectCatalog.valid(type)||!Motion.allowed(Motion.INTENSITY,intensity))throw new IllegalArgumentException("Invalid effect instance; original project is preserved.");

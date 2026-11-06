@@ -29,7 +29,7 @@ final class EasingControls {
             public void preview(CubicBezier c){if(first!=null&&scope.equals(scope(property)))a.liveAdjust(()->CurveEdits.write(first,c));}
             public void commit(){a.endLiveAdjust("Easing curve updated",()->{});}
             public void cancel(){a.cancelLiveAdjust();}
-        });content.addView(graph);
+        });graph.setEnabled(first!=null&&!a.selectionLocked()&&!a.uiLocked);content.addView(graph);
         TextView reset=a.button("Reset curve",v->{if(first!=null&&scope.equals(scope(property))&&a.layerEditable())a.edit("Easing curve reset",()->CurveEdits.write(first,CubicBezier.LINEAR));});reset.setEnabled(first!=null);content.addView(reset);
         for(int i=0;i<4;i++){final int preset=i;TextView button=a.button(Keyframes.EASINGS[i],v->apply(property,preset));button.setEnabled(first!=null);content.addView(button);}
         CollapsibleSection section=new CollapsibleSection(a,scope,expanded,"Easing Curve Editor",content,a::cancelLiveAdjust);section.context(status);parent.addView(section);
@@ -53,7 +53,7 @@ final class EasingControls {
             public void begin(){activate.run();a.fillPanel.begin();}
             public void preview(CubicBezier c){if(valid.getAsBoolean())a.fillPanel.live(()->source.get().curve(start,(float)c.x1,(float)c.y1,(float)c.x2,(float)c.y2));}
             public void commit(){a.fillPanel.end(false);}public void cancel(){a.fillPanel.end(true);}
-        });content.addView(graph);TextView reset=a.button("Reset curve",v->{if(valid.getAsBoolean())a.fillPanel.commit(title+" easing reset",()->source.get().ease(start,0));});reset.setEnabled(start!=null);content.addView(reset);
+        });graph.setEnabled(start!=null&&!a.selectionLocked()&&!a.uiLocked);content.addView(graph);TextView reset=a.button("Reset curve",v->{if(valid.getAsBoolean())a.fillPanel.commit(title+" easing reset",()->source.get().ease(start,0));});reset.setEnabled(start!=null);content.addView(reset);
         for(int i=0;i<4;i++){final int preset=i;TextView choice=a.button(Keyframes.EASINGS[i],v->{if(valid.getAsBoolean()){activate.run();a.fillPanel.commit(title+" easing updated",()->source.get().ease(start,preset));}});choice.setContentDescription(title+" "+Keyframes.EASINGS[i]);choice.setEnabled(start!=null);choice.setSelected(start!=null&&track.interval(start).easing==i);if(choice.isSelected())choice.setBackground(MenuPalette.surfaceGreen(a));content.addView(choice);}
         CollapsibleSection section=new CollapsibleSection(a,scope,expanded,"Easing Curve Editor",content,()->a.fillPanel.end(true));section.context(status);parent.addView(section);
     }

@@ -121,7 +121,7 @@ public final class EditProject {
             if(array==null)return;if(array.length()>MAX_EFFECTS)throw new org.json.JSONException("More than three effects on a layer; original file is preserved.");
             List<EffectInstance> values=new ArrayList<>();java.util.Set<String> ids=new java.util.HashSet<>();
             for(int i=0;i<array.length();i++){EffectInstance e=EffectInstance.read(array.getJSONObject(i));if(!ids.add(e.id))throw new org.json.JSONException("Duplicate effect identity");values.add(newIdentities?e.copy(true):e);}
-            additionalEffects.clear();motion.curves.get(Motion.INTENSITY).clear();effect=0;fx=null;primaryEffectId=null;primaryEffectEnabled=true;intensity=.6f;
+            additionalEffects.clear();if(values.isEmpty()){effect=0;primaryEffectId=null;primaryEffectEnabled=true;return;}motion.curves.get(Motion.INTENSITY).clear();effect=0;fx=null;primaryEffectId=null;primaryEffectEnabled=true;intensity=.6f;
             if(!values.isEmpty()){EffectInstance e=values.remove(0);effect=e.type;primaryEffectId=e.id;primaryEffectEnabled=e.enabled;intensity=e.intensity;fx=e.params;fxEffect=e.type;for(Motion.Key k:e.motion.curves.get(Motion.INTENSITY))motion.curves.get(Motion.INTENSITY).add(k.copy());additionalEffects.addAll(values);}
         }
         public void validateEffects(){List<EffectInstance> all=effects();if(all.size()>MAX_EFFECTS||effect==0&&!additionalEffects.isEmpty())throw new IllegalArgumentException("Three effects per layer maximum");java.util.Set<String> ids=new java.util.HashSet<>();for(EffectInstance e:all){e.validate();if(!ids.add(e.id))throw new IllegalArgumentException("Duplicate effect identity");}}
