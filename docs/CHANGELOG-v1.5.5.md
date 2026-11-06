@@ -38,3 +38,7 @@ How the pack maps to the editor:
 
 ## Publishing 1.5.5
 `.github/workflows/bc1-v155-publish.yml` mirrors the 1.5.4 gate: it runs when `v1.5.5/release.json` lands on `main`, restores the retained-key signed APK from the qualified CI APK, installs published Preview 1.5.4 build 48, upgrades in place, verifies the project and publishes to `test-apk/preview/v1.5.5`. The signed APK, `release.json`, checksums and QA do not exist yet and are not committed as placeholders.
+
+## Integrated phone and diagnostics follow-up
+
+Phone-only: compact Settings gear/outlined Back; smoothly resizable selected-layer drawer with retained UI height; Remove quick action; direct tick-strip ruler gestures and immediate reversal at bounds. Shared: detailed buffered local action/movement/performance trace and Copy All with complete-log export fallback; the project work clock is read-only and keeps accumulated foreground project time. See QA-v1.5.5-phone-diagnostics.md for verification status and measurement limits.

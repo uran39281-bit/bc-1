@@ -12,6 +12,7 @@ import java.util.function.DoubleSupplier;
 final class NumberRuler extends View {
     final float min,max,step;final DoubleSupplier read;final DoubleConsumer write;
     final Runnable begin,end,cancel;final Paint paint=new Paint(3);
+    com.blackice.bc1.menu.RulerGesture gesture;
     float down,start;boolean dragging;
     NumberRuler(Context context,String label,float min,float max,float step,DoubleSupplier read,
                 DoubleConsumer write,Runnable begin,Runnable end,Runnable cancel){
@@ -33,8 +34,8 @@ final class NumberRuler extends View {
         paint.setColor(BlackIceTheme.ICE);paint.setStrokeWidth(dp(isFocused()?3:2));c.drawLine(w/2,0,w/2,h,paint);
     }
     @Override public boolean onTouchEvent(MotionEvent e){if(!isEnabled())return false;switch(e.getActionMasked()){
-        case MotionEvent.ACTION_DOWN:requestFocus();begin.run();start=(float)read.getAsDouble();down=e.getX();dragging=true;getParent().requestDisallowInterceptTouchEvent(true);return true;
-        case MotionEvent.ACTION_MOVE:if(dragging)set(start-(e.getX()-down)/dp(12)*step);return true;
+        case MotionEvent.ACTION_DOWN:requestFocus();begin.run();start=(float)read.getAsDouble();down=e.getX();gesture=new com.blackice.bc1.menu.RulerGesture(start,down);dragging=true;getParent().requestDisallowInterceptTouchEvent(true);return true;
+        case MotionEvent.ACTION_MOVE:if(dragging)set(gesture.move(e.getX(),-step/dp(12),min,max));return true;
         case MotionEvent.ACTION_UP:case MotionEvent.ACTION_CANCEL:if(dragging){dragging=false;getParent().requestDisallowInterceptTouchEvent(false);if(e.getActionMasked()==MotionEvent.ACTION_CANCEL)cancel.run();else{end.run();performClick();}}return true;
     }return super.onTouchEvent(e);}
     @Override public boolean onKeyDown(int code,KeyEvent e){if(code==KeyEvent.KEYCODE_DPAD_LEFT||code==KeyEvent.KEYCODE_DPAD_RIGHT){nudge(code==KeyEvent.KEYCODE_DPAD_RIGHT?step:-step);return true;}return super.onKeyDown(code,e);}

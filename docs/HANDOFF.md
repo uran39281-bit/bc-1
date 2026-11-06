@@ -1,3 +1,7 @@
+# v1.5.5 phone/diagnostics integration candidate
+
+Contains Claude PR #30 plus the phone/diagnostics handoff. See [integration QA](QA-v1.5.5-phone-diagnostics.md). Current candidate requires its own build/emulator/export checks. Work clock is now read-only; never restore old manual pause/reset paths. ActionTrace owns buffered structured local events; CrashLogs owns the viewer/clipboard/export and existing crash records.
+
 # v1.5.5 (build 49) — 18 new effects (source, unsigned)
 
 Effect ids 48–65 appended in `EffectCatalog` (names, categories, centered flags, controls) and `EffectCatalogBrowser` (display groups); shader blocks in `video.frag` after id 47, reading `uParams`. Written from scratch: nothing from the Black Ice Effects Integration Lab pack (another vendor's assets) is imported. `EffectParamsTest` renders every control and every new effect at defaults. The upgrade gate installs published 1.5.4 (build 48); effects work inside 1.5.4 effect stacks. Not signed or published. See CHANGELOG-v1.5.5.md.

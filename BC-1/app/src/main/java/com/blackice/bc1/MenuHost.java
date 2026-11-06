@@ -364,7 +364,7 @@ final class MenuHost implements MenuScreenFactory.Host {
         if (keys.isEmpty()) { a.tell("Add a keyframe to " + title(p) + " first."); return; }
         String[] names = new String[keys.size()];
         for (int i = 0; i < names.length; i++) names[i] = "Key " + (i + 1) + " · " + EditorActivity.seconds(keys.get(i).timeMs) + " s";
-        new AlertDialog.Builder(a).setTitle(title(p) + " keyframe")
+        new com.blackice.bc1.TraceDialogBuilder(a).setTitle(title(p) + " keyframe")
                 .setItems(names, (d, i) -> {
                     a.easingControls.selected.put(scope(p,track), keys.get(i).id);
                     owner.showGraph(p);

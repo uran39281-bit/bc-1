@@ -187,16 +187,16 @@ public final class EditorActivity extends Activity {
         final String initialId=id;
         loadSession(initialId);
     }
-    void loadSession(String id){loading=true;io.execute(()->{EditProject saved=null;String hash="",failure=null;RecoveryStore.Candidate candidate=null;
+    void loadSession(String id){ActionTrace.Span openTrace=ActionTrace.begin("project_open");loading=true;io.execute(()->{openTrace.started();EditProject saved=null;String hash="",failure=null;RecoveryStore.Candidate candidate=null;
         try{if(id!=null){saved=store.load(id);hash=DocumentIdentity.fingerprint(saved);}else{saved=new EditProject();saved.name="";store.save(saved);hash=DocumentIdentity.fingerprint(saved);}}catch(Exception e){failure=e.getMessage();}
         if(id!=null)try{candidate=new RecoveryStore(this).read(id);}catch(Exception e){failure=e.getMessage();}
         EditProject ordinary=saved;String ordinaryHash=hash,error=failure;RecoveryStore.Candidate recovery=candidate;
-        main.post(()->{if(isDestroyed())return;
+        main.post(()->{if(isDestroyed()){openTrace.end("cancelled");return;}openTrace.end(error==null?"success":"failure");
             ProjectSession retained=id==null?null:ProjectSession.ACTIVE.get(id);
             if(retained!=null){useSession(retained.model,retained.savedHash);return;}
             if(recovery!=null&&!recovery.fingerprint.equals(ordinaryHash)){offerRecovery(ordinary,ordinaryHash,recovery);return;}
             if(ordinary!=null){useSession(ordinary,ordinaryHash);if(error!=null)tell(error);}
-            else{loading=false;new AlertDialog.Builder(this).setTitle("Could not open project").setMessage(error==null?"Project storage is unavailable.":error).setPositiveButton("Back to Projects",(d,w)->returnHome()).setCancelable(false).show();}
+            else{loading=false;new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Could not open project").setMessage(error==null?"Project storage is unavailable.":error).setPositiveButton("Back to Projects",(d,w)->returnHome()).setCancelable(false).show();}
         });});}
     void useSession(EditProject loaded,String ordinaryHash){if(projectSession!=null)projectSession.listener=null;projectSession=ProjectSession.attach(this,loaded,ordinaryHash);project=projectSession.model;loading=false;projectSession.listener=this::saveStateChanged;saveStateChanged();refreshProject();if(restoredPanel!=null){String panel=restoredPanel;restoredPanel=null;panels.category(panel);}showLive();if(mediaImportWindow.restoreOpen)openMediaBrowser();if(restoreExportForm&&!exportPickerPending){restoreExportForm=false;ExportWorkspace.show(this);}if(restoreSettingsForm){restoreSettingsForm=false;showSettingsWindow();}if(restoredNewProjectDraft!=null){Bundle draft=restoredNewProjectDraft;restoredNewProjectDraft=null;NewProjectDialog.show(this,this::createFromDialog,draft);}if(getIntent().getBooleanExtra("show-settings",false)){tab=4;renderInspector();}}
     void offerRecovery(EditProject ordinary,String ordinaryHash,RecoveryStore.Candidate candidate){
@@ -204,15 +204,15 @@ public final class EditorActivity extends Activity {
         if(!candidate.base.equals(ordinaryHash))text+="\n\nThe saved project also changed. Both versions will remain intact until you explicitly save or discard the recovered edits.";
         if(ordinary==null)text+="\n\nThe ordinary saved version cannot be read. Keep saved version is unavailable.";
         text+="\n\nKeep saved version discards these recovered edits and opens the saved project.";
-        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Recover project?").setMessage(text).setCancelable(false)
+        AlertDialog dialog=new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Recover project?").setMessage(text).setCancelable(false)
             .setPositiveButton("Restore",(d,w)->{useSession(candidate.project,ordinaryHash);projectSession.restoredIdentity=candidate.identity;projectSession.edited(project,false);})
             .setNeutralButton("Later",(d,w)->{HomeActivity.deferRecovery();returnHome();})
-            .setNegativeButton("Keep saved version",(d,w)->new AlertDialog.Builder(this).setTitle("Discard recovered edits?").setMessage("Discard these recovered edits and open the saved project.").setNegativeButton("Cancel",(x,y)->offerRecovery(ordinary,ordinaryHash,candidate)).setPositiveButton("Discard recovered edits",(x,y)->{io.execute(()->{try{EditProject validated=store.load(candidate.project.id);String current=DocumentIdentity.fingerprint(validated);new RecoveryStore(this).discard(candidate.project.id,candidate.identity);main.post(()->{if(!isDestroyed())useSession(validated,current);});}catch(Exception e){main.post(()->{tell("Recovery was retained: "+e.getMessage());offerRecovery(ordinary,ordinaryHash,candidate);});}});}).setCancelable(false).show()).create();
+            .setNegativeButton("Keep saved version",(d,w)->new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Discard recovered edits?").setMessage("Discard these recovered edits and open the saved project.").setNegativeButton("Cancel",(x,y)->offerRecovery(ordinary,ordinaryHash,candidate)).setPositiveButton("Discard recovered edits",(x,y)->{io.execute(()->{try{EditProject validated=store.load(candidate.project.id);String current=DocumentIdentity.fingerprint(validated);new RecoveryStore(this).discard(candidate.project.id,candidate.identity);main.post(()->{if(!isDestroyed())useSession(validated,current);});}catch(Exception e){main.post(()->{tell("Recovery was retained: "+e.getMessage());offerRecovery(ordinary,ordinaryHash,candidate);});}});}).setCancelable(false).show()).create();
         dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(ordinary!=null));dialog.show();
     }
     void returnHome(){startActivity(new Intent(this,HomeActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP));finish();}
     void saveStateChanged(){if(projectSession==null||isDestroyed())return;boolean previous=dirty;dirty=projectSession.dirty();editRevision=projectSession.revision;String label=projectSession.status();if(previous!=dirty||!label.equals(lastSaveLabel)){lastSaveLabel=label;renderHeader();}if(saveState!=null&&!label.contentEquals(saveState.getText()))saveState.setText(label);
-        if(projectSession.saveFailure!=null&&!projectSession.saveFailure.equals(shownSaveFailure)){shownSaveFailure=projectSession.saveFailure;tell("Save failed: "+shownSaveFailure);if(leavingAfterSave){leavingAfterSave=false;new AlertDialog.Builder(this).setTitle("Could not save project").setMessage(shownSaveFailure+"\nYour edits remain open.").setPositiveButton("Retry",(d,w)->saveAndProjects()).setNegativeButton("Keep editing",null).show();}}
+        if(projectSession.saveFailure!=null&&!projectSession.saveFailure.equals(shownSaveFailure)){shownSaveFailure=projectSession.saveFailure;tell("Save failed: "+shownSaveFailure);if(leavingAfterSave){leavingAfterSave=false;new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Could not save project").setMessage(shownSaveFailure+"\nYour edits remain open.").setPositiveButton("Retry",(d,w)->saveAndProjects()).setNegativeButton("Keep editing",null).show();}}
         if(projectSession.saveFailure==null)shownSaveFailure=null;
         if(projectSession.recoveryWarning!=null&&!projectSession.recoveryWarning.equals(shownRecoveryWarning)){shownRecoveryWarning=projectSession.recoveryWarning;tell(shownRecoveryWarning);}if(projectSession.recoveryWarning==null)shownRecoveryWarning=null;
     }
@@ -317,7 +317,7 @@ public final class EditorActivity extends Activity {
     }
     void remember(){try {undo.addLast(ProjectStore.encode(project));while(undo.size()>30)undo.removeFirst();redo.clear();}catch(Exception e){tell(e.getMessage());}}
     void changed(String text) {
-        CrashLogs.project(project);
+        CrashLogs.project(project);ActionTrace.context(this);ActionTrace.event("project_edit","complete","","category",text==null?"Editing":text.split(" ",2)[0]);
         project.ensureLibrary();project.validate();dirty=true;editRevision++;message=text;if(projectSession!=null)projectSession.edited(project,false);refreshProject();showLive();
     }
     void saveNow() {
@@ -401,7 +401,7 @@ public final class EditorActivity extends Activity {
             mobile=new MobileChrome(this);mobile.build(root);renderHeader();
 
         }
-        status=label(message,10,MUTED,false);status.setSingleLine(true);status.setPadding(dp(10),0,dp(10),dp(3));status.setOnClickListener(v->new AlertDialog.Builder(this).setMessage(status.getText()).setPositiveButton("OK",null).show());root.addView(status,new LinearLayout.LayoutParams(-1,dp(wide&&c.screenHeightDp<450?16:24)));
+        status=label(message,10,MUTED,false);status.setSingleLine(true);status.setPadding(dp(10),0,dp(10),dp(3));status.setOnClickListener(v->new com.blackice.bc1.TraceDialogBuilder(this).setMessage(status.getText()).setPositiveButton("OK",null).show());root.addView(status,new LinearLayout.LayoutParams(-1,dp(wide&&c.screenHeightDp<450?16:24)));
         if(portraitPhone())status.setVisibility(View.GONE);
         TextView version=label("v"+appVersion(),10,MUTED,false);version.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);version.setPadding(0,0,dp(12),0);version.setContentDescription("App version "+appVersion());
         // Version chrome must not consume preview/timeline space on short phones.
@@ -436,9 +436,9 @@ public final class EditorActivity extends Activity {
 
         return monitor;
     }
-    void previewOptions(){new AlertDialog.Builder(this).setTitle("Preview view only").setItems(new String[]{"Fit canvas","Fill viewport (cropped)","100% preview pixels","Preview volume","Fullscreen preview"},(d,i)->{
+    void previewOptions(){new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Preview view only").setItems(new String[]{"Fit canvas","Fill viewport (cropped)","100% preview pixels","Preview volume","Fullscreen preview"},(d,i)->{
         if(i<3){resetPreviewView();float ratio=project.canvasAspect();float fit=Math.max(1,Math.min(monitor.getWidth(),monitor.getHeight()*ratio));if(i==1)previewZoom=Math.max(monitor.getWidth()/fit,monitor.getHeight()*ratio/fit);if(i==2)previewZoom=project.canvasSize(project.previewHeight)[0]/fit;monitor.requestLayout();}
-        else if(i==3){LinearLayout f=form();double[] volume={monitorVolume*100},before={monitorVolume*100};com.blackice.bc1.menu.RulerView volumeRuler=new com.blackice.bc1.menu.RulerView(this,"Preview volume percent",0,100,1,new com.blackice.bc1.menu.RulerView.Binding(){public double value(){return volume[0];}public void begin(){before[0]=volume[0];}public void preview(double n){volume[0]=n;}public void commit(){}public void cancel(){volume[0]=before[0];}});f.addView(volumeRuler);new AlertDialog.Builder(this).setTitle("Preview volume (export unchanged)").setView(f).setPositiveButton("Apply",(x,w)->{monitorVolume=(float)volume[0]/100f;if(player!=null)player.setVolume(monitorVolume);}).setNegativeButton("Cancel",null).show();}
+        else if(i==3){LinearLayout f=form();double[] volume={monitorVolume*100},before={monitorVolume*100};com.blackice.bc1.menu.RulerView volumeRuler=new com.blackice.bc1.menu.RulerView(this,"Preview volume percent",0,100,1,new com.blackice.bc1.menu.RulerView.Binding(){public double value(){return volume[0];}public void begin(){before[0]=volume[0];}public void preview(double n){volume[0]=n;}public void commit(){}public void cancel(){volume[0]=before[0];}});f.addView(volumeRuler);new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Preview volume (export unchanged)").setView(f).setPositiveButton("Apply",(x,w)->{monitorVolume=(float)volume[0]/100f;if(player!=null)player.setVolume(monitorVolume);}).setNegativeButton("Cancel",null).show();}
         else {fullscreenPreview=true;buildWorkspace();}
     }).show();}
     final ArrayList<TextView> playheadTools=new ArrayList<>();
@@ -541,7 +541,7 @@ public final class EditorActivity extends Activity {
             }
             if(result.cues.isEmpty()){tell(result.summary);com.blackice.bc1.captions.CaptionService.acknowledge(this,projectId,result);return;}
             if(!result.fingerprint.equals(com.blackice.bc1.core.CaptionState.fingerprint(project))){
-                new AlertDialog.Builder(this).setTitle("Caption source changed")
+                new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Caption source changed")
                     .setMessage("These captions use the original selection and timing. Add them for review, or discard them and transcribe again.")
                     .setPositiveButton("Add for review",(d,w)->{if(projectId.equals(project.id))applyCaptionResult(result);})
                     .setNegativeButton("Discard",(d,w)->com.blackice.bc1.captions.CaptionService.acknowledge(this,projectId,result)).show();
@@ -577,7 +577,7 @@ public final class EditorActivity extends Activity {
         if(!editable())return;
         if(!com.blackice.bc1.captions.CaptionJobs.exists(this,project.id)){tell("No saved transcription for this project.");return;}
         final String id=project.id;
-        new AlertDialog.Builder(this).setTitle("Resume transcription?")
+        new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Resume transcription?")
             .setMessage("Continue after the last saved batch, using the original selection and recognition settings. The current unfinished batch will be repeated.")
             .setPositiveButton("Resume",(d,w)->{if(!editable()||!id.equals(project.id))return;try{pausePlayback();saveNow();com.blackice.bc1.captions.CaptionService.resume(this,id);tell("Resuming transcription…");}catch(Exception e){tell(e.getMessage());}})
             .setNegativeButton("Close",null).show();
@@ -585,21 +585,21 @@ public final class EditorActivity extends Activity {
     void discardCaptionJob(){
         if(!editable())return;final String id=project.id;
         if(!com.blackice.bc1.captions.CaptionJobs.exists(this,id)){tell("No saved transcription for this project.");return;}
-        new AlertDialog.Builder(this).setTitle("Discard saved transcription?").setMessage("This removes unfinished recognition progress. Existing timeline captions stay in your project.")
+        new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Discard saved transcription?").setMessage("This removes unfinished recognition progress. Existing timeline captions stay in your project.")
             .setPositiveButton("Discard",(d,w)->{try{com.blackice.bc1.captions.CaptionService.discardJob(this,id);tell("Saved transcription discarded");}catch(Exception e){tell(e.getMessage());}}).setNegativeButton("Keep",null).show();
     }
     void edit(String message,Runnable operation){
-        if(!editable())return;pausePlayback();CrashLogs.operation(message);String before;try{before=ProjectStore.encode(project);}catch(Exception e){tell(e.getMessage());return;}
+        if(!editable()){ActionTrace.event("project_edit","rejected","","outcome","locked");return;}pausePlayback();CrashLogs.operation(message);ActionTrace.context(this);ActionTrace.Span trace=ActionTrace.begin("project_edit");java.util.Map<String,Object> values=ActionTrace.values(project);String before;try{before=ProjectStore.encode(project);}catch(Exception e){trace.end("failure");tell(e.getMessage());return;}
         int selection=selected;
-        try{operation.run();ParentTransforms.releaseOrphans(project,before);project.validate();if(!before.equals(ProjectStore.encode(project))){pushUndo(before);changed(message);}}
-        catch(Exception e){CrashLogs.record("Edit rejected",e);try{project=ProjectStore.decode(before);selected=selection;refreshProject();}catch(Exception impossible){throw new IllegalStateException(impossible);}tell(e.getMessage());}
+        try{operation.run();ParentTransforms.releaseOrphans(project,before);project.validate();ActionTrace.changes("project_edit",values,project,trace.id);if(!before.equals(ProjectStore.encode(project))){pushUndo(before);changed(message);}trace.end("success");}
+        catch(Exception e){trace.end("failure");CrashLogs.record("Edit rejected",e);try{project=ProjectStore.decode(before);selected=selection;refreshProject();}catch(Exception impossible){throw new IllegalStateException(impossible);}tell(e.getMessage());}
     }
     void pushUndo(String snapshot){undo.addLast(snapshot);while(undo.size()>30)undo.removeFirst();redo.clear();}
     TextView compactButton(String title,String description,View.OnClickListener listener){TextView b=button(title,listener);b.setPadding(dp(5),0,dp(5),0);b.setContentDescription(description);b.setTooltipText(description);return b;}
     void jump(boolean end){EditProject.Clip c=clip();EditProject.Overlay o=overlay();long target=o!=null?(end?o.endMs:o.startMs):c==null?(end?project.durationMs():0):(end?project.placements().get(selected).endMs:project.placements().get(selected).startMs);seek(target);}
     void updateJumpLabels(){String noun=clip()==null&&overlay()==null?"project":"selected clip";if(jumpStart!=null&&jumpEnd!=null){jumpStart.setContentDescription("Jump to beginning of "+noun);jumpStart.setTooltipText(jumpStart.getContentDescription());jumpEnd.setContentDescription("Jump to end of "+noun);jumpEnd.setTooltipText(jumpEnd.getContentDescription());}}
     int timelineHeight(Configuration c,boolean wide){int normal=wide?(c.screenHeightDp<450?88:c.screenHeightDp<550?120:Math.min(280,Math.round(c.screenHeightDp*.28f))):(c.screenHeightDp>=780?200:160);return workspaceFocus==1?Math.min(normal+100,Math.round(c.screenHeightDp*.45f)):workspaceFocus==2?100:normal;}
-    AlertDialog chooseSpace(){final boolean portrait=portraitPhone();return new AlertDialog.Builder(this).setTitle(portrait?"Portrait workspace space":"Workspace space").setSingleChoiceItems(BlackIceDialog.choiceAdapter(this,"Workspace space",new String[]{"Balanced","Expand timeline","Expand preview"}),portrait?portraitWorkspaceFocus:workspaceFocus,(d,i)->{if(uiLocked){tell("Unlock editing in Settings to change layout");return;}if(portrait)portraitWorkspaceFocus=i;else workspaceFocus=i;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putInt(portrait?"portrait-workspace-focus":"workspace-focus",i).apply();d.dismiss();buildWorkspace();}).setNegativeButton("Back",null).show();}
+    AlertDialog chooseSpace(){final boolean portrait=portraitPhone();return new com.blackice.bc1.TraceDialogBuilder(this).setTitle(portrait?"Portrait workspace space":"Workspace space").setSingleChoiceItems(BlackIceDialog.choiceAdapter(this,"Workspace space",new String[]{"Balanced","Expand timeline","Expand preview"}),portrait?portraitWorkspaceFocus:workspaceFocus,(d,i)->{if(uiLocked){tell("Unlock editing in Settings to change layout");return;}if(portrait)portraitWorkspaceFocus=i;else workspaceFocus=i;getSharedPreferences(PREFS,MODE_PRIVATE).edit().putInt(portrait?"portrait-workspace-focus":"workspace-focus",i).apply();d.dismiss();buildWorkspace();}).setNegativeButton("Back",null).show();}
     /** Display scale only; media timing never changes. The time under the anchor (viewport x, or the
      * playhead when NaN) stays in place. */
     void zoomTimeline(float factor,float anchor){
@@ -696,12 +696,12 @@ public final class EditorActivity extends Activity {
     void projectSettingsDialog(){
         CrashLogs.operation("Dialog");
         String[] entries={"Project name: "+project.name,"Canvas: "+project.canvasLabel(),"Frame rate: "+project.frameRate+" fps","Background: Black","Project storage"};
-        new AlertDialog.Builder(this).setTitle("Project Settings").setItems(entries,(d,i)->{
+        new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Project Settings").setItems(entries,(d,i)->{
             if(i==0)numberDialog("Project name",project.name,name->edit("Project renamed",()->{if(name.isBlank()||name.length()>80)throw new IllegalArgumentException("Use 1–80 characters");project.name=name;}));
-            else if(i==1)new AlertDialog.Builder(this).setTitle("Canvas aspect ratio").setSingleChoiceItems(com.blackice.bc1.core.CanvasFormat.SELECTABLE,java.util.Arrays.asList(com.blackice.bc1.core.CanvasFormat.SELECTABLE).indexOf(project.ratioName()),(dialog,index)->{dialog.dismiss();edit("Project canvas updated",()->project.setCanvasRatio(com.blackice.bc1.core.CanvasFormat.SELECTABLE[index]));}).setNegativeButton("Back",null).show();
-            else if(i==2){int[] rates=com.blackice.bc1.core.ExportPlanner.FRAME_RATES;String[] labels=new String[rates.length];for(int j=0;j<rates.length;j++)labels[j]=rates[j]+" fps";new AlertDialog.Builder(this).setTitle("Project frame rate").setItems(labels,(dialog,index)->edit("Frame rate updated",()->project.frameRate=rates[index])).show();}
+            else if(i==1)new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Canvas aspect ratio").setSingleChoiceItems(com.blackice.bc1.core.CanvasFormat.SELECTABLE,java.util.Arrays.asList(com.blackice.bc1.core.CanvasFormat.SELECTABLE).indexOf(project.ratioName()),(dialog,index)->{dialog.dismiss();edit("Project canvas updated",()->project.setCanvasRatio(com.blackice.bc1.core.CanvasFormat.SELECTABLE[index]));}).setNegativeButton("Back",null).show();
+            else if(i==2){int[] rates=com.blackice.bc1.core.ExportPlanner.FRAME_RATES;String[] labels=new String[rates.length];for(int j=0;j<rates.length;j++)labels[j]=rates[j]+" fps";new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Project frame rate").setItems(labels,(dialog,index)->edit("Frame rate updated",()->project.frameRate=rates[index])).show();}
             else if(i==3)tell("The current engine uses a black project background. Add a full-frame shape for a different background.");
-            else new AlertDialog.Builder(this).setTitle("Project storage").setMessage("Projects and imported media are saved privately in this app. Use Settings → Export project + media bundle to choose a backup destination.").setPositiveButton("OK",null).show();
+            else new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Project storage").setMessage("Projects and imported media are saved privately in this app. Use Settings → Export project + media bundle to choose a backup destination.").setPositiveButton("OK",null).show();
         }).setNegativeButton("Back",null).show();
     }
     void settingsPanel(){
@@ -735,7 +735,7 @@ public final class EditorActivity extends Activity {
             addAction("Restore project bundle",()->pick(RESTORE,"*/*"));
             addAction("Projects / New / Rename",()->projectsMenu());
             addAction("Keyboard Shortcuts",()->Shortcuts.show(this));
-            addAction("Project work clock",()->workClock.menu());
+            inspector.addView(note("Project work clock • read only; tracks active time in this project."));
             addAction("Diagnostics → Crash Logs",()->CrashLogs.show(this));
             addAction("Export diagnostics",()->exportDiagnostics());
             addAction("Device video capabilities",()->deviceVideoReport());
@@ -801,7 +801,7 @@ public final class EditorActivity extends Activity {
     void renameRow(int[] r){if(!editable())return;numberDialog("Layer name",rowName(r),name->{if(name.isBlank()||name.length()>60)throw new IllegalArgumentException("Use a name of 1 to 60 characters.");edit("Layer renamed",()->{if(r[0]==1)project.overlays.get(r[1]).name=name;else project.tracks[r[1]].name=name;});});}
     static final int[] LAYER_COLORS={0xFF40BFFF,0xFF9FEAFF,0xFF6BE675,0xFFFFC145,0xFFFF4D6D,0xFFB388FF,0xFF8CA3B8};
     void layerColor(int[] r){if(!editable())return;String[] names={"Ice blue","Frost","Green","Amber","Red","Violet","Slate"};
-        new AlertDialog.Builder(this).setTitle("Layer color").setItems(names,(d,i)->edit("Layer color changed",()->{if(r[0]==1){EditProject.Overlay o=project.overlays.get(r[1]);if(o.shape>0||o.imageUri==null)tell("Text and shape layers use their own fill color; row color follows it.");}else project.tracks[r[1]].color=LAYER_COLORS[i];})).show();}
+        new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Layer color").setItems(names,(d,i)->edit("Layer color changed",()->{if(r[0]==1){EditProject.Overlay o=project.overlays.get(r[1]);if(o.shape>0||o.imageUri==null)tell("Text and shape layers use their own fill color; row color follows it.");}else project.tracks[r[1]].color=LAYER_COLORS[i];})).show();}
     /** Reorders rows without touching timing: visual layers swap tracks, overlays change stacking order. */
     void moveRow(int[] r,boolean up){
         if(!editable())return;
@@ -818,8 +818,8 @@ public final class EditorActivity extends Activity {
     void pruneSelection(){multiClips.removeIf(i->i>=project.clips.size());multiOverlays.removeIf(i->i>=project.overlays.size());if(multiCount()==1){multiClips.clear();multiOverlays.clear();}}
     void deselect(){compareSnapshot=null;selected=-1;selectedOverlay=-1;multiClips.clear();multiOverlays.clear();panels.reset();renderInspector();}
     void baseline(){try{compareSnapshot=ProjectStore.encode(project);}catch(Exception e){compareSnapshot=null;}}
-    void selectClip(int index,boolean seekToStart){if(portraitPhone())mobile.dismissed=false;selectedMediaUri=project.clips.get(index).uri;if(index!=selected)baseline();selected=index;selectedOverlay=-1;multiClips.clear();multiOverlays.clear();tab=1;if(seekToStart)seek(project.placements().get(index).startMs);renderInspector();}
-    void selectOverlay(int index){if(portraitPhone())mobile.dismissed=false;if(selected>=0||index!=selectedOverlay)baseline();selected=-1;selectedOverlay=index;multiClips.clear();multiOverlays.clear();tab=1;renderInspector();}
+    void selectClip(int index,boolean seekToStart){ActionTrace.event("selection","complete","","selected_layer_id",project.clips.get(index).id);if(portraitPhone())mobile.dismissed=false;selectedMediaUri=project.clips.get(index).uri;if(index!=selected)baseline();selected=index;selectedOverlay=-1;multiClips.clear();multiOverlays.clear();tab=1;if(seekToStart)seek(project.placements().get(index).startMs);renderInspector();}
+    void selectOverlay(int index){ActionTrace.event("selection","complete","","selected_layer_id",project.overlays.get(index).id);if(portraitPhone())mobile.dismissed=false;if(selected>=0||index!=selectedOverlay)baseline();selected=-1;selectedOverlay=index;multiClips.clear();multiOverlays.clear();tab=1;renderInspector();}
     /** Ctrl/Shift-click or long-press: add or remove a layer from the multi-selection; groups select together. */
     void toggleMulti(int clipIndex,int overlayIndex){
         if(multiCount()==0){if(selected>=0)multiClips.add(selected);if(selectedOverlay>=0)multiOverlays.add(selectedOverlay);}
@@ -836,18 +836,20 @@ public final class EditorActivity extends Activity {
     boolean layerEditable(){if(!editable())return false;for(int i:selectedClips())if(LayerOps.locked(project,i)){tell("Layer locked • unlock it in Layers to edit");return false;}for(int i:selectedOverlays())if(project.overlays.get(i).locked){tell("Layer locked • unlock it in Layers to edit");return false;}return true;}
     void pausePlayback(){if(player!=null)player.pause();}
     /** Slider drag start: remember the project for one undo entry and switch to the live preview. */
-    void beginLiveAdjust(){if(!layerEditable())return;CrashLogs.operation("Transforms");try{liveBefore=ProjectStore.encode(project);}catch(Exception e){liveBefore=null;return;}if(player!=null||previewPending)releasePreview();main.removeCallbacks(warmPreview);previewProxy.cancel();}
+    ActionTrace.Span liveTrace;java.util.Map<String,Object> liveValues;
+    void beginLiveAdjust(){if(!layerEditable())return;CrashLogs.operation("Transforms");if(liveBefore!=null)return;liveTrace=ActionTrace.begin("layer_gesture");liveValues=ActionTrace.values(project);try{liveBefore=ProjectStore.encode(project);}catch(Exception e){liveBefore=null;return;}if(player!=null||previewPending)releasePreview();main.removeCallbacks(warmPreview);previewProxy.cancel();}
     /** During a drag: apply the value and redraw at once, without validation or undo. */
     void liveAdjust(Runnable apply){if(liveBefore==null)return;try{apply.run();if(projectSession!=null)projectSession.edited(project,true);if(timeline!=null)timeline.invalidate();if(previewControls!=null)previewControls.invalidate();renderLive();}catch(RuntimeException ignored){}}
-    void cancelLiveAdjust(){transformPanel.clearGesture();String before=liveBefore;liveBefore=null;if(before==null)return;try{project=ProjectStore.decode(before);if(projectSession!=null)projectSession.edited(project,false);}catch(Exception e){throw new IllegalStateException(e);}renderInspector();renderLive();if(previewControls!=null)previewControls.invalidate();}
+    void cancelLiveAdjust(){transformPanel.clearGesture();String before=liveBefore;liveBefore=null;if(before==null)return;if(liveTrace!=null)liveTrace.end("cancelled");try{project=ProjectStore.decode(before);if(projectSession!=null)projectSession.edited(project,false);}catch(Exception e){throw new IllegalStateException(e);}renderInspector();renderLive();if(previewControls!=null)previewControls.invalidate();}
     /** Drag end: validate and record a single undo entry from the drag start. */
     void endLiveAdjust(String message,Runnable apply){
         String before=liveBefore;liveBefore=null;if(before==null)return;
-        try{apply.run();project.validate();if(!before.equals(ProjectStore.encode(project))){pushUndo(before);changed(message);}else showLive();}
-        catch(Exception e){CrashLogs.record("Edit rejected",e);try{project=ProjectStore.decode(before);}catch(Exception ignored){}changed(e.getMessage()==null?"Value not applied":e.getMessage());}
+        try{apply.run();project.validate();if(liveTrace!=null){ActionTrace.changes("layer_gesture",liveValues,project,liveTrace.id);liveTrace.end("success");}if(!before.equals(ProjectStore.encode(project))){pushUndo(before);changed(message);}else showLive();}
+        catch(Exception e){if(liveTrace!=null)liveTrace.end("failure");CrashLogs.record("Edit rejected",e);try{project=ProjectStore.decode(before);}catch(Exception ignored){}changed(e.getMessage()==null?"Value not applied":e.getMessage());}
     }
     /** Rebuilds the top bar: project / Settings / Export normally; layer name / Duplicate / Delete / More when selected. */
     void renderHeader(){
+        ActionTrace.context(this);
         if(monitorInfo!=null)monitorInfo.setText(project.name+"  ·  "+project.canvasLabel()+"  ·  "+project.frameRate+" fps");if(header==null)return;if(mobile!=null){mobile.header();return;}EditProject.Clip c=clip();EditProject.Overlay o=overlay();int count=multiCount();
         String key=count>1?"multi"+count:c!=null?"clip"+selected+c.name:o!=null?"overlay"+selectedOverlay+o.label():"none"+project.name+wideLayout;
         key+=":"+(projectSession==null?"Loading":projectSession.status())+":"+dirty+":"+tab+":"+addDrawer.category;if(key.equals(headerKey))return;headerKey=key;header.removeAllViews();Configuration cfg=getResources().getConfiguration();
@@ -873,7 +875,7 @@ public final class EditorActivity extends Activity {
         header.addView(labelledIcon("Settings","Settings","Settings",v->{tab=4;renderInspector();}));
         exportButton=button("Export",v->exportMenu());exportButton.setTextSize(14);exportButton.setTextColor(BlackIceTheme.ON_ACCENT);exportButton.setBackground(BlackIceTheme.primary(getResources().getDisplayMetrics().density));LinearLayout.LayoutParams exportLp=new LinearLayout.LayoutParams(-2,dp(48));exportLp.leftMargin=dp(8);exportButton.setPadding(dp(22),0,dp(22),0);header.addView(exportButton,exportLp);
     }
-    TextView workClockView(){TextView work=button(workClock.label==null?"◷ 00:00:00":workClock.label.getText().toString(),v->workClock.menu());work.setTextSize(11);work.setBackgroundColor(android.graphics.Color.TRANSPARENT);work.setTypeface(android.graphics.Typeface.MONOSPACE);work.setSingleLine(true);work.setPadding(dp(6),0,dp(6),0);work.setContentDescription("Project work clock");work.setLayoutParams(new LinearLayout.LayoutParams(dp(100),dp(48)));workClock.label=work;return work;}
+    TextView workClockView(){TextView work=button(workClock.label==null?"◷ 00:00:00":workClock.label.getText().toString(),null);work.setOnClickListener(null);work.setClickable(false);work.setLongClickable(false);work.setTextSize(11);work.setBackgroundColor(android.graphics.Color.TRANSPARENT);work.setTypeface(android.graphics.Typeface.MONOSPACE);work.setSingleLine(true);work.setPadding(dp(6),0,dp(6),0);work.setContentDescription("Project work clock");work.setLayoutParams(new LinearLayout.LayoutParams(dp(100),dp(48)));workClock.label=work;return work;}
     /** Top-bar section tabs exist only in roomy wide windows. */
     boolean topTabs(){return wideLayout&&getResources().getConfiguration().screenWidthDp>=1100;}
     TextView labelledIcon(String icon,String title,String description,View.OnClickListener l){TextView b=button(title,l);b.setContentDescription(description);b.setTextSize(13);b.setTypeface(Typeface.DEFAULT);b.setCompoundDrawables(icon(icon,TEXT),null,null,null);b.setCompoundDrawablePadding(dp(8));b.setPadding(dp(12),0,dp(14),0);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-2,dp(BlackIceTheme.CONTROL));lp.leftMargin=dp(BlackIceTheme.SPACE);b.setLayoutParams(lp);return b;}
@@ -922,7 +924,7 @@ public final class EditorActivity extends Activity {
             items.add("Select multiple…");items.add("Delete");
         }
         String[] names=items.toArray(new String[0]);
-        new AlertDialog.Builder(this).setTitle(multi?multiCount()+" layers":"More").setItems(names,(d,i)->moreAction(names[i])).setNegativeButton("Close",null).show();
+        new com.blackice.bc1.TraceDialogBuilder(this).setTitle(multi?multiCount()+" layers":"More").setItems(names,(d,i)->moreAction(names[i])).setNegativeButton("Close",null).show();
     }
     boolean selectionLocked(){EditProject.Clip c=clip();EditProject.Overlay o=overlay();return c!=null?project.tracks[c.track].locked:o!=null&&o.locked;}
     boolean selectionHidden(){EditProject.Clip c=clip();EditProject.Overlay o=overlay();return c!=null?(c.track>=EditProject.AUDIO_FIRST?project.tracks[c.track].muted:project.tracks[c.track].hidden):o!=null&&o.hidden;}
@@ -980,14 +982,14 @@ public final class EditorActivity extends Activity {
     void copyAttributes(){
         EditProject.Clip c=clip();EditProject.Overlay o=overlay();if(c==null&&o==null){tell("Select a layer to copy from.");return;}
         boolean[] chosen={true,true,o!=null,false};
-        new AlertDialog.Builder(this).setTitle("Copy attributes").setMultiChoiceItems(ATTRIBUTE_NAMES,chosen,(d,i,on)->chosen[i]=on).setPositiveButton("Copy",(d,w)->{
+        new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Copy attributes").setMultiChoiceItems(ATTRIBUTE_NAMES,chosen,(d,i,on)->chosen[i]=on).setPositiveButton("Copy",(d,w)->{
             int mask=0;for(int i=0;i<4;i++)if(chosen[i])mask|=1<<i;copiedAttributes=c!=null?Attributes.of(c,mask):Attributes.of(o,mask);tell("Copied: "+Attributes.names(copiedAttributes.categories));}).setNegativeButton("Cancel",null).show();
     }
     void pasteAttributes(){
         if(copiedAttributes==null){tell("Copy attributes from a layer first.");return;}if(!layerEditable())return;
         java.util.List<String> names=new ArrayList<>();java.util.List<Integer> masks=new ArrayList<>();for(int i=0;i<4;i++)if((copiedAttributes.categories&(1<<i))!=0){names.add(ATTRIBUTE_NAMES[i]);masks.add(1<<i);}
         boolean[] chosen=new boolean[names.size()];java.util.Arrays.fill(chosen,true);
-        new AlertDialog.Builder(this).setTitle("Paste attributes").setMultiChoiceItems(names.toArray(new String[0]),chosen,(d,i,on)->chosen[i]=on).setPositiveButton("Paste",(d,w)->{
+        new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Paste attributes").setMultiChoiceItems(names.toArray(new String[0]),chosen,(d,i,on)->chosen[i]=on).setPositiveButton("Paste",(d,w)->{
             int mask=0;for(int i=0;i<chosen.length;i++)if(chosen[i])mask|=masks.get(i);int requested=mask;
             edit("Attributes pasted",()->{int applied=0;for(int i:selectedClips())applied|=copiedAttributes.applyTo(project.clips.get(i),requested);for(int i:selectedOverlays())applied|=copiedAttributes.applyTo(project.overlays.get(i),requested);if(applied==0)throw new IllegalArgumentException("None of the copied attributes apply to this layer.");});}).setNegativeButton("Cancel",null).show();
     }
@@ -1005,7 +1007,7 @@ public final class EditorActivity extends Activity {
         if(attributes.categories==0){tell("Nothing to save for this layer.");return;}
         numberDialog("Preset name",kind.equals(PresetStore.ANIMATION)?"My animation":"My look",name->{presets.save(name,kind,attributes.encode());tell("Preset saved");renderInspector();});
     }
-    void deletePreset(PresetStore.Preset preset){new AlertDialog.Builder(this).setTitle("Delete “"+preset.name+"”?").setPositiveButton("Delete",(d,w)->{try{presets.delete(preset.id);renderInspector();}catch(IllegalArgumentException e){tell(e.getMessage());}}).setNegativeButton("Cancel",null).show();}
+    void deletePreset(PresetStore.Preset preset){new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Delete “"+preset.name+"”?").setPositiveButton("Delete",(d,w)->{try{presets.delete(preset.id);renderInspector();}catch(IllegalArgumentException e){tell(e.getMessage());}}).setNegativeButton("Cancel",null).show();}
     void saveElement(){
         java.util.List<Integer> clips=new ArrayList<>(),overlays=new ArrayList<>();for(int i:selectedClips())if(project.clips.get(i).track<EditProject.AUDIO_FIRST)clips.add(i);overlays.addAll(selectedOverlays());
         if(clips.isEmpty()&&overlays.isEmpty()){tell("Select visual layers to save as an element.");return;}
@@ -1051,7 +1053,7 @@ public final class EditorActivity extends Activity {
             Runnable apply=()->edit("Media replaced",()->{c.uri=fresh.uri;c.name=fresh.name;c.width=fresh.width;c.height=fresh.height;
                 if(c.image){c.sourceDurationMs=Math.max(fresh.sourceDurationMs,c.outMs);return;}
                 c.sourceDurationMs=fresh.sourceDurationMs;if(c.outMs>fresh.sourceDurationMs){long length=Math.min(needed,fresh.sourceDurationMs);c.inMs=Math.max(0,fresh.sourceDurationMs-length);if(c.outMs-c.inMs>length||c.outMs>fresh.sourceDurationMs){c.inMs=0;c.outMs=length;}}});
-            if(!c.image&&fresh.sourceDurationMs<needed)new AlertDialog.Builder(this).setTitle("Replacement is shorter").setMessage("The new video is "+seconds(fresh.sourceDurationMs)+" s, but this clip uses "+seconds(needed)+" s of source. Replacing will shorten the clip to "+seconds(fresh.sourceDurationMs)+" s; later main-sequence clips move earlier. Transforms, effects and animation are kept.")
+            if(!c.image&&fresh.sourceDurationMs<needed)new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Replacement is shorter").setMessage("The new video is "+seconds(fresh.sourceDurationMs)+" s, but this clip uses "+seconds(needed)+" s of source. Replacing will shorten the clip to "+seconds(fresh.sourceDurationMs)+" s; later main-sequence clips move earlier. Transforms, effects and animation are kept.")
                 .setPositiveButton("Shorten and replace",(d,w)->apply.run()).setNegativeButton("Cancel",null).show();
             else apply.run();});}catch(Exception e){main.post(()->{importing=false;tell("Replace failed: "+e.getMessage());});}});
     }
@@ -1104,10 +1106,10 @@ public final class EditorActivity extends Activity {
     EditProject.Overlay overlay(){return selected<0&&selectedOverlay>=0&&selectedOverlay<project.overlays.size()?project.overlays.get(selectedOverlay):null;}
     void overlayTools(){EditProject.Overlay o=overlay();inspector.addView(note(o.imageUri==null?"Text: "+o.text:"Image overlay"));
         if(o.imageUri==null){addAction("Edit Text",()->numberDialog("Edit Text",o.text,value->edit("Text updated",()->o.text=value)));
-            addAction("Font",()->new AlertDialog.Builder(this).setTitle("Font").setItems(new String[]{"Sans serif","Serif","Monospace"},(d,i)->edit("Font updated",()->o.font=new String[]{"sans-serif-medium","serif","monospace"}[i])).show());
+            addAction("Font",()->new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Font").setItems(new String[]{"Sans serif","Serif","Monospace"},(d,i)->edit("Font updated",()->o.font=new String[]{"sans-serif-medium","serif","monospace"}[i])).show());
             addAction("Size",()->numberDialog("Text size (0.1 to 2)",String.valueOf(o.scale),value->edit("Text size updated",()->o.scale=Float.parseFloat(value))));
             addAction("Color",()->numberDialog("Text color (#RRGGBB)",String.format(Locale.US,"#%06X",o.color&0xFFFFFF),value->edit("Text color updated",()->o.color=Color.parseColor(value))));
-            addAction("Alignment",()->new AlertDialog.Builder(this).setTitle("Alignment at text anchor").setItems(new String[]{"Left","Center","Right"},(d,i)->edit("Alignment updated",()->o.alignment=i)).show());}
+            addAction("Alignment",()->new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Alignment at text anchor").setItems(new String[]{"Left","Center","Right"},(d,i)->edit("Alignment updated",()->o.alignment=i)).show());}
         addAction("Duration: "+seconds(o.endMs-o.startMs)+" s",()->numberDialog("Duration (seconds)",seconds(o.endMs-o.startMs),value->edit("Duration updated",()->{long length=parseMs(value);if(length<100)throw new IllegalArgumentException("Keep at least 0.10 seconds");o.endMs=Math.addExact(o.startMs,length);})));
         addAction("Transform",()->{LinearLayout f=form();EditText x=field(f,"X (−1 to 1)",String.valueOf(o.x)),y=field(f,"Y (−1 to 1)",String.valueOf(o.y)),size=field(f,"Scale factor (0.1 to 100)",String.valueOf(o.scale));dialog("Overlay transform",f,()->edit("Transform updated",()->{o.x=parseFloat(x);o.y=parseFloat(y);o.scale=parseFloat(size);}),null);});
         addAction("Opacity",()->percentPanel("Opacity",o.opacity,1,value->o.opacity=value));
@@ -1134,7 +1136,7 @@ public final class EditorActivity extends Activity {
     void autoCaptions(){
         if(!editable())return;
         if(com.blackice.bc1.captions.CaptionService.isRunning()){
-            new AlertDialog.Builder(this).setTitle("Auto captions running").setMessage(getSharedPreferences(com.blackice.bc1.captions.CaptionService.PREFS,MODE_PRIVATE).getString("status","Captioning…"))
+            new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Auto captions running").setMessage(getSharedPreferences(com.blackice.bc1.captions.CaptionService.PREFS,MODE_PRIVATE).getString("status","Captioning…"))
                 .setPositiveButton("Cancel captions",(d,w)->com.blackice.bc1.captions.CaptionService.cancel(this)).setNegativeButton("Keep going",null).show();return;}
         if(!com.blackice.bc1.captions.WhisperLib.available()){tell("Auto captions are not available on this device's CPU type.");return;}
         if(project.clips.isEmpty()){tell("Add a video or audio clip with speech first.");return;}
@@ -1165,7 +1167,7 @@ public final class EditorActivity extends Activity {
         TextView info=new TextView(this);info.setTextColor(0xFFB8C7D9);info.setPadding(0,dp(10),0,0);
         info.setText("Ice Voice 01 includes Whisper Base English and works offline immediately. Speech stays on this phone. The separate music bed is excluded; music inside footage may still be heard."+(existing>0?"\n\nThe "+existing+" existing captions in the chosen range will be replaced (Undo restores them).":"")+"\n\nYou can leave the app while it runs.");
         box.addView(info);
-        new AlertDialog.Builder(this).setTitle("Ice Voice 01 · Auto captions").setView(box).setNegativeButton("Cancel",null)
+        new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Ice Voice 01 · Auto captions").setView(box).setNegativeButton("Cancel",null)
             .setPositiveButton("Start",(d,w)->{
                 com.blackice.bc1.captions.Transcriber.Options o=new com.blackice.bc1.captions.Transcriber.Options();
                 o.model=models[model.getSelectedItemPosition()];o.language=com.blackice.bc1.captions.Transcriber.LANGUAGES[language.getSelectedItemPosition()][0];
@@ -1187,10 +1189,10 @@ public final class EditorActivity extends Activity {
         String[] rows=new String[models.length];
         for(int i=0;i<models.length;i++){java.io.File f=com.blackice.bc1.captions.SpeechModels.file(this,models[i]);boolean have=com.blackice.bc1.captions.SpeechModels.installed(this,models[i]);
             rows[i]=models[i].label+": "+(models[i].bundled()?(have?"included • ready offline":"included • prepares offline on first use"):have?String.format(java.util.Locale.US,"downloaded, %.0f MB • tap to delete",f.length()/1e6):"not downloaded");}
-        new AlertDialog.Builder(this).setTitle("Speech models (auto captions)").setItems(rows,(d,which)->{
+        new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Speech models (auto captions)").setItems(rows,(d,which)->{
             if(models[which].bundled()){tell("Ice Voice 01 uses pretrained Whisper Base English. It is included in the app and prepares locally when needed; no download or training is required.");return;}
             if(!com.blackice.bc1.captions.SpeechModels.installed(this,models[which])){tell(models[which].label+" downloads when you first use it in Auto captions.");return;}
-            new AlertDialog.Builder(this).setTitle("Delete "+models[which].label+" model?").setMessage("It will download again the next time you use it.")
+            new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Delete "+models[which].label+" model?").setMessage("It will download again the next time you use it.")
                 .setPositiveButton("Delete",(d2,w2)->{com.blackice.bc1.captions.SpeechModels.delete(this,models[which]);tell(models[which].label+" speech model deleted");}).setNegativeButton("Keep",null).show();
         }).setNegativeButton("Close",null).show();
     }
@@ -1198,16 +1200,16 @@ public final class EditorActivity extends Activity {
     void speechBenchmark(){
         com.blackice.bc1.captions.SpeechModels.Model[] models=new com.blackice.bc1.captions.SpeechModels.Model[]{com.blackice.bc1.captions.SpeechModels.Model.BASE_EN};
         String[] labels=new String[models.length];for(int i=0;i<models.length;i++)labels[i]=models[i].describe()+(com.blackice.bc1.captions.SpeechModels.installed(this,models[i])?" • downloaded":"");
-        new AlertDialog.Builder(this).setTitle("Captions speed test: pick a model").setItems(labels,(d,which)->{
+        new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Captions speed test: pick a model").setItems(labels,(d,which)->{
             java.util.concurrent.atomic.AtomicBoolean stop=new java.util.concurrent.atomic.AtomicBoolean();
-            AlertDialog running=new AlertDialog.Builder(this).setTitle("Captions speed test").setMessage("Preparing…").setNegativeButton("Stop",(d2,w)->stop.set(true)).setCancelable(false).show();
+            AlertDialog running=new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Captions speed test").setMessage("Preparing…").setNegativeButton("Stop",(d2,w)->stop.set(true)).setCancelable(false).show();
             new Thread(()->{String report;
                 try{report=com.blackice.bc1.captions.SpeechBenchmark.run(this,models[which],stop,text->main.post(()->{if(running.isShowing())running.setMessage(text);}));}
                 catch(java.util.concurrent.CancellationException e){report=null;}
                 catch(Throwable t){report="Speed test failed: "+t.getMessage();}
                 final String text=report;
                 main.post(()->{if(running.isShowing())running.dismiss();if(text==null||isDestroyed())return;
-                    new AlertDialog.Builder(this).setTitle("Captions speed test").setMessage(text)
+                    new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Captions speed test").setMessage(text)
                         .setPositiveButton("Copy result",(d3,w)->{((android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(android.content.ClipData.newPlainText("BC-1 captions speed test",text));tell("Result copied");})
                         .setNegativeButton("Close",null).show();});
             },"bc1-speech-benchmark").start();
@@ -1216,7 +1218,7 @@ public final class EditorActivity extends Activity {
     void engineBenchmark(){
         if(exporting()){tell("Wait for the current export to finish.");return;}
         java.util.concurrent.atomic.AtomicBoolean stop=new java.util.concurrent.atomic.AtomicBoolean();
-        AlertDialog running=new AlertDialog.Builder(this).setTitle("Engine benchmark").setMessage("Generating a 1080p60 test clip, then exporting 8 layers of it for 10 seconds…\nKeep the app open.")
+        AlertDialog running=new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Engine benchmark").setMessage("Generating a 1080p60 test clip, then exporting 8 layers of it for 10 seconds…\nKeep the app open.")
                 .setNegativeButton("Stop",(d,w)->stop.set(true)).setCancelable(false).show();
         new Thread(()->{String report;
             try{report=com.blackice.bc1.engine.bc.EngineBenchmark.run(this,8,60,10_000,stop,p->main.post(()->{if(running.isShowing())running.setMessage("Exporting 8 layers × 1080p60… "+p+"%");})).describe();}
@@ -1224,14 +1226,14 @@ public final class EditorActivity extends Activity {
             catch(Throwable t){report="Benchmark failed: "+t;}
             final String text=report;
             main.post(()->{if(running.isShowing())running.dismiss();if(text==null||isDestroyed())return;
-                new AlertDialog.Builder(this).setTitle("Engine benchmark").setMessage(text)
+                new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Engine benchmark").setMessage(text)
                     .setPositiveButton("Copy result",(d,w)->{((android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(android.content.ClipData.newPlainText("BC-1 engine benchmark",text));tell("Benchmark result copied");})
                     .setNegativeButton("Close",null).show();});
         },"bc1-benchmark").start();
     }
     void deviceVideoReport(){
         io.execute(()->{String report;try{report=com.blackice.bc1.engine.bc.DeviceVideoReport.build(this);}catch(RuntimeException e){report="Codec query failed: "+e.getMessage();}final String text=report;
-            main.post(()->{if(isDestroyed())return;new AlertDialog.Builder(this).setTitle("Device video capabilities").setMessage(text)
+            main.post(()->{if(isDestroyed())return;new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Device video capabilities").setMessage(text)
                 .setPositiveButton("Copy report",(d,w)->{((android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(android.content.ClipData.newPlainText("BC-1 device video capabilities",text));tell("Report copied");})
                 .setNegativeButton("Close",null).show();});});
     }
@@ -1240,7 +1242,7 @@ public final class EditorActivity extends Activity {
         String report="BC-1 v"+appVersion()+" • Android API "+android.os.Build.VERSION.SDK_INT+"\n\n"+
                 prefs.getString(ExportService.LAST_FAILURE,"No export failure recorded.")+"\n\n"+
                 "Last failure is retained after successful exports. This summary excludes media names, paths and exception messages.";
-        new AlertDialog.Builder(this).setTitle("Export diagnostics").setMessage(report)
+        new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Export diagnostics").setMessage(report)
                 .setPositiveButton("Copy report",(d,w)->{((android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE))
                     .setPrimaryClip(android.content.ClipData.newPlainText("BC-1 export diagnostics",report));tell("Export diagnostics copied");})
                 .setNegativeButton("Close",null).show();
@@ -1280,17 +1282,17 @@ public final class EditorActivity extends Activity {
     }
     void createFromDialog(EditProject created){io.execute(()->{try{store.save(created);main.post(()->openProject(created.id));}catch(Exception error){main.post(()->tell(error.getMessage()));}});}
     void projectsMenu() {
-        if(!editable())return;new AlertDialog.Builder(this).setTitle("Black Ice projects").setItems(new String[]{"New project","Recent projects","Rename project","Save project","Undo","Redo"},(d,index)->{
+        if(!editable())return;new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Black Ice projects").setItems(new String[]{"New project","Recent projects","Rename project","Save project","Undo","Redo"},(d,index)->{
             if(index==0)NewProjectDialog.show(this,this::createFromDialog);
             if(index==1){saveNow();io.execute(()->{java.util.List<ProjectStore.Entry> recent=store.recent();main.post(()->{if(isDestroyed())return;
                 if(recent.isEmpty()){tell("No saved projects yet.");return;}
-                new AlertDialog.Builder(this).setTitle("Recent projects").setItems(recent.stream().map(e->e.name).toArray(String[]::new),(x,i)->openProject(recent.get(i).id)).show();});});}
+                new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Recent projects").setItems(recent.stream().map(e->e.name).toArray(String[]::new),(x,i)->openProject(recent.get(i).id)).show();});});}
             if(index==2)numberDialog("Project name",project.name,name->{if(name.isBlank()||name.length()>120)throw new IllegalArgumentException("Use a name from 1 to 120 characters.");remember();project.name=name;changed("Project renamed");});
             if(index==3){saveNow();tell("Saving project…");}if(index==4)undo(false);if(index==5)undo(true);
         }).show();
     }
     void openProject(String id){if(projectSession!=null){projectSession.model=project;projectSession.save(()->{projectSession.finish();releasePreview();undo.clear();redo.clear();selected=-1;selectedOverlay=-1;loadSession(id);});}else loadSession(id);}
-    void chooseMode(){if(uiLocked){tell("Unlock to change workspace layout");return;}new AlertDialog.Builder(this).setTitle("Workspace layout").setSingleChoiceItems(BlackIceDialog.choiceAdapter(this,"Workspace layout",new String[]{"Auto • phone / tablet / DeX","Phone portrait workspace","Wide tablet / DeX workspace"}),mode.ordinal(),(d,i)->{mode=LayoutPolicy.Preference.values()[i];getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("mode",mode.name()).apply();d.dismiss();buildWorkspace();}).show();}
+    void chooseMode(){if(uiLocked){tell("Unlock to change workspace layout");return;}new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Workspace layout").setSingleChoiceItems(BlackIceDialog.choiceAdapter(this,"Workspace layout",new String[]{"Auto • phone / tablet / DeX","Phone portrait workspace","Wide tablet / DeX workspace"}),mode.ordinal(),(d,i)->{mode=LayoutPolicy.Preference.values()[i];getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString("mode",mode.name()).apply();d.dismiss();buildWorkspace();}).show();}
     void openMediaBrowser(){
         if(!editable())return;
         if(mediaBrowser==null||!mediaBrowser.isShown()){tab=0;addDrawer.category=0;if(mobile!=null)mobile.dismissed=false;renderInspector();}
@@ -1341,7 +1343,7 @@ public final class EditorActivity extends Activity {
                 if(request!=IMPORT&&request!=AUDIO_LAYER&&(selected>=0||selectedOverlay>=0))tab=1;
                 if(binned>0){mediaKind=MediaFilter.Kind.ALL;favoritesOnly=false;mediaQuery="";}
                 changed(!errors.isEmpty()?"Import issue: "+String.join("; ",errors):request==IMPORT||request==AUDIO_LAYER?"Added "+binned+" item(s) to Project Media • drag onto the timeline":"Imported "+imported.size()+" item(s)");
-                if(!errors.isEmpty())new AlertDialog.Builder(this).setTitle("Import result").setMessage(message).setPositiveButton("OK",null).show();
+                if(!errors.isEmpty())new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Import result").setMessage(message).setPositiveButton("OK",null).show();
             });
         });
     }
@@ -1431,13 +1433,13 @@ public final class EditorActivity extends Activity {
     void loadWaveform(EditProject.Clip c,boolean quiet){if(waveforms.containsKey(c.uri)||!waveformsLoading.add(c.uri))return;if(!quiet)tell("Decoding audio waveform…");String uri=c.uri;long duration=c.sourceDurationMs;io.execute(()->{try{float[] peaks=AudioWaveform.read(this,uri,duration);main.post(()->{waveformsLoading.remove(uri);waveforms.put(uri,peaks);if(timeline!=null)timeline.invalidate();if(!quiet)tell("Waveform ready");});}catch(Exception e){main.post(()->{waveformsLoading.remove(uri);if(!quiet)tell("Waveform: "+e.getMessage());});}});}
     void bundle(int request,Uri uri){if(!editable())return;saveNow();EditProject snapshot=ProjectStore.snapshot(project);importing=true;tell(request==BACKUP?"Saving project and media…":"Restoring project and media…");io.execute(()->{try{if(request==BACKUP){ProjectBundle.write(this,snapshot,getContentResolver().openOutputStream(uri,"wt"));main.post(()->{importing=false;tell("Project bundle saved");});}else{EditProject restored=ProjectBundle.read(this,getContentResolver().openInputStream(uri));main.post(()->{importing=false;if(isDestroyed())return;openProject(restored.id);});}}catch(Exception e){if(request==BACKUP)try{android.provider.DocumentsContract.deleteDocument(getContentResolver(),uri);}catch(Exception ignored){}main.post(()->{importing=false;tell("Bundle failed: "+e.getMessage());});}});}
     void chromaDialog(){EditProject.Clip c=clip();if(c==null||!editable())return;LinearLayout f=form();CheckBox enabled=new CheckBox(this);enabled.setText("Enable chroma key");enabled.setTextColor(TEXT);enabled.setChecked(c.chroma);f.addView(enabled);EditText color=field(f,"Key color (#RRGGBB)",String.format(java.util.Locale.ROOT,"#%06X",c.keyColor&0xFFFFFF)),t=field(f,"Tolerance 0–1",String.valueOf(c.keyTolerance)),soft=field(f,"Edge softness 0.001–1",String.valueOf(c.keySoftness)),spill=field(f,"Spill removal 0–1",String.valueOf(c.keySpill));dialog("Chroma key",f,()->{int rgb=Color.parseColor(color.getText().toString());float a=parseFloat(t),b=parseFloat(soft),z=parseFloat(spill);if(a<0||a>1||b<.001f||b>1||z<0||z>1)throw new IllegalArgumentException("Check key limits");remember();c.chroma=enabled.isChecked();c.keyColor=rgb;c.keyTolerance=a;c.keySoftness=b;c.keySpill=z;changed("Chroma key updated");},null);}
-    void transformDialog(){EditProject.Clip c=clip();if(c==null||!editable())return;new AlertDialog.Builder(this).setTitle("Transform & motion").setItems(new String[]{"Static transform","Keyframes / curve editor"},(d,i)->{
+    void transformDialog(){EditProject.Clip c=clip();if(c==null||!editable())return;new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Transform & motion").setItems(new String[]{"Static transform","Keyframes / curve editor"},(d,i)->{
         if(i==1){motionDialog(c.motion,Math.max(c.inMs,Math.min(c.outMs,Math.round((project.playheadMs-project.placements().get(selected).startMs)*c.speed)+c.inMs)),c.sourceDurationMs,panels.currentValues(),true);return;}
         LinearLayout f=form();EditText x=field(f,"X: −2 to 2",String.valueOf(c.x)),y=field(f,"Y: −2 to 2",String.valueOf(c.y)),scale=field(f,"Scale factor: 0.05 to 100",String.valueOf(c.scale)),rotation=field(f,"Rotation (degrees)",String.valueOf(c.rotation));dialog("Transform",f,()->{float a=parseFloat(x),b=parseFloat(y),z=parseFloat(scale),r=parseFloat(rotation);if(!Motion.allowed(0,a)||!Motion.allowed(1,b)||!Motion.allowed(2,z)||!Motion.allowed(3,r))throw new IllegalArgumentException("Transform out of range");remember();c.x=a;c.y=b;c.scale=z;c.rotation=r;changed("Transform updated");},null);
     }).show();}
-    void motionDialog(Motion motion,long current,long limit,float[] defaults,boolean effects){String[] properties=effects?java.util.Arrays.copyOf(Motion.PROPERTIES,Math.min(defaults.length,Motion.COUNT)):java.util.Arrays.copyOf(Motion.PROPERTIES,5);new AlertDialog.Builder(this).setTitle("Animate property").setItems(properties,(d,property)->{
+    void motionDialog(Motion motion,long current,long limit,float[] defaults,boolean effects){String[] properties=effects?java.util.Arrays.copyOf(Motion.PROPERTIES,Math.min(defaults.length,Motion.COUNT)):java.util.Arrays.copyOf(Motion.PROPERTIES,5);new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Animate property").setItems(properties,(d,property)->{
         java.util.List<Motion.Key> keys=motion.curves.get(property);String[] choices=new String[keys.size()+1];choices[0]="+ Key at playhead";for(int n=0;n<keys.size();n++)choices[n+1]=seconds(keys.get(n).timeMs)+" s → "+keys.get(n).value;
-        new AlertDialog.Builder(this).setTitle(properties[property]+" • source-time keys").setItems(choices,(dialog,index)->keyDialog(motion,property,index==0?new Motion.Key(current,motion.value(property,current,defaults[property])):keys.get(index-1).copy(),limit,index==0?null:keys.get(index-1))).show();
+        new com.blackice.bc1.TraceDialogBuilder(this).setTitle(properties[property]+" • source-time keys").setItems(choices,(dialog,index)->keyDialog(motion,property,index==0?new Motion.Key(current,motion.value(property,current,defaults[property])):keys.get(index-1).copy(),limit,index==0?null:keys.get(index-1))).show();
     }).show();}
     void keyDialog(Motion motion,int property,Motion.Key key,long limit,Motion.Key existing){LinearLayout f=form();EditText time=field(f,"Source time (seconds)",seconds(key.timeMs)),value=field(f,Motion.PROPERTIES[property]+" value",String.valueOf(key.value));
         LinearLayout curves=column();EditText x1=field(curves,"Curve X1 (0–1)",String.valueOf(key.x1)),y1=field(curves,"Curve Y1 (0–1)",String.valueOf(key.y1)),x2=field(curves,"Curve X2 (0–1)",String.valueOf(key.x2)),y2=field(curves,"Curve Y2 (0–1)",String.valueOf(key.y2));
@@ -1456,7 +1458,7 @@ public final class EditorActivity extends Activity {
         mediaBrowser.removeAllViews();mediaFilterButtons.clear();
         boolean shapeShelf=mobile!=null&&tab==0&&addDrawer.category==3;
         LinearLayout title=row();title.setGravity(Gravity.CENTER_VERTICAL);LinearLayout titles=column();titles.addView(label(shapeShelf?"Shapes":"Project Media",15,TEXT,true));titles.addView(label(shapeShelf?"Hold and drag onto a visual timeline row.":"Import, then drag media onto the timeline.",10,MUTED,false));title.addView(titles,new LinearLayout.LayoutParams(0,-2,1));
-        title.addView(headerIcon("Sort","Sort media",v->new AlertDialog.Builder(this).setTitle("Sort media").setSingleChoiceItems(new String[]{"Import order","Name","Duration"},mediaSort,(d,n)->{mediaSort=n;d.dismiss();renderMediaGrid();}).show()));
+        title.addView(headerIcon("Sort","Sort media",v->new com.blackice.bc1.TraceDialogBuilder(this).setTitle("Sort media").setSingleChoiceItems(new String[]{"Import order","Name","Duration"},mediaSort,(d,n)->{mediaSort=n;d.dismiss();renderMediaGrid();}).show()));
         mediaBrowser.addView(title);
 
         if(!shapeShelf){
@@ -1605,7 +1607,7 @@ public final class EditorActivity extends Activity {
         items.add(asset.audioOnly?"Add to an audio layer at playhead":"Add to main sequence at playhead");if(!asset.audioOnly)items.add("Add as new layer at playhead");
         items.add(favoriteMedia.contains(asset.uri)?"Remove favorite":"Add favorite");if(used<0)items.add("Remove from Project Media");
         String[] names=items.toArray(new String[0]);
-        new AlertDialog.Builder(this).setTitle(asset.name).setMessage("Tip: long-press and drag media onto any timeline row.").setItems(names,(d,n)->mediaAction(asset,names[n])).setNegativeButton("Close",null).show();
+        new com.blackice.bc1.TraceDialogBuilder(this).setTitle(asset.name).setMessage("Tip: long-press and drag media onto any timeline row.").setItems(names,(d,n)->mediaAction(asset,names[n])).setNegativeButton("Close",null).show();
     }
     void mediaAction(EditProject.Clip asset,String action){
         long at=project.playheadMs;
@@ -1669,7 +1671,7 @@ public final class EditorActivity extends Activity {
     void slider(String name,float value,ValueAction action){double[] current={value},before={value};inspector.addView(new com.blackice.bc1.menu.RulerView(this,name+" percent",0,100,1,new com.blackice.bc1.menu.RulerView.Binding(){public double value(){return current[0]*100;}public void begin(){before[0]=current[0];pausePlayback();}public void preview(double n){current[0]=n/100;}public void commit(){if(editable())action.apply((float)current[0]);}public void cancel(){current[0]=before[0];}}));}
     LinearLayout form(){LinearLayout l=column();l.setPadding(dp(18),dp(8),dp(18),dp(10));return l;}
     EditText field(LinearLayout form,String title,String value){form.addView(note(title));EditText e=new EditText(this);e.setText(value);e.setTextColor(TEXT);e.setSingleLine(false);e.setMinHeight(dp(48));form.addView(e);return e;}
-    void dialog(String title,LinearLayout form,Runnable apply,Runnable delete){CrashLogs.operation("Dialog");ScrollView scroll=new ScrollView(this);scroll.addView(form);AlertDialog.Builder b=new AlertDialog.Builder(this).setTitle(title).setView(scroll).setPositiveButton("Apply",null).setNegativeButton("Cancel",null);if(delete!=null)b.setNeutralButton("Remove",(d,w)->{if(editable())delete.run();});AlertDialog dialog=b.create();dialog.setOnShowListener(x->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{if(!editable())return;try{apply.run();dialog.dismiss();}catch(Exception e){Toast.makeText(this,e.getMessage()==null?"Check the entered values.":e.getMessage(),Toast.LENGTH_LONG).show();}}));dialog.show();}
+    void dialog(String title,LinearLayout form,Runnable apply,Runnable delete){CrashLogs.operation("Dialog");ScrollView scroll=new ScrollView(this);scroll.addView(form);AlertDialog.Builder b=new com.blackice.bc1.TraceDialogBuilder(this).setTitle(title).setView(scroll).setPositiveButton("Apply",null).setNegativeButton("Cancel",null);if(delete!=null)b.setNeutralButton("Remove",(d,w)->{if(editable())delete.run();});AlertDialog dialog=b.create();dialog.setOnShowListener(x->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{if(!editable())return;try{apply.run();dialog.dismiss();}catch(Exception e){Toast.makeText(this,e.getMessage()==null?"Check the entered values.":e.getMessage(),Toast.LENGTH_LONG).show();}}));dialog.show();}
     void numberDialog(String title,String value,TextAction action){LinearLayout form=form();EditText input=field(form,title,value);dialog(title,form,()->action.apply(input.getText().toString().trim()),null);}
     static long parseMs(String value){double seconds=Double.parseDouble(value);if(!Double.isFinite(seconds)||Math.abs(seconds)>7_200_000)throw new IllegalArgumentException("Enter a valid time in seconds.");return Math.round(seconds*1000);}
     static float parseFloat(EditText field){float value=Float.parseFloat(field.getText().toString());if(!Float.isFinite(value))throw new IllegalArgumentException("Enter a finite number.");return value;}
