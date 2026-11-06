@@ -16,7 +16,7 @@ public final class CharacterFilter implements AutoCloseable {
     private final PoseLandmarker detector;
     private final Bitmap art;
     private final CharacterMesh mesh;
-    private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
+
     private int[] plate,pixels;
     private boolean replaced;
     private final Context context;
@@ -85,12 +85,7 @@ public final class CharacterFilter implements AutoCloseable {
             for(int i=0;i<2;i++){joints[2+i]=(joints[6+i]+joints[12+i])*.5f;joints[4+i]=(joints[18+i]+joints[24+i])*.5f;}
             MPImage mask=masks.get(0);int mw=mask.getWidth(),mh=mask.getHeight();
             FloatBuffer alpha=ByteBufferExtractor.extract(mask).order(ByteOrder.nativeOrder()).asFloatBuffer();
-            for(int y=0;y<h;y++)for(int x=0;x<w;x++){
-                int i=y*w+x;float confidence=alpha.get((y*mh/h)*mw+x*mw/w);
-                if(confidence>.1f)pixels[i]=plate[i];
-            }
-            Bitmap out=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);out.setPixels(pixels,0,w,0,0,w,h);
-            mesh.pose(joints);new Canvas(out).drawBitmapMesh(art,CharacterMesh.GRID,CharacterMesh.GRID,mesh.vertices,0,null,0,paint);
+            Bitmap out=PersonCompositor.render(w,h,pixels,plate,alpha,mw,mh,art,mesh,joints);
             replaced=true;return out;
         } finally{for(MPImage m:masks)m.close();}
     }
