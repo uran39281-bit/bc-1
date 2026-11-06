@@ -1,0 +1,98 @@
+name: Publish retained-key Black Ice 1.4.4 Preview
+on:
+  push:
+    branches: [main, feature/v1.4.4-workspace-catalog]
+    paths: [v1.4.4/release.json]
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require qualified source run
+        id: release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const release = JSON.parse(fs.readFileSync('v1.4.4/release.json'));
+            const {data: run} = await github.rest.actions.getWorkflowRun({...context.repo, run_id: release.workflow_run});
+            if (run.head_sha !== release.source_commit || run.conclusion !== 'success') throw new Error('Source build has not passed its full qualification');
+            const {data: artifacts} = await github.rest.actions.listWorkflowRunArtifacts({...context.repo, run_id: release.workflow_run, per_page: 100});
+            for (const [key, name] of [['candidate_artifact_id','Black-Ice-Editor-v1.4.4-ci-candidate'],['qa_artifact_id','BC-1-GPU-test-reports']]) {
+              if (!artifacts.artifacts.some(a => a.id === release[key] && a.name === name && !a.expired)) throw new Error('Qualified artifact unavailable: ' + key);
+              core.setOutput(key, release[key]);
+            }
+            core.setOutput('run', release.workflow_run);
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ steps.release.outputs.candidate_artifact_id }}
+          merge-multiple: true
+          run-id: ${{ steps.release.outputs.run }}
+          github-token: ${{ github.token }}
+          path: candidate
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ steps.release.outputs.qa_artifact_id }}
+          merge-multiple: true
+          run-id: ${{ steps.release.outputs.run }}
+          github-token: ${{ github.token }}
+          path: qualification
+      - name: Install signature verification tools
+        run: |
+          bc1_sdkmanager=$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)
+          "$bc1_sdkmanager" --install 'build-tools;35.0.0'
+      - name: Restore and verify retained-key signature
+        run: |
+          mkdir -p publish
+          python .github/scripts/bc1-restore-signed-apk.py v1.4.4/release.json candidate/app-debug.apk publish/Black-Ice-Editor-v1.4.4-Preview-build38.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs publish/Black-Ice-Editor-v1.4.4-Preview-build38.apk | tee publish/SIGNATURE-VERIFICATION.txt
+          grep -F '3c578586198b9ebadd9496d38e25851ec0e90d918684dc4994e03d1d7f29a29d' publish/SIGNATURE-VERIFICATION.txt
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 4 publish/Black-Ice-Editor-v1.4.4-Preview-build38.apk
+          mkdir -p publish/screenshots
+          cp qualification/qa/v144-*.png publish/screenshots/
+          cp v1.4.4/QA.md publish/QA.md
+          cp v1.4.4/SHA256SUMS.txt publish/SHA256SUMS.txt
+          cd publish
+          sha256sum -c SHA256SUMS.txt
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Upgrade original Preview without clearing its projects
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: python .github/scripts/bc1-v144-upgrade.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Black-Ice-v144-upgrade-verification
+          path: publish/upgrade-*
+      - name: Publish immutable version download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd publish
+          git init -q
+          git checkout -q -b release
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code origin refs/heads/test-apk/preview/v1.4.4 >/dev/null; then
+            git fetch -q origin refs/heads/test-apk/preview/v1.4.4
+            git show FETCH_HEAD:SHA256SUMS.txt > /tmp/published-sha256
+            cmp SHA256SUMS.txt /tmp/published-sha256
+            echo 'Identical version already published.'
+            exit 0
+          fi
+          git add .
+          git -c user.name=bc1-ci -c user.email=bc1-ci@users.noreply.github.com commit -qm 'Retained-key Black Ice Preview 1.4.4 build 38'
+          git push -q origin release:refs/heads/test-apk/preview/v1.4.4

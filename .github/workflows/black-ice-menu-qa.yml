@@ -1,0 +1,74 @@
+name: Black Ice main menu QA
+on:
+  push:
+    branches: ['feature/responsive-project-home']
+    paths: ['BC-1/**', '.github/workflows/black-ice-menu-qa.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: menu-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  menu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Install Android SDK 36
+        run: |
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;35.0.0"
+      - name: Build native menu and tests
+        working-directory: BC-1
+        run: gradle --no-daemon -Pbc1SideBySide testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            adb install -r BC-1/app/build/outputs/apk/debug/app-debug.apk
+            adb install -r BC-1/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            mkdir -p menu-qa
+            adb shell am instrument -w -r -e class com.blackice.bc1.HomeBrowserTest com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee menu-qa/device-tests.txt
+            adb exec-out run-as com.blackice.bc1.preview tar -C files/qa -cf - . > menu-qa/screenshots.tar
+            tar -xf menu-qa/screenshots.tar -C menu-qa
+            if grep -E 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' menu-qa/device-tests.txt; then exit 1; fi
+            grep -E '^OK \([0-9]+ tests?\)' menu-qa/device-tests.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: black-ice-menu-qa
+          path: |
+            menu-qa/
+            BC-1/app/build/reports/
+            BC-1/app/build/outputs/apk/debug/app-debug.apk
+      - name: Publish review screenshots
+        if: always()
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/menu-review
+          cp menu-qa/*.png menu-qa/device-tests.txt /tmp/menu-review/ 2>/dev/null || true
+          printf 'Source: %s\nRun: %s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > /tmp/menu-review/BUILD.txt
+          cd /tmp/menu-review
+          git init -q && git checkout -q -b screenshots && git add .
+          git -c user.name=bc1-ci -c user.email=bc1-ci@users.noreply.github.com commit -qm "Native menu QA for $GITHUB_SHA"
+          git push -qf "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "screenshots:refs/heads/menu-qa/${GITHUB_REF_NAME}"

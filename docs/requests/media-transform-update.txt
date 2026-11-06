@@ -1,0 +1,184 @@
+BLACK ICE EDITOR — MEDIA SETTINGS AND MOVE & TRANSFORM UPDATE
+
+Implement this update in the existing Black Ice Editor app. Use the four attached images as layout references, with the written requirements below taking priority wherever the references show extra tabs, different colors, placeholder text, or unavailable features.
+
+This is a functional UI and editing update. Connect every control to the existing selected clip, transform system, keyframe timeline, preview renderer, undo history, project storage, and export pipeline. Preserve existing projects and working editing features.
+
+1. SCOPE AND NAVIGATION
+
+Update these two areas:
+• Media Settings, opened by selecting an existing media clip or footage item.
+• Move & Transform, opened from that clip's Media Settings.
+
+Keep the + button assigned to adding/importing media. Do not use it to open the selected clip's settings.
+
+Preserve the selected clip and current playhead position when switching panels or transform tabs. Back from Move & Transform returns to that same clip's Media Settings. Keep existing Save, Settings, and Export actions working without duplicating their controls inside these panels.
+
+Apply the new panels appropriately in both the mobile workspace and the landscape/tablet/Samsung DeX workspace. Preserve the surrounding editor and timeline layouts. Changing display size, preview zoom, or workspace orientation must not change the clip's transform values or the project's aspect ratio.
+
+2. MEDIA SETTINGS — FOUR MATCHING TILES
+
+Show the selected media filename above a 2 × 2 tile grid:
+
+Top left: Move & Transform
+Top right: Blending & Opacity
+Bottom left: Effects
+Bottom right: Audio
+
+All four tiles must have identical width, height, corner radius, border thickness, padding, and icon area. Use a shared square aspect ratio where space allows. If a constrained panel needs another aspect ratio, apply the same dimensions to all four tiles. A two-line title must not make one tile taller than the others.
+
+Visual requirements:
+• Keep the dark navy/Black Ice background and consistent icy-blue tile styling.
+• All four tiles use the same blue color family. Do not assign a different color to each category.
+• Give every tile a subtle blue wave background, similar to the reference. Keep it decorative, low contrast, and behind the icon and text. Static vector or drawn curves are sufficient; animation is not required.
+• Center a clear icon above each label. Use consistent icon size, stroke weight, and visual emphasis.
+• Suggested icons: four-way movement arrows for Move & Transform; stacked layers with a half-filled circle for Blending & Opacity; sparkles for Effects; speaker/sound waves for Audio.
+• Keep label placement, spacing, borders, and pressed/selected feedback consistent across the grid.
+• Make the entire tile clickable, not only its text or icon. Provide accessible labels and at least 48 dp touch targets for interactive controls.
+
+Display the media's actual filename rather than copying the sample filename from the image. Handle long names with ellipsis and an accessible way to read the full name.
+
+Move & Transform opens the new panel described below. Blending & Opacity and Audio retain their existing functional destinations. Preserve existing Effects functionality if available. If Effects is unavailable, keep its tile in the same blue design and show an honest “Coming Later” status; do not create a fake working effects panel or build new effects as part of this update.
+
+3. MOVE & TRANSFORM — EXACTLY THREE TABS
+
+Show a Back button, the title “Move & Transform,” and only these tabs, in this order:
+• Position
+• Rotation
+• Scale
+
+The reference images contain extra labels such as Skew, Anchor, and Align. Do not include those tabs in this update. Preserve any existing underlying values for backward compatibility; hiding a control must not erase saved data.
+
+Clearly highlight the selected tab using the existing selection accent and an underline. Do not rely on color alone. Keep the panel readable and scrollable on small screens without shrinking controls below usable touch sizes.
+
+4. SHARED VALUE, SCRUBBING, AND KEYFRAME BEHAVIOR
+
+Numeric fields:
+• Tapping a value opens direct numeric editing with the appropriate decimal/sign support.
+• Validate input before committing. Reject blank, invalid, NaN, and infinite values without crashing or replacing a valid value with bad data.
+• Show position in px, rotation in degrees, and scale in %. Use consistent display precision; two decimal places are preferred. Preserve the engine's useful internal precision rather than repeatedly rounding during gestures.
+
+Horizontal rulers:
+• Use the reference's horizontal tick marks and a fixed central indicator beneath each applicable value.
+• Dragging right increases the displayed value; dragging left decreases it. Tick marks scroll beneath the central indicator.
+• Update the value, preview, and keyframe state continuously during the gesture. Provide practical fine control and direct numeric entry for exact values.
+• Do not apply an inertial fling after the finger is released. Final values must be predictable.
+
+Keyframe diamonds:
+• Each editable property has its own diamond button: X, Y, Rotation, Width, and Height.
+• A filled diamond means a keyframe exists for that property at the current project frame. An outline means there is no key at that frame. Also distinguish a property that is animated elsewhere from one that is entirely static, using a subtle consistent indicator.
+• Tapping the diamond adds a key at the playhead using the currently evaluated value. If a key already exists at that frame, tapping removes only that property's key at that frame.
+• Editing a static property changes its static value. Editing an animated property updates its current key or inserts a key at the playhead while preserving the other keys.
+• When removing the final key from a property, retain the value currently being displayed as its static value so the clip does not unexpectedly jump.
+• Respect the existing project frame rate and keyframe timing. Do not create duplicate keys through tiny floating-point time differences.
+
+Previous Key / Next Key:
+• Position navigates through the combined X and Y key times.
+• Rotation navigates through Rotation keys.
+• Scale navigates through the combined Width and Height key times.
+• Jump to the nearest strictly earlier or later key in the current tab, update the timeline/playhead, and refresh the evaluated controls and preview.
+• Disable the relevant button when there is no key in that direction. Never create a key merely by navigating.
+
+Pause playback when beginning a transform edit or jumping to a key. Keep the playhead stable throughout an active edit. Treat one continuous ruler/dial/preview drag as one undoable action; a preset tap, reset, numeric commit, or keyframe action is also individually undoable. Cancellation should restore the value from before the edit.
+
+5. POSITION TAB
+
+Follow the Position reference layout:
+• A wide “Reset all” button at the top of the tab.
+• Previous Key and Next Key side by side underneath.
+• An X control card containing its diamond, X label, editable px value, Reset button, and horizontal ruler.
+• A matching Y control card below it.
+
+Coordinate behavior:
+• Values represent project-canvas pixels, independent of the phone's physical pixels, monitor resolution, or preview magnification.
+• Preserve the existing engine's coordinate convention and saved positions. Do not reinterpret old coordinates in a way that moves existing clips.
+• If the app has no established convention, use the canvas center as X = 0 / Y = 0, positive X to the right, and positive Y downward. Use this consistently in the UI, preview, storage, and export.
+• Allow negative values and positioning partly or fully outside the visible canvas. Do not clamp the clip to the preview boundaries.
+• Existing direct movement in the preview must update these controls and use the same keyframe and undo rules.
+
+Reset scope:
+• X Reset restores only X to the engine's neutral/default placement value.
+• Y Reset restores only Y to its neutral/default placement value.
+• Position “Reset all” restores X and Y only. It must not change Rotation, Scale, opacity, trimming, or any other property.
+• With centered coordinates the neutral values are X = 0 and Y = 0. Under an established absolute-coordinate system, reset to the actual centered/default placement rather than blindly writing zero.
+• Apply resets at the current edit/keyframe scope. Do not erase the complete position animation.
+
+6. ROTATION TAB — CONTINUOUS, CUMULATIVE ROTATION
+
+Follow the Rotation reference layout:
+• Previous Key and Next Key side by side.
+• A large circular rotation dial with tick marks, a pointer/handle, and the angle displayed in the center.
+• A row containing the Rotation diamond, label, editable angle, and Reset button.
+• A Presets area below with four matching columns: 45°, 90°, 180°, and 360°. Each column has an up/+ button above its amount and a down/− button below it.
+
+The rotation value is a signed cumulative angle. One full revolution is 360°; it is not the maximum value. Support values such as 405°, 720°, 1080°, −45°, and −450°.
+
+Dial behavior:
+• Clockwise dragging increases the cumulative angle. Counterclockwise dragging decreases it.
+• Permit multiple complete turns without stopping, snapping back, or losing the accumulated turn count.
+• Crossing the top/0° boundary must remain smooth. For example, dragging clockwise from 359° should continue through 360° to 361°, not jump to 0° or 1°.
+• The pointer visually repeats its direction every 360°, but both numeric readouts retain the full cumulative value. At 405° the pointer faces the same direction as 45°, while the text still says 405.00°.
+• Start dragging from the existing rotation without an initial jump. Handle the circular wrap correctly when calculating pointer-movement deltas, and ignore the unstable central dead zone.
+
+Preset buttons are RELATIVE INCREMENTS, not absolute angle assignments:
+• Up/+45° adds 45° to the current angle; down/−45° subtracts 45°.
+• Apply the same behavior for 90°, 180°, and 360°.
+• Examples: 360° + 45° = 405°; 405° − 90° = 315°; 720° + 360° = 1080°; 0° − 45° = −45°.
+• Update the dial, numeric values, preview, and applicable keyframe immediately after each tap.
+
+Storage and animation:
+• Store the unwrapped angle. Do not normalize saved rotation into 0–359° or −180–180°.
+• Preserve full turns during interpolation. A 0° → 720° animation must render two complete clockwise revolutions. A 0° → −720° animation must render two complete counterclockwise revolutions.
+• Existing easing should operate on the cumulative angle. Do not silently replace it with shortest-path rotation.
+• Save/reopen and export must retain the same turn count and direction seen in the preview.
+• Rotation Reset sets rotation to 0° at the applicable current edit/keyframe scope, without changing position or scale or deleting the rest of the animation.
+
+7. SCALE TAB — WIDTH, HEIGHT, AND PROPORTION LOCK
+
+Follow the Scale reference layout:
+• Previous Key and Next Key side by side.
+• A Width row with diamond, editable percentage, Reset button, and horizontal ruler beneath it.
+• A wide chain-link toggle labeled “Lock W and H.”
+• A matching Height row and ruler below the toggle.
+
+Scale behavior:
+• 100% represents the clip's existing default imported/fitted size in the project, not 100% of the device screen. Preserve the app's established import-fit behavior.
+• Changing Width affects horizontal scale; changing Height affects vertical scale. These are nondestructive transforms, not edits to the source file or the project resolution.
+• Allow precise numeric input and smooth ruler adjustments. Do not use negative scale as a hidden flip control in this update.
+• Handle 0% safely where supported by the transform engine; never produce invalid matrices, division-by-zero errors, or renderer crashes. Preserve validated engine limits for excessively large values.
+
+When Lock W and H is OFF:
+• Width and Height change independently.
+• Resetting one sets that dimension to 100% without changing the other.
+
+When Lock W and H is ON:
+• Capture and preserve the CURRENT proportion between Width and Height. Enabling the lock must not immediately resize or reshape the clip.
+• Apply the same proportional change to both scale dimensions, whether the edit came from a ruler, numeric input, or Reset.
+• Example: W = 100%, H = 100%; changing W to 150% produces H = 150%.
+• Example: W = 200%, H = 100%; enabling the lock changes neither value. Changing W to 300% then produces H = 150%.
+• A linked Width Reset sets W to 100% and adjusts H proportionally. A linked Height Reset sets H to 100% and adjusts W proportionally. Both changed values form one undo action.
+• Retain the captured positive ratio if a linked edit takes both dimensions to zero, so scaling back up is safe. If the user attempts to enable linking from an already unlinked zero dimension with no usable ratio, explain that both dimensions must be above zero before linking; do not silently resize the clip.
+• If either linked dimension is animated, write/update paired Width and Height keys at the same playhead time for an edit affecting both. Preserve all other keys.
+• The lock is an editing constraint, not a playback constraint. It must not rewrite old keys or force existing animations into a new shape. At the start of a new edit, use the values evaluated at the current playhead and preserve their current proportion throughout that edit; do not impose a ratio captured at a different animation time.
+
+Show the lock state clearly through its chain icon and selected/pressed treatment. Changing tabs must not silently toggle the lock or reset its values.
+
+8. INTEGRATION, STABILITY, AND VERIFICATION
+
+Use the existing application framework and transform pipeline. Keep one authoritative value for each property so the preview, fields, rulers, dial, keyframes, saved project, and exported render stay synchronized. Preserve legacy transforms when loading old projects; add migration only where genuinely required and retain the previous visual result.
+
+Verify at least the following before marking the update complete:
+1) All four Media Settings tiles have equal dimensions, aligned icons/labels, matching blue colors, and subtle wave backgrounds on phone and landscape/DeX panels.
+2) Only Position, Rotation, and Scale appear in Move & Transform.
+3) X/Y input, rulers, preview dragging, and per-axis resets agree in project pixels, including negative coordinates.
+4) Rotation continues smoothly through 360° in both directions and supports several complete revolutions.
+5) At 360°, pressing +45° displays 405°; pressing −90° afterward displays 315°.
+6) A 0° → 720° animation performs two turns in preview and export, including after save/reopen.
+7) Width/Height work independently while unlocked and proportionally while locked, including the 200/100 → 300/150 example.
+8) Each reset affects only its documented properties and current edit/keyframe scope, without deleting unrelated animation.
+9) Previous/Next Key uses the correct tab's keys, handles missing keys, and creates no new keys.
+10) Keyframe additions, removals, numeric edits, drags, linked edits, presets, and resets support correct undo/redo.
+11) Invalid numeric input, zero/very large scale values, repeated tab switches, and rapid dial gestures do not crash the app or lose the selected clip.
+12) Existing projects, saving, playback, and export continue to work, with exported transforms matching the preview.
+
+Deliver the implemented update with a brief explanation of the changes, the verification performed, and any remaining limitations. Do not mark unfinished controls as working.

@@ -1,0 +1,97 @@
+package com.blackice.bc1;
+
+import android.view.*;
+import android.widget.*;
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import com.blackice.bc1.editor.*;
+import com.blackice.bc1.menu.*;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import static org.junit.Assert.*;
+
+/** Real inspector gestures, project transactions and measured layout, not screenshot-only checks. */
+@RunWith(AndroidJUnit4.class)
+public class InspectorControlsTest {
+ private final WorkspaceV2Test h=new WorkspaceV2Test();
+ private static <T extends View> T find(View view,Class<T> type){if(type.isInstance(view))return type.cast(view);if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++){T child=find(group.getChildAt(i),type);if(child!=null)return child;}}return null;}
+ private static void expand(View v){CollapsibleSection section=find(v,CollapsibleSection.class);assertNotNull(section);if(!section.expanded())((ViewGroup)section).getChildAt(0).performClick();}
+ private static void mode(EditorActivity a,String name){View button=WorkspaceV2Test.described(a.inspector,"Position control: "+name);assertNotNull(button);button.performClick();}
+ private static void send(View view,long time,int action,float x,float y){MotionEvent event=MotionEvent.obtain(time,time+16,action,x,y,0);try{view.dispatchTouchEvent(event);}finally{event.recycle();}}
+ private static PositionTrackpadView pad(EditorActivity a){PositionTrackpadView pad=find(a.inspector,PositionTrackpadView.class);assertNotNull(pad);pad.layout(0,0,a.dp(280),a.dp(160));return pad;}
+ private static void drag(EditorActivity a,boolean cancel){PositionTrackpadView pad=pad(a);long t=android.os.SystemClock.uptimeMillis();send(pad,t,MotionEvent.ACTION_DOWN,a.dp(80),a.dp(70));send(pad,t,MotionEvent.ACTION_MOVE,a.dp(110),a.dp(90));send(pad,t,cancel?MotionEvent.ACTION_CANCEL:MotionEvent.ACTION_UP,a.dp(110),a.dp(90));}
+ private static void open(EditorActivity a,boolean overlay){a.panels.reset();if(overlay)a.selectOverlay(0);else a.selectClip(0,false);a.transformPanel.tab=0;a.panels.category("Move & Transform");mode(a,"Trackpad");}
+ private static float x(EditorActivity a){return a.transformPanel.current().x;}
+ private static float y(EditorActivity a){return a.transformPanel.current().y;}
+ private static String snapshot(EditorActivity a){try{return ProjectStore.encode(a.project);}catch(org.json.JSONException e){throw new AssertionError(e);}}
+ private void clearPreference(){h.inst.getTargetContext().getSharedPreferences(MenuScreenFactory.CONTROL_PREFS,0).edit().remove(MenuScreenFactory.POSITION_CONTROL).commit();}
+
+ @Test public void trackpadMovesBothAxesWithOneUndoAndCancelRestoresStaticAndAnimatedLayers()throws Exception{
+  clearPreference();try{new Workspace144Test().fixture();try(ActivityScenario<EditorActivity> scene=ActivityScenario.launch(EditorActivity.class)){h.waitLoaded(scene);
+   scene.onActivity(a->{for(boolean overlay:new boolean[]{false,true})for(boolean animated:new boolean[]{false,true}){
+    open(a,overlay);a.seek(1000);
+    a.edit("Trackpad fixture",()->{Motion m=a.selectedMotion();m.curves.get(Motion.X).clear();m.curves.get(Motion.Y).clear();if(animated){m.put(Motion.X,new Motion.Key(0,0));m.put(Motion.X,new Motion.Key(2000,.4f));m.put(Motion.Y,new Motion.Key(0,0));m.put(Motion.Y,new Motion.Key(2000,.2f));}});
+    float beforeX=x(a),beforeY=y(a);int undo=a.undo.size();
+    drag(a,true);assertEquals(beforeX,x(a),1e-6);assertEquals(beforeY,y(a),1e-6);assertEquals(undo,a.undo.size());
+    drag(a,false);assertEquals(beforeX+60f/a.exportSize()[0],x(a),1e-5);assertEquals(beforeY-40f/a.exportSize()[1],y(a),1e-5);assertEquals(undo+1,a.undo.size());
+    if(!animated)assertFalse("Static layers stay static",a.selectedMotion().animated());
+    a.undo(false);assertEquals(beforeX,x(a),1e-6);assertEquals(beforeY,y(a),1e-6);a.undo(true);assertEquals(beforeX+60f/a.exportSize()[0],x(a),1e-5);
+   }});
+  }}finally{clearPreference();}
+ }
+
+ @Test public void rulerAndTrackpadKeyboardUseTheRealPositionAndRespectLocks()throws Exception{
+  clearPreference();try{new Workspace144Test().fixture();try(ActivityScenario<EditorActivity> scene=ActivityScenario.launch(EditorActivity.class)){h.waitLoaded(scene);
+   scene.onActivity(a->{open(a,false);float beforeX=x(a),beforeY=y(a);int undo=a.undo.size();long playhead=a.project.playheadMs;PositionTrackpadView pad=pad(a);assertTrue("Trackpad accepts keyboard focus in touch mode",pad.requestFocus());
+    a.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_DPAD_RIGHT));
+    assertTrue("Trackpad keeps keyboard focus after commit",pad(a).hasFocus());
+    a.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_DPAD_RIGHT));
+    assertEquals("Arrow keys never seek the timeline while the trackpad is focused",playhead,a.project.playheadMs);assertEquals(beforeX+4f/a.exportSize()[0],x(a),1e-6);assertEquals(beforeY,y(a),0);assertEquals(undo+2,a.undo.size());a.undo(false);a.undo(false);
+    mode(a,"Ruler");RulerView slider=(RulerView)WorkspaceV2Test.described(a.inspector,"X");assertNotNull(slider);slider.layout(0,0,a.dp(280),a.dp(48));long t=android.os.SystemClock.uptimeMillis();int n=a.undo.size();
+    send(slider,t,MotionEvent.ACTION_DOWN,a.dp(140),a.dp(24));send(slider,t,MotionEvent.ACTION_MOVE,a.dp(200),a.dp(24));assertTrue("Ruler previews position",Math.abs(x(a)-beforeX)>.001);send(slider,t,MotionEvent.ACTION_CANCEL,a.dp(200),a.dp(24));assertEquals(beforeX,x(a),1e-6);assertEquals(n,a.undo.size());
+    slider=(RulerView)WorkspaceV2Test.described(a.inspector,"Y");slider.onKeyDown(KeyEvent.KEYCODE_DPAD_RIGHT,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_DPAD_RIGHT));assertNotEquals(beforeY,y(a),1e-6);assertEquals(beforeX,x(a),1e-6);assertEquals(n+1,a.undo.size());a.undo(false);
+    mode(a,"Trackpad");pad=pad(a);t=android.os.SystemClock.uptimeMillis();send(pad,t,MotionEvent.ACTION_DOWN,a.dp(80),a.dp(70));send(pad,t,MotionEvent.ACTION_MOVE,a.dp(110),a.dp(90));pad.setEnabled(false);assertEquals(beforeX,x(a),1e-6);assertEquals(beforeY,y(a),1e-6);assertEquals(n,a.undo.size());
+    a.uiLocked=true;a.renderInspector();assertFalse(pad(a).isEnabled());a.uiLocked=false;
+   });
+  }}finally{clearPreference();}
+ }
+
+ @Test public void controlChoiceSurvivesRecreationWithoutChangingTheProject()throws Exception{
+  clearPreference();try{new Workspace144Test().fixture();try(ActivityScenario<EditorActivity> scene=ActivityScenario.launch(EditorActivity.class)){h.waitLoaded(scene);
+   scene.onActivity(a->{open(a,false);String before=snapshot(a);int undo=a.undo.size();mode(a,"Ruler");mode(a,"Trackpad");assertEquals(before,snapshot(a));assertEquals(undo,a.undo.size());});
+   scene.recreate();h.waitLoaded(scene);scene.onActivity(a->{a.selectClip(0,false);a.transformPanel.tab=0;a.panels.category("Move & Transform");assertNotNull(find(a.inspector,PositionTrackpadView.class));assertTrue(WorkspaceV2Test.described(a.inspector,"Position control: Trackpad").isSelected());mode(a,"Ruler");assertNotNull(find(a.inspector,RulerView.class));assertNull(find(a.inspector,PositionTrackpadView.class));});
+  }}finally{clearPreference();}
+ }
+
+ @Test public void wideMenusUseCompactRowsAndScrollableGraphs()throws Exception{
+  String size=h.override(h.shell("wm size")),density=h.override(h.shell("wm density"));clearPreference();
+  try{new Workspace144Test().fixture();h.shell("wm size 1920x1080");h.shell("wm density 160");
+   try(ActivityScenario<EditorActivity> scene=ActivityScenario.launch(EditorActivity.class)){h.waitLoaded(scene);
+    scene.onActivity(a->{open(a,false);mode(a,"Ruler");a.edit("Menu review keys",()->{
+     a.selectedMotion().put(Motion.X,new Motion.Key(0,0));a.selectedMotion().put(Motion.X,new Motion.Key(2000,.2f));
+     a.selectedMotion().put(Motion.Y,new Motion.Key(0,0));a.selectedMotion().put(Motion.Y,new Motion.Key(2000,.1f));
+     CurveEdits.write(a.selectedMotion().curves.get(Motion.X).get(0),new CubicBezier(.25,.1,.75,.9));
+    });a.seek(1000);a.easingControls.select(Motion.X,0);a.renderInspector();expand(a.inspector);});Thread.sleep(700);
+    scene.onActivity(a->{View previous=WorkspaceV2Test.described(a.inspector,"Previous Key"),next=WorkspaceV2Test.described(a.inspector,"Next Key"),reset=WorkspaceV2Test.described(a.inspector,"Reset all");assertNotSame("Reset is separate from the shared joined key navigation",previous.getParent(),reset.getParent());assertSame(previous.getParent(),next.getParent());assertEquals(a.dp(36),reset.getHeight());
+     EditText x=WorkspaceV2Test.field(a.inspector,"X exact value in pixels");assertEquals("Diamond, label, value, unit, reset share one row",5,((ViewGroup)x.getParent()).getChildCount());
+     CurveEditorView graph=find(a.inspector,CurveEditorView.class);assertNotNull(graph);assertTrue("Graph is readable instead of squeezed to fit",graph.getHeight()>=a.dp(230));ScrollView scroll=(ScrollView)a.inspector.getParent();assertTrue("Inspector scrolls to reach its lower controls",a.inspector.getHeight()>scroll.getHeight());});
+    h.capture("v151-wide-position-ruler");
+    scene.onActivity(a->{ScrollView scroll=(ScrollView)a.inspector.getParent();scroll.scrollTo(0,a.inspector.getHeight());});Thread.sleep(150);h.capture("v151-wide-position-graph");
+    scene.onActivity(a->((ScrollView)a.inspector.getParent()).scrollTo(0,0));
+    for(String control:new String[]{"Ruler","Trackpad"}){scene.onActivity(a->mode(a,control));Thread.sleep(150);h.capture("v151-wide-position-"+control.toLowerCase(java.util.Locale.US));}
+    scene.onActivity(a->{mode(a,"Ruler");a.transformPanel.tab=1;a.renderInspector();});Thread.sleep(150);h.capture("v151-wide-rotation");
+    scene.onActivity(a->{a.transformPanel.tab=2;a.renderInspector();});Thread.sleep(150);h.capture("v151-wide-scale");
+    scene.onActivity(a->{a.panels.back();a.panels.category("Blending & Opacity");});Thread.sleep(150);h.capture("v151-wide-blending");
+    scene.onActivity(a->{a.panels.back();a.edit("Effect fixture",()->{a.clip().effect=2;a.clip().intensity=.5f;});a.panels.category("Effects");});Thread.sleep(150);h.capture("v151-wide-effects");
+    scene.onActivity(a->{a.panels.back();a.layerTools.open();});Thread.sleep(150);h.capture("v151-wide-layer-tools");
+   }
+   // Capture portrait from its own settled activity, so configuration callbacks cannot replace a
+   // just-opened menu with the previously visible landscape Layer Tools panel during the capture.
+   h.shell("wm size 1080x1920");h.shell("wm density 420");
+   try(ActivityScenario<EditorActivity> phone=ActivityScenario.launch(EditorActivity.class)){h.waitLoaded(phone);
+    phone.onActivity(a->{open(a,false);assertNotNull("Phone drawer exists",a.mobile);assertEquals("Move & Transform",a.panels.title());assertNotNull(find(a.inspector,PositionTrackpadView.class));});
+    Thread.sleep(500);h.capture("v151-phone-position-trackpad");
+   }
+  }finally{clearPreference();h.shell("wm size "+size);h.shell("wm density "+density);}
+ }
+}
