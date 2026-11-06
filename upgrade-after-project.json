@@ -1,0 +1,466 @@
+{
+  "appliedCaptionJobId": "",
+  "schema": 12,
+  "id": "v154-upgrade-fixture",
+  "name": "Upgrade fixture",
+  "portrait": false,
+  "canvasRatio": "",
+  "previewHeight": 540,
+  "playheadMs": 500,
+  "frameRate": 30,
+  "loopInMs": -1,
+  "loopOutMs": -1,
+  "tracks": [
+    {
+      "name": "Main",
+      "color": -12533761,
+      "hidden": false,
+      "solo": false,
+      "locked": false,
+      "muted": false,
+      "collapsed": false
+    },
+    {
+      "name": "Layer 1",
+      "color": -12533761,
+      "hidden": false,
+      "solo": false,
+      "locked": false,
+      "muted": false,
+      "collapsed": false
+    },
+    {
+      "name": "Layer 2",
+      "color": -12533761,
+      "hidden": false,
+      "solo": false,
+      "locked": false,
+      "muted": false,
+      "collapsed": false
+    },
+    {
+      "name": "Layer 3",
+      "color": -12533761,
+      "hidden": false,
+      "solo": false,
+      "locked": false,
+      "muted": false,
+      "collapsed": false
+    },
+    {
+      "name": "Layer 4",
+      "color": -12533761,
+      "hidden": false,
+      "solo": false,
+      "locked": false,
+      "muted": false,
+      "collapsed": false
+    },
+    {
+      "name": "Layer 5",
+      "color": -12533761,
+      "hidden": false,
+      "solo": false,
+      "locked": false,
+      "muted": false,
+      "collapsed": false
+    },
+    {
+      "name": "Layer 6",
+      "color": -12533761,
+      "hidden": false,
+      "solo": false,
+      "locked": false,
+      "muted": false,
+      "collapsed": false
+    },
+    {
+      "name": "Layer 7",
+      "color": -12533761,
+      "hidden": false,
+      "solo": false,
+      "locked": false,
+      "muted": false,
+      "collapsed": false
+    },
+    {
+      "name": "Audio 1",
+      "color": -12533761,
+      "hidden": false,
+      "solo": false,
+      "locked": false,
+      "muted": false,
+      "collapsed": false
+    },
+    {
+      "name": "Audio 2",
+      "color": -12533761,
+      "hidden": false,
+      "solo": false,
+      "locked": false,
+      "muted": false,
+      "collapsed": false
+    },
+    {
+      "name": "Audio 3",
+      "color": -12533761,
+      "hidden": false,
+      "solo": false,
+      "locked": false,
+      "muted": false,
+      "collapsed": false
+    },
+    {
+      "name": "Audio 4",
+      "color": -12533761,
+      "hidden": false,
+      "solo": false,
+      "locked": false,
+      "muted": false,
+      "collapsed": false
+    }
+  ],
+  "markers": [],
+  "landmarks": [],
+  "clips": [
+    {
+      "id": "upgrade-image",
+      "uri": "file:///data/user/0/com.blackice.bc1.preview/files/media/upgrade-source.png",
+      "name": "Preserved image",
+      "audio": {
+        "noise": 0,
+        "preamp": 0,
+        "normalization": 0,
+        "eq": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "audioOnly": false,
+      "image": true,
+      "sourceDurationMs": 2000,
+      "inMs": 100,
+      "outMs": 1600,
+      "effects": [
+        {
+          "id": "legacy-upgrade-image",
+          "type": 12,
+          "intensity": 0.5,
+          "enabled": true,
+          "motion": [
+            [],
+            [],
+            [],
+            [
+              [
+                0,
+                0,
+                0.20000000298023224,
+                0.6000000238418579,
+                0.699999988079071,
+                0.10000000149011612,
+                "curve-a",
+                -1
+              ],
+              [
+                1000,
+                90,
+                0,
+                0,
+                0.5799999833106995,
+                1,
+                "curve-b",
+                2
+              ],
+              [
+                2000,
+                180,
+                0,
+                0,
+                1,
+                1,
+                "curve-c",
+                0
+              ]
+            ],
+            [],
+            [
+              [
+                100,
+                0.20000000298023224,
+                0,
+                0,
+                1,
+                1,
+                "strength-start",
+                0
+              ],
+              [
+                1500,
+                0.800000011920929,
+                0.25,
+                0.10000000149011612,
+                0.75,
+                0.8999999761581421,
+                "strength-end",
+                -1
+              ]
+            ],
+            [],
+            [],
+            [],
+            [],
+            [],
+            []
+          ]
+        }
+      ],
+      "effect": 12,
+      "intensity": 0.5,
+      "opacity": 0.800000011920929,
+      "volume": 1,
+      "unmutedVolume": -1,
+      "speed": 1,
+      "track": 0,
+      "startMs": 0,
+      "gapMs": 0,
+      "fadeInMs": 0,
+      "fadeOutMs": 0,
+      "x": 0.11999999731779099,
+      "y": -0.10000000149011612,
+      "scale": 0.699999988079071,
+      "rotation": 17,
+      "motion": [
+        [],
+        [],
+        [],
+        [
+          [
+            0,
+            0,
+            0.20000000298023224,
+            0.6000000238418579,
+            0.699999988079071,
+            0.10000000149011612,
+            "curve-a",
+            -1
+          ],
+          [
+            1000,
+            90,
+            0,
+            0,
+            0.5799999833106995,
+            1,
+            "curve-b",
+            2
+          ],
+          [
+            2000,
+            180,
+            0,
+            0,
+            1,
+            1,
+            "curve-c",
+            0
+          ]
+        ],
+        [],
+        [
+          [
+            100,
+            0.20000000298023224,
+            0,
+            0,
+            1,
+            1,
+            "strength-start",
+            0
+          ],
+          [
+            1500,
+            0.800000011920929,
+            0.25,
+            0.10000000149011612,
+            0.75,
+            0.8999999761581421,
+            "strength-end",
+            -1
+          ]
+        ],
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "chroma": false,
+      "keyColor": -16711936,
+      "keyTolerance": 0.25,
+      "keySoftness": 0.07999999821186066,
+      "keySpill": 0.5,
+      "transition": -1,
+      "transitionMs": 0,
+      "easing": 0,
+      "blend": 0,
+      "heightScale": -1,
+      "aspect": 1,
+      "skewX": 0,
+      "skewY": 0,
+      "anchorX": 0,
+      "anchorY": 0,
+      "flipH": false,
+      "flipV": false,
+      "width": 64,
+      "height": 32
+    }
+  ],
+  "library": [
+    {
+      "id": "f9a43952-d41b-4bed-9952-59b515bdc43a",
+      "uri": "file:///data/user/0/com.blackice.bc1.preview/files/media/upgrade-source.png",
+      "name": "Preserved image",
+      "image": true,
+      "audioOnly": false,
+      "sourceDurationMs": 2000,
+      "inMs": 0,
+      "outMs": 1500,
+      "width": 64,
+      "height": 32
+    }
+  ],
+  "overlays": [
+    {
+      "id": "upgrade-shape",
+      "text": "Rectangle",
+      "visualizerStyle": 0,
+      "motion": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "startMs": 0,
+      "endMs": 1500,
+      "x": -0.30000001192092896,
+      "y": 0.10000000149011612,
+      "scale": 1.2000000476837158,
+      "opacity": 0.6499999761581421,
+      "font": "sans-serif-medium",
+      "color": -16731137,
+      "fill": {
+        "gradient": true,
+        "solid": {
+          "base": -1,
+          "keys": []
+        },
+        "angle": {
+          "base": 0,
+          "keys": [
+            [
+              0,
+              0,
+              "fill-0",
+              0,
+              0,
+              0,
+              1,
+              1
+            ],
+            [
+              1500,
+              90,
+              "fill-1500",
+              0,
+              0,
+              0,
+              1,
+              1
+            ]
+          ]
+        },
+        "stops": [
+          {
+            "id": "left",
+            "position": {
+              "base": 0,
+              "keys": []
+            },
+            "color": {
+              "base": -65536,
+              "keys": [
+                [
+                  0,
+                  -65536,
+                  "fill-0",
+                  0,
+                  0,
+                  0,
+                  1,
+                  1
+                ],
+                [
+                  1500,
+                  -16776961,
+                  "fill-1500",
+                  0,
+                  0,
+                  0,
+                  1,
+                  1
+                ]
+              ]
+            }
+          },
+          {
+            "id": "right",
+            "position": {
+              "base": 1,
+              "keys": []
+            },
+            "color": {
+              "base": -16776961,
+              "keys": []
+            }
+          }
+        ],
+        "active": [
+          "left",
+          "right"
+        ],
+        "structures": []
+      },
+      "alignment": 1,
+      "shape": 14,
+      "hidden": false,
+      "solo": false,
+      "locked": false,
+      "flipH": false,
+      "flipV": false,
+      "rotation": 29,
+      "heightScale": -1,
+      "aspect": 1,
+      "skewX": 0,
+      "skewY": 0,
+      "anchorX": 0,
+      "anchorY": 0,
+      "borderWidth": 0,
+      "shadow": 0,
+      "borderColor": -16777216,
+      "blend": 0
+    }
+  ]
+}
