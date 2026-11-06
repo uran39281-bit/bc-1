@@ -439,7 +439,7 @@ final class MenuHost implements MenuScreenFactory.Host {
 
     // ---- Navigation ------------------------------------------------------------------------------
     @Override public void back() { a.panels.back(); }
-    @Override public void settings() { a.projectSettingsDialog(); }
+    @Override public void settings() { a.showSettingsWindow(); }
     @Override public void export() { a.exportMenu(); }
     @Override public void reportInputError(String message) { a.tell(message); }
 

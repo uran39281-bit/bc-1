@@ -204,6 +204,7 @@ final class ToolPanels {
         switch(name){
             case "Layer Tools":a.layerTools.open();return;
             case "Move & Transform":open(name,()->a.transformPanel.build(a.inspector));return;
+            case "Shape & Style":open(name,this::shapePanel);return;
             case "Color & Fill":open(name,this::colorPanel);return;
             case "Border & Shadow":open(name,this::borderPanel);return;
             case "Blending & Opacity":open(name,()->a.transformPanel.menus.mount(a.inspector,com.blackice.bc1.menu.MenuScreenFactory.Menu.BLENDING));return;

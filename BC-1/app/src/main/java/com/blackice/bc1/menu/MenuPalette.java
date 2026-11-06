@@ -4,6 +4,7 @@ import android.graphics.drawable.GradientDrawable;
 /** Presentation-only tokens sampled from the supplied menu references. */
 public final class MenuPalette {
  private MenuPalette(){}
+ public static final int GAP_COMPACT=8,GAP_ROW=12,GAP_GROUP=16,PANEL_PADDING=16;
  public static final int BACKGROUND=0xff03131e,SURFACE=0xff061c2a,BORDER=0xff24475b,TEXT=0xfff4f7fa,MUTED=0xff9eb5c9,GREEN=0xff08e7ac,ACCENT=0xff40bfff,CYAN=0xff40bfff,DANGER=0xffff6575;
  public static int dp(Context c,float n){return Math.round(n*c.getResources().getDisplayMetrics().density);}
  public static GradientDrawable surface(Context c,boolean active){GradientDrawable d=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{active?0xff0a3550:SURFACE,active?0xff062a40:BACKGROUND});d.setCornerRadius(dp(c,10));d.setStroke(dp(c,active?1.5f:1),active?GREEN:BORDER);return d;}
