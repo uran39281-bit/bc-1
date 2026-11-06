@@ -448,7 +448,7 @@ public final class WorkbenchActivity extends Activity {
     private void selectWorkspace() {
         String[] options={"Automatic (recommended)","Phone UI · portrait 9:16", "Wide UI · tablet / Samsung DeX"};
         int selected=preference.ordinal();
-        new AlertDialog.Builder(this).setTitle("BC-1 workspace layout")
+        new com.blackice.bc1.TraceDialogBuilder(this).setTitle("BC-1 workspace layout")
             .setSingleChoiceItems(options,selected,(dialog,which)->{
                 preference=LayoutPolicy.Preference.values()[which];
                 getSharedPreferences(PREF_FILE,MODE_PRIVATE).edit().putString(PREF_MODE,preference.name()).apply();

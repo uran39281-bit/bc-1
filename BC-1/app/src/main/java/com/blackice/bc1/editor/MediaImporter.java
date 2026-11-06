@@ -17,6 +17,7 @@ public final class MediaImporter {
     public MediaImporter(Context context) {this.context=context.getApplicationContext();}
     public EditProject.Clip importClip(Uri uri,boolean audioOnly) throws IOException { return importClip(uri,audioOnly,2048); }
     public EditProject.Clip importClip(Uri uri,boolean audioOnly,int maxDimension) throws IOException {
+        com.blackice.bc1.ActionTrace.Span trace=com.blackice.bc1.ActionTrace.begin("media_import");trace.started();try {
         String name="Imported media";
         try(android.database.Cursor c=context.getContentResolver().query(uri,new String[]{OpenableColumns.DISPLAY_NAME},null,null,null)) {
             if(c!=null && c.moveToFirst()) name=c.getString(0);
@@ -41,7 +42,7 @@ public final class MediaImporter {
             }
             if(!image&&!audioOnly){BitmapFactory.Options probe=new BitmapFactory.Options();probe.inJustDecodeBounds=true;BitmapFactory.decodeFile(copy.getPath(),probe);image=probe.outWidth>0&&probe.outHeight>0;}
             EditProject.Clip clip=new EditProject.Clip();clip.name=name;clip.image=image;
-            if(image) {
+            if(image) {trace.phase("image_decode_start");
                 Bitmap bitmap;
                 if(Build.VERSION.SDK_INT>=28) bitmap=ImageDecoder.decodeBitmap(ImageDecoder.createSource(copy),(decoder,info,source)->{
                     int w=info.getSize().getWidth(),h=info.getSize().getHeight();
@@ -67,7 +68,7 @@ public final class MediaImporter {
                 try(OutputStream out=new FileOutputStream(png)) {if(!bitmap.compress(Bitmap.CompressFormat.PNG,100,out))throw new IOException("Image conversion failed.");}
                 finally {bitmap.recycle();sourceFile.delete();}
                 clip.sourceDurationMs=600_000;clip.outMs=3000;
-            } else {
+            } else {trace.phase("metadata_start");
                 try(MediaMetadataRetriever metadata=new MediaMetadataRetriever()) {
                     metadata.setDataSource(copy.getPath());
                     String duration=metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
@@ -80,8 +81,9 @@ public final class MediaImporter {
                         throw new IOException(audioOnly?"No playable audio was found.":"No playable video or audio was found.");
                 } catch(RuntimeException e) {throw new IOException("This media could not be read. Try a local MP4, JPEG/PNG, or audio file.",e);}
             }
-            clip.uri=Uri.fromFile(copy).toString();return clip;
+            clip.uri=Uri.fromFile(copy).toString();trace.phase("decoded","layer_id",clip.id,"kind",image?"image":clip.audioOnly?"audio":"video");trace.end("success");return clip;
         } catch(IOException|RuntimeException e) {copy.delete();throw e;}
+        }catch(IOException|RuntimeException e){trace.end(Thread.currentThread().isInterrupted()?"cancelled":"failure");throw e;}
     }
     /** Displayed size, accounting for rotation metadata. */
     private static int[] videoSize(MediaMetadataRetriever metadata) {

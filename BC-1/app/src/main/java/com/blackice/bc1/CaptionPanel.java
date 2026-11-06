@@ -13,7 +13,7 @@ import java.util.Locale;
 /** Caption text and timing are edited through the editor's existing undo/project machinery. */
 final class CaptionPanel {
     static void show(EditorActivity a) {
-        new AlertDialog.Builder(a).setTitle("Speech & captions")
+        new com.blackice.bc1.TraceDialogBuilder(a).setTitle("Speech & captions")
             .setItems(new String[]{"Generate auto captions", "Review / edit captions", "Export subtitles (.srt)", "Export subtitles (.vtt)", "Speech models", "Resume saved transcription", "Review pending result", "Discard saved transcription", "Shift caption timing"}, (d, which) -> {
                 if (which == 0) a.autoCaptions();
                 else if (which == 1) review(a);
@@ -28,7 +28,7 @@ final class CaptionPanel {
     static void shift(EditorActivity a) {
         if(!a.editable())return;String id=a.project.id;
         EditText input=new EditText(a);input.setHint("Milliseconds: positive = later, negative = earlier");input.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_SIGNED);
-        new AlertDialog.Builder(a).setTitle("Shift all captions").setView(input).setPositiveButton("Apply",(d,w)->{
+        new com.blackice.bc1.TraceDialogBuilder(a).setTitle("Shift all captions").setView(input).setPositiveButton("Apply",(d,w)->{
             if(!id.equals(a.project.id))return;
             try{long delta=Long.parseLong(input.getText().toString().trim());a.edit("Caption timing shifted",()->com.blackice.bc1.core.CaptionTiming.shift(a.project,delta));}
             catch(RuntimeException e){a.tell("Enter a signed whole number of milliseconds.");}
@@ -42,7 +42,7 @@ final class CaptionPanel {
             EditProject.Overlay o = captions.get(i);
             rows[i] = (i + 1) + "  ·  " + SubtitleFiles.time(o.startMs, true) + " – " + SubtitleFiles.time(o.endMs, true) + "\n" + o.text;
         }
-        new AlertDialog.Builder(a).setTitle("Review captions • " + rows.length)
+        new com.blackice.bc1.TraceDialogBuilder(a).setTitle("Review captions • " + rows.length)
             .setItems(rows, (d, which) -> edit(a, captions.get(which))).setNegativeButton("Close", null).show();
     }
     private static void edit(EditorActivity a, EditProject.Overlay o) {
@@ -53,7 +53,7 @@ final class CaptionPanel {
         words.setMinLines(2); words.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(200)});
         EditText start = input(a, box, "Start (seconds)", String.format(Locale.ROOT, "%.3f", o.startMs / 1000.0), true);
         EditText end = input(a, box, "End (seconds)", String.format(Locale.ROOT, "%.3f", o.endMs / 1000.0), true);
-        AlertDialog dialog = new AlertDialog.Builder(a).setTitle("Edit caption").setView(box)
+        AlertDialog dialog = new com.blackice.bc1.TraceDialogBuilder(a).setTitle("Edit caption").setView(box)
             .setPositiveButton("Save", null).setNeutralButton("Preview", null).setNegativeButton("Cancel", null).create();
         dialog.setOnShowListener(d -> {
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> { a.seek(o.startMs); });

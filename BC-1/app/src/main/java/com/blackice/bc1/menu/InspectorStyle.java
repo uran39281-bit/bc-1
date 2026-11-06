@@ -14,7 +14,14 @@ public final class InspectorStyle {
   }
  }
  public static void apply(View root,boolean wide){
-  if(!wide)return;int h=MenuPalette.dp(root.getContext(),controlDp(root.getContext(),true));
+  if(!wide){if(!com.blackice.bc1.ActionTrace.phone(root.getContext()))return;
+   int target=MenuPalette.dp(root.getContext(),Math.max(44,44*root.getResources().getConfiguration().fontScale));
+   if(root instanceof TextView&&root.isClickable()&&!(root instanceof KeyframeButton)){
+    TextView t=(TextView)root;ViewGroup.LayoutParams lp=t.getLayoutParams();if(lp!=null&&lp.height>=target&&lp.height<=MenuPalette.dp(root.getContext(),56))lp.height=target;
+    t.setMinimumHeight(target);t.setPadding(t.getPaddingLeft(),MenuPalette.dp(root.getContext(),2),t.getPaddingRight(),MenuPalette.dp(root.getContext(),2));
+   }
+   if(root instanceof ViewGroup){ViewGroup g=(ViewGroup)root;for(int i=0;i<g.getChildCount();i++)apply(g.getChildAt(i),false);}return;
+  }int h=MenuPalette.dp(root.getContext(),controlDp(root.getContext(),true));
   if(!(root instanceof KeyframeButton)&&root instanceof TextView&&root.isClickable()&&!(root instanceof EditText)){
    TextView t=(TextView)root;
    if(t.getCompoundDrawables()[1]==null&&t.getCompoundDrawables()[3]==null){

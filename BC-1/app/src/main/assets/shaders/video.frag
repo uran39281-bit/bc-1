@@ -160,6 +160,73 @@ vec4 bcEffect(int e,vec2 uv,vec4 a,float k){
         vec2 c=(floor(q)+.5);float lum=bcLuma(texture(uInput,(transpose(rot)*c)*cell/vec2(uAspect,1.0)+.5).rgb);
         float dot_=smoothstep(.05,-.05,length(q-c)-sqrt(1.0-lum)*.62);a.rgb=mix(a.rgb,vec3(1.0-dot_),clamp(k*1.5,0.0,1.0)); return a;} // Halftone
 #endif
+// ---- 48-65: grading, detail and look effects (written for BC-1; controls arrive in uParams) ----
+#if !defined(BC_EFFECT) || BC_EFFECT == 48
+    if(e==48){float l=bcLuma(a.rgb);float e0=mix(.3,.7,uParams.x);float w=smoothstep(e0,1.0,l);a.rgb*=1.0+(k-.5)*2.0*w; return a;} // Highlights
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 49
+    if(e==49){float l=bcLuma(a.rgb);float e1=mix(.3,.7,uParams.x);float w=1.0-smoothstep(0.0,e1,l);a.rgb+=(k-.5)*1.2*w; return a;} // Shadows
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 50
+    if(e==50){float lift=k*.3*exp2((uParams.x-.5)*2.0);float l=bcLuma(a.rgb);a.rgb=mix(a.rgb,vec3(l),k*.35*uParams.y*2.0);a.rgb=a.rgb*(1.0-lift)+lift; return a;} // Fade
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 51
+    if(e==51){float t=(k-.5)*2.0;a.rgb*=vec3(1.0+t*.4,1.0+t*.05,1.0-t*.4); return a;} // Temperature
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 52
+    if(e==52){float t=(k-.5)*2.0;a.rgb*=vec3(1.0+t*.16,1.0-t*.35,1.0+t*.16); return a;} // Tint
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 53
+    if(e==53){float mx=max(a.r,max(a.g,a.b)),mn=min(a.r,min(a.g,a.b));float l=bcLuma(a.rgb);float boost=(1.0-(mx-mn))*k*1.6;a.rgb=mix(vec3(l),a.rgb,1.0+boost); return a;} // Vibrance
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 54
+    if(e==54){float r=8.0*exp2((uParams.x-.5)*2.0);vec3 b=vec3(0.0);for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++)b+=texture(uInput,uv+vec2(float(x),float(y))*px*r).rgb;b/=9.0;
+        float mid=1.0-abs(bcLuma(a.rgb)*2.0-1.0);a.rgb+=(a.rgb-b)*k*2.2*mid; return a;} // Clarity
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 55
+    if(e==55){float m=min(a.r,min(a.g,a.b));float s=clamp(k*.75*exp2((uParams.x-.5)*2.0),0.0,.95);a.rgb=(a.rgb-vec3(m*s))/max(1.0-m*s,.15);
+        float l=bcLuma(a.rgb);a.rgb=mix(vec3(l),a.rgb,1.0+k*.25); return a;} // Dehaze
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 56
+    if(e==56){float g=mix(2.0,9.0,k);float m=mix(.25,.75,uParams.x);vec3 x=clamp(a.rgb,0.0,1.0);vec3 y=1.0/(1.0+exp(-g*(x-m)));
+        float y0=1.0/(1.0+exp(g*m)),y1=1.0/(1.0+exp(-g*(1.0-m)));a.rgb=mix(x,(y-y0)/(y1-y0),min(1.0,k*4.0)); return a;} // S-curve
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 57
+    if(e==57){vec3 ts=bcHsv2Rgb(vec3(uParams.x,1.0,1.0)),th=bcHsv2Rgb(vec3(uParams.y,1.0,1.0));float bal=smoothstep(uParams.z-.4,uParams.z+.4,bcLuma(a.rgb));
+        vec3 tint=mix(ts,th,bal);a.rgb=mix(a.rgb,a.rgb*(.55+.9*tint),k*.85);a.rgb+=(tint-.5)*k*.06; return a;} // Color balance
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 58
+    if(e==58){vec3 h=bcRgb2Hsv(clamp(a.rgb,0.0,1.0));float d=abs(h.x-uParams.x);d=min(d,1.0-d);float range=mix(.03,.25,k);float w=(1.0-smoothstep(range*.5,range,d))*step(.05,h.y);
+        h.x=fract(h.x+(uParams.y-.5)*.5*w);h.y=clamp(h.y*mix(1.0,uParams.z*2.0,w),0.0,1.0);h.z*=mix(1.0,uParams.w*2.0,w);a.rgb=bcHsv2Rgb(h); return a;} // Selective colour
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 59
+    if(e==59){vec3 x=max(a.rgb,vec3(0.0));a.rgb=pow(x,vec3(1.0/(1.0+k*1.1)));float dark=1.0-smoothstep(0.0,.6,bcLuma(a.rgb));
+        a.rgb*=vec3(1.0-dark*k*.22*uParams.x*2.0,1.0,1.0+dark*k*.36*uParams.x*2.0); return a;} // Night boost
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 60
+    if(e==60){float p=exp2((uParams.x-.5)*2.0);vec3 x=(a.rgb-.5)*(1.0+.28*k*p)+.5+.04*k;float l=bcLuma(x);float mx=max(x.r,max(x.g,x.b)),mn=min(x.r,min(x.g,x.b));
+        a.rgb=mix(vec3(l),x,1.0+(1.0-(mx-mn))*k*.7*p); return a;} // Auto enhance
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 61
+    if(e==61){vec3 w=vec3(.2126,.7152,.0722)*exp2((vec3(uParams.x,uParams.y,uParams.z)-.5)*3.0);w/=w.r+w.g+w.b;a.rgb=mix(a.rgb,vec3(dot(a.rgb,w)),k); return a;} // Black & white mix
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 62
+    if(e==62){float cells=mix(6.0,26.0,uParams.z);vec2 g=uv*vec2(uAspect,1.0)*cells;vec3 glow=vec3(0.0);
+        for(int layer=0;layer<3;layer++){float fl=float(layer);vec2 gg=g*(1.0+fl*.55)+vec2(fl*17.3,fl*5.1);gg.y+=uTime*(.35+.25*fl)*uParams.y*2.0;
+            vec2 cell=floor(gg),f=fract(gg)-.5;vec2 off=(vec2(rnd(cell+fl),rnd(cell.yx+31.0+fl))-.5)*.7;float rad=mix(.05,.22,uParams.x)*(.5+rnd(cell+7.0));
+            float on=step(.55,rnd(cell+3.0+fl));glow+=vec3(1.0,.95,.85)*smoothstep(rad,rad*.2,length(f-off))*on*(1.0-fl*.25);}
+        a.rgb+=glow*k; return a;} // Particles
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 63
+    if(e==63){float e0=mix(.05,.45,uParams.y);float v=smoothstep(e0,e0+.7*exp2((uParams.z-.5)*2.0),length((uv-.5)*vec2(uAspect,1.0)));vec3 tint=bcHsv2Rgb(vec3(uParams.x,.85,.9));
+        a.rgb=mix(a.rgb,mix(a.rgb*(1.0-.6*v),tint,v*.6),k); return a;} // Tinted vignette
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 64
+    if(e==64){vec3 x=max(a.rgb,vec3(0.0))*exp2((uParams.x-.5)*2.0)*1.4;vec3 f=(x*(2.51*x+.03))/(x*(2.43*x+.59)+.14);a.rgb=mix(a.rgb,clamp(f,0.0,1.0),k); return a;} // Filmic tone
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 65
+    if(e==65){float tol=mix(.1,.45,k);float soft=.09*uParams.x;a.a*=smoothstep(tol-soft,tol+soft,distance(a.rgb,vec3(.07,.27,.85))); return a;} // Chroma key (blue)
+#endif
     return a;
 }
 void main() {

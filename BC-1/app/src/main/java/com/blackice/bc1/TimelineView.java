@@ -488,7 +488,7 @@ final class TimelineView extends View {
     }
     private void headerTap(Row r,int zone,boolean longPress){
         int[] row={r.kind,r.index};
-        if(longPress){String name=a.rowName(row);new android.app.AlertDialog.Builder(a).setTitle(name).setItems(new String[]{"Toggle visibility / mute","Lock / unlock","Select layer","Rename layer","Layer management"},(d,i)->{if(i<2)a.rowFlag(row,i==0?"hide":"lock");else if(i==3)a.renameRow(row);else if(i==4){a.tab=3;if(a.mobile!=null)a.mobile.dismissed=false;a.renderInspector();}else if(r.kind==1)a.selectOverlay(r.index);else for(int n=0;n<a.project.clips.size();n++)if(a.project.clips.get(n).track==r.index){a.selectClip(n,false);break;}}).show();return;}
+        if(longPress){String name=a.rowName(row);new com.blackice.bc1.TraceDialogBuilder(a).setTitle(name).setItems(new String[]{"Toggle visibility / mute","Lock / unlock","Select layer","Rename layer","Layer management"},(d,i)->{if(i<2)a.rowFlag(row,i==0?"hide":"lock");else if(i==3)a.renameRow(row);else if(i==4){a.tab=3;if(a.mobile!=null)a.mobile.dismissed=false;a.renderInspector();}else if(r.kind==1)a.selectOverlay(r.index);else for(int n=0;n<a.project.clips.size();n++)if(a.project.clips.get(n).track==r.index){a.selectClip(n,false);break;}}).show();return;}
         a.rowFlag(row,"hide");
     }
     private void commit(){

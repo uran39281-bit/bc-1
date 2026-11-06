@@ -242,7 +242,7 @@ final class LayerToolsPanel {
         if (candidates.isEmpty()) return;
         String[] names = new String[candidates.size()];
         for (int i = 0; i < names.length; i++) names[i] = describe(candidates.get(i)) + (isDuplicateLabel(candidates, i) ? "  (#" + (i + 1) + ")" : "");
-        new android.app.AlertDialog.Builder(a).setTitle("Parent layer").setItems(names, (d, which) -> {
+        new com.blackice.bc1.TraceDialogBuilder(a).setTitle("Parent layer").setItems(names, (d, which) -> {
             chosenParent = ParentTransforms.idOf(candidates.get(which));
             a.renderInspector();
         }).setNegativeButton("Cancel", null).show();

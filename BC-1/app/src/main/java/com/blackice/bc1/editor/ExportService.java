@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /** Foreground, cancellable export. Private temporary output is published only after encoding. */
 @androidx.annotation.OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
 public final class ExportService extends Service {
+    private com.blackice.bc1.ActionTrace.Span exportTrace;
     public static final String ACTION_CANCEL="com.blackice.bc1.CANCEL_EXPORT";
     public static final String PREFS="bc1-export";
     public static final String LAST_FAILURE="lastFailure";
@@ -59,7 +60,7 @@ public final class ExportService extends Service {
         if(intent==null){stopSelf();return START_NOT_STICKY;}
         if(ACTION_CANCEL.equals(intent.getAction())) {cancelExport();return START_NOT_STICKY;}
         if(transformer!=null || coreThread!=null || copying)return START_NOT_STICKY;
-        com.blackice.bc1.CrashLogs.operation("Export");
+        com.blackice.bc1.CrashLogs.operation("Export");exportTrace=com.blackice.bc1.ActionTrace.begin("export");exportTrace.started();
         Notification initial=notification("Preparing export…",-1);
         if(wakeLock==null){wakeLock=getSystemService(PowerManager.class).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"BC1:export");wakeLock.setReferenceCounted(false);wakeLock.acquire(6L*60*60*1000);}
         if(Build.VERSION.SDK_INT>=35)startForeground(41,initial,ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROCESSING);
@@ -155,7 +156,7 @@ public final class ExportService extends Service {
         if(!copying)finish("Export cancelled",false);
     }
     private void finish(String message,boolean success) {
-        if(finished)return;finished=true;main.removeCallbacks(poll);releaseWakeLock();
+        if(finished)return;if(exportTrace!=null)exportTrace.end(success?"success":cancelled.get()?"cancelled":"failure");finished=true;main.removeCallbacks(poll);releaseWakeLock();
         if(!success && destination!=null)try {android.provider.DocumentsContract.deleteDocument(getContentResolver(),destination);}catch(Exception ignored){}
         if(destination!=null)try{getContentResolver().releasePersistableUriPermission(destination,Intent.FLAG_GRANT_WRITE_URI_PERMISSION);}catch(SecurityException|IllegalArgumentException ignored){}
         long finalBytes=output!=null?output.length():0;

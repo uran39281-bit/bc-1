@@ -182,7 +182,7 @@ final class PreviewEditor extends View {
     private void pickList(float x,float y){
         List<int[]> hits=layersAt(x,y);if(hits.isEmpty()){a.tell("No visible layer here at the playhead.");return;}if(hits.size()==1){select(hits.get(0));return;}
         String[] names=new String[hits.size()];for(int i=0;i<hits.size();i++){int[] h=hits.get(i);names[i]=(i==0?"Top • ":"")+(h[0]==1?a.project.overlays.get(h[1]).label():a.project.clips.get(h[1]).name+"  ("+a.project.tracks[a.project.clips.get(h[1]).track].name+")");}
-        new AlertDialog.Builder(a).setTitle("Layers at this point").setItems(names,(d,i)->select(hits.get(i))).setNegativeButton("Cancel",null).show();
+        new com.blackice.bc1.TraceDialogBuilder(a).setTitle("Layers at this point").setItems(names,(d,i)->select(hits.get(i))).setNegativeButton("Cancel",null).show();
     }
     @Override public boolean performClick(){super.performClick();return true;}
     @Override public boolean onGenericMotionEvent(MotionEvent event){

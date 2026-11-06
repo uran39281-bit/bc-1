@@ -18,7 +18,7 @@ final class LandmarkControls {
     static void show(EditorActivity a){
         LinearLayout body=a.form();TextView add=a.button("Add marker at playhead • "+a.project.landmarks.size()+"/5",null);add.setEnabled(a.project.landmarks.size()<5);body.addView(add);
         if(!add.isEnabled())body.addView(a.note("Delete a marker to free a slot."));
-        AlertDialog dialog=new AlertDialog.Builder(a).setTitle("Timeline markers").setView(body).setNegativeButton("Close",null).create();
+        AlertDialog dialog=new com.blackice.bc1.TraceDialogBuilder(a).setTitle("Timeline markers").setView(body).setNegativeButton("Close",null).create();
         add.setOnClickListener(v->{dialog.dismiss();add(a,a.project.playheadMs);});
         for(EditProject.Landmark m:a.project.landmarks){TextView row=a.button((m.slot+1)+" • "+m.label+" • "+EditorActivity.seconds(m.timeMs)+" s",v->{dialog.dismiss();a.pausePlayback();a.seek(m.timeMs);edit(a,m);});row.setTextColor(EditProject.MARKER_COLORS[m.slot]);body.addView(row);}
         dialog.show();

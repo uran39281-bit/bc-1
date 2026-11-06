@@ -35,8 +35,7 @@ public class PortraitWideBaselineTest {
  }
  private void capture(ActivityScenario<EditorActivity> scene,String name)throws Exception{
   h.inst.waitForIdleSync();scene.onActivity(a->{
-   a.workClock.pause();a.workClock.total=0;a.message="Ready";if(a.status!=null)a.status.setText("Ready");
-   if(a.workClock.label!=null){a.workClock.label.setText("◷ 00:00:00");a.workClock.label.setContentDescription("Project work clock");}
+   a.workClock.pause();a.message="Ready";if(a.status!=null)a.status.setText("Ready");
    View root=(View)a.header.getParent();root.setFocusableInTouchMode(true);root.requestFocus();
   });h.inst.waitForIdleSync();Thread.sleep(250);
   scene.onActivity(a->{try{

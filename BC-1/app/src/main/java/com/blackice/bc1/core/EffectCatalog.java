@@ -23,9 +23,12 @@ public final class EffectCatalog {
             "Threshold", "Edge Detect", "Emboss", "Luma Key",
             // 42-47: stylize
             "Film Grain", "Scanlines", "Glitch", "VHS", "RGB Split", "Halftone",
+            // 48-65: grading, detail and look
+            "Highlights", "Shadows", "Fade", "Temperature", "Tint", "Vibrance", "Clarity", "Dehaze", "S-Curve", "Color Balance",
+            "Selective Color", "Night Boost", "Auto Enhance", "B&W Mix", "Particles", "Tinted Vignette", "Filmic Tone", "Chroma Key (Blue)",
     };
 
-    public static final String[] CATEGORIES = {"Basics", "Blur & Sharpen", "Color & Light", "Distortion", "Edges & Keying", "Stylize"};
+    public static final String[] CATEGORIES = {"Basics", "Blur & Sharpen", "Color & Light", "Distortion", "Edges & Keying", "Stylize", "Grade & Detail"};
 
     /** Category index of each effect id. */
     private static final int[] CATEGORY = new int[NAMES.length];
@@ -37,10 +40,12 @@ public final class EffectCatalog {
         for (int id = 29; id <= 37; id++) CATEGORY[id] = 3;
         for (int id = 38; id <= 41; id++) CATEGORY[id] = 4;
         for (int id = 42; id <= 47; id++) CATEGORY[id] = 5;
+        for (int id = 48; id <= 61; id++) CATEGORY[id] = 6;
+        CATEGORY[62] = 5; CATEGORY[63] = 5; CATEGORY[64] = 6; CATEGORY[65] = 4;
     }
 
     /** Effects whose intensity is neutral at 50% (lower reduces, higher increases). */
-    private static final int[] CENTERED = {9, 10, 17, 18, 19};
+    private static final int[] CENTERED = {9, 10, 17, 18, 19, 48, 49, 51, 52};
 
     /** Maximum named controls per effect (the shader reads them as one vec4). */
     public static final int MAX_PARAMS = 4;
@@ -89,6 +94,21 @@ public final class EffectCatalog {
         PARAMS[45] = new Param[]{p("Wobble", .5f), p("Noise", .5f)};
         PARAMS[46] = new Param[]{angle("Angle", 0f)};
         PARAMS[47] = new Param[]{angle("Dot angle", .125f), p("Dot size", .5f)};
+        PARAMS[48] = new Param[]{p("Range", .5f)};
+        PARAMS[49] = new Param[]{p("Range", .5f)};
+        PARAMS[50] = new Param[]{p("Black lift", .5f), p("Desaturate", .5f)};
+        PARAMS[54] = new Param[]{p("Radius", .5f)};
+        PARAMS[55] = new Param[]{p("Recovery", .5f)};
+        PARAMS[56] = new Param[]{p("Midpoint", .5f)};
+        PARAMS[57] = new Param[]{angle("Shadow hue", .6f), angle("Highlight hue", .08f), p("Balance", .5f)};
+        PARAMS[58] = new Param[]{angle("Target hue", 0f), p("Hue shift", .65f), p("Saturation", .6f), p("Brightness", .5f)};
+        PARAMS[59] = new Param[]{p("Blue tint", .5f)};
+        PARAMS[60] = new Param[]{p("Pop", .5f)};
+        PARAMS[61] = new Param[]{p("Reds", .5f), p("Greens", .5f), p("Blues", .5f)};
+        PARAMS[62] = new Param[]{p("Size", .5f), p("Speed", .5f), p("Density", .5f)};
+        PARAMS[63] = new Param[]{angle("Tint hue", .62f), p("Size", .5f), p("Softness", .5f)};
+        PARAMS[64] = new Param[]{p("Exposure", .5f)};
+        PARAMS[65] = new Param[]{p("Softness", .5f)};
     }
 
     private EffectCatalog() {}

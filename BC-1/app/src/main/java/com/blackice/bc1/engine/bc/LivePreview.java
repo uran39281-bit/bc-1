@@ -36,6 +36,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     private static final long REUSE_WINDOW_US = 3_000_000; // forward jumps up to 3 s reuse the open decoder
 
     private static final class Request {
+        final com.blackice.bc1.ActionTrace.Span trace=com.blackice.bc1.ActionTrace.begin("preview_frame");
         final EditProject project; final long timeMs; final CountDownLatch done; volatile boolean presented;
         Request(EditProject project, long timeMs, CountDownLatch done) { this.project = project; this.timeMs = timeMs; this.done = done; }
     }
@@ -52,6 +53,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     /** The newest frame asked for, redrawn when a new surface arrives (layout rebuilds, rotation). */
     private volatile Request latest;
     private volatile FrameListener listener;
+    private final AtomicReference<Request> submitted=new AtomicReference<>();
     private volatile String lastError;
     /** Time of the last frame presented, or -1 before the first (tests and diagnostics). */
     private volatile long lastFrameMs = -1;
@@ -109,7 +111,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
         if (!gl.post(() -> { if(surfaceTexture==st)detachWindow();else st.release(); })) st.release();
         return false;
     }
-    @Override public void onSurfaceTextureUpdated(SurfaceTexture st) { }
+    @Override public void onSurfaceTextureUpdated(SurfaceTexture st) {Request r=submitted.getAndSet(null);if(r!=null)r.trace.phase("surface_update_observed","since_request_ms",com.blackice.bc1.ActionTrace.now()-r.trace.requestedAt(),"correlation","Latest submitted buffer; TextureView may coalesce updates.");}
 
     private void bind(Surface target, SurfaceTexture st) {
         if(target==null||!target.isValid()){lastError="Preview surface is unavailable";com.blackice.bc1.CrashLogs.record("Preview surface unavailable",new IllegalStateException());return;}
@@ -157,7 +159,7 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
     public void request(EditProject snapshot, long timeMs) {
         Request r = new Request(snapshot, timeMs, null);
         latest = r;
-        if (pending.getAndSet(r) == null) gl.post(this::drain);
+        Request previous=pending.getAndSet(r);if(previous==null)gl.post(this::drain);else previous.trace.end("superseded");
     }
 
     /** Renders synchronously (tests). Returns false on timeout or error. */
@@ -180,17 +182,17 @@ public final class LivePreview implements TextureView.SurfaceTextureListener {
         Request r = pending.getAndSet(null);
         if (r == null) return;
         try {
-            if (egl == null || !egl.hasWindow()) { android.util.Log.d("BC1Live", "frame at " + r.timeMs + " waits for a surface"); return; } // binding one redraws the latest request
-            long start = System.nanoTime();
+            if (egl == null || !egl.hasWindow()) { r.trace.end("surface_unavailable"); android.util.Log.d("BC1Live", "frame at " + r.timeMs + " waits for a surface"); return; } // binding one redraws the latest request
+            r.trace.started();long start = System.nanoTime();
             render(r.project, r.timeMs);
             lastError = null;
-            lastFrameMs = r.timeMs; r.presented=true;
+            lastFrameMs = r.timeMs; r.presented=true;r.trace.phase("buffer_submitted","project_id",r.project.id,"playhead_ms",r.timeMs,"render_ms",(System.nanoTime()-start)/1_000_000);Request old=submitted.getAndSet(r);if(old!=null)old.trace.phase("display_measurement_unavailable","reason","Surface updates coalesced or unavailable");r.trace.end("success");
             long took = (System.nanoTime() - start) / 1_000_000;
             if (++frames % 20 == 1 || took > 250) android.util.Log.d("BC1Live", "frame " + frames + " at " + r.timeMs + " ms took " + took + " ms, " + slots.size() + " sources open");
             FrameListener l = listener;
             if (l != null) l.onFrame(r.timeMs, (System.nanoTime() - start) / 1_000_000);
         } catch (Exception t) {
-            lastError = String.valueOf(t.getMessage());
+            r.trace.end("failure");lastError = String.valueOf(t.getMessage());
             android.util.Log.w("BC1Live", "Live preview frame failed", t);
             com.blackice.bc1.CrashLogs.record("Live renderer frame failed",t);
             releaseSources(); // reopen cleanly next time
