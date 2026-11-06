@@ -63,7 +63,7 @@ public final class ReverseTranscoder {
             long spanUs = times.get(frames - 1) - times.get(0);
             long frameUs = frames > 1 ? Math.max(1, spanUs / (frames - 1)) : 33_333;
             progress.accept(AUDIO_SHARE);
-            writeVideo(context, uri, times, frameUs, audio, temp, cancelled, p -> progress.accept(AUDIO_SHARE + p * (100 - AUDIO_SHARE) / 100));
+            writeVideo(context, uri, times, frameUs, audio, temp, null, cancelled, p -> progress.accept(AUDIO_SHARE + p * (100 - AUDIO_SHARE) / 100));
             if (!temp.renameTo(output)) throw new java.io.IOException("Could not save the reversed footage.");
             done = true;
             progress.accept(100);
@@ -229,7 +229,45 @@ public final class ReverseTranscoder {
 
     // ---- Video ----------------------------------------------------------------------------------------
 
-    private static void writeVideo(Context context, String uri, List<Long> times, long frameUs, AudioPart audio, File output,
+    /** Returned bitmap is owned by the writer; the filter must not recycle its input. */
+    public interface FrameFilter { Bitmap apply(Bitmap frame, long ptsUs) throws Exception; }
+
+    /** Experimental, bounded forward render. Retains source PTS and copies the original AAC packets. */
+    public static void replacePerson(Context context, String uri, long durationMs, File output,
+                                     FrameFilter filter, BooleanSupplier cancelled, IntConsumer progress) throws Exception {
+        if (filter == null || durationMs < 1 || durationMs > 12000) throw new IllegalArgumentException("Choose a source video up to 12 seconds.");
+        List<Long> times = framesIn(context, uri, 0, durationMs * 1000L + 1000);
+        if (times.size() < 2 || times.size() > 360) throw new IllegalArgumentException("Choose a clip with 2 to 360 frames.");
+        MediaExtractor e = new MediaExtractor();
+        AudioPart audio = null;
+        try {
+            e.setDataSource(context, Uri.parse(uri), null);
+            int track = trackOf(e, "audio/");
+            if (track >= 0) {
+                MediaFormat f = e.getTrackFormat(track);
+                if (!MediaFormat.MIMETYPE_AUDIO_AAC.equals(f.getString(MediaFormat.KEY_MIME)))
+                    throw new IllegalArgumentException("This preview supports AAC audio or silent video.");
+                audio = new AudioPart(f);
+                e.selectTrack(track);
+                ByteBuffer buf = ByteBuffer.allocate(256 * 1024);
+                long bytes = 0;
+                while (e.getSampleTime() >= 0) {
+                    if (cancelled.getAsBoolean()) throw new CancellationException();
+                    buf.clear(); int n = e.readSampleData(buf, 0);
+                    if (n < 0) break;
+                    if ((bytes += n) > 16 * 1024 * 1024 || n > buf.capacity()) throw new IllegalArgumentException("Unsupported audio size.");
+                    if ((e.getSampleFlags() & MediaExtractor.SAMPLE_FLAG_ENCRYPTED) != 0) throw new IllegalArgumentException("Encrypted footage is unsupported.");
+                    byte[] chunk = new byte[n]; buf.position(0); buf.get(chunk);
+                    audio.data.add(chunk); audio.info.add(new long[]{e.getSampleTime(), MediaCodec.BUFFER_FLAG_KEY_FRAME});
+                    if (!e.advance()) break;
+                }
+            }
+        } finally { e.release(); }
+        long frameUs = Math.max(1, (times.get(times.size()-1)-times.get(0))/(times.size()-1));
+        writeVideo(context, uri, times, frameUs, audio, output, filter, cancelled, progress);
+    }
+
+    private static void writeVideo(Context context, String uri, List<Long> times, long frameUs, AudioPart audio, File output, FrameFilter filter,
                                    BooleanSupplier cancelled, IntConsumer progress) throws Exception {
         int frames = times.size();
         long lastUs = times.get(frames - 1);
@@ -238,7 +276,13 @@ public final class ReverseTranscoder {
         Bitmap first = null; boolean succeeded = false;
         try {
             retriever.setDataSource(context, Uri.parse(uri));
-            first = retriever.getFrameAtTime(lastUs, MediaMetadataRetriever.OPTION_CLOSEST);
+            if (filter != null) {
+                int w = Integer.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
+                int h = Integer.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
+                if ((long) w * h > 1280L * 720 || Math.min(w,h) < 16 || (w%2+h%2)!=0)
+                    throw new IllegalArgumentException("Use an even-sized video up to 720p for this preview.");
+            }
+            first = retriever.getFrameAtTime(filter == null ? lastUs : times.get(0), MediaMetadataRetriever.OPTION_CLOSEST);
             if (first == null) throw new IllegalStateException("The video frames cannot be read on this device.");
             int width = first.getWidth() & ~1, height = first.getHeight() & ~1;
             if (width < 16 || height < 16) throw new IllegalStateException("Unsupported video size.");
@@ -260,9 +304,14 @@ public final class ReverseTranscoder {
             Matrix flip = new Matrix();
             for (int i = 0; i < frames; i++) {
                 if (cancelled.getAsBoolean()) throw new CancellationException("Reverse cancelled");
-                long sourceTime = times.get(frames - 1 - i);
+                long sourceTime = times.get(filter == null ? frames - 1 - i : i);
                 Bitmap frame = i == 0 ? first : retriever.getFrameAtTime(sourceTime, MediaMetadataRetriever.OPTION_CLOSEST);
                 if (frame == null) throw new IllegalStateException("A video frame could not be read (" + (i + 1) + " of " + frames + ").");
+                if (filter != null) {
+                    Bitmap original = frame;
+                    frame = filter.apply(original, sourceTime);
+                    if (frame != original && original != first) original.recycle();
+                }
                 // GL's origin is the bottom-left; flip so the picture ends up upright in the encoder.
                 flip.reset(); flip.setScale(1, -1, frame.getWidth() / 2f, frame.getHeight() / 2f);
                 Bitmap upright = Bitmap.createBitmap(frame, 0, 0, Math.min(frame.getWidth(), width), Math.min(frame.getHeight(), height), flip, false);
@@ -272,7 +321,7 @@ public final class ReverseTranscoder {
                 upright.recycle();
                 compositor.beginFrame(false);
                 compositor.drawPlain(texture);
-                egl.setPresentationTime((lastUs - sourceTime) * 1000L);
+                egl.setPresentationTime((filter == null ? lastUs - sourceTime : sourceTime) * 1000L);
                 egl.swap();
                 drain(encoder, mux, false);
                 progress.accept((int) ((i + 1L) * 100 / frames));
@@ -283,6 +332,7 @@ public final class ReverseTranscoder {
             muxer.stop();
             succeeded = true;
         } finally {
+            if (first != null && !first.isRecycled()) first.recycle();
             retriever.release();
             if (compositor != null) try { compositor.release(); } catch (Exception ignored) { }
             if (egl != null) try { egl.close(); } catch (Exception ignored) { }

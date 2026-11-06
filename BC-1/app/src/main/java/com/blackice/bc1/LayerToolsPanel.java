@@ -14,7 +14,7 @@ import java.util.Locale;
  */
 final class LayerToolsPanel {
     static final String TITLE = "Layer Tools";
-    static final String[] TABS = {"Speed", "Reverse", "Screenshot", "Joint Movement", "Copy All"};
+    static final String[] TABS = {"Speed", "Reverse", "Screenshot", "Joint Movement", "Copy All", "Character Swap"};
     private final EditorActivity a;
     private int tab;
     private final int[] scroll = new int[TABS.length];
@@ -54,7 +54,15 @@ final class LayerToolsPanel {
             case 1: reverse(inspector); break;
             case 2: screenshot(inspector); break;
             case 3: jointMovement(inspector); break;
-            default: copyAll(inspector); break;
+            case 4: copyAll(inspector); break;
+            default:
+                inspector.addView(heading("Replace person • experimental"));
+                inspector.addView(a.note("Use one full-body performer, a fixed camera and an empty background image (or empty first frame). Choose a transparent full-body character PNG facing forward with arms extended sideways. Up to 12 seconds, 360 frames and 720p. Audio must be AAC or silent."));
+                String why=a.characterSwap.reason();
+                TextView swap=a.button("Choose character PNG",v->a.characterSwap.choose());
+                EditorActivity.dim(swap,why==null);inspector.addView(swap);
+                if(why!=null)inspector.addView(a.note(why));
+                break;
         }
         ScrollView scrollView = scroller();
         if (scrollView != null) { int y = scroll[tab]; scrollView.post(() -> scrollView.scrollTo(0, y)); }

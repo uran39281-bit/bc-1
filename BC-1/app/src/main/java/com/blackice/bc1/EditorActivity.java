@@ -47,6 +47,7 @@ public final class EditorActivity extends Activity {
     Attributes copiedAttributes;
     final LayerToolsPanel layerTools=new LayerToolsPanel(this);
     final ScreenshotTool screenshotTool=new ScreenshotTool(this);
+    final CharacterSwapTool characterSwap=new CharacterSwapTool(this);
     final ReverseTool reverseTool=new ReverseTool(this);
     Keyframes.Clip copiedKeys;
     float previewMoveX=Float.NaN,previewMoveY=Float.NaN,previewZoom=1,previewPanX,previewPanY;
@@ -222,7 +223,7 @@ public final class EditorActivity extends Activity {
     @Override protected void onPause(){workClock.pause();super.onPause();}
     @Override protected void onStart(){super.onStart();active=true;main.post(pulse);if(!loading)showLive();}
     @Override protected void onStop(){cancelLiveAdjust();active=false;main.removeCallbacks(pulse);main.removeCallbacks(warmPreview);if(projectSession!=null)projectSession.checkpoint();releasePreview();if(previewProxy!=null)previewProxy.cancel();if(live!=null)live.releaseDecoders();super.onStop();}
-    @Override protected void onDestroy(){if(mediaImportWindow!=null)mediaImportWindow.close();main.removeCallbacks(autosave);if(projectSession!=null){projectSession.model=project;projectSession.listener=null;}if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
+    @Override protected void onDestroy(){characterSwap.destroy();if(mediaImportWindow!=null)mediaImportWindow.close();main.removeCallbacks(autosave);if(projectSession!=null){projectSession.model=project;projectSession.listener=null;}if(live!=null)live.release();io.shutdown();if(thumbnails!=null)thumbnails.close();super.onDestroy();}
     @Override protected void onSaveInstanceState(Bundle state){if(portraitPhone())mobile.portrait.capture();phoneState.save(state);if(panels.showing())state.putString("focused-panel",panels.title());easingControls.save(state);fillPanel.save(state);effectCatalog.save(state);mediaImportWindow.save(state);state.putString("selected-media-uri",selectedMediaUri);state.putString("subtitle-export",pendingSubtitleExport);state.putString("project-id",loading?openingProjectId:project.id);cancelLiveAdjust();state.putBoolean("transform-linked",transformPanel.linked);state.putInt("graph-selection",transformPanel.menus.graphSelection());state.putInt("transform-tab",transformPanel.tab);state.putInt("media-sort",mediaSort);state.putBoolean("media-list",mediaList);state.putBoolean("media-favorites",favoritesOnly);state.putInt("timeline-height",customTimelineHeight);state.putInt("selected",selected);state.putInt("selected-overlay",selectedOverlay);state.putFloat("timeline-zoom",pixelsPerSecond);state.putInt("tab",tab);state.putString("media-query",mediaQuery);state.putString("media-kind",mediaKind.name());if(projectSession!=null)projectSession.checkpoint();super.onSaveInstanceState(state);}
     @Override public void onConfigurationChanged(Configuration config){super.onConfigurationChanged(config);cancelLiveAdjust();buildWorkspace();}
     boolean exporting(){return getSharedPreferences(ExportService.PREFS,MODE_PRIVATE).getBoolean("running",false)||exportLaunching;}
@@ -1289,6 +1290,7 @@ public final class EditorActivity extends Activity {
     @Override protected void onActivityResult(int request,int result,Intent data) {
         super.onActivityResult(request,result,data);if(result!=RESULT_OK||data==null){
             if(request==SUBTITLE_EXPORT&&pendingSubtitleExport!=null){new java.io.File(pendingSubtitleExport).delete();pendingSubtitleExport=null;}return;}
+        if(request==CharacterSwapTool.ART||request==CharacterSwapTool.PLATE){characterSwap.picked(request,data.getData());return;}
         if(request==SUBTITLE_EXPORT){
             String snapshot=pendingSubtitleExport;pendingSubtitleExport=null;Uri target=data.getData();
             if(target==null||snapshot==null){if(snapshot!=null)new java.io.File(snapshot).delete();tell("Open subtitle export again to retry.");return;}
