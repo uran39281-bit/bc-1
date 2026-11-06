@@ -35,15 +35,18 @@ final class EffectCatalogPanel {
         }else{
             if(category>=0)results.addView(a.label(EffectCatalogBrowser.CATEGORIES[category],14,BlackIceTheme.ICE,true));java.util.List<Integer> ids=EffectCatalogBrowser.entries(category,query);if(ids.isEmpty())results.addView(a.note("No matching effects. Clear the search to browse again."));
             EditProject.Clip clip=a.clip();boolean visual=clip!=null&&clip.track<EditProject.AUDIO_FIRST;
-            for(int id:ids){boolean applied=visual&&clip.effect==id;TextView item=a.button((applied?"● ":"")+EffectCatalog.name(id)+"\n"+(applied?"Applied • tap to remove":visual?"Tap to apply":"Select a video or picture"),v->apply(id));item.setTextSize(13);item.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);item.setMinHeight(a.dp(64));item.setEnabled(visual);item.setContentDescription(EffectCatalog.name(id)+(applied?". Applied. Tap to remove.":visual?". Tap to apply.":". Select a video or picture to apply."));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.topMargin=a.dp(4);results.addView(item,p);}
+            for(int id:ids){boolean applied=visual&&clip.effectType(id)!=null;TextView item=a.button((applied?"● ":"")+EffectCatalog.name(id)+"\n"+(applied?"Applied • tap to remove":visual?"Tap to apply":"Select a video or picture"),v->apply(id));item.setTextSize(13);item.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);item.setMinHeight(a.dp(64));item.setEnabled(visual&&(applied||clip.effects().size()<EditProject.Clip.MAX_EFFECTS));item.setSelected(applied);if(applied){item.setTextColor(com.blackice.bc1.menu.MenuPalette.GREEN);item.setBackground(com.blackice.bc1.menu.MenuPalette.surfaceGreen(a));}item.setContentDescription(EffectCatalog.name(id)+(applied?". Applied. Tap to remove.":visual?". Tap to apply.":". Select a video or picture to apply."));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.topMargin=a.dp(4);results.addView(item,p);}
         }
         if(!query.isEmpty())results.addView(a.button("Clear search",v->search.setText("")));
-        TextView availability=a.note("One effect per video or picture. Adjust its strength in the Effects panel.");availability.setTextSize(11);results.addView(availability);if(scroll!=null)scroll.scrollTo(0,0);
+        TextView availability=a.note("Up to three effects per video or picture. Select an effect in the Effects panel to adjust it.");availability.setTextSize(11);results.addView(availability);if(scroll!=null)scroll.scrollTo(0,0);
     }
     /** Applies the effect to the selected clip, or removes it when it is already applied (one undo step). */
     private void apply(int id){
         EditProject.Clip c=a.clip();if(c==null||c.track>=EditProject.AUDIO_FIRST||!a.layerEditable())return;
-        boolean remove=c.effect==id;a.edit(remove?"Effect removed":"Effect: "+EffectCatalog.name(id),()->{EditProject.Clip target=a.clip();if(target!=null)target.effect=remove?0:id;});
+        EffectInstance existing=c.effectType(id);boolean remove=existing!=null;
+        if(!remove&&c.effects().size()>=EditProject.Clip.MAX_EFFECTS){a.tell("Three effects per layer maximum. Remove an effect first.");return;}
+        String projectId=a.project.id,layerId=c.id;
+        a.edit(remove?"Effect removed":"Effect: "+EffectCatalog.name(id),()->{EditProject.Clip target=a.clip();if(target==null||!target.id.equals(layerId)||!a.project.id.equals(projectId))throw new IllegalArgumentException("The selected layer changed.");if(remove)target.removeEffect(existing.id);else a.transformPanel.menus.selectedEffectId=target.addEffect(id);});
         a.renderInspector();renderResults();
     }
     /** Native vector category art, decorative only. */

@@ -7,7 +7,7 @@ import java.util.UUID;
 /** Portable edit decision list. Times are integer milliseconds; media is never modified. */
 public final class EditProject {
     /** Saved-file schema. Since schema 5: eight visual tracks (0 main, 1–7 layers) and audio on tracks 8–11 (was 4–7). */
-    public static final int SCHEMA = 11;
+    public static final int SCHEMA = 12;
     /** Generated caption overlays (group {@link com.blackice.bc1.core.CaptionBuilder#GROUP}); not counted as regular overlays. */
     public static final int MAX_CAPTIONS=2000;
     public String appliedCaptionJobId="";
@@ -82,6 +82,49 @@ public final class EditProject {
         public float[] fx; public int fxEffect;
         /** The four values the shader reads for this clip's current effect. */
         public float[] effectParams(){return com.blackice.bc1.core.EffectCatalog.resolve(effect,fxEffect==effect?fx:null);}
+        public static final int MAX_EFFECTS=3;
+        private String primaryEffectId;
+        private boolean primaryEffectEnabled=true;
+        private final List<EffectInstance> additionalEffects=new ArrayList<>();
+        /** Legacy fields remain the first instance so older edit commands and source-time keys retain their semantics. */
+        public List<EffectInstance> effects(){
+            List<EffectInstance> all=new ArrayList<>();
+            if(effect!=0){all.add(new EffectInstance(primaryEffectId==null?"legacy-"+id:primaryEffectId,effect,intensity,fxEffect==effect?fx:null,motion,primaryEffectEnabled));}
+            all.addAll(additionalEffects);return java.util.Collections.unmodifiableList(all);
+        }
+        public EffectInstance effect(String identity){for(EffectInstance e:effects())if(e.id.equals(identity))return e;return null;}
+        public EffectInstance effectType(int definition){for(EffectInstance e:effects())if(e.type==definition)return e;return null;}
+        public boolean primary(String identity){return effect!=0&&effects().get(0).id.equals(identity);}
+        public String addEffect(int definition){
+            if(audioOnly||audioTrack(track)||definition==0||!com.blackice.bc1.core.EffectCatalog.valid(definition))throw new IllegalArgumentException("Select a video or picture for visual effects.");
+            if(effects().size()>=MAX_EFFECTS)throw new IllegalArgumentException("Three effects per layer maximum. Remove an effect first.");
+            if(effectType(definition)!=null)throw new IllegalArgumentException("This effect is already applied.");
+            EffectInstance e=new EffectInstance(definition);
+            if(effect==0){primaryEffectId=e.id;primaryEffectEnabled=true;effect=definition;intensity=e.intensity;fx=null;fxEffect=definition;motion.curves.get(Motion.INTENSITY).clear();}
+            else additionalEffects.add(e);return e.id;
+        }
+        public void updateEffect(EffectInstance value){
+            if(primary(value.id)){effect=value.type;intensity=value.intensity;fx=value.params==null?null:value.params.clone();fxEffect=effect;primaryEffectEnabled=value.enabled;}
+            else for(int i=0;i<additionalEffects.size();i++)if(additionalEffects.get(i).id.equals(value.id)){additionalEffects.set(i,value);return;}
+        }
+        public void removeEffect(String identity){
+            if(primary(identity)){
+                motion.curves.get(Motion.INTENSITY).clear();fx=null;effect=0;intensity=.6f;primaryEffectId=null;primaryEffectEnabled=true;
+                if(!additionalEffects.isEmpty()){
+                    EffectInstance e=additionalEffects.remove(0);effect=e.type;primaryEffectId=e.id;primaryEffectEnabled=e.enabled;intensity=e.intensity;fx=e.params==null?null:e.params.clone();fxEffect=e.type;
+                    for(Motion.Key k:e.motion.curves.get(Motion.INTENSITY))motion.curves.get(Motion.INTENSITY).add(k.copy());
+                }
+            }else additionalEffects.removeIf(e->e.id.equals(identity));
+        }
+        public org.json.JSONArray effectsJson()throws org.json.JSONException{org.json.JSONArray all=new org.json.JSONArray();for(EffectInstance e:effects())all.put(e.json());return all;}
+        public void readEffects(org.json.JSONArray array,boolean newIdentities)throws org.json.JSONException{
+            if(array==null)return;if(array.length()>MAX_EFFECTS)throw new org.json.JSONException("More than three effects on a layer; original file is preserved.");
+            List<EffectInstance> values=new ArrayList<>();java.util.Set<String> ids=new java.util.HashSet<>();
+            for(int i=0;i<array.length();i++){EffectInstance e=EffectInstance.read(array.getJSONObject(i));if(!ids.add(e.id))throw new org.json.JSONException("Duplicate effect identity");values.add(newIdentities?e.copy(true):e);}
+            additionalEffects.clear();motion.curves.get(Motion.INTENSITY).clear();effect=0;fx=null;primaryEffectId=null;primaryEffectEnabled=true;intensity=.6f;
+            if(!values.isEmpty()){EffectInstance e=values.remove(0);effect=e.type;primaryEffectId=e.id;primaryEffectEnabled=e.enabled;intensity=e.intensity;fx=e.params;fxEffect=e.type;for(Motion.Key k:e.motion.curves.get(Motion.INTENSITY))motion.curves.get(Motion.INTENSITY).add(k.copy());additionalEffects.addAll(values);}
+        }
+        public void validateEffects(){List<EffectInstance> all=effects();if(all.size()>MAX_EFFECTS||effect==0&&!additionalEffects.isEmpty())throw new IllegalArgumentException("Three effects per layer maximum");java.util.Set<String> ids=new java.util.HashSet<>();for(EffectInstance e:all){e.validate();if(!ids.add(e.id))throw new IllegalArgumentException("Duplicate effect identity");}}
         public boolean reversed; public String forwardUri, forwardName; public long forwardSourceDurationMs, reverseBaseMs, reverseSpanMs;
         public boolean image, audioOnly;
         public int track; public long startMs,fadeInMs,fadeOutMs;
@@ -112,7 +155,7 @@ public final class EditProject {
             c.sourceDurationMs=sourceDurationMs; c.inMs=inMs; c.outMs=outMs;
             c.effect=effect; c.transition=transition; c.easing=easing; c.blend=blend;
             c.intensity=intensity; c.opacity=opacity; c.volume=volume;c.unmutedVolume=unmutedVolume; c.transitionMs=transitionMs;c.speed=speed;
-            c.parentId=parentId;c.attach=attach==null?null:attach.clone();c.fx=fx==null?null:fx.clone();c.fxEffect=fxEffect;c.reversed=reversed;c.forwardUri=forwardUri;c.forwardName=forwardName;c.forwardSourceDurationMs=forwardSourceDurationMs;c.reverseBaseMs=reverseBaseMs;c.reverseSpanMs=reverseSpanMs;return c;
+            c.parentId=parentId;c.attach=attach==null?null:attach.clone();c.fx=fx==null?null:fx.clone();c.fxEffect=fxEffect;c.primaryEffectId=effect==0?null:UUID.randomUUID().toString();c.primaryEffectEnabled=primaryEffectEnabled;for(EffectInstance e:additionalEffects)c.additionalEffects.add(e.copy(true));c.reversed=reversed;c.forwardUri=forwardUri;c.forwardName=forwardName;c.forwardSourceDurationMs=forwardSourceDurationMs;c.reverseBaseMs=reverseBaseMs;c.reverseSpanMs=reverseSpanMs;return c;
         }
     }
     public static final class Overlay {
@@ -229,7 +272,7 @@ public final class EditProject {
         for(int i=0;i<markers.size();i++) if(markers.get(i)<0||(i>0&&markers.get(i)<=markers.get(i-1))) throw new IllegalArgumentException("Markers must be distinct times from zero.");
         if((loopInMs<0)!=(loopOutMs<0)||(loopInMs>=0&&loopOutMs-loopInMs<MIN_CLIP_MS)) throw new IllegalArgumentException("Loop range needs at least 0.10 seconds.");
         for(Clip c:clips) {
-            c.audio.validate();
+            c.audio.validate();c.validateEffects();
             c.motion.validate();
             if(!(c.heightScale==-1||Motion.allowed(Motion.HEIGHT,c.heightScale))||!(c.aspect>=.05f&&c.aspect<=20)||!(Math.abs(c.skewX)<=80)||!(Math.abs(c.skewY)<=80)||!Motion.allowed(Motion.ANCHOR_X,c.anchorX)||!Motion.allowed(Motion.ANCHOR_Y,c.anchorY)||c.width<0||c.height<0||(c.group!=null&&c.group.length()>40)) throw new IllegalArgumentException("Invalid transform: "+c.name);
             if(c.gapMs<0||c.gapMs>7_200_000_000L||(c.track!=0&&c.gapMs!=0))throw new IllegalArgumentException("Gaps belong to main-sequence clips: "+c.name);

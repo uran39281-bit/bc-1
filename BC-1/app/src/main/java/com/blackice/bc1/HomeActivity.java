@@ -97,6 +97,7 @@ public final class HomeActivity extends Activity {
             if(wide&&height>=520){TextView footer=text("Create. Edit. Make it yours.",14,MUTED,false);footer.setGravity(Gravity.CENTER);content.addView(footer,new LinearLayout.LayoutParams(-1,dp(64)));}}
         if(!wide){LinearLayout bottom=row();bottom.setPadding(dp(8),dp(4),dp(8),dp(4));bottom.setBackgroundColor(0xff071522);
             for(String item:new String[]{"Home","Projects","Settings"})bottom.addView(nav(item,false),new LinearLayout.LayoutParams(0,dp(64),1));page.addView(bottom);}
+        TextView version=text("v"+getVersionName(),10,MUTED,false);version.setGravity(Gravity.END);version.setPadding(0,0,dp(12),0);page.addView(version,new LinearLayout.LayoutParams(-1,dp(14)));
         setContentView(root);
         root.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{int now=Math.round((r-l)/getResources().getDisplayMetrics().density);if(now>0&&Math.abs(now-renderedWidth)>4){renderedWidth=now;main.post(()->{if(!isDestroyed()){captureScroll();build();}});}});
     }
@@ -161,6 +162,7 @@ public final class HomeActivity extends Activity {
             case "Open":open(e);break;case "Rename":rename(e);break;case "Duplicate":work("Duplicating project…",()->{store.duplicate(e.id);return null;},false);break;
             case "Delete":new AlertDialog.Builder(this).setTitle("Delete “"+e.name+"”?").setMessage("This deletes the saved project and its recovery records. Your original videos, photos and audio are kept.").setNegativeButton("Cancel",null).setPositiveButton("Delete",(d,w)->work("Deleting project…",()->{store.delete(e.id);if(e.id.equals(getSharedPreferences(EditorActivity.PREFS,MODE_PRIVATE).getString("last-project",null)))getSharedPreferences(EditorActivity.PREFS,MODE_PRIVATE).edit().remove("last-project").apply();return null;},false)).show();break;}return true;});menu.show();}
     private void rename(ProjectStore.BrowserEntry e){EditText input=field(e.name);AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Rename project").setView(input).setNegativeButton("Cancel",null).setPositiveButton("Rename",null).create();dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{String name=input.getText().toString().trim();if(!validName(input,name))return;dialog.dismiss();work("Renaming project…",()->{store.rename(e.id,name);return null;},false);}));dialog.show();}
+    private String getVersionName(){try{return getPackageManager().getPackageInfo(getPackageName(),0).versionName;}catch(android.content.pm.PackageManager.NameNotFoundException e){return "unknown";}}
     private void newProject(){if(busy)return;NewProjectDialog.show(this,project->work("Creating project…",()->{store.save(project);return project;},true));}
     private boolean validName(EditText input,String name){if(name.isBlank()||name.length()>120){input.setError("Use 1–120 characters");return false;}return true;}
     private void pickImport(){Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

@@ -178,3 +178,16 @@ head_db=$(ffmpeg -hide_banner -ss 0 -t 0.3 -i "$REVERSED_MP4" -vn -af volumedete
 tail_db=$(ffmpeg -hide_banner -ss 1.7 -t 0.3 -i "$REVERSED_MP4" -vn -af volumedetect -f null - 2>&1 | sed -n 's/.*max_volume: \(-\?[0-9.]*\) dB.*/\1/p' | tail -1)
 echo "reversed audio: first 0.3 s max ${head_db} dB, last 0.3 s max ${tail_db} dB"
 python3 -c "import sys; h=float('${head_db:--91}'); t=float('${tail_db:--91}'); sys.exit(0 if t > h + 20 else 1)" || { echo "Reversed audio is not reversed"; exit 1; }
+
+for engine in ice media3; do
+  bc1_stack_mp4="BC-1/app/build/reports/androidTests/qa/v154-stack-${engine}.mp4"
+  ffmpeg -v error -xerror -i "$bc1_stack_mp4" -f null -
+  ffprobe -v error -show_streams -show_format -of json "$bc1_stack_mp4" > "${bc1_stack_mp4}.ffprobe.json"
+  python3 - "${bc1_stack_mp4}.ffprobe.json" <<'PYV154'
+import json,sys
+report=json.load(open(sys.argv[1]));video=next(s for s in report['streams'] if s['codec_type']=='video')
+assert (video['width'],video['height'])==(180,320),video
+assert 1.1<float(report['format']['duration'])<1.4,report['format']
+print('Independent three-effect portrait MP4 check passed:',sys.argv[1], '180x320; decoded without errors')
+PYV154
+done

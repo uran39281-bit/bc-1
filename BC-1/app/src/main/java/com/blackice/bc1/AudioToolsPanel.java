@@ -15,8 +15,13 @@ final class AudioToolsPanel {
  static void eq(EditorActivity a){
   if(!ready(a))return;EditProject.Clip c=a.clip();String id=a.project.id;AudioSettings draft=c.audio.copy();LinearLayout box=a.form();String[] labels={"Preamp","80 Hz","250 Hz","1 kHz","4 kHz","10 kHz"};
   for(int i=0;i<labels.length;i++){
-   final int band=i;TextView title=new TextView(a);box.addView(title);SeekBar slider=new SeekBar(a);slider.setMax(48);slider.setContentDescription(labels[i]);float value=i==0?draft.preampDb:draft.eqDb[i-1];slider.setProgress(Math.round((value+12)*2));title.setText(labels[i]+": "+value+" dB");box.addView(slider);
-   slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){public void onStartTrackingTouch(SeekBar s){}public void onStopTrackingTouch(SeekBar s){}public void onProgressChanged(SeekBar s,int p,boolean u){float v=p/2f-12;if(band==0)draft.preampDb=v;else draft.eqDb[band-1]=v;title.setText(labels[band]+": "+v+" dB");}});
+   final int band=i;TextView title=a.note("");box.addView(title);float[] start={0};
+   com.blackice.bc1.menu.RulerView ruler=new com.blackice.bc1.menu.RulerView(a,labels[i]+" dB",-12,12,.5,new com.blackice.bc1.menu.RulerView.Binding(){
+    public double value(){return band==0?draft.preampDb:draft.eqDb[band-1];}
+    public void begin(){start[0]=(float)value();}
+    public void preview(double n){if(band==0)draft.preampDb=(float)n;else draft.eqDb[band-1]=(float)n;title.setText(labels[band]+": "+n+" dB");}
+    public void commit(){}public void cancel(){preview(start[0]);}
+   });title.setText(labels[i]+": "+(i==0?draft.preampDb:draft.eqDb[i-1])+" dB");box.addView(ruler);
   }
   ScrollView scroll=new ScrollView(a);scroll.addView(box);
   new AlertDialog.Builder(a).setTitle("Equalizer").setView(scroll).setPositiveButton("Apply",(d,w)->{if(ready(a)&&id.equals(a.project.id)&&a.project.clips.contains(c))a.edit("EQ updated",()->{draft.normalizationDb=0;c.audio=draft.copy();});}).setNeutralButton("Flat",(d,w)->{if(ready(a)&&id.equals(a.project.id)&&a.project.clips.contains(c))a.edit("EQ reset",()->{java.util.Arrays.fill(c.audio.eqDb,0);c.audio.preampDb=0;c.audio.normalizationDb=0;});}).setNegativeButton("Cancel",null).show();

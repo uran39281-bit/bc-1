@@ -27,6 +27,7 @@ public final class RenderPlan {
         public final float intensity, opacity, progress;
         /** The effect's four named controls (0..1), as the shader reads them. */
         public final float[] params;
+        public final java.util.List<com.blackice.bc1.editor.EffectInstance> effects;
         /** Upper of the two alternating main-lane streams (transition masks cut its alpha). */
         public final boolean top;
         /** Stacking group: 0 lower main stream, 1 upper main stream, track + 1 for layer tracks. */
@@ -39,7 +40,7 @@ public final class RenderPlan {
             clip = c; placementIndex = p.index; track = c.track; startMs = p.startMs; endMs = p.endMs;
             this.sourceTimeMs = sourceTimeMs; this.top = top;
             transform = world != null ? world : TransformMath.of(c, sourceTimeMs);
-            effect = c.effect; params = c.effectParams();
+            effect = c.effect; params = c.effectParams();effects=c.effects();
             intensity = c.motion.value(Motion.INTENSITY, sourceTimeMs, c.intensity);
             opacity = c.motion.value(Motion.OPACITY, sourceTimeMs, c.opacity);
             transition = t.type; role = t.role; progress = t.progress;

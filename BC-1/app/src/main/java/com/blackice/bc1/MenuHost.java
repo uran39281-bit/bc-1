@@ -24,6 +24,7 @@ final class MenuHost implements MenuScreenFactory.Host {
     /** Identity of the interval a graph gesture started on; a gesture never follows a changed selection. */
     private String tokenProject, tokenLayer, tokenStart, tokenEnd;
     private int tokenTrack = -1;
+    private String gestureProject,gestureLayer,gestureEffect;
 
     MenuHost(EditorActivity activity, MenuPanels panels) { a = activity; owner = panels; }
 
@@ -31,7 +32,12 @@ final class MenuHost implements MenuScreenFactory.Host {
     private EditProject.Clip clip() { return a.clip(); }
     private EditProject.Overlay overlay() { return a.overlay(); }
     private boolean present() { return a.multiCount() <= 1 && (clip() != null || overlay() != null); }
-    private Motion motion() { return a.selectedMotion(); }
+    private EffectInstance selectedEffect(){EditProject.Clip c=clip();if(c==null)return null;EffectInstance e=c.effect(owner.selectedEffectId);return e!=null?e:c.effects().isEmpty()?null:c.effects().get(0);}
+    private Motion motion(Property p){EffectInstance e=p==Property.EFFECT_STRENGTH?selectedEffect():null;return e!=null?e.motion:a.selectedMotion();}
+    private String scope(Property p,int track){return p==Property.EFFECT_STRENGTH?a.project.id+":"+layerId()+":effect:"+(selectedEffect()==null?"":selectedEffect().id):a.easingControls.scope(track);}
+    @Override public String curveScope(Property p){return scope(p,track(p));}
+    private void selectKey(Property p,int track,long time){Motion m=motion(p);Motion.Key k=Keyframes.keyAt(m,track,time,tolerance());if(k==null)a.easingControls.selected.remove(scope(p,track));else a.easingControls.selected.put(scope(p,track),k.id);}
+    private void verifyGesture(){if(!a.project.id.equals(gestureProject)||!layerId().equals(gestureLayer)||!java.util.Objects.equals(gestureEffect,selectedEffect()==null?null:selectedEffect().id))throw new IllegalStateException("Selection changed during edit");}
     private long time() { return a.panels.motionTime(); }
     private long tolerance() { return a.panels.tolerance(); }
     private float neutral() { return clip() != null ? 1f : new EditProject.Overlay().scale; }
@@ -99,8 +105,8 @@ final class MenuHost implements MenuScreenFactory.Host {
             case ROTATION: return 0.0 - t.rotation;
             case WIDTH: return t.scale * 100d / neutral();
             case HEIGHT: return t.scale * t.aspect * 100d / neutral();
-            case OPACITY: return motion().value(Motion.OPACITY, time(), clip() != null ? clip().opacity : overlay().opacity) * 100d;
-            default: return clip() == null ? 0 : motion().value(Motion.INTENSITY, time(), clip().intensity) * 100d;
+            case OPACITY: return motion(p).value(Motion.OPACITY, time(), clip() != null ? clip().opacity : overlay().opacity) * 100d;
+            default: return selectedEffect()==null?0:selectedEffect().motion.value(Motion.INTENSITY,time(),selectedEffect().intensity) * 100d;
         }
     }
 
@@ -144,7 +150,7 @@ final class MenuHost implements MenuScreenFactory.Host {
 
     @Override public KeyVisual keyVisual(Property p) {
         if (!present()) return KeyVisual.STATIC;
-        int state = Keyframes.state(motion(), track(p), time(), tolerance());
+        int state = Keyframes.state(motion(p), track(p), time(), tolerance());
         return state == Keyframes.ON_KEY ? KeyVisual.CURRENT_KEY : state == Keyframes.ANIMATED ? KeyVisual.ANIMATED : KeyVisual.STATIC;
     }
 
@@ -162,7 +168,7 @@ final class MenuHost implements MenuScreenFactory.Host {
         EditProject.Overlay o = overlay();
         long now = a.project.playheadMs, best = -1, here = time(), tol = tolerance();
         for (int id : group(p)) {
-            for (Motion.Key k : motion().curves.get(id)) {
+            for (Motion.Key k : motion(p).curves.get(id)) {
                 if (Math.abs(k.timeMs - here) <= tol) continue;
                 if (c != null && (k.timeMs < c.inMs || k.timeMs > c.outMs)) continue;
                 if (o != null && (k.timeMs < 0 || k.timeMs > o.endMs - o.startMs)) continue;
@@ -188,8 +194,8 @@ final class MenuHost implements MenuScreenFactory.Host {
         Property show = p;
         boolean selected = false;
         for (int id : group(p)) {
-            if (Keyframes.keyAt(motion(), id, at, tolerance()) != null) {
-                a.easingControls.select(id, at);
+            if (Keyframes.keyAt(motion(p), id, at, tolerance()) != null) {
+                selectKey(p,id,at);
                 if (!selected) { show = property(id, p); selected = true; }
             }
         }
@@ -204,15 +210,15 @@ final class MenuHost implements MenuScreenFactory.Host {
         final int track = id(p);
         a.transformPanel.commit(title(p) + " keyframe", () -> {
             if (track == Motion.SCALE || track == Motion.HEIGHT) a.transformPanel.separate();
-            Motion m = motion();
+            Motion m = motion(p);
             long t = time(), tol = tolerance();
             float v = (float) internalValue(p);
             Motion.Key key = Keyframes.keyAt(m, track, t, tol);
             if (key != null) {
                 m.curves.get(track).remove(key);
-                if (m.curves.get(track).isEmpty()) a.setStatic(track, v);
+                if (m.curves.get(track).isEmpty()){if(p==Property.EFFECT_STRENGTH){EffectInstance e=selectedEffect();e.intensity=v;clip().updateEffect(e);}else a.setStatic(track,v);}
             } else m.put(track, new Motion.Key(t, v));
-            a.easingControls.select(track, t);
+            selectKey(p,track,t);
         });
     }
 
@@ -231,14 +237,14 @@ final class MenuHost implements MenuScreenFactory.Host {
 
     // ---- Edit transactions -----------------------------------------------------------------------
     @Override public void beginEdit(String text) {
-        label = text;
+        label = text;gestureProject=a.project.id;gestureLayer=layerId();gestureEffect=selectedEffect()==null?null:selectedEffect().id;
         a.pausePlayback();
         a.beginLiveAdjust();
         if (a.liveBefore == null) throw new IllegalStateException("Edit unavailable");
         a.transformPanel.beginGesture();
     }
 
-    @Override public void previewValue(Property p, double v) { a.liveAdjust(() -> applyDisplay(p, v)); }
+    @Override public void previewValue(Property p, double v) { verifyGesture();a.liveAdjust(() -> applyDisplay(p, v)); }
 
     @Override public void commitEdit() {
         clearToken();
@@ -263,14 +269,16 @@ final class MenuHost implements MenuScreenFactory.Host {
             case WIDTH: a.transformPanel.applyInternal(Motion.SCALE, (float) (v * neutral() / 100d)); break;
             case HEIGHT: a.transformPanel.applyInternal(Motion.HEIGHT, (float) (v * neutral() / 100d)); break;
             case OPACITY: setMotionValue(Motion.OPACITY, (float) (v / 100d)); break;
-            default: setMotionValue(Motion.INTENSITY, (float) (v / 100d)); break;
+            default: setEffectValue((float)(v/100d));break;
         }
     }
 
     private void setMotionValue(int id, float value) {
         if (!Motion.allowed(id, value)) throw new IllegalArgumentException(Motion.PROPERTIES[id] + " is outside the supported range.");
-        if (Keyframes.set(motion(), id, time(), value, tolerance())) a.setStatic(id, value);
+        if (Keyframes.set(a.selectedMotion(), id, time(), value, tolerance())) a.setStatic(id, value);
     }
+
+    private void setEffectValue(float value){EffectInstance e=selectedEffect();if(e==null||!Motion.allowed(Motion.INTENSITY,value))throw new IllegalArgumentException("Invalid effect strength");if(Keyframes.set(e.motion,Motion.INTENSITY,time(),value,tolerance())){e.intensity=value;clip().updateEffect(e);}}
 
     // ---- Discrete commands -----------------------------------------------------------------------
     @Override public void reset(Property p) {
@@ -283,7 +291,7 @@ final class MenuHost implements MenuScreenFactory.Host {
                 case WIDTH: a.transformPanel.applyInternal(Motion.SCALE, neutral()); break;
                 case HEIGHT: a.transformPanel.applyInternal(Motion.HEIGHT, neutral()); break;
                 case OPACITY: setMotionValue(Motion.OPACITY, 1f); break;
-                default: setMotionValue(Motion.INTENSITY, .6f); break;
+                default: setEffectValue(.6f);break;
             }
         });
     }
@@ -310,15 +318,15 @@ final class MenuHost implements MenuScreenFactory.Host {
         Interval(Motion.Key start, Motion.Key end, int track, int index) { this.start = start; this.end = end; this.track = track; this.index = index; }
     }
 
-    private int selectedIndex(int track) {
+    private int selectedIndex(Property p,int track) {
         if (!present()) return -1;
-        return CurveEdits.indexOf(motion().curves.get(track), a.easingControls.selected.get(a.easingControls.scope(track)));
+        return CurveEdits.indexOf(motion(p).curves.get(track), a.easingControls.selected.get(scope(p,track)));
     }
 
     private Interval interval(Property p) {
         if (!present()) return null;
-        int track = track(p), index = selectedIndex(track);
-        List<Motion.Key> keys = motion().curves.get(track);
+        int track = track(p), index = selectedIndex(p,track);
+        List<Motion.Key> keys = motion(p).curves.get(track);
         if (!CurveEdits.hasNext(keys, index)) return null;
         return new Interval(keys.get(index), keys.get(index + 1), track, index);
     }
@@ -339,8 +347,8 @@ final class MenuHost implements MenuScreenFactory.Host {
 
     @Override public String intervalLabel(Property p) {
         if (!present()) return "Select a keyframe";
-        int track = track(p), index = selectedIndex(track);
-        List<Motion.Key> keys = motion().curves.get(track);
+        int track = track(p), index = selectedIndex(p,track);
+        List<Motion.Key> keys = motion(p).curves.get(track);
         if (keys.isEmpty()) return "No next keyframe";
         if (index < 0) return "Select a keyframe";
         if (!CurveEdits.hasNext(keys, index)) return "No next keyframe";
@@ -352,13 +360,13 @@ final class MenuHost implements MenuScreenFactory.Host {
     @Override public void selectInterval(Property p) {
         if (!present()) return;
         final int track = track(p);
-        final List<Motion.Key> keys = motion().curves.get(track);
+        final List<Motion.Key> keys = motion(p).curves.get(track);
         if (keys.isEmpty()) { a.tell("Add a keyframe to " + title(p) + " first."); return; }
         String[] names = new String[keys.size()];
         for (int i = 0; i < names.length; i++) names[i] = "Key " + (i + 1) + " · " + EditorActivity.seconds(keys.get(i).timeMs) + " s";
         new AlertDialog.Builder(a).setTitle(title(p) + " keyframe")
                 .setItems(names, (d, i) -> {
-                    a.easingControls.selected.put(a.easingControls.scope(track), keys.get(i).id);
+                    a.easingControls.selected.put(scope(p,track), keys.get(i).id);
                     owner.showGraph(p);
                     a.renderInspector();
                 }).setNegativeButton("Cancel", null).show();
@@ -376,7 +384,7 @@ final class MenuHost implements MenuScreenFactory.Host {
     }
 
     @Override public void previewCurve(Property p, CubicBezier curve) {
-        Interval iv = interval(p);
+        verifyGesture();Interval iv = interval(p);
         if (iv == null || tokenStart == null || !a.project.id.equals(tokenProject) || !layerId().equals(tokenLayer)
                 || iv.track != tokenTrack || !iv.start.id.equals(tokenStart) || !iv.end.id.equals(tokenEnd))
             throw new IllegalStateException("The selected keyframe interval changed");
@@ -410,47 +418,24 @@ final class MenuHost implements MenuScreenFactory.Host {
     }
 
     // ---- Effects ---------------------------------------------------------------------------------
-    @Override public boolean hasSelectedEffect() { return present() && visualClip() && clip().effect != 0; }
-    @Override public String effectTitle() { return hasSelectedEffect() ? EffectCatalog.name(clip().effect) : ""; }
-    /** Opens the catalog, which itself explains when nothing selected can take effects, so only a busy or locked editor disables it. */
-    @Override public boolean canAddEffects() { return !a.loading && !a.importing && !a.captionApplying && !a.uiLocked; }
-    @Override public void addEffects() { a.effectCatalog.open(); }
-
-    // Effect controls beyond strength (EffectCatalog.params): static, 0..1, owned by the clip while its effect stays the same.
-    @Override public int effectParamCount() { return hasSelectedEffect() ? EffectCatalog.paramCount(clip().effect) : 0; }
-    @Override public String effectParamName(int index) { return paramAt(index) == null ? "" : paramAt(index).name; }
-    @Override public boolean effectParamIsAngle(int index) { return paramAt(index) != null && paramAt(index).angle; }
-    @Override public double effectParam(int index) { return hasSelectedEffect() && index >= 0 && index < EffectCatalog.MAX_PARAMS ? clip().effectParams()[index] : 0; }
-    @Override public double effectParamDefault(int index) { return paramAt(index) == null ? 0 : paramAt(index).def; }
-    @Override public boolean effectParamEditable() { return hasSelectedEffect() && editable(Property.EFFECT_STRENGTH); }
-    @Override public void previewEffectParam(int index, double value) {
-        a.liveAdjust(() -> {
-            EditProject.Clip c = clip();
-            if (c == null || c.effect == 0 || index < 0 || index >= EffectCatalog.paramCount(c.effect)) return;
-            float[] now = c.effectParams();
-            c.fx = new float[]{now[0], now[1], now[2], now[3]};
-            c.fx[index] = (float) Math.max(0, Math.min(1, value));
-            c.fxEffect = c.effect;
-        });
-    }
-    private EffectCatalog.Param paramAt(int index) {
-        if (!hasSelectedEffect()) return null;
-        EffectCatalog.Param[] all = EffectCatalog.params(clip().effect);
-        return index >= 0 && index < all.length ? all[index] : null;
-    }
-
-    /** Removes only the effect and its strength animation; one undo restores both exactly. */
-    @Override public void removeSelectedEffect() {
-        if (!hasSelectedEffect()) return;
-        a.transformPanel.commit("Effect removed", () -> {
-            EditProject.Clip c = clip();
-            c.effect = 0;
-            c.fx = null;
-            c.intensity = .6f;
-            c.motion.curves.get(Motion.INTENSITY).clear();
-            a.easingControls.selected.remove(a.easingControls.scope(Motion.INTENSITY));
-        });
-    }
+    @Override public boolean hasSelectedEffect(){return present()&&visualClip()&&selectedEffect()!=null;}
+    @Override public String effectTitle(){return hasSelectedEffect()?EffectCatalog.name(selectedEffect().type):"";}
+    @Override public int effectCount(){return visualClip()?clip().effects().size():0;}
+    @Override public String effectId(int i){return clip().effects().get(i).id;}
+    @Override public String effectName(int i){return EffectCatalog.name(clip().effects().get(i).type);}
+    @Override public boolean effectSelected(int i){return selectedEffect()!=null&&effectId(i).equals(selectedEffect().id);}
+    @Override public void selectEffect(String id){if(clip()!=null&&clip().effect(id)!=null)owner.selectedEffectId=id;}
+    @Override public boolean canAddEffects(){return !a.loading&&!a.importing&&!a.captionApplying&&!a.uiLocked&&(!visualClip()||effectCount()<EditProject.Clip.MAX_EFFECTS);}
+    @Override public void addEffects(){a.effectCatalog.open();}
+    @Override public int effectParamCount(){return hasSelectedEffect()?EffectCatalog.paramCount(selectedEffect().type):0;}
+    @Override public String effectParamName(int i){return paramAt(i)==null?"":paramAt(i).name;}
+    @Override public boolean effectParamIsAngle(int i){return paramAt(i)!=null&&paramAt(i).angle;}
+    @Override public double effectParam(int i){return hasSelectedEffect()&&i>=0&&i<EffectCatalog.MAX_PARAMS?selectedEffect().resolved()[i]:0;}
+    @Override public double effectParamDefault(int i){return paramAt(i)==null?0:paramAt(i).def;}
+    @Override public boolean effectParamEditable(){return hasSelectedEffect()&&editable(Property.EFFECT_STRENGTH);}
+    @Override public void previewEffectParam(int i,double value){verifyGesture();a.liveAdjust(()->{EffectInstance e=selectedEffect();if(e==null||i<0||i>=EffectCatalog.paramCount(e.type))return;e.params=e.resolved().clone();e.params[i]=(float)Math.max(0,Math.min(1,value));clip().updateEffect(e);});}
+    private EffectCatalog.Param paramAt(int i){if(!hasSelectedEffect())return null;EffectCatalog.Param[] all=EffectCatalog.params(selectedEffect().type);return i>=0&&i<all.length?all[i]:null;}
+    @Override public void removeSelectedEffect(){if(!hasSelectedEffect())return;String identity=selectedEffect().id;EditProject.Clip target=clip();a.transformPanel.commit("Effect removed",()->target.removeEffect(identity));}
 
     // ---- Navigation ------------------------------------------------------------------------------
     @Override public void back() { a.panels.back(); }

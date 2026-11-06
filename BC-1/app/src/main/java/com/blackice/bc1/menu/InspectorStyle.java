@@ -9,7 +9,7 @@ public final class InspectorStyle {
  /** Apply the same density to legacy inspector actions, keeping icon-above-label tiles larger. */
  public static void apply(View root,boolean wide){
   if(!wide)return;int h=MenuPalette.dp(root.getContext(),controlDp(root.getContext(),true));
-  if(root instanceof TextView&&root.isClickable()&&!(root instanceof EditText)){
+  if(!(root instanceof KeyframeButton)&&root instanceof TextView&&root.isClickable()&&!(root instanceof EditText)){
    TextView t=(TextView)root;
    if(t.getCompoundDrawables()[1]==null&&t.getCompoundDrawables()[3]==null){
     t.setMinHeight(h);t.setMinimumHeight(h);t.setPadding(t.getPaddingLeft(),MenuPalette.dp(root.getContext(),3),t.getPaddingRight(),MenuPalette.dp(root.getContext(),3));
