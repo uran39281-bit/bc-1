@@ -42,7 +42,7 @@ jobs:
             mkdir -p phone-baseline
             adb install -r BC-1/app/build/outputs/apk/debug/app-debug.apk
             adb install -r BC-1/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-            adb shell am instrument -w -r -e class com.blackice.bc1.InspectorControlsTest,com.blackice.bc1.MenuUpdateTest,com.blackice.bc1.DailyUpdateTest,com.blackice.bc1.MenuConsistencyTest,com.blackice.bc1.EffectStackExportTest com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee phone-baseline/tests.txt
+            adb shell am instrument -w -r -e class com.blackice.bc1.InspectorControlsTest,com.blackice.bc1.MenuUpdateTest,com.blackice.bc1.DailyUpdateTest,com.blackice.bc1.MenuConsistencyTest,com.blackice.bc1.EffectStackExportTest,com.blackice.bc1.EditorWorkspaceTest,com.blackice.bc1.ExportDiagnosticsUiTest,com.blackice.bc1.PhoneMediaSpaceTest com.blackice.bc1.preview.test/androidx.test.runner.AndroidJUnitRunner | tee phone-baseline/tests.txt
             bash .github/scripts/bc1-collect-qa.sh phone-baseline
             if rg 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed' phone-baseline/tests.txt; then exit 1; fi
             rg '^OK \([0-9]+ tests?\)' phone-baseline/tests.txt

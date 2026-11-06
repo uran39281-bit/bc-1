@@ -403,9 +403,11 @@ public final class EditorActivity extends Activity {
         }
         status=label(message,10,MUTED,false);status.setSingleLine(true);status.setPadding(dp(10),0,dp(10),dp(3));status.setOnClickListener(v->new AlertDialog.Builder(this).setMessage(status.getText()).setPositiveButton("OK",null).show());root.addView(status,new LinearLayout.LayoutParams(-1,dp(wide&&c.screenHeightDp<450?16:24)));
         if(portraitPhone())status.setVisibility(View.GONE);
-        TextView version=label("v"+appVersion(),10,MUTED,false);version.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);version.setPadding(0,0,dp(12),0);version.setContentDescription("App version "+appVersion());root.addView(version,new LinearLayout.LayoutParams(-1,dp(14)));
-        root.setOnApplyWindowInsetsListener((v,insets)->{v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets.consumeSystemWindowInsets();});
-        setContentView(root);root.requestApplyInsets();if(timelineScroll!=null)timelineScroll.post(()->timeline.syncScroll());if(layerScroll>0&&timelineScroll!=null)timelineScroll.post(()->{if(timelineScroll.getParent() instanceof ScrollView)((ScrollView)timelineScroll.getParent()).scrollTo(0,layerScroll);});if(player!=null)player.setVideoSurfaceView(surface);renderInspector();syncPosition();if(previewPending)previewHint("Preparing preview…\nTap to cancel");mediaImportWindow.reposition();effectCatalog.mount();
+        TextView version=label("v"+appVersion(),10,MUTED,false);version.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);version.setPadding(0,0,dp(12),0);version.setContentDescription("App version "+appVersion());
+        // Version chrome must not consume preview/timeline space on short phones.
+        status.setPadding(dp(10),0,dp(68),dp(3));FrameLayout chrome=new FrameLayout(this);chrome.addView(root,new FrameLayout.LayoutParams(-1,-1));chrome.addView(version,new FrameLayout.LayoutParams(-2,dp(14),Gravity.BOTTOM|Gravity.END));
+        chrome.setOnApplyWindowInsetsListener((v,insets)->{v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets.consumeSystemWindowInsets();});
+        setContentView(chrome);chrome.requestApplyInsets();if(timelineScroll!=null)timelineScroll.post(()->timeline.syncScroll());if(layerScroll>0&&timelineScroll!=null)timelineScroll.post(()->{if(timelineScroll.getParent() instanceof ScrollView)((ScrollView)timelineScroll.getParent()).scrollTo(0,layerScroll);});if(player!=null)player.setVideoSurfaceView(surface);renderInspector();syncPosition();if(previewPending)previewHint("Preparing preview…\nTap to cancel");mediaImportWindow.reposition();effectCatalog.mount();
     }
     View buildMonitor() {
         if(surface==null){surface=new SurfaceView(this);surface.setContentDescription("Video project preview");}
