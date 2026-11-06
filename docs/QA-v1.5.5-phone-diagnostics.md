@@ -1,26 +1,61 @@
-# 1.5.5 phone and diagnostics integration
+# Black Ice 1.5.5 phone and diagnostics integration — qualified source
 
-Base main: `e698909fdf2307c2b2477007d20c7f4b8f93fe8c`.
-Claude PR #30 source: `93a31540557100043f37d0a1862fcd475185e075`.
-The integration descends from that source and leaves Claude's branch unchanged.
-Claude's source build/GPU/baseline checks passed in runs 42241884937 and 42241885119.
-Those results do not qualify this follow-up.
+Qualified application/test/workflow source: `73fc56a9d4d73e44b94d10f253aa301f747bdac6`.
+[CI run 42264463542](https://github.com/uran39281-bit/bc-1/actions/runs/42264463542) passed both build and gpu-tests. Subsequent qualification-document changes do not alter application, test or workflow source.
 
-The follow-up implements the supplied Black-Ice-1.5.5-Phone-and-Diagnostics-Update.zip:
+Base main: `e698909fdf2307c2b2477007d20c7f4b8f93fe8c` (1.5.4).
+Claude PR #30: `93a31540557100043f37d0a1862fcd475185e075`, included as ancestry; Claude's branch remains unchanged.
+Integration: [PR #31](https://github.com/uran39281-bit/bc-1/pull/31). Neither PR is merged by this work. Version remains 1.5.5 / build 49. Signing configuration and the published 1.5.4 / build 48 upgrade base are retained. No official signing, publication, release manifest or signed upgrade verification is claimed.
 
-- Phone workspace: Remove replaces Duration in the first quick row; the original delete/undo command preserves imported media. Header Back is outlined and a Settings gear is between Save and Export.
-- Phone drawer: drag the handle upward/downward, bounded below preview/transport/timeline ruler. Cancel restores the previous height. Height is UI state retained across panels/recreation; it never enters project or undo data. Tap the handle or Back retains dismissal. The body scrolls independently.
-- Phone rulers: direct tick-strip motion, using incremental clamping so reversing at a bound responds immediately. Wide RulerView direction is unchanged. NumberRuler uses the same incremental clamping only on phone. Both wide ruler implementations retain their original mapping, including their behavior at bounds.
-- Phone inspector control density is scoped to the workspace, independently of canvas ratio. Keyframe squares retain their sizing.
-- Both workspaces: read-only foreground per-project clock, migration keeps accumulated milliseconds and discards the former manual-pause override. Ledger remains in project-work-clocks preferences, independent of edits/log retention. A serial worker commits ten-second/lifecycle checkpoints before reporting them confirmed; in-process handoffs keep the latest total. Restarts recover confirmed time; unconfirmed crash intervals are explicitly unavailable.
-- Both workspaces: buffered JSONL events, UTC and elapsed time, session and operation IDs, numeric before/after values including stacked effect controls and keyframes; command, selection, input/window/lifecycle, import/save/export and preview processing boundaries. Raw app pointer samples include historical points, hover and wheel axes. Typed text, key characters, media paths/content and clipboard text are excluded. Dialog windows use the same input hook.
-- Copy All takes a serialized snapshot of every retained action segment plus crash reports, with no hidden truncation. Viewer truncation is labeled. Over 400 KB, copying explains the limit and directs the user to the existing full text export.
-- Capture buffers are bounded, with reserved space for semantic events; queue/storage gaps and retention are explicit. Persistence is off the input/render thread.
+## Changes
 
-Local checks: complete application, JVM-test and Android-test Java compilation against Android API 35 / Media3 1.11.1 classes passed (generated resource/OptIn declarations supplied for compilation only). All 289 JVM tests passed with real org.json, including six new ruler, trace privacy/effect-keyframe, and superseded-save queue checks. Run 42255236394 passed the Android build/lint/unit job, but emulator startup exposed a null initial tool-context name in the new logger; context names are now normalized and compared null-safely. Initial integration CI 42254107964 stopped at old tests that set the timer fields directly; these tests now assert the read-only/migration contract. The first custom test launch used the repository root and five shader-path lookups failed; the corrected app working directory passes all tests.
+Phone workspace, independently of project canvas ratio:
 
-Run 42256175872 attempt 2: Android build/lint/JVM passed; all seven focused tests passed, including phone Remove/Undo, drawer recreation, clock migration and trace pressure. Full instrumentation passed 112/116. Two tests still expected the removed Duration quick button; one expected the old phone ruler direction; these assertions now follow the requested phone contract. PhoneMediaSpaceTest captured its balanced size in the same callback that rebuilt the layout; it now waits for layout before comparing expansion. Run 42263240597 passed build/lint/JVM and 11/12 expanded focused tests, including all four previous failures. The new historical/wheel check caught raw numeric input actions overwriting the semantic event label; raw actions now use input_action and preserve the pointer/keyboard event label. The next required full emulator/export checks remain pending. A final audit also instruments the expanded graph dialog and media-browser popup root, adds historical/wheel input coverage and retains a real JSONL sample in QA. Do not merge or claim these pass before the checks finish. Physical Samsung/DeX and performance qualification remain untested.
+- Outlined Back and a Settings gear between Save and Export.
+- Compact selected-layer drawer: standard height about one third of the usable window; continuous resize below the preview/transport/ruler; cancellation and recreation preserve UI state. More footage tools stays at the bottom when space permits. Body scrolling is independent.
+- Remove replaces Duration in the quick row and reuses the existing deletion/undo command. Source media and duration editing elsewhere are preserved.
+- Ruler ticks follow the drag. Incremental clamping consumes overscroll so reversing at a bound responds immediately. Wide ruler mappings, including behavior at bounds, remain unchanged.
+- Phone inspector density is scoped to the phone workspace; keyframe squares retain their sizing.
 
-TextureView surface-update events are labeled as observations of the latest submitted buffer; updates may coalesce. A GPU buffer submission is not claimed to prove an exact physical display timestamp. Pending frame requests are reported as superseded; missing surfaces are explicit. No renderer/shader/export algorithm, project schema, effect definitions or signing configuration is changed by this follow-up.
+Both workspaces:
 
-This branch is source-only until qualified. No official signed APK, release manifest or upgrade qualification is claimed. Retain the existing signing/publication process.
+- Buffered local JSONL action, movement, lifecycle and processing events with UTC/elapsed timestamps, session/operation/input IDs, numeric changes, effect controls and keyframes. Pointer history, hover and wheel input are retained; separate dialog and popup windows use the same recorder. Typed text, media content/paths and clipboard text are excluded. Raw input action codes are separate from semantic event labels.
+- Copy All takes a serialized snapshot of retained events plus crash reports without hidden truncation. Viewer truncation is labeled. Above 400 KB or on clipboard failure, the UI directs the user to full text export.
+- Foreground per-project work time is read-only. Existing totals survive migration; the former manual-pause override is removed. A serial worker commits checkpoints before reporting them confirmed. In-process handoffs preserve the latest total, while restart recovery uses confirmed checkpoints. Clock storage is independent of undo and log retention.
+- Bounded capture queues reserve semantic-event capacity; queue/storage gaps and retention are explicit. Persistence runs off input/render threads.
+
+Notable source: ActionTrace, TraceDialogBuilder, TraceInputLayout, ProjectClock, WorkClockLedger, ProjectSession, PortraitChrome, PhoneWorkspaceState, ToolPanels, RulerView/RulerGesture, NumberRuler, MediaImporter, ExportService and LivePreview. Remaining dialog-builder substitutions provide shared input coverage. See the PR Files changed tab for the exact diff.
+
+## Verification
+
+| Check | Result |
+|---|---|
+| JVM tests | 289 passed; also compiled/run locally with real org.json |
+| Android lint, application APK and test APK | Passed |
+| Focused Android regressions | 12 passed |
+| Full Android emulator suite | 117 passed, no failures |
+| Independent FFmpeg/ffprobe export gates | Full existing device-checks script passed |
+| Effects | Existing render tests, including the 18 new effects/controls and layer stacks, passed |
+| Remove/Undo, drawer recreation, clock migration | Passed |
+| Historical pointer samples and wheel axes | Passed |
+| Bounded trace pressure and explicit gaps | Passed |
+
+The earlier failures are resolved: tests were migrated from the former Duration/rightward-increase/manual-pause contracts; the preview-size comparison now waits for layout; initial null tool context is normalized; raw input action codes no longer overwrite pointer/keyboard event labels. No failed check is counted as a pass.
+
+## Native evidence
+
+Evidence revision: `dc285051f856a5b1a2da74a6a77b1fe08e5bd868`, published by the qualified CI run.
+
+- [Phone standard drawer](https://raw.githubusercontent.com/uran39281-bit/bc-1/dc285051f856a5b1a2da74a6a77b1fe08e5bd868/v155-phone-standard.png)
+- [Phone expanded drawer](https://raw.githubusercontent.com/uran39281-bit/bc-1/dc285051f856a5b1a2da74a6a77b1fe08e5bd868/v155-phone-expanded.png)
+- [Retained structured log sample](https://github.com/uran39281-bit/bc-1/blob/dc285051f856a5b1a2da74a6a77b1fe08e5bd868/v155-action-log.txt)
+
+All eight native wide-workspace captures match Claude's baseline outside a 5-by-6 pixel rectangle containing the work-clock seconds. Each has 23 changed pixels at x=415..419, y=5..10 in the 540-by-288 published capture. Header/menu geometry, tool cards and ruler presentation are otherwise pixel-identical.
+
+The saved trace contains 6,833 actual records, including 274 measured render submissions: median 90 ms and maximum 4,620 ms on the software-rendered emulator, including cold setup. These are render/submission measurements, not physical display latency or Samsung performance. TextureView updates are labeled as observations of the latest submitted buffer; updates may coalesce and unavailable display correlation is explicit.
+
+## Remaining limits
+
+Physical Samsung/DeX use, thermal/battery/FPS qualification, reboot/crash stress, storage-failure injection and clipboard-service failure injection were not performed. Snapshot ordering, retained content, pointer history/wheel input and queue pressure were tested. The interface provides full-log export for clipboard limits, but no physical-device clipboard-limit result is claimed. ASD-STE100 guides wording; formal language certification is not claimed.
+
+This remains a qualified development source candidate. An official APK requires the retained signing key and the existing signed publication/upgrade process.
