@@ -9,12 +9,12 @@ public final class MenuIconDrawable extends Drawable {
  public MenuIconDrawable(Context c,Kind kind,int color){this.kind=kind;this.color=color;size=MenuPalette.dp(c,24);}
  public void mark(int color,boolean filled,boolean dot){this.color=color;this.filled=filled;this.dot=dot;invalidateSelf();}
  @Override public int getIntrinsicWidth(){return size;}@Override public int getIntrinsicHeight(){return size;}
- @Override public void draw(Canvas c){int save=c.save();Rect b=getBounds();c.translate(b.left,b.top);c.scale(b.width()/24f,b.height()/24f);paint.setColor(color);paint.setAlpha(alpha);paint.setStrokeWidth(1.7f);paint.setStrokeCap(Paint.Cap.ROUND);paint.setStrokeJoin(Paint.Join.ROUND);paint.setStyle(Paint.Style.STROKE);Path p=new Path();
+ @Override public void draw(Canvas c){int save=c.save();Rect b=getBounds();float side=Math.min(b.width(),b.height());c.translate(b.exactCenterX()-side/2,b.exactCenterY()-side/2);c.scale(side/24f,side/24f);paint.setColor(color);paint.setAlpha(alpha);paint.setStrokeWidth(1.7f);paint.setStrokeCap(Paint.Cap.ROUND);paint.setStrokeJoin(Paint.Join.ROUND);paint.setStyle(Paint.Style.STROKE);Path p=new Path();
   switch(kind){
    case BACK:p.moveTo(14,5);p.lineTo(7,12);p.lineTo(14,19);c.drawPath(p,paint);break;
    case NEXT:p.moveTo(10,5);p.lineTo(17,12);p.lineTo(10,19);c.drawPath(p,paint);break;
    case ADD:c.drawLine(12,4,12,20,paint);c.drawLine(4,12,20,12,paint);break;
-   case DIAMOND:p.moveTo(10.5f,3);p.lineTo(18,12);p.lineTo(10.5f,21);p.lineTo(3,12);p.close();if(filled)paint.setStyle(Paint.Style.FILL);c.drawPath(p,paint);if(dot){paint.setStyle(Paint.Style.FILL);c.drawCircle(22,12,1.5f,paint);}break;
+   case DIAMOND:p.moveTo(12,4);p.lineTo(20,12);p.lineTo(12,20);p.lineTo(4,12);p.close();if(filled)paint.setStyle(Paint.Style.FILL);c.drawPath(p,paint);if(dot){paint.setStyle(Paint.Style.FILL);c.drawCircle(22,12,1,paint);}break;
    case SETTINGS:c.drawCircle(12,12,6.5f,paint);c.drawCircle(12,12,2.5f,paint);for(int i=0;i<8;i++){c.save();c.rotate(i*45,12,12);c.drawLine(12,1.5f,12,4,paint);c.restore();}break;
    case LINK:c.drawRoundRect(new RectF(2,7,15,17),5,5,paint);c.drawRoundRect(new RectF(9,7,22,17),5,5,paint);break;
    case EXPAND:c.drawLine(4,10,4,4,paint);c.drawLine(4,4,10,4,paint);c.drawLine(14,4,20,4,paint);c.drawLine(20,4,20,10,paint);c.drawLine(4,14,4,20,paint);c.drawLine(4,20,10,20,paint);c.drawLine(14,20,20,20,paint);c.drawLine(20,20,20,14,paint);break;

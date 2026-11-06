@@ -75,7 +75,8 @@ final class Compositor {
      */
     private final boolean effectPasses;
     private final java.util.Map<Integer, GlKit.Program> effect = new java.util.HashMap<>();
-    private GlKit.Target effected;
+    private GlKit.Target[] effected;
+    private GlKit.Target stackedExternal;
     private GlKit.Target previewOutput;
 
     Compositor(Context context, int width, int height) throws IOException { this(context, width, height, false); }
@@ -320,9 +321,10 @@ final class Compositor {
 
     /** One layer through the shipping shader, alpha-composited over what is already drawn. */
     void drawLayer(RenderPlan.LayerDraw d, int texture) {
-        boolean pass = effectPasses && com.blackice.bc1.core.LayerShader.separable(d.clip.effect);
-        int key = pass ? 0 : d.clip.effect;
-        if (pass && com.blackice.bc1.core.LayerShader.separable(d.effect)) texture = applyEffect(d, texture);
+        boolean stacked=d.effects.size()>1||(!d.effects.isEmpty()&&!d.effects.get(0).enabled);
+        boolean pass=stacked||(effectPasses&&com.blackice.bc1.core.LayerShader.separable(d.clip.effect));
+        int key=pass?0:d.clip.effect;
+        if(pass){int target=0;for(com.blackice.bc1.editor.EffectInstance instance:d.effects)if(instance.enabled){texture=applyEffect(d,instance,texture,target);target=1-target;}}
         GlKit.Program p = begin(d, false, key);
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture);
@@ -333,10 +335,12 @@ final class Compositor {
     }
 
     /** Runs the clip's effect over a frame-sized texture with the layer shader's own uniforms; returns the result. */
-    private int applyEffect(RenderPlan.LayerDraw d, int texture) {
-        if (effected == null) effected = new GlKit.Target(width, height);
-        GlKit.Program p = effectPass(d.effect);
-        effected.bind(); clear(0, 0, 0, 0);
+    private int applyEffect(RenderPlan.LayerDraw d, com.blackice.bc1.editor.EffectInstance instance,int texture,int target) {
+        if(effected==null)effected=new GlKit.Target[2];
+        // A single effect keeps the original one-target cost; a stack allocates the second only when needed.
+        if(effected[target]==null)effected[target]=new GlKit.Target(width,height);
+        GlKit.Program p = effectPass(instance.type);
+        effected[target].bind(); clear(0, 0, 0, 0);
         GLES30.glDisable(GLES30.GL_BLEND);
         p.use();
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
@@ -344,20 +348,25 @@ final class Compositor {
         p.set("uInput", 0);
         p.set("uTexel", 1f / width, 1f / height);
         p.set("uAspect", (float) width / height);
-        p.set("uEffect", d.effect);
-        p.set("uIntensity", d.intensity);
-        p.set("uParams", d.params[0], d.params[1], d.params[2], d.params[3]);
+        p.set("uEffect", instance.type);
+        p.set("uIntensity", instance.strength(d.sourceTimeMs));
+        float[] values=instance.resolved();p.set("uParams",values[0],values[1],values[2],values[3]);
         p.set("uTime", d.sourceTimeMs / 1000f);
         quad.draw();
         GlKit.check("effect pass");
         // Back to where layers are being composed (begin() binds the other buffer itself for a blend layer).
         if (accumulating) accum[current].bind();
         else bindOutput();
-        return effected.texture;
+        return effected[target].texture;
     }
 
     /** Same, sampling a decoder's external texture directly through the letterbox and rotation. */
     void drawLayerExternal(RenderPlan.LayerDraw d, int oesTexture, float[] stMatrix, int rotation, double displayAspect) {
+        if(d.effects.size()>1||(!d.effects.isEmpty()&&!d.effects.get(0).enabled)){
+            if(stackedExternal==null)stackedExternal=new GlKit.Target(width,height);
+            fitExternal(oesTexture,stMatrix,rotation,displayAspect,stackedExternal);
+            if(accumulating)accum[current].bind();else bindOutput();drawLayer(d,stackedExternal.texture);return;
+        }
         GlKit.Program p = begin(d, true);
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
         GLES30.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oesTexture);
@@ -425,7 +434,8 @@ final class Compositor {
             m.clear();
         }
         if (accum != null) for (GlKit.Target t : accum) t.release();
-        if (effected != null) effected.release();
+        if(effected!=null)for(GlKit.Target t:effected)if(t!=null)t.release();
+        if(stackedExternal!=null)stackedExternal.release();
         if (previewOutput != null) previewOutput.release();
         overlay.release(); quad.release();
     }

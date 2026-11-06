@@ -6,7 +6,7 @@ import android.view.*;
 import android.view.accessibility.AccessibilityNodeInfo;
 import java.util.Locale;
 /** Fixed-center ruler. Finger-right increases value; cancellation delegates rollback. */
-public final class RulerView extends View {
+public class RulerView extends View {
  public interface Binding {double value();void begin();void preview(double value);void commit();void cancel();}
  private final Binding binding;private final double min,max,step;private final Paint p=new Paint(3);
  private int pointer=-1;private boolean dragging;private float downX;private double start;

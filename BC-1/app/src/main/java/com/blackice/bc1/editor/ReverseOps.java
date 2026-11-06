@@ -31,7 +31,7 @@ public final class ReverseOps {
         if (c.reversed) throw new IllegalArgumentException("This footage is already reversed.");
         if (derivativeUri == null || derivativeMs <= 0) throw new IllegalArgumentException("The reversed footage is not ready.");
         long base = c.inMs, span = c.outMs - c.inMs;
-        shift(c.motion, -base);
+        shift(c.motion,-base);for(EffectInstance e:c.effects())if(!c.primary(e.id))shift(e.motion,-base);
         c.forwardUri = c.uri; c.forwardName = c.name; c.forwardSourceDurationMs = c.sourceDurationMs;
         c.reverseBaseMs = base; c.reverseSpanMs = span;
         c.uri = derivativeUri;
@@ -50,7 +50,7 @@ public final class ReverseOps {
         long in = c.reverseBaseMs + (c.reverseSpanMs - c.outMs), out = c.reverseBaseMs + (c.reverseSpanMs - c.inMs);
         in = Math.max(0, Math.min(in, c.forwardSourceDurationMs)); out = Math.max(in, Math.min(out, c.forwardSourceDurationMs));
         if (out <= in) throw new IllegalArgumentException("Nothing is left to restore.");
-        shift(c.motion, in - c.inMs);
+        shift(c.motion,in-c.inMs);for(EffectInstance e:c.effects())if(!c.primary(e.id))shift(e.motion,in-c.inMs);
         c.uri = c.forwardUri; c.name = c.forwardName == null ? c.name : c.forwardName; c.sourceDurationMs = c.forwardSourceDurationMs;
         c.inMs = in; c.outMs = out;
         c.reversed = false; c.forwardUri = null; c.forwardName = null; c.forwardSourceDurationMs = 0; c.reverseBaseMs = 0; c.reverseSpanMs = 0;

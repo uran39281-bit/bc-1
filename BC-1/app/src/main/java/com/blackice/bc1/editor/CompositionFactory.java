@@ -85,7 +85,7 @@ public final class CompositionFactory {
                 EditProject.Clip previous=null;int ordinal=0;
                 if(c.track==0)for(EditProject.Placement candidate:placements){if(candidate.index==p.index)break;if(candidate.clip.track==0){previous=candidate.clip;ordinal++;}}
                 boolean renders=LayerOps.renders(project,c,preview);
-                List<Effect> effects=new ArrayList<>();if(!audioOnly){effects.add(Presentation.createForWidthAndHeight(w,h,Presentation.LAYOUT_SCALE_TO_FIT));effects.add(new ClipEffect(p,previous,ordinal%2==0,renders).parents(links));if(frameDrop)effects.add(FrameDropEffect.createDefaultFrameDropEffect(project.frameRate));}
+                List<Effect> effects=new ArrayList<>();if(!audioOnly){effects.add(Presentation.createForWidthAndHeight(w,h,Presentation.LAYOUT_SCALE_TO_FIT));boolean stacked=c.effects().size()>1||(!c.effects().isEmpty()&&!c.effects().get(0).enabled);if(stacked)for(EffectInstance instance:c.effects())if(instance.enabled)effects.add(new StackEffect(p,instance));effects.add(new ClipEffect(p,previous,ordinal%2==0,renders).parents(links).baseOnly(stacked));if(frameDrop)effects.add(FrameDropEffect.createDefaultFrameDropEffect(project.frameRate));}
                 // Audio tracks honour mute; a hidden picture keeps its own sound (mute it with volume).
                 float volume=audioOnly&&!renders?-1:c.volume;
                 // Pictures carry no sound, so their (silent) audio path is left untouched.

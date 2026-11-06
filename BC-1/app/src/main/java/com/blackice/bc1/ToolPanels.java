@@ -204,6 +204,7 @@ final class ToolPanels {
         switch(name){
             case "Layer Tools":a.layerTools.open();return;
             case "Move & Transform":open(name,()->a.transformPanel.build(a.inspector));return;
+            case "Shape & Style":open(name,this::shapePanel);return;
             case "Color & Fill":open(name,this::colorPanel);return;
             case "Border & Shadow":open(name,this::borderPanel);return;
             case "Blending & Opacity":open(name,()->a.transformPanel.menus.mount(a.inspector,com.blackice.bc1.menu.MenuScreenFactory.Menu.BLENDING));return;
@@ -239,35 +240,32 @@ final class ToolPanels {
         row.addView(exact,new LinearLayout.LayoutParams(a.dp(88),a.dp(48)));
         if(!unit.isEmpty())row.addView(a.label(unit,11,EditorActivity.MUTED,false));
         a.inspector.addView(row);
-        if(property==Motion.OPACITY&&motion!=null){
-            NumberRuler ruler=new NumberRuler(a,"Opacity ruler, 0 to 100 percent",0,100,1,()->motion.value(property,motionTime(),value*motionFactor)/motionFactor*100,n->{exact.setText(format((float)n));a.liveAdjust(()->apply.set((float)n/100));},()->{a.pausePlayback();a.beginLiveAdjust();},()->a.endLiveAdjust(title+" updated",()->{}),a::cancelLiveAdjust);
-            a.inspector.addView(ruler,new LinearLayout.LayoutParams(-1,a.dp(56)));
-            valueRefresh.add(()->{float n=motion.value(property,motionTime(),value*motionFactor)/motionFactor*100;if(!exact.hasFocus())exact.setText(format(n));ruler.invalidate();});
-        }else{
-        SeekBar slider=new SeekBar(a);slider.setMax(1000);slider.setProgress(Math.round((value-min)/(max-min)*1000));slider.setContentDescription(title);
-        slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
-            // The preview follows the slider live (ICE Lite); one drag is one undo entry.
-            public void onProgressChanged(SeekBar s,int p,boolean user){if(!user)return;float v=min+(max-min)*p/1000f;exact.setText(format(v*displayFactor));a.liveAdjust(()->apply.set(v));}
-            public void onStartTrackingTouch(SeekBar s){a.pausePlayback();a.beginLiveAdjust();}
-            public void onStopTrackingTouch(SeekBar s){float v=min+(max-min)*s.getProgress()/1000f;if(a.liveBefore!=null)a.endLiveAdjust(title+" updated",()->apply.set(v));else commit(title,v,apply);}
-        });
-        a.inspector.addView(slider,new LinearLayout.LayoutParams(-1,a.dp(44)));
-        if(motion!=null)valueRefresh.add(()->{if(a.liveBefore!=null)return;float evaluated=motion.value(property,motionTime(),value*motionFactor)/motionFactor;String formatted=format(evaluated*displayFactor);if(!exact.hasFocus()&&!formatted.contentEquals(exact.getText()))exact.setText(formatted);int progress=Math.round((evaluated-min)/(max-min)*1000);if(progress!=slider.getProgress())slider.setProgress(progress);});
-        }
+        final double[] current={value};
+        String projectId=a.project.id,layerId=a.clip()!=null?a.clip().id:a.overlay()!=null?a.overlay().id:"";
+        java.util.function.BooleanSupplier same=()->projectId.equals(a.project.id)&&layerId.equals(a.clip()!=null?a.clip().id:a.overlay()!=null?a.overlay().id:"");
+        com.blackice.bc1.menu.RulerView ruler=new com.blackice.bc1.menu.RulerView(a,title+(unit.isEmpty()?"":" "+unit),min*displayFactor,max*displayFactor,Math.max((max-min)*displayFactor/200,.01),new com.blackice.bc1.menu.RulerView.Binding(){
+            public double value(){return (motion==null?current[0]:motion.value(property,motionTime(),value*motionFactor)/motionFactor)*displayFactor;}
+            public void begin(){if(same.getAsBoolean()){a.pausePlayback();a.beginLiveAdjust();}}
+            public void preview(double n){if(same.getAsBoolean()){current[0]=n/displayFactor;exact.setText(format((float)n));a.liveAdjust(()->apply.set((float)current[0]));}}
+            public void commit(){if(same.getAsBoolean())a.endLiveAdjust(title+" updated",()->{});else a.cancelLiveAdjust();}
+            public void cancel(){current[0]=value;a.cancelLiveAdjust();}
+        });a.inspector.addView(ruler,new LinearLayout.LayoutParams(-1,a.dp(64)));
+        valueRefresh.add(()->{if(!exact.hasFocus())exact.setText(format((float)(rulerValue(motion,property,motionFactor,value,current)*displayFactor)));ruler.invalidate();});
         LinearLayout actions=a.row();
         actions.addView(a.button("Apply",v->{try{float typed=Float.parseFloat(exact.getText().toString().trim())/displayFactor;if(!Float.isFinite(typed)||typed<min-1e-6f||typed>max+1e-6f)throw new NumberFormatException();commit(title,typed,apply);}catch(NumberFormatException e){a.tell("Enter "+format(min*displayFactor)+" to "+format(max*displayFactor)+(unit.isEmpty()?"":" "+unit)+".");}}),new LinearLayout.LayoutParams(0,a.dp(48),1));
         actions.addView(a.button("Reset",v->commit(title,defaultValue,apply)),new LinearLayout.LayoutParams(0,a.dp(48),1));
         a.inspector.addView(actions);
     }
+    private double rulerValue(Motion motion,int property,float factor,float value,double[] current){return motion==null?current[0]:motion.value(property,motionTime(),value*factor)/factor;}
     private void commit(String title,float value,Setter apply){if(!a.layerEditable()){a.renderInspector();return;}a.edit(title+" updated",()->apply.set(value));}
     static String format(float v){return String.format(Locale.US,Math.abs(v)>=100?"%.0f":"%.2f",v);}
     /** ◇ unanimated · cyan ◇ animated between keys · filled ◆ on a key at the playhead. */
     TextView diamond(String title,Motion motion,int property,float current){
         int state=Keyframes.state(motion,property,motionTime(),tolerance());
-        TextView d=a.label(state==Keyframes.ON_KEY?"◆":"◇",20,state==Keyframes.STATIC?EditorActivity.MUTED:EditorActivity.CYAN,true);d.setGravity(Gravity.CENTER);
+        com.blackice.bc1.menu.KeyframeButton d=new com.blackice.bc1.menu.KeyframeButton(a,title+" keyframe",()->{});d.state(state!=Keyframes.STATIC,state==Keyframes.ON_KEY);
         String[] words={"not animated • tap to animate","animated • tap to add a keyframe here","keyframe at playhead • tap to remove"};
         d.setContentDescription(title+" keyframe: "+words[state]);d.setTooltipText(d.getContentDescription());d.setFocusable(true);
-        valueRefresh.add(()->{int currentState=Keyframes.state(motion,property,motionTime(),tolerance());String glyph=currentState==Keyframes.ON_KEY?"◆":"◇";if(!glyph.contentEquals(d.getText()))d.setText(glyph);d.setTextColor(currentState==Keyframes.STATIC?EditorActivity.MUTED:EditorActivity.CYAN);String description=title+" keyframe: "+words[currentState];if(!description.contentEquals(d.getContentDescription())){d.setContentDescription(description);d.setTooltipText(description);}});
+        valueRefresh.add(()->{int currentState=Keyframes.state(motion,property,motionTime(),tolerance());d.state(currentState!=Keyframes.STATIC,currentState==Keyframes.ON_KEY);String description=title+" keyframe: "+words[currentState];if(!description.contentEquals(d.getContentDescription())){d.setContentDescription(description);d.setTooltipText(description);}});
         d.setOnClickListener(v->{if(!a.layerEditable())return;long t=motionTime(),tol=tolerance();int currentState=Keyframes.state(motion,property,t,tol);
             a.edit(currentState==Keyframes.ON_KEY?title+" keyframe removed":title+" keyframe added",()->{
                 if(currentState==Keyframes.ON_KEY&&motion.curves.get(property).size()==1){a.setStatic(property,Keyframes.disable(motion,property,t,current));}
@@ -400,11 +398,8 @@ final class ToolPanels {
         EditProject.Overlay o=a.overlay();if(o==null||o.shape<=0)return;
         a.inspector.addView(a.button("Shape: "+EditProject.SHAPES[o.shape],v->{int[] ids=ShapeCatalog.ids();String[] names=new String[ids.length];for(int i=0;i<ids.length;i++)names[i]=EditProject.SHAPES[ids[i]];
             new AlertDialog.Builder(a).setTitle("Change shape").setItems(names,(d,index)->{if(a.layerEditable())a.edit("Shape changed",()->{o.shape=ids[index];o.text=EditProject.SHAPES[o.shape];});}).setNegativeButton("Cancel",null).show();}));
-        a.inspector.addView(a.button("Move & Transform",v->category("Move & Transform")));
         a.inspector.addView(a.button("Color & Fill",v->category("Color & Fill")));
         a.inspector.addView(a.button("Border & Shadow",v->category("Border & Shadow")));
-        a.inspector.addView(a.button("Duration",v->open("Duration",this::durationPanel)));
-        a.inspector.addView(a.button("Animation",v->open("Animation",this::animationPanel)));
         a.inspector.addView(a.button("Reset natural proportions",v->{if(a.layerEditable())a.edit("Shape proportions reset",()->{o.aspect=1;o.heightScale=-1;o.skewX=o.skewY=0;o.motion.curves.get(Motion.HEIGHT).clear();o.motion.curves.get(Motion.SKEW_X).clear();o.motion.curves.get(Motion.SKEW_Y).clear();});}));
         a.inspector.addView(a.note("Shapes share a square-sized area and keep their natural proportions. Link dimensions in Move & Transform to resize uniformly."));
     }
@@ -452,10 +447,8 @@ final class ToolPanels {
     long toMotion(long timeline){EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();if(c!=null){EditProject.Placement p=a.project.placements().get(a.selected);return Math.max(0,c.inMs+Math.round((timeline-p.startMs)*c.speed));}return Math.max(0,timeline-o.startMs);}
     long toTimeline(long motion){EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();if(c!=null){EditProject.Placement p=a.project.placements().get(a.selected);return p.startMs+Math.round((motion-c.inMs)/(double)c.speed);}return o.startMs+motion;}
     void keyNavigation(){
-        LinearLayout row=a.row();
-        row.addView(a.button("◆‹  Previous keyframe",v->a.jumpKeyframe(false)),new LinearLayout.LayoutParams(0,a.dp(48),1));
-        row.addView(a.button("Next keyframe  ›◆",v->a.jumpKeyframe(true)),new LinearLayout.LayoutParams(0,a.dp(48),1));
-        a.inspector.addView(row);
+        com.blackice.bc1.menu.KeyNavigation nav=new com.blackice.bc1.menu.KeyNavigation(a,48,()->a.jumpKeyframe(false),()->a.jumpKeyframe(true));
+        Motion m=a.selectedMotion();long t=motionTime();boolean back=false,next=false;if(m!=null)for(java.util.List<Motion.Key> keys:m.curves)for(Motion.Key k:keys){back|=k.timeMs<t;next|=k.timeMs>t;}nav.available(back,next);a.inspector.addView(nav);
     }
     private void animationPanel(){
         Motion m=a.selectedMotion();if(m==null)return;EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();long t=motionTime(),tol=tolerance();
@@ -487,14 +480,7 @@ final class ToolPanels {
     float[] currentValues(){EditProject.Clip c=a.clip();EditProject.Overlay o=a.overlay();
         if(c!=null)return new float[]{c.x,c.y,c.scale,c.rotation,c.opacity,c.intensity,c.skewX,c.skewY,c.anchorX,c.anchorY,c.heightScale<0?c.scale*c.aspect:c.heightScale,c.volume};
         return new float[]{o.x,o.y,o.scale,o.rotation,o.opacity,0,o.skewX,o.skewY,o.anchorX,o.anchorY,o.heightScale<0?o.scale*o.aspect:o.heightScale,0};}
-    private void curvePanel(int property){
-        Motion m=a.selectedMotion();if(m==null)return;List<Motion.Key> keys=m.curves.get(property);String id=a.easingControls.selected.get(a.easingControls.scope(property));Motion.Key first=null;
-        for(int i=0;i+1<keys.size();i++)if(keys.get(i).id.equals(id)){first=keys.get(i);break;}
-        if(first==null){a.inspector.addView(a.note("Select a keyframe with a next keyframe."));return;}
-        Motion.Key working=first.copy();a.inspector.addView(a.note("Custom interpolation for the selected "+Motion.PROPERTIES[property]+" interval."));
-        a.inspector.addView(a.new CurveView(working,()->{}),new LinearLayout.LayoutParams(-1,a.dp(200)));
-        a.inspector.addView(a.button("Apply curve",v->{if(!a.layerEditable())return;a.edit("Custom easing applied",()->{for(Motion.Key key:m.curves.get(property))if(key.id.equals(id)){key.easingToNext=-1;key.x1=working.x1;key.y1=working.y1;key.x2=working.x2;key.y2=working.y2;break;}});}));
-    }
+    private void curvePanel(int property){a.easingControls.build(a.inspector,property);}
     // ---- Markers ------------------------------------------------------------------------------------
     private void markersPanel(){
         a.inspector.addView(a.note("Up to five project landmarks. Beat-detection cues remain saved separately."));a.inspector.addView(a.button("Manage timeline markers",v->LandmarkControls.show(a)));

@@ -11,7 +11,7 @@ final class BlackIceTheme {
         ON_ACCENT=0xFF03130D,DISABLED=0xFF526174,TEXT=0xFFF2F6FA,MUTED=0xFF97A8BA,BORDER=0xFF213548;
     static GradientDrawable surface(float density,boolean active){
         GradientDrawable d=new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-            new int[]{active?0xFF12456A:0xED0B1C2D,active?0xFF0B2943:0xEE081524});
+            new int[]{active?0xFF12454F:0xED0B1C2D,active?0xFF082B38:0xEE081524});
         d.setCornerRadius(7*density);d.setStroke(Math.max(1,(int)density),active?ACCENT:BORDER);return d;
     }
     /** The single primary action (Export): restrained mint fill. */
