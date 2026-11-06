@@ -104,5 +104,5 @@ jobs:
             exit 0
           fi
           git add .
-          git -c user.name=bc1-ci -c user.email=bc1-ci@users.noreply.github.com commit -qm 'Retained-key Black Ice Preview 1.5.4 build 47'
+          git -c user.name=bc1-ci -c user.email=bc1-ci@users.noreply.github.com commit -qm 'Retained-key Black Ice Preview 1.5.4 build 48'
           git push -q origin release:refs/heads/test-apk/preview/v1.5.4
