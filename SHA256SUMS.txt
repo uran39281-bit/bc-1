@@ -1,1 +1,1 @@
-e3eebb6f01903446eee3b9ef8c5158f2732c983a0d0397c66db12f191ffb28f9  Black-Ice-Editor-v1.4.2-integration.apk
+e3eebb6f01903446eee3b9ef8c5158f2732c983a0d0397c66db12f191ffb28f9  Black-Ice-Editor-v1.5.5-build49-debug.apk
