@@ -28,6 +28,9 @@ public final class EffectCatalog {
             "Selective Color", "Night Boost", "Auto Enhance", "B&W Mix", "Particles", "Tinted Vignette", "Filmic Tone", "Chroma Key (Blue)",
             // 66-69: combined effects (several adjustments in one effect slot) and the any-colour key
             "Light", "White Balance", "Color Intensity", "Chroma Key",
+            // 70-77: HSL, one colour band each; 78-80: colour wheels (tint by tonal range)
+            "HSL Reds", "HSL Oranges", "HSL Yellows", "HSL Greens", "HSL Aquas", "HSL Blues", "HSL Purples", "HSL Magentas",
+            "Shadows Wheel", "Midtones Wheel", "Highlights Wheel",
     };
 
     public static final String[] CATEGORIES = {"Basics", "Blur & Sharpen", "Color & Light", "Distortion", "Edges & Keying", "Stylize", "Grade & Detail"};
@@ -45,6 +48,7 @@ public final class EffectCatalog {
         for (int id = 48; id <= 61; id++) CATEGORY[id] = 6;
         CATEGORY[62] = 5; CATEGORY[63] = 5; CATEGORY[64] = 6; CATEGORY[65] = 4;
         CATEGORY[66] = 2; CATEGORY[67] = 2; CATEGORY[68] = 2; CATEGORY[69] = 4;
+        for (int id = 70; id <= 80; id++) CATEGORY[id] = 6;
     }
 
     /** Effects whose intensity is neutral at 50% (lower reduces, higher increases). */
@@ -117,10 +121,15 @@ public final class EffectCatalog {
         PARAMS[67] = new Param[]{p("Temperature", .7f), p("Tint", .5f)};
         PARAMS[68] = new Param[]{p("Saturation", .6f), p("Vibrance", .65f)};
         PARAMS[69] = new Param[]{angle("Key hue", 1f / 3f), p("Tolerance", .5f), p("Softness", .5f), p("Spill suppression", .5f)};
+        // HSL bands start with a saturation lift so the chosen colour responds as soon as the effect is added.
+        for (int id = 70; id <= 77; id++) PARAMS[id] = new Param[]{p("Hue", .5f), p("Saturation", .65f), p("Lightness", .5f)};
+        PARAMS[78] = new Param[]{angle("Hue", .55f), p("Amount", .35f), p("Luma", .5f)};
+        PARAMS[79] = new Param[]{angle("Hue", .08f), p("Amount", .2f), p("Luma", .5f)};
+        PARAMS[80] = new Param[]{angle("Hue", .09f), p("Amount", .35f), p("Luma", .5f)};
     }
 
-    /** Strength a newly added effect starts at. Combined effects start at full so their controls read as set. */
-    public static float defaultStrength(int id) { return id >= 66 && id <= 69 ? 1f : .6f; }
+    /** Strength a newly added effect starts at. Effects 66+ (combined, HSL, wheels) start at full so their controls read as set. */
+    public static float defaultStrength(int id) { return id >= 66 && valid(id) ? 1f : .6f; }
 
     private EffectCatalog() {}
 

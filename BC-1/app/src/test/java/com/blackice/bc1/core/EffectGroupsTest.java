@@ -7,8 +7,8 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class EffectGroupsTest {
-    @Test public void thirtyFourEntriesInFiveCategoriesCoverEveryEffectOnce() {
-        assertEquals(34, EffectGroups.all().size());
+    @Test public void thirtyFiveEntriesInFiveCategoriesCoverEveryEffectOnce() {
+        assertEquals(35, EffectGroups.all().size());
         int[] perCategory = new int[EffectGroups.CATEGORIES.length];
         Set<Integer> ids = new HashSet<>(); Set<String> names = new HashSet<>();
         for (EffectGroups.Entry e : EffectGroups.all()) {
@@ -17,7 +17,7 @@ public class EffectGroupsTest {
             assertFalse(e.name + " offers a mode for new clips", e.allModes().get(0).legacy);
             for (EffectGroups.Mode m : e.allModes()) assertTrue("Effect " + m.id + " is listed once", ids.add(m.id));
         }
-        assertArrayEquals(new int[]{12, 6, 8, 5, 3}, perCategory);
+        assertArrayEquals(new int[]{13, 6, 8, 5, 3}, perCategory);
         for (int id = 1; id < EffectCatalog.count(); id++) assertNotNull(EffectCatalog.name(id) + " has an entry", EffectGroups.entry(id));
         assertNull(EffectGroups.entry(0));
     }
@@ -29,7 +29,9 @@ public class EffectGroupsTest {
         assertEquals(69, EffectGroups.entry(3).defaultId());   // Green key -> Chroma Key
         assertEquals(7, EffectGroups.entry(16).defaultId());   // Unsharp Mask -> Detail (Sharpen)
         assertEquals(1, EffectGroups.entry(13).defaultId());   // Blur starts on Gaussian
-        for (int id : new int[]{66, 67, 68, 69}) {
+        assertEquals(70, EffectGroups.entry(75).defaultId());  // HSL starts on Reds
+        assertEquals(57, EffectGroups.entry(78).defaultId());  // Color Balance keeps Split Tone first
+        for (int id : new int[]{66, 67, 68, 69, 70, 77, 78, 80}) {
             assertEquals(1f, EffectCatalog.defaultStrength(id), 0);
             assertEquals(1f, new EffectInstance(id).intensity, 0);
         }
@@ -46,6 +48,9 @@ public class EffectGroupsTest {
         assertEquals("Swirl", EffectGroups.title(29));
         assertEquals("Detail · Unsharp Mask", EffectGroups.title(16));
         assertEquals(Arrays.asList("Sharpen", "Clarity"), labels(EffectGroups.entry(7).choices(7)));
+        assertEquals("HSL · Greens", EffectGroups.title(73));
+        assertEquals("Color Balance · Shadows", EffectGroups.title(78));
+        assertEquals(Arrays.asList("Split Tone", "Shadows", "Midtones", "Highlights"), labels(EffectGroups.entry(57).choices(57)));
     }
 
     @Test public void presetsFitTheirModesControls() {
@@ -67,7 +72,9 @@ public class EffectGroupsTest {
         assertEquals(Arrays.asList("Detail"), names(EffectGroups.entries(-1, "unsharp")));
         assertTrue(names(EffectGroups.entries(-1, "warm")).contains("White Balance"));
         assertTrue(EffectGroups.entries(4, "blur").isEmpty());
-        assertEquals(34, EffectGroups.entries(-1, "  ").size());
+        assertEquals(Arrays.asList("Color Balance"), names(EffectGroups.entries(-1, "color wheels")));
+        assertTrue(names(EffectGroups.entries(-1, "hsl")).contains("HSL"));
+        assertEquals(35, EffectGroups.entries(-1, "  ").size());
     }
 
     /** Switching mode is a type change on the same instance; the project keeps a valid, saved effect. */

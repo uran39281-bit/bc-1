@@ -3,7 +3,7 @@ package com.blackice.bc1.core;
 import java.util.*;
 
 /**
- * The Effect Catalog as people browse it: 34 entries in five categories. Each entry's modes point at existing
+ * The Effect Catalog as people browse it: 35 entries in five categories. Each entry's modes point at existing
  * {@link EffectCatalog} ids, so projects keep storing the same ids and nothing is migrated. Legacy modes are
  * ids that older projects still use but new clips no longer get (for example Exposure, now part of Light);
  * they show only on a clip that already has them, next to the mode that replaces them.
@@ -65,14 +65,15 @@ public final class EffectGroups {
     private static final String[] NO_WORDS = {};
 
     private static final Entry[] ENTRIES = {
-        // Color & Light · 12
+        // Color & Light · 13
         new Entry("Light", 0, modes(m("Adjust", 66), legacy("Exposure", 9), legacy("Brightness", 18), legacy("Highlights", 48), legacy("Shadows", 49)), NONE, NO_WORDS),
         new Entry("Tone Curve", 0, modes(m("Contrast", 17), m("Gamma", 19), m("Levels", 20), m("S-Curve", 56)), NONE, NO_WORDS),
         new Entry("White Balance", 0, modes(m("Adjust", 67), legacy("Temperature", 51), legacy("Tint", 52), legacy("Warm", 22), legacy("Cool", 23)),
                 presets(new Preset("Warm", 67, .7f, .5f), new Preset("Cool", 67, .3f, .5f), new Preset("Neutral", 67, .5f, .5f)), NO_WORDS),
         new Entry("Color Intensity", 0, modes(m("Adjust", 68), legacy("Saturation", 10), legacy("Vibrance", 53)), NONE, NO_WORDS),
         new Entry("Hue & Selective Color", 0, modes(m("All Colors", 21), m("Selected Color", 58)), NONE, words("hue")),
-        new Entry("Color Balance", 0, modes(m("Color Balance", 57)), NONE, words("split tone")),
+        new Entry("HSL", 0, modes(m("Reds", 70), m("Oranges", 71), m("Yellows", 72), m("Greens", 73), m("Aquas", 74), m("Blues", 75), m("Purples", 76), m("Magentas", 77)), NONE, words("hsl", "hue saturation lightness", "color mixer")),
+        new Entry("Color Balance", 0, modes(m("Split Tone", 57), m("Shadows", 78), m("Midtones", 79), m("Highlights", 80)), NONE, words("split tone", "color wheels", "lift gamma gain")),
         new Entry("Black & White", 0, modes(m("Standard", 4), m("Channel Mixer", 61)), NONE, words("black and white", "monochrome", "b&w")),
         new Entry("Color Looks", 0, modes(m("Ice Grade", 11), m("Ice Duotone", 27), m("Sepia", 26), m("Fade", 50), m("Filmic Tone", 64)), NONE, words("look", "grade", "lut")),
         new Entry("Enhance", 0, modes(m("Auto Enhance", 60), m("Night Boost", 59), m("Dehaze", 55)), NONE, words("auto")),

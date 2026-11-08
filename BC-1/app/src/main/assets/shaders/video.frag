@@ -37,6 +37,12 @@ vec3 bcRgb2Hsv(vec3 c){vec4 K=vec4(0.0,-1.0/3.0,2.0/3.0,-1.0);vec4 p=mix(vec4(c.
   return vec3(abs(q.z+(q.w-q.y)/(6.0*d+e)),d/(q.x+e),q.x);}
 vec3 bcHsv2Rgb(vec3 c){vec3 p=abs(fract(c.xxx+vec3(1.0,2.0/3.0,1.0/3.0))*6.0-3.0);return c.z*mix(vec3(1.0),clamp(p-1.0,0.0,1.0),c.y);}
 float bcLuma(vec3 c){return dot(c,vec3(.2126,.7152,.0722));}
+// HSL band: hue shift (+/-30 deg), saturation scale and lightness push, weighted by distance to the band centre.
+vec3 bcHslBand(vec3 c,vec4 p,float centre,float width){vec3 h=bcRgb2Hsv(clamp(c,0.0,1.0));float d=abs(h.x-centre);d=min(d,1.0-d);
+  float w=(1.0-smoothstep(0.0,width,d))*smoothstep(.04,.2,h.y);h.x=fract(h.x+(p.x-.5)*(1.0/6.0)*w);h.y=clamp(h.y*(1.0+(p.y-.5)*2.0*w),0.0,1.0);
+  vec3 o=bcHsv2Rgb(h);float l=(p.z-.5)*2.0*w;return mix(o,l>0.0?vec3(1.0):vec3(0.0),abs(l)*.6);}
+// Colour wheel: tints one tonal range (weight w) toward a hue and lifts or lowers it.
+vec3 bcWheel(vec3 c,vec4 p,float w){vec3 t=bcHsv2Rgb(vec3(p.x,1.0,1.0));t-=vec3(bcLuma(t));return c+(t*p.y*.6+(p.z-.5)*.5)*w;}
 // Distortions move the sampling point inside the layer (uv in 0..1, aspect-correct around the centre).
 vec2 bcDistort(int e,vec2 uv,float k){
     vec2 ctr=(e==32||e==33||e==35||e==37)?vec2(.5):clamp(uParams.yz,0.0,1.0);
@@ -244,6 +250,40 @@ vec4 bcEffect(int e,vec2 uv,vec4 a,float k){
         float tol=mix(.05,.35,uParams.y),soft=mix(.005,.15,uParams.z);float matte=smoothstep(tol-soft,tol+soft,score);
         vec3 key=bcHsv2Rgb(vec3(uParams.x,1.0,1.0));vec3 kc=normalize(key-vec3(bcLuma(key)));float along=max(dot(a.rgb-vec3(bcLuma(a.rgb)),kc),0.0);
         a.rgb-=kc*along*uParams.w*k*(1.0-smoothstep(tol,tol*3.0+soft,score));a.a*=mix(1.0,matte,k); return a;} // Chroma key (any colour)
+#endif
+// ---- 70-80: HSL bands and colour wheels ----
+#if !defined(BC_EFFECT) || BC_EFFECT == 70
+    if(e==70){a.rgb=mix(a.rgb,bcHslBand(a.rgb,uParams,0.0/360.0,30.0/360.0),k); return a;} // HSL Reds
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 71
+    if(e==71){a.rgb=mix(a.rgb,bcHslBand(a.rgb,uParams,30.0/360.0,30.0/360.0),k); return a;} // HSL Oranges
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 72
+    if(e==72){a.rgb=mix(a.rgb,bcHslBand(a.rgb,uParams,60.0/360.0,30.0/360.0),k); return a;} // HSL Yellows
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 73
+    if(e==73){a.rgb=mix(a.rgb,bcHslBand(a.rgb,uParams,120.0/360.0,60.0/360.0),k); return a;} // HSL Greens
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 74
+    if(e==74){a.rgb=mix(a.rgb,bcHslBand(a.rgb,uParams,180.0/360.0,60.0/360.0),k); return a;} // HSL Aquas
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 75
+    if(e==75){a.rgb=mix(a.rgb,bcHslBand(a.rgb,uParams,240.0/360.0,30.0/360.0),k); return a;} // HSL Blues
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 76
+    if(e==76){a.rgb=mix(a.rgb,bcHslBand(a.rgb,uParams,270.0/360.0,30.0/360.0),k); return a;} // HSL Purples
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 77
+    if(e==77){a.rgb=mix(a.rgb,bcHslBand(a.rgb,uParams,300.0/360.0,30.0/360.0),k); return a;} // HSL Magentas
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 78
+    if(e==78){float l=clamp(bcLuma(a.rgb),0.0,1.0);a.rgb=mix(a.rgb,bcWheel(a.rgb,uParams,(1.0-l)*(1.0-l)),k); return a;} // Shadows wheel
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 79
+    if(e==79){float l=clamp(bcLuma(a.rgb),0.0,1.0);a.rgb=mix(a.rgb,bcWheel(a.rgb,uParams,4.0*l*(1.0-l)),k); return a;} // Midtones wheel
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 80
+    if(e==80){float l=clamp(bcLuma(a.rgb),0.0,1.0);a.rgb=mix(a.rgb,bcWheel(a.rgb,uParams,l*l),k); return a;} // Highlights wheel
 #endif
     return a;
 }

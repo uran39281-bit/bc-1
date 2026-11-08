@@ -40,6 +40,7 @@ public class EffectParamsTest {
             EffectCatalog.Param[] params=EffectCatalog.params(id);
             for(int i=0;i<params.length;i++){
                 if(id==3||id==65||id==69)continue; // keys: the pattern has no green / blue edge for their controls to show
+                if(id>=75&&id<=77)continue; // HSL Blues / Purples / Magentas: this picture has none of those colours
                 clip.effect=id;clip.intensity=.6f;clip.fxEffect=id;
                 // 36 degrees, not 45: the kaleidoscope has 8 segments of exactly 45 degrees at this strength, so a 45 degree turn maps it onto itself.
                 float low=0f,high=params[i].angle?.1f:1f;
@@ -95,6 +96,7 @@ public class EffectParamsTest {
         StringBuilder failures=new StringBuilder();
         for(int id=48;id<EffectCatalog.count();id++){
             if(id==65||id==69)continue; // a blue-screen or (default green) any-colour key leaves this picture untouched
+            if(id>=75&&id<=77)continue; // HSL bands change only their colour; this picture has no blue, purple or magenta
             clip.effect=id;clip.intensity=.6f;clip.fx=null;
             Bitmap shown=LayerCapture.render(context,ProjectStore.snapshot(project),clip.id,1500,360);
             int changed=differing(plain,shown);if(changed<40)failures.append(EffectCatalog.name(id)).append(" changed ").append(changed).append(" px; ");shown.recycle();
