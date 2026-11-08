@@ -26,6 +26,8 @@ public final class EffectCatalog {
             // 48-65: grading, detail and look
             "Highlights", "Shadows", "Fade", "Temperature", "Tint", "Vibrance", "Clarity", "Dehaze", "S-Curve", "Color Balance",
             "Selective Color", "Night Boost", "Auto Enhance", "B&W Mix", "Particles", "Tinted Vignette", "Filmic Tone", "Chroma Key (Blue)",
+            // 66-69: combined effects (several adjustments in one effect slot) and the any-colour key
+            "Light", "White Balance", "Color Intensity", "Chroma Key",
     };
 
     public static final String[] CATEGORIES = {"Basics", "Blur & Sharpen", "Color & Light", "Distortion", "Edges & Keying", "Stylize", "Grade & Detail"};
@@ -42,6 +44,7 @@ public final class EffectCatalog {
         for (int id = 42; id <= 47; id++) CATEGORY[id] = 5;
         for (int id = 48; id <= 61; id++) CATEGORY[id] = 6;
         CATEGORY[62] = 5; CATEGORY[63] = 5; CATEGORY[64] = 6; CATEGORY[65] = 4;
+        CATEGORY[66] = 2; CATEGORY[67] = 2; CATEGORY[68] = 2; CATEGORY[69] = 4;
     }
 
     /** Effects whose intensity is neutral at 50% (lower reduces, higher increases). */
@@ -109,7 +112,15 @@ public final class EffectCatalog {
         PARAMS[63] = new Param[]{angle("Tint hue", .62f), p("Size", .5f), p("Softness", .5f)};
         PARAMS[64] = new Param[]{p("Exposure", .5f)};
         PARAMS[65] = new Param[]{p("Softness", .5f)};
+        // Combined effects: every control is centred at 0.5 = unchanged; defaults give a visible starting look.
+        PARAMS[66] = new Param[]{p("Exposure", .5f), p("Brightness", .5f), p("Highlights", .35f), p("Shadows", .75f)};
+        PARAMS[67] = new Param[]{p("Temperature", .7f), p("Tint", .5f)};
+        PARAMS[68] = new Param[]{p("Saturation", .6f), p("Vibrance", .65f)};
+        PARAMS[69] = new Param[]{angle("Key hue", 1f / 3f), p("Tolerance", .5f), p("Softness", .5f), p("Spill suppression", .5f)};
     }
+
+    /** Strength a newly added effect starts at. Combined effects start at full so their controls read as set. */
+    public static float defaultStrength(int id) { return id >= 66 && id <= 69 ? 1f : .6f; }
 
     private EffectCatalog() {}
 

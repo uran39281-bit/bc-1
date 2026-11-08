@@ -227,6 +227,24 @@ vec4 bcEffect(int e,vec2 uv,vec4 a,float k){
 #if !defined(BC_EFFECT) || BC_EFFECT == 65
     if(e==65){float tol=mix(.1,.45,k);float soft=.09*uParams.x;a.a*=smoothstep(tol-soft,tol+soft,distance(a.rgb,vec3(.07,.27,.85))); return a;} // Chroma key (blue)
 #endif
+// ---- 66-69: combined effects (each control centred at 0.5 = unchanged; strength mixes the result) ----
+#if !defined(BC_EFFECT) || BC_EFFECT == 66
+    if(e==66){vec3 c=a.rgb*exp2((uParams.x-.5)*4.0);c+=(uParams.y-.5)*.8;float l=bcLuma(c);
+        c*=1.0+(uParams.z-.5)*2.0*smoothstep(.5,1.0,l);c+=(uParams.w-.5)*1.2*(1.0-smoothstep(0.0,.5,l));a.rgb=mix(a.rgb,c,k); return a;} // Light
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 67
+    if(e==67){float t=(uParams.x-.5)*2.0,n=(uParams.y-.5)*2.0;vec3 c=a.rgb*vec3(1.0+t*.4,1.0+t*.05,1.0-t*.4)*vec3(1.0+n*.16,1.0-n*.35,1.0+n*.16);a.rgb=mix(a.rgb,c,k); return a;} // White balance
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 68
+    if(e==68){vec3 c=mix(vec3(bcLuma(a.rgb)),a.rgb,uParams.x*2.0);float mx=max(c.r,max(c.g,c.b)),mn=min(c.r,min(c.g,c.b));
+        c=mix(vec3(bcLuma(c)),c,1.0+(1.0-clamp(mx-mn,0.0,1.0))*(uParams.y-.5)*3.2);a.rgb=mix(a.rgb,c,k); return a;} // Color intensity
+#endif
+#if !defined(BC_EFFECT) || BC_EFFECT == 69
+    if(e==69){vec3 h=bcRgb2Hsv(clamp(a.rgb,0.0,1.0));float d=abs(h.x-uParams.x);d=min(d,1.0-d);float score=d*2.0+max(0.0,.25-h.y)*2.0;
+        float tol=mix(.05,.35,uParams.y),soft=mix(.005,.15,uParams.z);float matte=smoothstep(tol-soft,tol+soft,score);
+        vec3 key=bcHsv2Rgb(vec3(uParams.x,1.0,1.0));vec3 kc=normalize(key-vec3(bcLuma(key)));float along=max(dot(a.rgb-vec3(bcLuma(a.rgb)),kc),0.0);
+        a.rgb-=kc*along*uParams.w*k*(1.0-smoothstep(tol,tol*3.0+soft,score));a.a*=mix(1.0,matte,k); return a;} // Chroma key (any colour)
+#endif
     return a;
 }
 void main() {

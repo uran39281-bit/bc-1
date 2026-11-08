@@ -376,6 +376,7 @@ public class BcCoreExportTest {
             Bitmap none = r.getFrameAtTime(100_000, MediaMetadataRetriever.OPTION_CLOSEST);
             assertNotNull(none);
             for (int id = first; id < count; id++) {
+                if (id == 69) continue; // the any-colour key defaults to green; this picture has none to remove
                 Bitmap frame = r.getFrameAtTime(((id - first + 1) * 200L + 100) * 1000, MediaMetadataRetriever.OPTION_CLOSEST);
                 assertNotNull("Frame for effect " + id, frame);
                 double diff = 0; int samples = 0;

@@ -419,10 +419,10 @@ final class MenuHost implements MenuScreenFactory.Host {
 
     // ---- Effects ---------------------------------------------------------------------------------
     @Override public boolean hasSelectedEffect(){return present()&&visualClip()&&selectedEffect()!=null;}
-    @Override public String effectTitle(){return hasSelectedEffect()?EffectCatalog.name(selectedEffect().type):"";}
+    @Override public String effectTitle(){return hasSelectedEffect()?com.blackice.bc1.core.EffectGroups.title(selectedEffect().type):"";}
     @Override public int effectCount(){return visualClip()?clip().effects().size():0;}
     @Override public String effectId(int i){return clip().effects().get(i).id;}
-    @Override public String effectName(int i){return EffectCatalog.name(clip().effects().get(i).type);}
+    @Override public String effectName(int i){return com.blackice.bc1.core.EffectGroups.title(clip().effects().get(i).type);}
     @Override public boolean effectSelected(int i){return selectedEffect()!=null&&effectId(i).equals(selectedEffect().id);}
     @Override public void selectEffect(String id){if(clip()!=null&&clip().effect(id)!=null)owner.selectedEffectId=id;}
     @Override public boolean canAddEffects(){return !a.loading&&!a.importing&&!a.captionApplying&&!a.uiLocked&&(!visualClip()||effectCount()<EditProject.Clip.MAX_EFFECTS);}
@@ -435,6 +435,30 @@ final class MenuHost implements MenuScreenFactory.Host {
     @Override public boolean effectParamEditable(){return hasSelectedEffect()&&editable(Property.EFFECT_STRENGTH);}
     @Override public void previewEffectParam(int i,double value){verifyGesture();a.liveAdjust(()->{EffectInstance e=selectedEffect();if(e==null||i<0||i>=EffectCatalog.paramCount(e.type))return;e.params=e.resolved().clone();e.params[i]=(float)Math.max(0,Math.min(1,value));clip().updateEffect(e);});}
     private EffectCatalog.Param paramAt(int i){if(!hasSelectedEffect())return null;EffectCatalog.Param[] all=EffectCatalog.params(selectedEffect().type);return i>=0&&i<all.length?all[i]:null;}
+    // Modes and presets of the selected effect's catalog entry (see EffectGroups). A mode is another effect id.
+    private java.util.List<com.blackice.bc1.core.EffectGroups.Mode> modes(){if(!hasSelectedEffect())return java.util.Collections.emptyList();com.blackice.bc1.core.EffectGroups.Entry e=com.blackice.bc1.core.EffectGroups.entry(selectedEffect().type);return e==null?java.util.Collections.emptyList():e.choices(selectedEffect().type);}
+    private java.util.List<com.blackice.bc1.core.EffectGroups.Preset> presets(){if(!hasSelectedEffect())return java.util.Collections.emptyList();com.blackice.bc1.core.EffectGroups.Entry e=com.blackice.bc1.core.EffectGroups.entry(selectedEffect().type);return e==null?java.util.Collections.emptyList():e.presets(selectedEffect().type);}
+    @Override public int effectModeCount(){return modes().size()>1?modes().size():0;}
+    @Override public String effectModeLabel(int i){java.util.List<com.blackice.bc1.core.EffectGroups.Mode> m=modes();return i>=0&&i<m.size()?m.get(i).label+(m.get(i).legacy?" (old)":""):"";}
+    @Override public boolean effectModeSelected(int i){java.util.List<com.blackice.bc1.core.EffectGroups.Mode> m=modes();return i>=0&&i<m.size()&&m.get(i).id==selectedEffect().type;}
+    /** Switches the selected effect to another mode of its entry in one undo step. Strength and its keys carry over
+     *  unless the two modes read strength differently (centred amount vs mix), when strength restarts at the new default. */
+    @Override public void selectEffectMode(int i){
+        java.util.List<com.blackice.bc1.core.EffectGroups.Mode> m=modes();if(i<0||i>=m.size()||!effectParamEditable())return;
+        int to=m.get(i).id,from=selectedEffect().type;if(to==from)return;
+        if(clip().effectType(to)!=null){reportInputError(m.get(i).label+" is already applied to this layer.");return;}
+        String identity=selectedEffect().id;EditProject.Clip target=clip();
+        a.transformPanel.commit("Effect: "+com.blackice.bc1.core.EffectGroups.title(to),()->{EffectInstance e=target.effect(identity);if(e==null)throw new IllegalArgumentException("The selected effect changed.");
+            boolean sameStrength=EffectCatalog.centered(from)==EffectCatalog.centered(to)&&EffectCatalog.defaultStrength(from)==EffectCatalog.defaultStrength(to);
+            e.type=to;e.params=null;if(!sameStrength){e.intensity=EffectCatalog.defaultStrength(to);e.motion.curves.get(Motion.INTENSITY).clear();}target.updateEffect(e);});
+    }
+    @Override public int effectPresetCount(){return presets().size();}
+    @Override public String effectPresetLabel(int i){java.util.List<com.blackice.bc1.core.EffectGroups.Preset> p=presets();return i>=0&&i<p.size()?p.get(i).label:"";}
+    @Override public void applyEffectPreset(int i){
+        java.util.List<com.blackice.bc1.core.EffectGroups.Preset> p=presets();if(i<0||i>=p.size()||!effectParamEditable())return;
+        float[] values=p.get(i).params();String identity=selectedEffect().id;EditProject.Clip target=clip();
+        a.transformPanel.commit("Preset: "+p.get(i).label,()->{EffectInstance e=target.effect(identity);if(e==null)throw new IllegalArgumentException("The selected effect changed.");e.params=values;target.updateEffect(e);});
+    }
     @Override public void removeSelectedEffect(){if(!hasSelectedEffect())return;String identity=selectedEffect().id;EditProject.Clip target=clip();a.transformPanel.commit("Effect removed",()->target.removeEffect(identity));}
 
     // ---- Navigation ------------------------------------------------------------------------------
