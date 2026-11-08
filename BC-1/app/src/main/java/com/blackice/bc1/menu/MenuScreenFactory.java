@@ -48,6 +48,15 @@ public final class MenuScreenFactory {
   default double effectParamDefault(int index){return 0;}
   default boolean effectParamEditable(){return false;}
   default void previewEffectParam(int index,double value){}
+  /** Modes of the selected effect's catalog entry (Blur: Gaussian, Box…); 0 when it has one way of working. */
+  default int effectModeCount(){return 0;}
+  default String effectModeLabel(int index){return "";}
+  default boolean effectModeSelected(int index){return false;}
+  default void selectEffectMode(int index){}
+  /** Named starting points for the selected mode's controls (Warm, Cool; Green, Blue). */
+  default int effectPresetCount(){return 0;}
+  default String effectPresetLabel(int index){return "";}
+  default void applyEffectPreset(int index){}
   void back();void settings();void export();void reportInputError(String message);
   /** Called when the visible menu or its tab changes so the host can keep its own tab state. */
   default void menuChanged(Menu menu){}
@@ -175,6 +184,13 @@ public final class MenuScreenFactory {
  }
 
  /** One named effect control: label, value, 0..1 slider and a reset to the effect's default. */
+ /** A labelled, horizontally scrolling row of mode or preset buttons; nothing when there are none. */
+ private void effectChoiceRow(LinearLayout parent,String title,int count,java.util.function.IntFunction<String> label,java.util.function.IntPredicate selected,java.util.function.IntConsumer choose){
+  if(count<=0)return;TextView heading=text(title,14,MenuPalette.TEXT,true);add(parent,heading,10);
+  android.widget.HorizontalScrollView scroller=new android.widget.HorizontalScrollView(context);scroller.setHorizontalScrollBarEnabled(false);LinearLayout row=row();scroller.addView(row);
+  for(int i=0;i<count;i++){final int index=i;boolean on=selected.test(i);Button b=button(label.apply(i),on,()->{commandSafe(()->choose.accept(index));show(current);});b.setEnabled(host.effectParamEditable());b.setContentDescription(title+" "+label.apply(i)+(on?", selected":""));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-2,controlHeight());if(i>0)lp.leftMargin=dp(6);row.addView(b,lp);}
+  add(parent,scroller,4);
+ }
  private void effectParamRow(LinearLayout parent,int index){
   String name=host.effectParamName(index);boolean angle=host.effectParamIsAngle(index);
   LinearLayout row=row();TextView label=text(name,14,MenuPalette.TEXT,true);row.addView(label,new LinearLayout.LayoutParams(0,-2,1));
@@ -198,7 +214,7 @@ public final class MenuScreenFactory {
  private void moreBlends(){String[] labels=host.moreBlendLabels();if(labels.length==0)return;new com.blackice.bc1.TraceDialogBuilder(context).setTitle("More blend modes").setSingleChoiceItems(labels,host.moreBlendSelected(),(d,which)->{d.dismiss();commandSafe(()->host.selectMoreBlend(which));if(body!=null)show(current);}).setNegativeButton("Cancel",null).show();}
  private void effects(){Button add=button("Add Effects",false,()->commandSafe(host::addEffects));readers.add(()->add.setEnabled(host.canAddEffects()));leftIcon(add,MenuIconDrawable.Kind.ADD,MenuPalette.CYAN);add.setTextColor(MenuPalette.CYAN);add(body,add,8);if(!host.hasSelectedEffect())return;
   if(host.effectCount()>1)for(int i=0;i<host.effectCount();i++){final String identity=host.effectId(i);Button choice=button((i+1)+". "+host.effectName(i),host.effectSelected(i),()->{finishEditSafe(false);host.selectEffect(identity);show(current);});choice.setSelected(host.effectSelected(i));add(body,choice,12);}
-  LinearLayout heading=card();LinearLayout name=row();ImageView sparkle=new ImageView(context);sparkle.setImageDrawable(new MenuIconDrawable(context,MenuIconDrawable.Kind.SPARKLE,MenuPalette.CYAN));sparkle.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);name.addView(sparkle,new LinearLayout.LayoutParams(dp(28),dp(28)));TextView effectName=text(host.effectTitle(),compact?18:21,MenuPalette.TEXT,true);LinearLayout.LayoutParams namePart=new LinearLayout.LayoutParams(0,-2,1);namePart.leftMargin=dp(10);name.addView(effectName,namePart);add(heading,name,0);View rule=new View(context);rule.setBackgroundColor(MenuPalette.BORDER);LinearLayout.LayoutParams ruleLp=new LinearLayout.LayoutParams(-1,dp(1));ruleLp.topMargin=dp(10);heading.addView(rule,ruleLp);LinearLayout controls=numericCard(Property.EFFECT_STRENGTH,"Effect strength","%",true,false,true);body.removeView(controls);controls.setBackground(null);controls.setPadding(0,dp(10),0,0);add(heading,controls,8);for(int i=0;i<host.effectParamCount();i++)effectParamRow(heading,i);keyNav(heading,Property.EFFECT_STRENGTH,false,true);add(body,heading,12);curveCard(body,Property.EFFECT_STRENGTH,false);Button remove=button("Remove Effect",false,()->{commandSafe(host::removeSelectedEffect);show(current);});remove.setTextColor(MenuPalette.DANGER);leftIcon(remove,MenuIconDrawable.Kind.TRASH,MenuPalette.DANGER);android.graphics.drawable.GradientDrawable danger=MenuPalette.surface(context,false);danger.setStroke(dp(1),MenuPalette.DANGER);remove.setBackground(danger);add(body,remove,12);}
+  LinearLayout heading=card();LinearLayout name=row();ImageView sparkle=new ImageView(context);sparkle.setImageDrawable(new MenuIconDrawable(context,MenuIconDrawable.Kind.SPARKLE,MenuPalette.CYAN));sparkle.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);name.addView(sparkle,new LinearLayout.LayoutParams(dp(28),dp(28)));TextView effectName=text(host.effectTitle(),compact?18:21,MenuPalette.TEXT,true);LinearLayout.LayoutParams namePart=new LinearLayout.LayoutParams(0,-2,1);namePart.leftMargin=dp(10);name.addView(effectName,namePart);add(heading,name,0);View rule=new View(context);rule.setBackgroundColor(MenuPalette.BORDER);LinearLayout.LayoutParams ruleLp=new LinearLayout.LayoutParams(-1,dp(1));ruleLp.topMargin=dp(10);heading.addView(rule,ruleLp);LinearLayout controls=numericCard(Property.EFFECT_STRENGTH,"Effect strength","%",true,false,true);body.removeView(controls);controls.setBackground(null);controls.setPadding(0,dp(10),0,0);effectChoiceRow(heading,"Mode",host.effectModeCount(),host::effectModeLabel,host::effectModeSelected,host::selectEffectMode);effectChoiceRow(heading,"Presets",host.effectPresetCount(),host::effectPresetLabel,x->false,host::applyEffectPreset);add(heading,controls,8);for(int i=0;i<host.effectParamCount();i++)effectParamRow(heading,i);keyNav(heading,Property.EFFECT_STRENGTH,false,true);add(body,heading,12);curveCard(body,Property.EFFECT_STRENGTH,false);Button remove=button("Remove Effect",false,()->{commandSafe(host::removeSelectedEffect);show(current);});remove.setTextColor(MenuPalette.DANGER);leftIcon(remove,MenuIconDrawable.Kind.TRASH,MenuPalette.DANGER);android.graphics.drawable.GradientDrawable danger=MenuPalette.surface(context,false);danger.setStroke(dp(1),MenuPalette.DANGER);remove.setBackground(danger);add(body,remove,12);}
  private void curveCard(LinearLayout parent,Property property,boolean scaleChannels){LinearLayout c=column();
   TextView interval=text(host.intervalLabel(property),compact?13:14,MenuPalette.MUTED,false);interval.setMinHeight(controlHeight());interval.setGravity(Gravity.CENTER_VERTICAL);interval.setFocusable(true);interval.setClickable(true);interval.setOnClickListener(v->commandSafe(()->host.selectInterval(property)));
   LinearLayout heading=row();ImageView curveIcon=new ImageView(context);curveIcon.setImageDrawable(new MenuIconDrawable(context,MenuIconDrawable.Kind.CURVE,MenuPalette.ACCENT));curveIcon.setPadding(dp(6),dp(6),dp(6),dp(6));curveIcon.setBackground(MenuPalette.surface(context,false));curveIcon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);heading.addView(curveIcon,new LinearLayout.LayoutParams(controlHeight(),controlHeight()));

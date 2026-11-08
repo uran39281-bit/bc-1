@@ -12,7 +12,7 @@ public final class EffectInstance {
     public float[] params;
     public Motion motion;
     public boolean enabled=true;
-    public EffectInstance(int type){this.type=type;id=UUID.randomUUID().toString();motion=new Motion();}
+    public EffectInstance(int type){this.type=type;intensity=EffectCatalog.defaultStrength(type);id=UUID.randomUUID().toString();motion=new Motion();}
     EffectInstance(String id,int type,float intensity,float[] params,Motion motion,boolean enabled){this.id=id;this.type=type;this.intensity=intensity;this.params=params;this.motion=motion;this.enabled=enabled;}
     public float[] resolved(){return EffectCatalog.resolve(type,params);}
     public float strength(long sourceMs){return motion.value(Motion.INTENSITY,sourceMs,intensity);}

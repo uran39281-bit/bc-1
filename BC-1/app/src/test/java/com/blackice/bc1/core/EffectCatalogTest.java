@@ -8,7 +8,8 @@ import static org.junit.Assert.*;
 
 public class EffectCatalogTest {
     @Test public void idsAreStableAndEveryEffectHasACategory() {
-        assertEquals(66, EffectCatalog.count());
+        assertEquals(81, EffectCatalog.count());
+        assertEquals("Light", EffectCatalog.name(66)); assertEquals("Chroma Key", EffectCatalog.name(69));
         assertEquals("None", EffectCatalog.name(0)); assertEquals("Ice Grade", EffectCatalog.name(11));
         assertEquals("Box Blur", EffectCatalog.name(12)); assertEquals("Halftone", EffectCatalog.name(47));
         Set<Integer> seen = new HashSet<>();
