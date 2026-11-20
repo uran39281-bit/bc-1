@@ -1,0 +1,18 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const model=vm.runInNewContext(fs.readFileSync(__dirname+'/src/main/assets/ledger.js','utf8')+';({occurs,outlook,post,ledgerEvents})');
+const bill={id:'s',name:'Subscription',kind:'Subscription',date:'2024-01-31',cycle:'Monthly',amount:3500,account:'a'};
+assert(model.occurs(bill,'2024-02-29'));
+assert(model.occurs(bill,'2024-03-31'));
+assert(!model.occurs(bill,'2024-03-29'));
+assert(model.occurs({...bill,cycle:'Yearly',date:'2024-02-29'},'2025-02-28'));
+const pay={...bill,id:'p',kind:'Payday',date:'2024-02-02',cycle:'Biweekly',amount:100000};
+const db={items:[bill,pay],accounts:[{id:'a',balance:45000}],posted:{},reserves:{'Paycheck@2024-02-01':20000}};
+const calc=()=>model.outlook(db,'2024-02-01','Paycheck');
+assert.equal(calc().available,21500);
+const due=calc().bills[0];model.post(db,due);model.post(db,due);
+assert.equal(db.accounts[0].balance,41500);
+assert.equal(calc().available,21500);
+db.items.shift();
+assert.equal(model.ledgerEvents(db,'2024-01-31','2024-01-31')[0].done,true);
+assert.equal(model.outlook(db,'2024-02-01','Month').income,200000);
+console.log('Ledger checks passed');
