@@ -2,7 +2,8 @@
 const $=id=>document.getElementById(id);
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>(n/100).toLocaleString('en-US',{style:'currency',currency:'USD'});
-const now=new Date(),today=dateKey(new Date(Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())));
+function localToday(){const now=new Date();return dateKey(new Date(Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())));}
+let today=localToday();
 const fmt=(k,opts={month:'short',day:'numeric'})=>day(k).toLocaleDateString('en-US',{...opts,timeZone:'UTC'});
 const db=JSON.parse((window.Ice?Ice.load():localStorage.getItem('blackIceBudget'))||'null')||{accounts:[],items:[],posted:{},reserves:{},mode:'Paycheck'};
 let tab='Calendar',selection=today,month=today.slice(0,7)+'-01',editId='',activeKind='';
@@ -88,7 +89,7 @@ $('form').onsubmit=e=>{
  const n=Math.round(Number($('amount').value)*100),kind=activeKind;
  const name=$('name')?.value.trim();
  if(kind!=='Reserve'&&!name)throw Error('Enter a name.');
- const id=editId||crypto.randomUUID(),remind=Number($('remind')?.value??-1);
+ const id=editId||Array.from(crypto.getRandomValues(new Uint32Array(4)),n=>n.toString(16).padStart(8,'0')).join(''),remind=Number($('remind')?.value??-1);
  change(()=>{
    if(kind==='Reserve')db.reserves[db.mode+'@'+outlook(db,today,db.mode).end]=n;
    else if(kind==='Account'){
@@ -118,3 +119,5 @@ document.addEventListener('click',e=>{
  }catch(err){alert(err.message);}
 });
 render();
+
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&localToday()!==today){today=localToday();selection=today;month=today.slice(0,7)+'-01';render();}});
